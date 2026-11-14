@@ -1,0 +1,158 @@
+/* RibbitBeat: menu główne na scenie koncertowej (menu z podglądu „koncert” przeniesione do gry).
+   Scenę (tło, kolumny, membrany, lampy) buduje js/menu-koncert.js w .menu-koncert; ten plik ładuje się po gry.css,
+   gry-konta.css i gry-nagrody.css i przestawia menu na ciemną scenę:
+   · wycinanki z filcu (.menu-tlo) schowane, zamiast nich tło sceny,
+   · naklejka z nazwą mniejsza i niżej, żeby kolumna mieściła się między głośnikami,
+   · prawy górny róg: wyciszenie muzyki menu, konto, pod nimi „Odbierz nagrody”,
+   · lewy górny róg: naklejka RibbitFlip (strona projektu),
+   · stopka na środku podłogi: taśma stanu, cicha linijka klawiszy, kapsle F11 · Discord · flagi.
+   Kolejność i identyfikatory przycisków bez zmian, więc klawiatura, pad i kapsel (nawigujLobby) działają jak wcześniej. */
+
+/* ---- scena ---- */
+.menu{background:#141210}
+.menu .menu-tlo{display:none}
+.menu-koncert{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.mk-tlo{position:absolute;inset:-2%;background:url(../assets/koncert/scena.webp) center/cover no-repeat}
+/* kolumna 2:3 jak grafika; front (filc między szwami): x 17,6–70,4 %, y 32,2–91,8 %; membrana 38 % szerokości, środek
+   w x 44 % i na środku każdej połówki frontu; puls na stopę najwyżej +7 %, więc membrana zostaje na froncie */
+.mk-kolumna{position:absolute;bottom:-2dvh;height:min(76dvh,42vw);aspect-ratio:2/3;filter:drop-shadow(5px 5px 8px rgba(0,0,0,.45))}
+.mk-kolumna>img:first-child{display:block;width:100%;height:100%}
+.mk-strona-0{left:-4.5vw;scale:-1 1}
+.mk-strona-1{right:-4.5vw}
+.mk-membrana{position:absolute;left:25%;width:38%;height:auto;aspect-ratio:1;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));will-change:transform}
+.mk-membrana-0{top:34.4%}
+.mk-membrana-1{top:64.2%}
+/* lampy na kablu z tła: pozycje i --lampa liczy menu-koncert.js (ulozLampy); obrót wokół miejsca na kablu */
+.mk-lampy{position:absolute;inset:0}
+.mk-lampa{position:absolute;width:calc(var(--lampa,60px) * var(--k,1));transform:translateX(-50%) rotate(var(--kat,0deg));transform-origin:50% 0;will-change:transform}
+.mk-lampa img{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 4px rgba(0,0,0,.45)) brightness(calc(1 + var(--uderzenie,0) * .3))}
+.mk-lampa.mk-roz img{filter:hue-rotate(300deg) saturate(1.3) drop-shadow(0 6px 4px rgba(0,0,0,.45)) brightness(calc(1 + var(--uderzenie,0) * .3))}
+
+/* ---- kolumna: naklejka z nazwą mniejsza i niżej (wcześniej min(64vw, 84vh)), przyciski na ciemnym tle ---- */
+.menu{--nakl-w:min(38vw,68vh)}   /* napis nieco większy i wyżej, między lampami */
+.menu:has(#btnStudio:not([hidden])){--nakl-w:min(38vw,61vh)}
+@media (max-height:760px){.menu:has(#btnStudio:not([hidden])){--nakl-w:min(38vw,50vh)}}
+@media (max-width:1180px){.menu:has(#btnStudio:not([hidden])){--nakl-w:min(40vw,46vh)}}
+/* napis podniesiony sam (przyciski zostają): górą wchodzi między dwie grupy lamp na kablu */
+.menu .menu-bohater{transform:translateY(calc(-1 * clamp(14px,3.4vh,40px)))}
+.menu-scena{padding-top:clamp(36px,7vh,96px);padding-bottom:calc(clamp(10px,2vh,24px) + 92px)}
+@media (max-width:1180px){.menu-scena{padding-bottom:calc(clamp(10px,2vh,24px) + 112px)}}
+/* kolumna ma stałą szerokość: wcześniej wyznaczał ją najszerszy przycisk („Odbierz nagrody”, teraz w rogu), a min-width
+   przycisków to procent szerokości kolumny */
+.menu .menu-przyciski{width:min(470px,100%)}
+.menu .menu-przycisk{box-shadow:0 0 0 4px #fff,0 8px 0 4px rgba(0,0,0,.42)}
+.menu .menu-przycisk:hover{box-shadow:0 0 0 4px #fff,0 11px 0 4px rgba(0,0,0,.42)}
+.menu .menu-przycisk:active{box-shadow:0 0 0 4px #fff,0 3px 0 4px rgba(0,0,0,.42)}
+.menu .menu-przycisk:focus-visible,body.nawigacja .menu .menu-przycisk:focus{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--pink),0 10px 0 8px rgba(0,0,0,.42)}
+/* strzałka wyboru jasna, bo tło jest ciemne */
+.menu .menu-przycisk::before{background:#fff7e8}
+body.pilot .menu .menu-przycisk:focus{box-shadow:0 0 0 4px #fff,0 0 0 8px var(--pilot,var(--pink)),0 10px 0 8px rgba(0,0,0,.42)}
+
+/* ---- prawy górny róg ---- */
+.menu-rog{position:absolute;z-index:5;top:clamp(12px,2.6vh,30px);right:clamp(16px,3vw,56px);display:grid;grid-template-columns:auto auto;
+  align-items:center;justify-items:end;gap:clamp(10px,1.8vh,18px) 10px}
+.menu-rog{grid-template-columns:auto auto auto}
+.menu-rog .menu-konto{position:relative;inset:auto;top:auto;right:auto;margin:0}
+.menu-rog .menu-przycisk.menu-nagrody{grid-column:1/-1;min-width:0;margin:0;padding:clamp(7px,1.2vh,11px) 16px clamp(6px,1.1vh,10px) 12px;gap:10px;
+  font-size:clamp(15px,2.3vh,21px);--skos:2deg}
+.menu-rog .menu-nagrody .nagrody-ikona{width:clamp(22px,3.2vh,30px);margin:-5px 0}
+/* wyciszenie: mała, przygaszona ikonka; jaśnieje pod kursorem i przy fokusie */
+.menu-wycisz{display:grid;place-items:center;width:clamp(36px,4.6vh,44px);height:clamp(36px,4.6vh,44px);padding:0;border:1px solid rgba(255,255,255,.2);
+  border-radius:50%;color:#efe6d6;background:rgba(18,16,14,.6);opacity:.78;cursor:pointer;transition:opacity .12s,transform .08s}
+.menu-wycisz svg{width:52%;height:52%;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.menu-wycisz .glosnik{fill:currentColor;stroke:none}
+.menu-wycisz .krzyzyk{display:none;stroke:#ff6fb0}
+.menu-wycisz[aria-pressed="true"] .fale{display:none}
+.menu-wycisz[aria-pressed="true"] .krzyzyk{display:inline}
+.menu-wycisz:hover,.menu-wycisz:focus-visible,body.nawigacja .menu-wycisz:focus{opacity:1}
+.menu-wycisz:active{transform:translateY(2px)}
+.menu-wycisz:focus{outline:none}
+.menu-wycisz:focus-visible,body.nawigacja .menu-wycisz:focus{outline:3px solid var(--pink);outline-offset:3px}
+
+/* pełny ekran: jasna naszywka z ikoną i napisem, wyraźna obok konta (to samo co F11) */
+.menu-pelny{display:inline-flex;align-items:center;gap:8px;height:clamp(36px,4.6vh,44px);padding:0 14px 0 11px;border:none;border-radius:999px;cursor:pointer;
+  color:var(--ink);background-color:#faf6ee;background-image:var(--felt-soft);box-shadow:0 0 0 3px #fff,0 5px 0 3px rgba(0,0,0,.4);
+  font:400 clamp(13px,1.8vh,16px)/1 var(--rebel);letter-spacing:.3px;white-space:nowrap;transition:transform .08s}
+.menu-pelny svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.menu-pelny .wyjdz{display:none}
+.menu-pelny.pelny .wejdz{display:none}
+.menu-pelny.pelny .wyjdz{display:inline}
+.menu-pelny:hover{transform:translateY(-2px)}
+.menu-pelny:active{transform:translateY(3px)}
+.menu-pelny:focus{outline:none}
+.menu-pelny:focus-visible,body.nawigacja .menu-pelny:focus{box-shadow:0 0 0 3px #fff,0 0 0 7px var(--pink),0 5px 0 7px rgba(0,0,0,.4)}
+/* napis o F11 w stopce chowamy: ten sam przełącznik jest teraz przyciskiem w rogu */
+.menu .menu-stopka .menu-ekran{display:none}
+
+/* ---- naklejka RibbitFlip (lewy górny róg) ---- */
+/* Naklejka odbija bas muzyki menu. --uderzenie (0–1) wpisuje js/menu-koncert.js w tej samej
+   klatce, co ruch lamp i membran; tu tylko skala i odrobina obrotu, słabiej niż membrany (0,05 zamiast 0,07),
+   bo to odnośnik w rogu, a nie element sceny. Bez muzyki zmienna jest 0 i naklejka stoi jak dotąd.
+   Najazd myszą wygrywa (reguła niżej), żeby odnośnik nadal czytelnie reagował na kursor. */
+.menu-ribbitflip{position:absolute;z-index:5;left:clamp(12px,1.8vw,30px);top:clamp(10px,2vh,24px);display:flex;
+  flex-direction:column;align-items:center;gap:3px;width:max-content;text-decoration:none;
+  transform:rotate(calc(-7deg + var(--uderzenie,0) * 1.5deg)) scale(calc(1 + var(--uderzenie,0) * .05));
+  filter:drop-shadow(0 4px 0 rgba(0,0,0,.45));transition:transform .1s}
+/* 10-21: kolumna ma szerokość etykiety (max-content), a naklejka stałą szerokość i stoi na jej środku — żaba nad
+   środkiem napisu, a lewa krawędź etykiety wyznacza odstęp od ekranu, więc nic nie wychodzi poza kadr */
+.menu-ribbitflip img{display:block;width:clamp(54px,6.4vw,104px);height:auto;order:2}
+/* podpis POD naklejką (order 3 za obrazkiem) jako filcowa ETYKIETA (atrakcyjniej niż zwykły
+   podpis): ciemna pigułka ze szwem jak napisy w stopce, wersaliki z rozstrzeleniem, OBIE linie
+   wyśrodkowane w etykiecie, lekki obrót w drugą stronę niż naklejka. Żaba stoi na środku
+   tekstu, napis jest węższy: TRZY krótkie wiersze („Gra" / „demonstracyjna" / „projektu", EN „Demo" /
+   „game" / „of the project", wstawia js/menu-koncert.js), mniejsza czcionka i rozstrzelenie, więc etykieta jest ledwie
+   szersza od naklejki, a naklejka stoi na jej środku (kolumna .menu-ribbitflip ma szerokość etykiety). Dawniej etykieta
+   była wyrównana do lewej krawędzi naklejki, bo wyśrodkowana wychodziła poza ekran przy 1280 px. */
+.menu-ribbitflip-opis{order:3;flex:none;width:max-content;max-width:min(44vw,200px);margin:1px 0 0;padding:4px 9px 3px;
+  border-radius:14px;background:rgba(18,16,14,.84);outline:1.5px dashed rgba(243,233,210,.42);outline-offset:-4px;
+  box-shadow:0 2px 0 rgba(0,0,0,.45);text-align:center;transform:rotate(1.5deg);
+  font:800 clamp(7.5px,.7vw,10px)/1.2 var(--display,"Baloo 2",sans-serif);letter-spacing:.06em;text-transform:uppercase;
+  color:#f3e9d2;text-shadow:0 1px 0 rgba(0,0,0,.6);pointer-events:none}
+.menu-ribbitflip-linia{display:block}
+.menu-ribbitflip-linia:last-child{font-size:.88em;letter-spacing:.12em;color:#ffd84a}   /* ostatni wiersz: krótszy, żółty jak lampy */
+/* Wyraźna informacja, że gra powstała z pomocą AI: naklejka i metka „Stworzona z AI”
+   stoją w jednej kolumnie .menu-rog-lewy (to ona trzyma róg ekranu, naklejka w środku jest już zwykłym elementem).
+   Metka = żółty filcowy skrawek ze szwem, grafitowy napis (na żółtym nigdy biały), lekko przekrzywiona w drugą stronę
+   niż etykieta; klik otwiera okno „O grze” (js/o-grze.js). */
+.menu-rog-lewy{position:absolute;z-index:5;left:clamp(12px,1.8vw,30px);top:clamp(10px,2vh,24px);display:flex;
+  flex-direction:column;align-items:center;gap:9px;width:max-content}
+.menu-rog-lewy .menu-ribbitflip{position:static}
+.menu-ai{display:inline-flex;align-items:center;gap:5px;margin:0;padding:5px 11px 4px;border:0;border-radius:6px;
+  background:#ffd84a;color:#211f1d;outline:1.5px dashed rgba(33,31,29,.5);outline-offset:-4px;
+  box-shadow:0 3px 0 rgba(0,0,0,.45);transform:rotate(-2.5deg);cursor:pointer;transition:transform .1s;
+  font:800 clamp(9px,.82vw,11.5px)/1.2 var(--display,"Baloo 2",sans-serif);letter-spacing:.07em;text-transform:uppercase}
+.menu-ai:hover{transform:rotate(-1deg) translateY(-2px) scale(1.05)}
+.menu-ai:focus-visible,body.nawigacja .menu-ai:focus{outline:3px solid var(--pink);outline-offset:3px}
+/* okno „O grze”: wygląd z „Zgłoś błąd” (zglos-* w gry.css), tu tylko śródtytuły i dopisek o licencjach */
+.ogrze-karta{width:min(500px,94vw)}
+.ogrze-naglowek{margin:8px 0 0;font:800 16px/1.2 var(--display);color:var(--pink-d)}
+.ogrze-licencje{margin-top:6px;opacity:.78}
+.menu-ribbitflip:hover{transform:rotate(-3deg) translateY(-3px) scale(1.05)}
+.menu-ribbitflip:focus{outline:none}
+.menu-ribbitflip:focus-visible,body.nawigacja .menu-ribbitflip:focus{outline:3px solid var(--pink);outline-offset:6px;border-radius:14px}
+
+/* ---- stopka na środku podłogi sceny ---- */
+.menu-stopka{left:50%;right:auto;bottom:clamp(10px,2vh,24px);width:max-content;max-width:min(56vw,760px);transform:translateX(-50%);
+  flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:7px 8px}
+@media (max-width:1180px){.menu-stopka{max-width:min(70vw,640px)}}
+.menu-stopka .menu-dol{position:static;flex-basis:100%;max-width:none;width:max-content;margin:0 auto 4px;transform:rotate(-1deg)}
+/* Bez powtórzonej informacji: w menu taśma stanu nad pigułką z klawiszami pokazuje tylko
+   kapsle czekające na przycisk i łączność. Zdanie „Dołączasz przyciskiem kapsla albo pada…” (.jak-dolaczyc, ten sam
+   #lobbyStan wędruje między gniazdami) powtarzało pigułkę tuż pod nią, która też mówi, jak kapsel dołącza. W stopce
+   Wyboru i Rozgrywki zdanie zostaje, bo tam pigułki nie ma. Pilnuje tests/test_gry_menu_stopka.py. */
+.menu-stopka .menu-dol .jak-dolaczyc{display:none}
+.menu-stopka .menu-klawisze{flex-basis:100%;max-width:none;margin:0;padding:5px 14px;border-radius:999px;background:rgba(18,16,14,.62);
+  color:rgba(239,230,214,.82);font:600 clamp(11px,1.45vh,12.5px)/1.35 var(--sans);text-align:center}
+.menu-stopka .menu-ekran,.menu-stopka .menu-link{display:inline-flex;align-items:center;gap:7px;min-height:32px;margin:0;padding:0 12px;border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;background:rgba(18,16,14,.62);color:#efe6d6;box-shadow:none;font:700 12px/1 var(--sans);opacity:.85;transition:opacity .12s}
+.menu-stopka .menu-ekran:hover,.menu-stopka .menu-link:hover{opacity:1;color:#fff;background:rgba(18,16,14,.8);box-shadow:none}
+.menu-stopka .menu-ekran .menu-kbd{margin:0 1px;padding:1px 6px;background:rgba(239,230,214,.16);color:#efe6d6;box-shadow:none;font-size:11px}
+.menu-stopka .menu-ekran.pelny .menu-kbd{background:#efe6d6;color:var(--ink)}
+.menu-stopka .menu-linki{display:contents}
+.menu-stopka .menu-link img{width:16px;height:16px}
+.menu-stopka .menu-link.menu-jezyk,.menu-stopka .menu-link.menu-jezyk:hover{gap:2px;padding:0 6px;background:rgba(18,16,14,.62)}
+.menu-stopka .menu-link.menu-jezyk img{width:24px;filter:none}
+.menu-stopka .menu-jezyk button{padding:3px 4px 5px;border-radius:999px}
+.menu-stopka .menu-jezyk button[aria-pressed="true"]{transform:none;background:rgba(239,230,214,.16)}
+.menu-stopka .menu-jezyk button[aria-pressed="true"]::after{left:6px;right:6px;bottom:1px;border-top-width:2px}
+.menu-stopka :is(.menu-ekran,.menu-link):focus-visible{outline:3px solid var(--pink);outline-offset:3px}

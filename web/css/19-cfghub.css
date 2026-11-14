@@ -1,0 +1,177 @@
+/* ============================================================================
+   HUB KONFIGURACJI (rf-49i-cfghub.js) — biblioteka na kaflach, kapsle jako chipy.
+
+   WYGLĄD JEST CELOWO WZIĘTY Z PASA PADÓW (.ph-* w 14c-controller.css). Tam kafel
+   to kontroler, a chip to kapsel, który na nim gra; tu kafel to nazwana
+   konfiguracja, a chip to kapsel, który ją nosi. Role są odwrócone, gest jest
+   ten sam — więc jeśli te dwa miejsca wyglądałyby inaczej, trzeba by się uczyć
+   drugiej składni do tej samej czynności. Klasy są jednak WŁASNE, nie
+   współdzielone: 14c opisuje jedną zakładkę, a hub jest komponentem, który
+   pójdzie też do Myszy i MIDI/OSC, i nie może zależeć od arkusza cudzej karty.
+
+   Ładowany jako 19, po 18 (pasek tożsamości — poprzednia warstwa tej samej
+   sprawy) i przed 15, bo skórka nakładki ma zostać ostatnia.
+   ============================================================================ */
+
+.cfh{border-bottom:1px solid var(--line);background:var(--bg2)}
+
+/* ---- nagłówek sekcji ------------------------------------------------------
+   Tytuł, streszczenie (tylko po zwinięciu), „Wymiana" i strzałka. Strzałka na
+   końcu, bo zwijanie jest czynnością o sekcji, a nie o jej treści. */
+.cfh-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 14px}
+.cfh-title{font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center}
+/* Streszczenie zwiniętej sekcji: „Triki 1: Wolfenstein chodzenie (zmienione) ·
+   Triki 2: bez nazwy". Jedna linijka, przycięta — zwinięta sekcja też ma
+   odpowiadać na pytanie „kto co nosi", inaczej zwijanie znaczy „schowaj prawdę". */
+.cfh-sum{font-size:11px;color:var(--dim);min-width:0;flex:1 1 220px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cfh-h .cfh-exchange{margin:0 0 0 auto}
+.cfh-fold{font:inherit;line-height:1;cursor:pointer;color:var(--muted);
+  background:transparent;border:1px solid var(--line);border-radius:8px;padding:3px 8px}
+.cfh-fold:hover{color:var(--fg,inherit);border-color:var(--az)}
+.cfh-fold:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+.cfh-caret{display:inline-block;transition:transform .16s ease}
+.cfh.is-folded .cfh-caret{transform:rotate(-90deg)}
+.cfh-body{padding:0 14px 12px}
+
+/* ---- TACKA: kapsle bez nazwanej konfiguracji ------------------------------
+   Kreską przerywaną, jak każda inna powierzchnia „jeszcze nic tu nie ma" w tej
+   aplikacji, i widoczna także wtedy, gdy jest pusta: pusty cel upuszczenia,
+   który widać, to jedyna rzecz, dzięki której ten gest da się odkryć. ✕ na
+   chipie robi to samo myszą, która nie przeciąga, a lista rozwijana na chipie
+   z tacki — klawiaturą, która przeciągać nie umie w ogóle. */
+.cfh-free{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;margin:0 0 10px;
+  padding:4px 8px;border:1px dashed var(--line);border-radius:10px;
+  transition:border-color .12s linear,box-shadow .12s linear}
+.cfh-free-lab{font-size:11px;font-weight:600;color:var(--muted)}
+.cfh-free.empty .cfh-free-lab{font-weight:500;color:var(--dim)}
+.cfh-free-hint{font-size:11px;color:var(--dim)}
+.cfh-free.drop{border-color:var(--az);border-style:solid;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--az) 45%,transparent)}
+
+/* ---- KAFLE ----------------------------------------------------------------
+   Zawijają się, a nie przewijają w bok — to jest LISTA tego, co masz
+   w bibliotece, i schowanie jednej pozycji za bocznym przewijaniem schowałoby
+   odpowiedź, dla której ta sekcja istnieje. */
+.cfh-tiles{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.cfh-tile{flex:0 1 auto;width:250px;min-width:0;display:flex;flex-direction:column;gap:6px;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+  transition:border-color .12s linear,box-shadow .12s linear}
+.cfh-tile.drop{border-color:var(--az);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--az) 45%,transparent)}
+/* Kafel-duch: nazwa, którą kapsel nosi, a której nie ma już w bibliotece.
+   Przerywana ramka mówi „to nie jest pozycja na liście", zanim ktokolwiek
+   przeczyta zdanie w środku. */
+.cfh-tile.is-gone{border-style:dashed;background:transparent}
+.cfh-t-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
+.cfh-t-name{font-size:13px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.cfh-t-metric{font-size:11px;color:var(--dim);white-space:nowrap}
+/* OPIS — to on odróżnia dwa kafle od siebie. Trzy linijki i wielokropek; całe
+   zdanie siedzi w tytule, żeby kafel dało się przeczytać wzrokiem, a pełną
+   treść dostać bez otwierania okna. */
+.cfh-t-desc{font-size:11px;line-height:1.45;color:var(--muted);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cfh-t-desc.none{color:var(--dim);font-style:italic}
+.cfh-t-desc.gone{color:var(--bad,#d4433f);font-style:normal}
+.cfh-t-tools{display:flex;gap:4px;margin-left:auto;opacity:.35;transition:opacity .12s linear}
+.cfh-tile:hover .cfh-t-tools,.cfh-tile:focus-within .cfh-t-tools{opacity:1}
+.cfh-tool{font:inherit;font-size:11px;line-height:1;cursor:pointer;color:var(--muted);
+  background:transparent;border:1px solid transparent;border-radius:6px;padding:2px 5px}
+.cfh-tool:hover{color:var(--fg,inherit);border-color:var(--line)}
+.cfh-tool.danger:hover{color:var(--bad);border-color:var(--bad)}
+.cfh-tool:focus-visible{outline:2px solid var(--az);outline-offset:1px;opacity:1}
+.cfh-t-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:4px}
+.cfh-t-load{margin-top:auto}
+
+/* ---- CHIPY: kapsle -------------------------------------------------------
+   Chip JEST kapslem, więc nosi jego kolor na lewej krawędzi — ten sam, którym
+   pas padów maluje pierścienie na rysunku. To on wiąże trzy obrazki w jeden. */
+.cfh-chip{display:flex;align-items:center;gap:6px;padding:3px 7px;min-width:0;cursor:pointer;
+  border:1px solid var(--line);border-left:4px solid var(--dcol,var(--line));
+  border-radius:9px;background:var(--bg2)}
+.cfh-chip>b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.cfh-chip.active{outline:2px solid var(--dcol,var(--az));outline-offset:1px}
+.cfh-chip.dragging{opacity:.45}
+.cfh-chip:active:not(:has(:is(button,select):active)){transform:translateY(1px)}
+.cfh-chip .cfh-pick{max-width:130px;min-width:0;font-size:11px}
+/* KROPKA „zmienione" przy kapslu. Kropka, nie słowo: chipów na kaflu bywa
+   kilka, a napis przy każdym zamieniłby kafel w akapit. Znaczenie stoi
+   w tytule chipa i w zdaniu statusowym pod kaflami. */
+.cfh-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;
+  background:var(--warn,#b8860b);box-shadow:0 0 0 2px color-mix(in srgb,var(--warn,#b8860b) 25%,transparent)}
+/* ZDEJMIJ NAZWĘ, na samym chipie. Wyciszone do najechania albo ogniska — działa
+   na PODPIS, a wszystko inne na chipie działa na kapsel, i stale zapalone ✕
+   zapraszałoby do tego drugiego. Przed klawiaturą nigdy nie ukryte. */
+.cfh-chip-off{font:inherit;font-size:11px;line-height:1;cursor:pointer;color:var(--muted);
+  background:transparent;border:1px solid transparent;border-radius:6px;padding:1px 4px;
+  opacity:.3;transition:opacity .12s linear}
+.cfh-chip:hover .cfh-chip-off,.cfh-chip:focus-within .cfh-chip-off{opacity:1}
+.cfh-chip-off:hover{color:var(--bad);border-color:var(--bad)}
+.cfh-chip-off:focus-visible{outline:2px solid var(--az);outline-offset:1px;opacity:1}
+
+.cfh-pick{font:inherit;font-size:11px;color:var(--ink);background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:3px 7px;max-width:100%;cursor:pointer}
+.cfh-pick:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+
+/* ---- KAFEL „+" -----------------------------------------------------------
+   Ostatni w rzędzie, w kształcie tego, co robi (wzór .ph-add-wrap z 14c).
+   Ramka przerywana należy do CAŁEGO kafla, bo zdanie pod przyciskiem jest
+   częścią tej samej decyzji. Wyłączony razem z powodem: przycisk, który po
+   prostu przestał działać, czyta się jak usterka. */
+.cfh-add-wrap{flex:0 1 auto;width:250px;display:flex;flex-direction:column;gap:6px;
+  border:1.5px dashed var(--line);border-radius:12px;padding:8px 10px}
+.cfh-add-wrap:has(.cfh-add-tile:hover:not(:disabled)){border-color:var(--az);background:var(--bg2)}
+.cfh-add-tile{width:100%;min-height:52px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;
+  font:inherit;font-size:12px;font-weight:500;color:var(--muted);
+  background:transparent;border:0;border-radius:9px;padding:4px 6px}
+.cfh-add-tile:hover:not(:disabled){color:var(--fg,inherit)}
+.cfh-add-tile:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+.cfh-add-tile:disabled{opacity:.45;cursor:not-allowed}
+.cfh-add-plus{font-size:17px;line-height:1;font-weight:800}
+.cfh-add-why{font-size:10px;line-height:1.4;color:var(--dim);text-align:center;max-width:100%}
+
+/* ---- ZDANIE STATUSOWE ----------------------------------------------------
+   Jedyne miejsce, w którym aplikacja mówi wprost, co znaczy zapis: NA KAPSLU
+   dzieje się od razu, W BIBLIOTECE dopiero po „Zapisz zmiany". Przyciski stoją
+   przy tym zdaniu, a nie w pasku, bo to ono mówi, po co są. Lewa krawędź barwi
+   się według stanu — to samo, co pigułka „zmienione" mówiła jednym słowem. */
+.cfh-status{margin-top:12px;padding:8px 12px;border-left:3px solid var(--line);
+  background:color-mix(in srgb,var(--line) 12%,transparent);border-radius:0 8px 8px 0}
+.cfh-status.is-dirty{border-left-color:var(--warn,#b8860b)}
+.cfh-status.is-gone{border-left-color:var(--bad,#d4433f)}
+.cfh-status-tx{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.cfh-status-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cfh-status-acts .btn{margin:0}
+
+/* Wąsko: kafle na całą szerokość, żeby opis nie zwężał się do dwóch słów. */
+@media (max-width:720px){
+  .cfh-tile,.cfh-add-wrap{width:100%;flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .cfh-free,.cfh-tile,.cfh-caret,.cfh-chip-off,.cfh-t-tools{transition:none}
+  .cfh-chip:active:not(:has(:is(button,select):active)){transform:none}
+}
+
+/* ===== UX 261120 B5a: karta „Stop awaryjny" w Ustawieniach =====
+   Pierwszy rząd to kombinacja (to jej człowiek szuka), drugi to czerwony przycisk bezpieczeństwa
+   (`.btn.danger` z 14d) i „Sprawdź skrót", oba 40 px. Ikona nagłówka: `--ic-stop` (stop.png). */
+.hd-ic-stop{background-image:var(--ic-stop)}
+#hkCard .hk-top{margin-top:var(--card-y,12px)}
+#hkCard .hk-top .hk-key{font-size:14px;min-width:34px;height:32px;display:inline-flex;align-items:center;justify-content:center}
+#hkCard .hk-acts{margin-top:4px;margin-bottom:10px}
+#hkCard .hk-acts .btn{height:40px;padding:0 16px;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+#hkCard .hk-acts .btn.danger{font-size:14px;font-weight:800}
+/* Czerwony kwadrat ikony na czerwonym przycisku: biały obrys, żeby nie zlał się z tłem. */
+#hkCard .hk-btnic{width:20px;height:20px;flex:0 0 auto;background:var(--ic-stop) center/contain no-repeat;
+  filter:drop-shadow(1.3px 0 0 #fff) drop-shadow(-1.3px 0 0 #fff) drop-shadow(0 1.3px 0 #fff) drop-shadow(0 -1.3px 0 #fff)}
+/* (koniec sekcji B5a) */
+
+/* ===== UX 261120 L4c: piętra Ustawień ===== */
+/* Czerwona akcja główna Stopu awaryjnego (`button.btn.danger.rf-cta`) jest wspólnym wzorcem w 08 (piętra). */
+/* Piętro 2: „Skrót awaryjny” w karcie Stopu, „Start programu” jako wstawka pod kartami. */
+#hkCard>.hk-fold{margin:4px var(--card-x) var(--card-y)}
+.hk-fold .setupbar,.us-fold .setupbar{padding-left:0;padding-right:0}
+.hk-fold .ra-lead,.us-fold .ra-lead{padding:6px 0 0}
+.us-fold-hint{margin:0}
+/* (koniec sekcji L4c) */

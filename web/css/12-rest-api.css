@@ -1,0 +1,599 @@
+/* REST API tab — every class is prefixed .ra-. Covers the credential vault, app cards with
+   their sub-tabs, the action library, triggers, variables, service templates and the send log.
+   Inputs and selects already get their felt look from 11; this file only adds layout and type. */
+
+/* — vault / credentials bar — */
+.ra-wrap{display:flex;flex-direction:column;gap:12px}
+.ra-lead{padding:11px var(--card-x) 0;color:var(--muted);font-size:13px;line-height:1.55}
+/* "this module is shared by every capsule": a pill in the module bar where other modules show the
+   capsule (rf-49j paintCrumb, REST_CFG_ADAPTER.sharedChip), with the planet that marks shared things */
+.rfpc-dev.rfpc-shared{--dcol:var(--line);padding-left:8px}
+.rfpc-dev.rfpc-shared b{max-width:none}
+.rfpc-dev.rfpc-shared::before{content:"";width:16px;height:16px;flex:0 0 auto;
+  background:var(--ic-planet) center/contain no-repeat}
+.ra-empty-cta .btn+.btn{margin-left:8px}
+.ra-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px var(--card-x) 12px}
+.ra-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;
+  border:1px solid var(--line);background:var(--panel2);color:var(--muted);font-size:12px;font-weight:500}
+.ra-pill.ok{color:var(--green-d);border-color:var(--green)}
+.ra-pill.warn{color:var(--warn);border-color:var(--amber)}
+/* Napis pigułki w czerwieni DO TEKSTU (12px na --panel2 to 3,88:1 przy --bad); obrys zostaje
+   w --bad, bo linia jest rysunkiem, nie literą.
+   WHY: the pill's word is text-grade red, its outline stays the drawing red. */
+.ra-pill.bad{color:var(--bad-ink);border-color:var(--bad)}
+.ra-acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ra-acts#raVaultBtns{margin-left:auto}
+.ra-body{padding:12px var(--card-x);display:flex;flex-direction:column;gap:10px}
+.ra-empty{padding:15px;border:1px dashed var(--line);border-radius:12px;background:var(--panel2);
+  color:var(--dim);font-size:13px;line-height:1.6;text-align:center}
+.ra-empty b{color:var(--ink);display:block;margin-bottom:3px}
+.ra-empty-cta{margin-top:10px}
+.ra-note{font-size:12px;color:var(--dim);line-height:1.55}
+.ra-cred{display:flex;flex-direction:column;gap:9px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:12px;background:var(--panel2)}
+.ra-cred-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ra-cred-h .ra-cname-inp{flex:1;min-width:150px;font-weight:700}
+.ra-kind{font-size:11px;color:var(--dim);font-family:var(--mono);padding:2px 6px;border-radius:6px;background:var(--panel)}
+.ra-fields{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end}
+.ra-fld{display:flex;flex-direction:column;gap:3px;min-width:150px;flex:1}
+.ra-fld>span{font-size:11px;color:var(--dim);font-weight:500}
+.ra-secret{display:flex;gap:5px;align-items:center}
+.ra-secret input{flex:1;min-width:110px}
+.ra-opt{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+.ra-api{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 12px;border:1px solid var(--line);
+  border-radius:12px;background:var(--panel2);font-size:13px}
+.ra-api b{color:var(--ink)}
+/* vault password modal — same box as #devEdit .de-box, animated with the shared rfm-* keyframes */
+#raPass{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999;
+  animation:rfm-fade var(--rf-d-press) ease both}
+#raPass .ra-pass-box{width:min(430px,92vw);padding:18px 20px 16px;display:flex;flex-direction:column;gap:9px;
+  background:var(--panel);background-image:var(--felt-tex-soft);border:none;border-radius:20px;
+  box-shadow:0 14px 0 rgba(120,90,40,.14);animation:rfm-pop var(--rf-d-pop) var(--rf-ez-overshoot) both}
+.rfm-closing .ra-pass-box{animation:rfm-card-out var(--rf-d-press) var(--rf-ez-snap) both !important}
+#raPass h3{margin:0;font-size:15px;color:var(--ink)}
+#raPass label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;color:var(--muted)}
+#raPass .ra-pass-err{min-height:17px;font-size:12px;font-weight:500;color:var(--bad)}
+#raPass .ra-pass-act{display:flex;gap:8px;justify-content:flex-end;margin-top:2px}
+@media (prefers-reduced-motion:reduce){
+  #raPass,#raPass .ra-pass-box,.rfm-closing .ra-pass-box{animation:none !important;transition:none !important;transform:none !important}
+}
+
+/* ===== App cards, sub-tabs, action library, chips, send log =====
+   Two naming decisions worth keeping:
+     • an app card is .ra-app*, never .ra-api* — .ra-api above is the API-status row and
+       already sets display:flex, which would break the card layout;
+     • the .ra-fld rules below are scoped under .ra-grid, because the bare .ra-fld in the
+       vault card sets min-width:150px and must not be overridden. */
+
+/* — toolbar above the lists — */
+.ra-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.ra-toolbar-cnt{margin-left:auto;font-size:12px;color:var(--dim);font-weight:500}
+
+/* — app list: one card per row —
+   `minmax(0,1fr)` and `min-width:0`, not the bare `1fr`: a grid (and flex) child's automatic
+   minimum size is its CONTENT, so one long address or a header row that refuses to wrap pushed
+   the whole card WIDER than the panel — measured at 1280×800: .ra-app 978 px inside a 968 px
+   #tab-restapi, with the ✕ "Usuń tę aplikację" sliced off under the right-hand column. */
+.ra-apps{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.ra-app{background:var(--panel);background-image:var(--felt-tex-soft);border-radius:16px;
+  box-shadow:var(--felt-shadow-sm);position:relative;padding:12px 14px 14px;min-width:0;max-width:100%}
+.ra-app::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+  border-radius:12px;pointer-events:none;z-index:0;opacity:.75}
+.ra-app>*{position:relative;z-index:1}
+
+/* — app card header — */
+.ra-app-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.ra-app-head .led{width:11px;height:11px;border-radius:50%;flex:none;background:var(--idle);
+  transition:transform .12s,box-shadow .12s,background .12s}
+.ra-app-head .led.fired{background:var(--ok);transform:scale(1.6);
+  box-shadow:0 0 7px var(--ok),0 0 18px var(--ok)}
+.ra-app-name{flex:1 1 180px;min-width:120px;font-size:14px;font-weight:800;
+  font-family:var(--display);padding:5px 9px}
+.ra-app-url{font-family:var(--mono);font-size:11px;color:var(--muted);max-width:38ch;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ra-app-url.none{color:var(--bad);font-style:italic;font-family:var(--body)}
+.ra-app-cnt{font-size:11px;color:var(--dim);font-weight:500;white-space:nowrap}
+.ra-app-x{flex:none;width:24px;height:24px;border-radius:7px;border:1px solid var(--line);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:12px;line-height:1;
+  transition:color .12s,border-color .12s,transform .12s}
+.ra-app-x:hover{color:var(--bad);border-color:var(--bad);transform:translateY(-1px)}
+
+/* — sub-tabs: Akcje › Wyzwalacze › Ustawienia i test —
+   To są JEDNOCZEŚNIE zakładki i kroki, więc nie zlepiamy ich już w jeden segmentowany pasek:
+   trzy osobne przyciski ze strzałką między nimi czytają się jako kolejność, a nie jako wybór
+   z trzech równorzędnych rzeczy. Osobny rząd kroków nad nimi zniknął 13.09 — ta sama informacja
+   dwa razy, jedna nad drugą. Podpowiedź („co wysłać") stoi pod słowem i w wąskim oknie znika. */
+.ra-subtabs{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin-bottom:11px}
+.ra-st-sep{flex:none;align-self:center;color:var(--dim);font-size:14px;font-weight:700}
+.ra-subtabs .ra-st{display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+  flex:0 1 auto;min-width:0;font:inherit;color:var(--muted);background:var(--panel);
+  border:1.5px solid var(--line);border-radius:11px;padding:5px 13px;cursor:pointer;
+  text-align:left;
+  transition:background .1s var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1)),color .1s,border-color .12s}
+.ra-st-w{font-family:var(--display);font-weight:600;font-size:12px;line-height:1.25}
+.ra-st-h{font-size:11px;line-height:1.2;color:var(--dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ra-subtabs .ra-st:hover{color:var(--ink);border-color:var(--ink)}
+.ra-subtabs .ra-st.on{background:var(--felt-ink);color:var(--panel);border-color:var(--felt-ink)}
+.ra-subtabs .ra-st.on .ra-st-h{color:var(--panel);opacity:.72}
+.ra-subtabs .ra-st:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+@media (max-width:820px){
+  .ra-st-h{display:none}           /* w wąskim oknie zostaje samo słowo — podpowiedź jest w title */
+  .ra-subtabs .ra-st{flex:1 1 auto;align-items:center}
+}
+.ra-stpanel{display:block}
+.ra-stpanel:focus{outline:none}
+.ra-stpanel[hidden]{display:none!important}
+.ra-trigwrap{display:block}
+
+/* — action library — */
+.ra-acts-list{display:flex;flex-direction:column;gap:7px}
+.ra-act{border:1.5px solid var(--line);border-radius:12px;background:var(--panel2);overflow:hidden}
+.ra-act-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px}
+.ra-act-main{flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:1px}
+.ra-act-name{font-size:13px;font-weight:600;color:var(--ink);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.ra-act-desc{font-size:11px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ra-act-desc:empty{display:none}
+.ra-act-ep{display:flex;align-items:center;gap:6px;min-width:0;flex:0 1 auto}
+.ra-met{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.4px;
+  padding:2px 6px;border-radius:6px;color:var(--muted);
+  background:color-mix(in srgb,var(--muted) 14%,transparent)}
+.ra-met[data-m=GET]{color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,transparent)}
+.ra-met[data-m=POST]{color:var(--pink-d);background:color-mix(in srgb,var(--pink) 16%,transparent)}
+.ra-met[data-m=PUT],.ra-met[data-m=PATCH]{color:var(--warn);background:color-mix(in srgb,var(--warn) 20%,transparent)}
+.ra-met[data-m=DELETE]{color:var(--bad);background:color-mix(in srgb,var(--bad) 16%,transparent)}
+.ra-path{font-family:var(--mono);font-size:11px;color:var(--muted);max-width:30ch;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ra-act-btns{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-left:auto}
+.ra-act-btns .btn.xs{white-space:nowrap}
+.ra-act-edit,.ra-act-prev{padding:0 10px 11px}
+.ra-act-edit[hidden],.ra-act-prev[hidden]{display:none!important}
+.ra-act-edit{border-top:1.5px dashed var(--stitch);padding-top:11px}
+
+/* — forms (action editor, API settings) — */
+.ra-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 11px}
+.ra-grid>.ra-fld{min-width:0}                     /* the vault card's bare .ra-fld sets min-width:150px — leave it alone */
+.ra-grid>.ra-fld.ra-wide{grid-column:1/-1}
+.ra-grid .ra-fld input,.ra-grid .ra-fld select{font-size:12px;padding:6px 8px;width:100%}
+.ra-mono{font-family:var(--mono)!important;font-size:12px!important}
+.ra-sub{margin-top:11px}
+.ra-sub-h{display:block;font-size:11px;color:var(--dim);font-weight:500;
+  text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px}
+.ra-set-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;
+  padding-top:10px;border-top:1.5px dashed var(--stitch)}
+.ra-set-note{font-size:11px;color:var(--dim);flex:1 1 220px}
+
+/* — key/value pair editor — */
+.ra-kv-list{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+.ra-kv-row{display:flex;align-items:center;gap:6px}
+.ra-kv-k{flex:0 1 190px;min-width:90px;font-size:12px;padding:5px 7px;font-family:var(--mono)}
+.ra-kv-v{flex:1 1 200px;min-width:90px;font-size:12px;padding:5px 7px;font-family:var(--mono)}
+.ra-kv-none{font-size:11px;color:var(--dim);font-style:italic}
+.ra-kv-x{flex:none;width:22px;height:22px;border-radius:6px;border:1px solid var(--line);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:11px;line-height:1;
+  transition:color .12s,border-color .12s}
+.ra-kv-x:hover{color:var(--bad);border-color:var(--bad)}
+
+/* — body-type segmented control (inherits .seg from the felt theme) — */
+.ra-seg{margin-bottom:7px}
+.ra-seg button{font-size:12px;padding:5px 12px}
+.ra-seg button:focus-visible{outline:2px solid var(--pink);outline-offset:-2px}
+textarea.ra-f-body{width:100%;min-height:96px;resize:vertical;padding:8px 9px;line-height:1.45}
+textarea.ra-f-body.off{opacity:.45}
+
+/* — placeholder chips — */
+.ra-chips-h{font-size:11px;color:var(--dim);font-weight:600;margin:7px 0 5px}
+.ra-chips{display:flex;flex-wrap:wrap;gap:5px}
+.ra-chip{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted);
+  background:var(--panel2);border:1.5px solid var(--line);border-radius:8px;
+  padding:3px 7px;cursor:pointer;transition:color .12s,border-color .12s,transform .1s}
+.ra-chip:hover{color:var(--pink-d);border-color:var(--pink);transform:translateY(-1px)}
+.ra-chip:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+
+/* — request preview (dry run) + the shared code block — */
+.ra-pre{font-family:var(--mono);font-size:11px;line-height:1.5;color:var(--ink);
+  background:var(--panel2);border:1.5px dashed var(--stitch);border-radius:10px;
+  padding:9px 11px;white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}
+.ra-pre.bad{color:var(--bad);border-color:var(--bad)}
+.ra-prev-note{font-size:11px;color:var(--dim);margin-top:5px}
+.ra-warns{margin:6px 0 0;padding-left:2px;list-style:none;display:flex;flex-direction:column;gap:3px}
+.ra-warns li{font-size:11px;color:var(--warn);font-weight:600}
+
+/* — send log — */
+.ra-log{display:flex;flex-direction:column;gap:3px}
+.ra-log-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:5px 9px;
+  border-radius:9px;border-left:4px solid var(--idle);background:var(--panel2);font-size:12px}
+.ra-log-row.ok{border-left-color:var(--ok)}
+.ra-log-row.bad{border-left-color:var(--bad)}
+.ra-log-row.warn{border-left-color:var(--warn)}
+/* persistent log: rows restored from disk (earlier sessions) are dimmed */
+.ra-log-row.hist{opacity:.55}
+.ra-log-stats{margin-left:auto;font-size:11px}
+/* "N sends without an entry" — amber, and it carries a title that says what that means */
+.ra-log-warn{color:var(--warn);font-weight:500;cursor:help}
+.ra-log-body-opt{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+  font-weight:600;margin:2px 0 8px}
+.ra-log-t{font-family:var(--mono);font-size:11px;color:var(--dim);flex:none}
+.ra-log-src{font-weight:700;color:var(--ink);flex:0 1 190px;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ra-log-req{flex:1 1 220px;min-width:0;display:flex;align-items:center;gap:5px}
+.ra-log-req b{font-family:var(--mono);font-size:10px;color:var(--muted);flex:none}
+.ra-log-url{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ra-log-st{font-family:var(--mono);font-size:11px;font-weight:500;flex:none}
+.ra-log-row.ok .ra-log-st{color:var(--ok)}
+.ra-log-row.bad .ra-log-st{color:var(--bad)}
+.ra-log-row.warn .ra-log-st{color:var(--warn)}
+.ra-log-ms{font-family:var(--mono);font-size:11px;color:var(--dim);flex:none;min-width:52px;text-align:right}
+.ra-log-x{flex:none;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:10px;line-height:1;
+  transition:color .12s,border-color .12s}
+.ra-log-x:hover{color:var(--ink);border-color:var(--stitch)}
+.ra-log-x-off{border-color:transparent;cursor:default}
+.ra-log-detail{padding:2px 9px 8px 22px}
+.ra-log-detail[hidden]{display:none!important}
+.ra-log-meta{font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:4px}
+#raLogCard .head .hint{margin-left:auto}
+#raLogCard .head .ra-log-clear{margin-left:10px;flex:none}
+
+/* — narrow windows — */
+@media (max-width:820px){
+  .ra-act-btns{margin-left:0;width:100%}
+  .ra-act-ep{order:3;width:100%}
+  .ra-log-src{flex-basis:100%}
+  .ra-log-ms{min-width:0}
+}
+
+/* — fully honour prefers-reduced-motion — */
+@media (prefers-reduced-motion:reduce){
+  .ra-app-head .led,.ra-app-x,.ra-kv-x,.ra-chip,.ra-log-x,.ra-subtabs .ra-st{
+    transition:none!important;transform:none!important;animation:none!important}
+  .ra-app-head .led.fired{box-shadow:0 0 0 3px var(--ok)!important}
+}
+
+/* ===== Triggers: rows, source-kind switch, live readout =====
+   Additive: reuses .ra-toolbar, .ra-empty, .seg and .ra-mono without redefining them. */
+
+/* — trigger list — */
+.ra-trigs{display:flex;flex-direction:column;gap:8px}
+.ra-trig{border:1.5px solid var(--line);border-radius:12px;background:var(--panel2);
+  transition:border-color .14s,box-shadow .14s,opacity .14s}
+.ra-trig.off{opacity:.6}
+.ra-trig.warn{border-color:var(--warn)}
+.ra-trig.fired{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok)}
+
+/* — top row: action · counter · enable · delete — */
+.ra-trig-head{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap;padding:9px 10px 0}
+
+/* — bands inside one row: "when it fires" and "how it tells you", each with its own heading
+     (.ra-sub-h, the same one the action editor uses). Fields live in the band they belong to. — */
+.ra-tsec{padding:9px 10px 0;margin-top:9px;border-top:1.5px dashed var(--stitch)}
+.ra-tsec>.ra-sub-h{margin-bottom:7px}
+.ra-tsec-notify{padding-bottom:10px}
+.ra-trig-cnt{margin-left:auto;flex:none;font-family:var(--mono);font-size:11px;font-weight:500;
+  color:var(--dim);align-self:center;text-align:right}
+
+/* — row form fields — */
+.ra-tf{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ra-tf[hidden]{display:none!important}
+.ra-tf-lab{font-size:11px;color:var(--dim);font-weight:500;line-height:1.2}
+.ra-tf select,.ra-tf input{width:100%;font-size:12px;padding:5px 7px}
+.ra-tf input[type=number]{font-family:var(--mono)}   /* monospace even without .ra-mono */
+.ra-tf-act{flex:1 1 190px}
+.ra-tf-min{flex:0 0 128px}
+/* JEDEN WYZNACZONY GROWER NA WIERSZ, a szerokości liczone od WARTOŚCI, nie od długości
+   etykiety. Bez `.ra-tf-dev` rozwijak „Kapsel” zostawał przy domyślnym `0 1 auto` (czyli tyle, ile
+   ma jego najdłuższa pozycja — 127 px), a „Reguła” z `flex:1 1 240px` zabierała CAŁĄ resztę wiersza
+   (689 px). Sufit na growerze trzyma tę proporcję także na szerokim oknie. */
+.ra-tf-wide{flex:1 1 240px;max-width:420px}
+.ra-tf-dev{flex:0 0 150px}
+.ra-tf-cmp{flex:0 0 146px}
+.ra-tf-thr{flex:0 0 152px}
+.ra-tf-live{flex:0 0 112px}
+.ra-tf-dwell{flex:0 0 158px}
+.ra-tf-notify{flex:0 0 244px}   /* Windows notification picker — its longest option needs the room */
+.ra-tf-ntext{flex:1 1 220px}    /* own wording for that notification */
+.ra-t-silent-l{display:flex;align-items:center;gap:5px;flex:none;padding-bottom:6px;
+  font-size:11px;color:var(--dim);font-weight:500;white-space:nowrap}
+.ra-t-silent-l input{width:auto;margin:0}
+.ra-t-silent-l[hidden],.ra-tf-ntext[hidden]{display:none!important}
+.ra-trow{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap}
+
+/* — per-trigger enable switch (role=switch) — */
+.ra-tsw{display:inline-flex;align-items:center;gap:6px;flex:none;align-self:center;
+  font:inherit;font-family:var(--display);font-weight:500;font-size:11px;letter-spacing:.3px;
+  color:var(--muted);background:var(--panel);border:1.5px solid var(--line);border-radius:999px;
+  padding:4px 11px 4px 8px;cursor:pointer;transition:color .12s,border-color .12s}
+.ra-tsw-dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--idle);
+  transition:background .12s,box-shadow .12s}
+.ra-tsw.on{color:var(--green-d);border-color:var(--green)}
+.ra-tsw.on .ra-tsw-dot{background:var(--green);box-shadow:0 0 6px var(--green)}
+.ra-tsw:hover{color:var(--ink)}
+.ra-tsw:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+
+/* — row delete (mirrors .ra-app-x, own class name) — */
+.ra-trig-x{flex:none;align-self:center;width:24px;height:24px;border-radius:7px;
+  border:1px solid var(--line);background:transparent;color:var(--dim);cursor:pointer;
+  font-size:12px;line-height:1;transition:color .12s,border-color .12s,transform .12s}
+.ra-trig-x:hover{color:var(--bad);border-color:var(--bad);transform:translateY(-1px)}
+.ra-trig-x:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+
+/* — source-kind switch (mapping rule · custom motion source) — inside .ra-tsec, which pads it — */
+.ra-ksw-row{display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap;padding:0}
+.ra-ksw-row>.ra-tf-lab{padding-bottom:7px}
+.ra-ksw{flex:0 1 auto}
+.ra-ksw button{font-size:12px;padding:5px 12px}
+.ra-ksw button:focus-visible{outline:2px solid var(--pink);outline-offset:-2px}
+
+/* — source parameters — */
+/* RYTM USTAWIONY NA KONTENERZE, nie na poszczególnych dzieciach. Wcześniej odstępy powstawały
+   z doraźnych marginesów dokładanych po kolei (7 px suwak, 8 px notka, 9 px sekcja) — każdy nowy
+   element rodził się WKLEJONY w sąsiada, dopóki ktoś nie dopisał mu własnego marginesu. Stąd
+   zgłoszenie o „wciśniętym suwaku”: wiersz „Zachowanie” doklejał się do uchwytu, bo margines miał
+   tylko suwak i tylko od góry. Ten sam wzorzec działa w karcie koła (`.wh-sec-in`, 03-triggers.css). */
+.ra-trig-body{display:flex;flex-direction:column;gap:9px;padding:9px 0 10px}
+.ra-thr{display:flex;align-items:center;gap:5px}
+.ra-thr input{width:auto;flex:1 1 auto;min-width:56px}
+.ra-unit,.ra-unit-hi{flex:none;font-family:var(--mono);font-size:11px;color:var(--dim)}
+
+/* — live readout of the source value (updated via textContent, ~6 Hz) — */
+.ra-live{display:block;padding:5px 8px;border:1.5px solid var(--line);border-radius:8px;
+  background:var(--panel);color:var(--muted);font-family:var(--mono);font-size:12px;
+  font-weight:500;text-align:right;
+  font-variant-numeric:lining-nums tabular-nums;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;transition:color .12s,border-color .12s,background .12s}
+.ra-live.on{color:var(--green-d);border-color:var(--green);
+  background:color-mix(in srgb,var(--green) 12%,transparent)}
+
+/* — flagi |x| i NIE — dwa czipy w wierszu warunku, bliźniaki .ra-t-silent-l wyżej.
+     NIE dostaje bursztynową obwódkę dokładnie po to, po co ma ją chip NEGUJ w Mapowaniu:
+     zaprzeczenie warunku jest rzeczą, którą trzeba ZOBACZYĆ, wracając do wyzwalacza po tygodniu. */
+.ra-t-flag{display:flex;align-items:center;flex:none;padding-bottom:6px}
+.ra-t-flag label{display:flex;align-items:center;gap:5px;cursor:pointer;
+  font-size:11px;font-weight:600;color:var(--dim);white-space:nowrap;
+  border:1.5px solid var(--line);border-radius:999px;padding:4px 10px 4px 8px;
+  background:var(--panel);transition:color .12s,border-color .12s}
+.ra-t-flag label:hover{color:var(--ink)}
+.ra-t-flag input{width:auto;margin:0}
+.ra-t-flag-neg label:has(input:checked){color:var(--warn);border-color:var(--warn)}
+.ra-t-flag-abs label:has(input:checked){color:var(--ink);border-color:var(--ink)}
+.ra-t-flag label:focus-within{outline:2px solid var(--pink);outline-offset:2px}
+
+/* — suwak progu — ten sam pomysł, co .ed-cond-slider w Mapowaniu, własne klasy (tamten arkusz
+     jest przyspawany do siatki #ruleEditor i bez rodzica .ed-grid traci styl). */
+.ra-cond-slider{display:flex;align-items:center;gap:9px}
+.ra-cond-slider[hidden]{display:none!important}
+.ra-sl-cap{flex:none;min-width:34px;font-size:11px;font-weight:600;color:var(--dim)}
+.ra-cond-slider input[type=range]{flex:1 1 auto;min-width:100px;margin:0}
+.ra-cond-slider .num{flex:none;min-width:56px;text-align:right;
+  font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);
+  font-variant-numeric:lining-nums tabular-nums}
+
+/* — pola wiersza wyzwalacza, które doszły razem ze słownikiem Mapowania — */
+.ra-tf-name{flex:1 1 180px}
+.ra-tf-srcsel{flex:0 0 190px}
+.ra-tf-mode{flex:0 0 180px}
+.ra-tf-cross{flex:0 0 96px}
+.ra-tf-win{flex:0 0 128px}
+.ra-tf-hi[hidden],.ra-tf-cross[hidden],.ra-tf-win[hidden]{display:none!important}
+.ra-t-test{flex:none;align-self:center}
+.ra-t-test[disabled]{cursor:not-allowed}
+
+/* — explanatory notes — */
+.ra-trig-note{font-size:11px;line-height:1.5;color:var(--dim);max-width:96ch}
+.ra-trig-note ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:4px}
+.ra-trig-note li{margin:0}
+.ra-trig-note:empty{display:none}
+.ra-trig-hint{margin-left:auto;font-size:11px;font-weight:600;color:var(--dim)}
+/* POWÓD BLOKADY MUSI BYĆ WIDOCZNY NA EKRANIE. Do 12.09 stał wyłącznie w `title` wygaszonego
+   przycisku — a wygaszony przycisk nie dostaje zdarzeń myszy i nie da się na niego wejść Tabem,
+   więc dymka nie zobaczy nikt. Ten sam wzorzec, co `.sk-wyzw-brama` w karcie skanera. */
+.ra-t-blok{font-size:11px;line-height:1.45;color:var(--ink);opacity:.75}
+.ra-t-blok:empty{display:none}
+
+/* — „Żeby wyzwalacz naprawdę wysłał": rachunek bramek. Zielony ptaszek i czerwony krzyżyk NIOSĄ
+     informację, więc obok każdego stoi zdanie, a wiersz ma własne aria-label — sam znak w kolorze
+     nie jest komunikatem dla kogoś, kto czyta ekran czytnikiem albo nie rozróżnia tych barw. */
+.ra-why{margin-top:11px;padding-top:9px;border-top:1.5px dashed var(--stitch)}
+.ra-why>.ra-sub-h{margin-bottom:6px}
+.ra-why-list{display:flex;flex-direction:column;gap:3px}
+.ra-why-row{display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.5;color:var(--dim)}
+.ra-why-ic{flex:none;width:14px;text-align:center;font-weight:700}
+.ra-why-row.ok .ra-why-ic{color:var(--green-d)}
+.ra-why-row.no .ra-why-ic{color:var(--bad)}
+.ra-why-row.no{color:var(--muted);font-weight:500}
+
+/* — narrow windows — */
+@media (max-width:820px){
+  .ra-tf-act,.ra-tf-wide,.ra-tf-name{flex-basis:100%}
+  .ra-tf-min,.ra-tf-cmp,.ra-tf-thr,.ra-tf-live,.ra-tf-dwell,
+  .ra-tf-srcsel,.ra-tf-mode,.ra-tf-cross,.ra-tf-win{flex:1 1 140px}
+  .ra-tf-notify,.ra-tf-ntext{flex:1 1 100%}
+  .ra-trig-cnt{margin-left:0}
+  .ra-ksw{width:100%}
+  .ra-ksw button{flex:1 1 auto}
+}
+
+/* — fully honour prefers-reduced-motion — */
+@media (prefers-reduced-motion:reduce){
+  .ra-trig,.ra-tsw,.ra-tsw-dot,.ra-trig-x,.ra-live,.ra-t-flag label{
+    transition:none!important;transform:none!important;animation:none!important}
+  .ra-trig-x:hover{transform:none}
+}
+
+/* ===== Variables card, modals (packs, templates), per-app setup guide =====
+   Additive: reuses .ra-empty, .ra-note, .ra-toolbar, .ra-chip, .ra-met, .ra-mono, .btn and
+   .card without redefining them, and animates on the shared rfm-fade / rfm-pop / rfm-card-out
+   keyframes rather than declaring new ones. */
+
+/* — variables card: key/value rows — */
+.ra-vars{display:flex;flex-direction:column;gap:6px}
+.ra-var{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 8px;border-radius:10px;
+  border:1.5px solid transparent;transition:border-color .12s,background .12s}
+.ra-var.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 7%,transparent)}
+.ra-var.warn{border-color:var(--amber);background:color-mix(in srgb,var(--warn) 7%,transparent)}
+.ra-var-k{flex:0 1 210px;min-width:110px;font-family:var(--mono);font-size:12px;padding:5px 7px;font-weight:500}
+.ra-var-v{flex:1 1 240px;min-width:120px;font-family:var(--mono);font-size:12px;padding:5px 7px}
+.ra-var-eq{flex:none;font-family:var(--mono);font-size:12px;color:var(--dim);font-weight:500}
+.ra-var-tok{flex:none;font-family:var(--mono);font-size:11px;color:var(--muted);
+  padding:2px 7px;border-radius:7px;background:var(--panel2);white-space:nowrap}
+.ra-var-tok:empty{display:none}
+.ra-var-x{flex:none;width:22px;height:22px;border-radius:6px;border:1px solid var(--line);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:11px;line-height:1;
+  transition:color .12s,border-color .12s}
+.ra-var-x:hover{color:var(--bad);border-color:var(--bad)}
+.ra-var-x:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+.ra-var-msg{flex-basis:100%;font-size:11px;line-height:1.45;color:var(--dim);margin-left:2px}
+.ra-var-msg:empty{display:none}
+.ra-var.bad .ra-var-msg{color:var(--bad);font-weight:600}
+.ra-var.warn .ra-var-msg{color:var(--warn);font-weight:600}
+.ra-var-bar{margin:10px 0 0}
+
+/* — "missing variables": referenced by an action but not defined yet — */
+.ra-var-miss{padding:9px 11px;border-radius:11px;border:1.5px dashed var(--amber);
+  background:color-mix(in srgb,var(--warn) 8%,transparent);display:flex;flex-direction:column;gap:6px;
+  align-items:flex-start}
+.ra-var-miss b{font-size:12px;color:var(--ink)}
+.ra-var-chips{display:flex;flex-wrap:wrap;gap:5px}
+.ra-var-chip{font-weight:700}
+
+/* — shared modal layer (pack preview, template list) — */
+.ra-modal{position:fixed;inset:0;z-index:10002;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:color-mix(in srgb,var(--felt-ink) 55%,transparent);
+  animation:rfm-fade var(--rf-d-press) ease both}
+.ra-pk-box,.ra-tpl-box{width:min(660px,94vw);max-height:88vh;overflow:auto;
+  padding:16px 18px 14px;display:flex;flex-direction:column;gap:9px;
+  background:var(--panel);background-image:var(--felt-tex-soft);border:none;border-radius:20px;
+  box-shadow:0 14px 0 color-mix(in srgb,var(--felt-ink) 14%,transparent);
+  animation:rfm-pop var(--rf-d-pop) var(--rf-ez-overshoot) both}
+.rfm-closing .ra-pk-box,.rfm-closing .ra-tpl-box{
+  animation:rfm-card-out var(--rf-d-press) var(--rf-ez-snap) both!important}
+.ra-pk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ra-pk-head h3{margin:0;font-family:var(--rebel);font-weight:400;font-size:16px;color:var(--ink)}
+.ra-pk-sum{font-size:12px;color:var(--dim);font-weight:500;white-space:nowrap}
+.ra-pk-src{font-size:12px;color:var(--muted);line-height:1.5}
+.ra-pk-note{font-size:12px;color:var(--dim);line-height:1.5}
+.ra-pk-alert{color:var(--warn);font-weight:600}
+.ra-pk-warn{padding:9px 11px;border-radius:11px;font-size:12px;line-height:1.55;color:var(--ink);
+  border:1.5px solid var(--bad);background:color-mix(in srgb,var(--bad) 9%,transparent)}
+
+/* — action list inside the pack preview — */
+.ra-pk-list{display:flex;flex-direction:column;gap:5px;max-height:44vh;overflow:auto;
+  padding:3px;border-radius:11px}
+.ra-pk-row{padding:7px 9px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel2)}
+.ra-pk-row.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,transparent)}
+/* A movement that will arrive switched off. Dashed rather than red: nothing is wrong with it, it
+   simply is not going to start firing on its own, and the row underneath says why. */
+.ra-pk-row.off{border-style:dashed;border-color:var(--warn);
+  background:color-mix(in srgb,var(--warn) 7%,transparent)}
+.ra-pk-trigs .ra-pk-name{font-weight:600}
+.ra-pk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ra-pk-name{font-size:13px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ra-pk-ren{font-size:11px;color:var(--warn);font-weight:500}
+.ra-pk-bt{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--dim);
+  padding:2px 6px;border-radius:6px;background:var(--panel)}
+.ra-pk-path{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;
+  word-break:break-all;line-height:1.4}
+.ra-pk-desc{font-size:11px;color:var(--dim);margin-top:2px;line-height:1.45}
+.ra-pk-why{font-size:11px;color:var(--bad);font-weight:600;margin-top:3px;line-height:1.45}
+.ra-pk-ack{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:10px;
+  font-size:12px;font-weight:500;color:var(--ink);cursor:pointer;user-select:none;
+  border:1.5px solid var(--bad);background:color-mix(in srgb,var(--bad) 8%,transparent)}
+.ra-pk-ack input{width:16px;height:16px;flex:none;accent-color:var(--bad)}
+.ra-pk-act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:2px}
+.ra-pk-act .btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* — service template list — */
+.ra-tpl-search{width:100%;font-size:13px;padding:7px 10px}
+.ra-tpl-list{display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow:auto;padding:3px}
+.ra-tpl-row{display:flex;flex-direction:column;gap:3px;text-align:left;width:100%;
+  padding:9px 11px;border-radius:12px;border:1.5px solid var(--line);background:var(--panel2);
+  color:var(--ink);font:inherit;cursor:pointer;
+  transition:border-color .12s,background .12s,transform .1s}
+.ra-tpl-row[hidden]{display:none!important}
+.ra-tpl-row:hover{border-color:var(--pink);transform:translateY(-1px)}
+.ra-tpl-row:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.ra-tpl-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ra-tpl-name{font-family:var(--display);font-size:13px}
+.ra-tpl-cnt{font-size:11px;color:var(--dim);font-weight:500;white-space:nowrap}
+.ra-tpl-badge{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;
+  padding:2px 7px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+/* "unverified" is a BADGE, not a sentence: one word, upper-case, amber — the long explanation
+   lives in its title. As prose in brackets it read like part of the description. */
+.ra-tpl-unv{color:var(--warn);border-color:var(--amber);cursor:help;
+  background:color-mix(in srgb,var(--warn) 8%,transparent);
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.ra-tpl-desc{font-size:12px;color:var(--muted);line-height:1.45}
+.ra-tpl-url{font-family:var(--mono);font-size:11px;color:var(--dim);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ra-tpl-none[hidden]{display:none!important}
+
+/* — collapsible setup guide inside an app card — */
+.ra-guide{margin:0 0 11px;border:1.5px solid var(--line);border-radius:12px;
+  background:var(--panel2);overflow:hidden}
+.ra-guide-h{cursor:pointer;list-style:none;padding:8px 11px;font-family:var(--display);
+  font-size:12px;font-weight:500;color:var(--muted);transition:color .12s}
+.ra-guide-h::-webkit-details-marker{display:none}
+.ra-guide-h::before{content:"▸";display:inline-block;margin-right:.4em;color:var(--pink);
+  transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+.ra-guide[open]>.ra-guide-h::before{transform:rotate(90deg)}
+.ra-guide[open]>.ra-guide-h{border-bottom:1.5px dashed var(--stitch);color:var(--ink)}
+.ra-guide-h:hover{color:var(--ink)}
+.ra-guide-h:focus-visible{outline:2px solid var(--pink);outline-offset:-2px}
+.ra-guide-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:9px}
+.ra-guide-txt{white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.6;color:var(--ink)}
+.ra-guide-cred{display:flex;flex-direction:column;gap:6px;align-items:flex-start;
+  padding:9px 11px;border-radius:11px;border:1.5px solid var(--line);background:var(--panel)}
+.ra-guide-cred b{font-size:12px;color:var(--ink)}
+/* a pack that needs no secret: same block, green keyline — it is good news, not a to-do */
+.ra-guide-cred.is-none{border-color:var(--green);border-style:dashed}
+.ra-guide-vars{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding-top:8px;
+  border-top:1.5px dashed var(--stitch);font-size:12px;color:var(--muted)}
+.ra-guide-varlist{font-family:var(--mono);font-size:11px;color:var(--pink-d);
+  padding:2px 7px;border-radius:7px;background:var(--panel);word-break:break-all}
+.ra-guide-cav{font-size:11px;line-height:1.55;color:var(--warn);padding:8px 10px;border-radius:10px;
+  border:1.5px dashed var(--amber);background:color-mix(in srgb,var(--warn) 7%,transparent)}
+
+/* — narrow windows — */
+@media (max-width:820px){
+  .ra-var-k,.ra-var-v{flex-basis:100%}
+  .ra-var-eq{display:none}
+  .ra-pk-bt{margin-left:0}
+  .ra-pk-list{max-height:38vh}
+  .ra-tpl-list{max-height:46vh}
+  .ra-pk-act .btn{flex:1 1 auto}
+}
+
+/* — fully honour prefers-reduced-motion — */
+@media (prefers-reduced-motion:reduce){
+  .ra-modal,.ra-pk-box,.ra-tpl-box,.rfm-closing .ra-pk-box,.rfm-closing .ra-tpl-box,
+  .ra-var,.ra-var-x,.ra-tpl-row,.ra-guide-h::before{
+    animation:none!important;transition:none!important;transform:none!important}
+  .ra-tpl-row:hover{transform:none}
+  .ra-guide[open]>.ra-guide-h::before{transform:rotate(90deg)!important}
+}
+
+/* Długi wstęp karty zwinięty do dwóch linijek (rf-28b rfClampLeads, przegląd UX 2026-10-15). */
+.ra-lead.rf-clamp:not(.is-open){display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  line-clamp:2;overflow:hidden}
+.rf-more{display:block;margin:2px var(--card-x) 0;padding:2px 0;background:none;border:0;
+  font:700 12px/1.4 var(--body,inherit);color:var(--pink-d);cursor:pointer;text-decoration:underline;
+  text-underline-offset:2px}
+.rf-more:hover{color:var(--pink)}
+.rf-more::after{content:"Pokaż więcej"}
+.rf-more[aria-expanded="true"]::after{content:"Pokaż mniej"}
+html[lang="en"] .rf-more::after{content:"Show more"}
+html[lang="en"] .rf-more[aria-expanded="true"]::after{content:"Show less"}
+
+/* ===== UX 261120 L4c: piętra Usług ===== */
+/* Piętro 2: OBS i Zmienne jako zwijaki w karcie aplikacji; ich wnętrze ma już własne odstępy
+   (.ra-body, .ra-lead), więc ciało zwijaka nie dokłada drugiego marginesu z boku. */
+.ra-tier2{display:flex;flex-direction:column;gap:10px;padding:0 var(--card-x) var(--card-y)}
+.ra-tier2:empty{display:none}
+.ra-fold>.cardfold-body{padding:0 0 6px}
+.ra-fold .ra-body,.ra-fold .ra-lead{padding-left:14px;padding-right:14px}
+.ra-fold-hint{margin:0;padding:2px 14px 0}
+/* Piętro 3: karty sejfu i dziennika w „Zaawansowane” stoją jedna pod drugą jak dawniej. */
+#raAdv>.cardfold-body{display:flex;flex-direction:column;gap:12px}
+/* (koniec sekcji L4c) */

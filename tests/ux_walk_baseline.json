@@ -1,0 +1,38 @@
+{
+ "createdAt": "2026-09-04",
+ "url": "http://127.0.0.1:8813/",
+ "total": 0,
+ "perScreen": {
+  "mapowanie": 0,
+  "kolo": 0,
+  "mysz": 0,
+  "kontroler": 0,
+  "midi": 0,
+  "osc": 0,
+  "restapi": 0,
+  "pad": 0,
+  "konfiguracje": 0,
+  "ustawienia": 0,
+  "wszystkie": 0,
+  "czujnik": 0,
+  "polaczenie": 0,
+  "przeglad": 0
+ },
+ "samples": {
+  "mapowanie": [],
+  "kolo": [],
+  "mysz": [],
+  "kontroler": [],
+  "midi": [],
+  "osc": [],
+  "restapi": [],
+  "pad": [],
+  "konfiguracje": [],
+  "ustawienia": [],
+  "wszystkie": [],
+  "czujnik": [],
+  "polaczenie": [],
+  "przeglad": []
+ },
+ "updatedAt": "2026-09-05 (iteracja 2, po 2.6: #cmdResult po angielsku)"
+}

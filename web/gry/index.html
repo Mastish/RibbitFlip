@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<script>
+"use strict";
+// Adres z podwójnym ukośnikiem (np. /gry//) rozjeżdża ścieżki względne: „../assets/” liczy się wtedy od
+// pustego katalogu, fonty i obrazki dostają 404. Normalizacja PRZED wczytaniem czegokolwiek.
+if(/\/{2,}/.test(location.pathname))location.replace(location.pathname.replace(/\/{2,}/g,"/")+location.search+location.hash);
+</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RibbitBeat · RibbitFlip</title>
+<!-- RibbitBeat (dawniej „Żabi chór”): powłoka gry i harness w jednym pliku.
+     Ścieżki do zasobów są WZGLĘDNE (../assets/…), bo ten katalog działa i jako /gry/ (py -m http.server
+     z katalogu web/, tools/gry_serwer.py), i jako /web/gry/ w samej aplikacji (przycisk „Gra” w menu).
+     Fonty marki (SIL OFL) bierzemy z ../assets/fonts przez własne @font-face w gry.css, bez CSS aplikacji.
+     Parametry adresu (harness 2/2 na dole):
+       piosenka=oda       id piosenki (scarborough, oda, panie-janie, kotek, gwiazdka, mary, buns, jingle)
+       auto=1&czekaj=3    start bez klikania po N sekundach lobby (czas gry, więc ZC.ff też go przewija)
+       boty=3             żaby-boty na poziomie z lobby;  luz=0.3  zamiast poziomu dawna niedbałość 0..1
+       ziarno=7           powtarzalny los botów
+       mysz=1             mysz od razu w chórze;  zywe=1  kapsle z /stream aplikacji (pod /web/gry/, czyli
+                          w samej aplikacji, włączone bez parametru; zywe=0 wyłącza)
+       partie=kolejno     gracze po kolei na partie 0,1,2,3… (albo lista: partie=0,1,1,2)
+       tempo=80 glos=ribbit latwy=1 fps=1 -->
+<link rel="preload" href="../assets/fonts/titan-one-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/titan-one-latin-ext.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/baloo2-latin-ext.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/nunito-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/icons/ribbitbeat-32.png">
+<link rel="shortcut icon" href="../assets/icons/ribbitbeat.ico">
+<link rel="apple-touch-icon" href="../assets/icons/ribbitbeat-180.png">
+<link rel="stylesheet" href="gry.css">
+<link rel="stylesheet" href="gry-profile.css">
+<link rel="stylesheet" href="gry-konta.css">
+<link rel="stylesheet" href="gry-nagrody.css">
+<link rel="stylesheet" href="gry-studio.css">
+<link rel="stylesheet" href="gry-studio-ikona.css">
+<link rel="stylesheet" href="gry-menu-koncert.css">
+<link rel="stylesheet" href="gry-kursor.css">
+<link rel="stylesheet" href="gry-piosenka.css">
+<link rel="stylesheet" href="gry-oprawa.css">
+<script>
+"use strict";
+// HARNESS 1/2: wirtualny zegar. performance.now() = prawdziwy czas +
+// przesunięcie, które dokłada ZC.ff(sek). Stoi PRZED skryptami gry, bo one czytają zegar od pierwszej klatki.
+(function(){
+  const prawdziwy=performance.now.bind(performance);let przesuniecie=0;
+  performance.now=()=>prawdziwy()+przesuniecie;
+  window.__zcPrzesunZegar=ms=>{przesuniecie+=ms;};
+})();
+</script>
+<!-- Ekran wczytywania (js/wczytywanie.js): klasa html.wczytuje od pierwszego bajtu, zasłona to pierwszy element body.
+     Wygląd sceny (11-19): ciemny filc ze ściegiem, reflektor, girlanda bujanych lamp z menu, promienie za żabą, korektor
+     i pasek jak naszywka. Lekko: tło to gradienty CSS malowane raz, pliki są dwa (żaba i lampy), a rusza się wyłącznie
+     transform i krycie (kompozytor), więc wszystko
+     chodzi płynnie, nawet gdy pod spodem trwa ciężki start. Ten sam wygląd ma zasłona utworu (zabi-chor.js). -->
+<script>document.documentElement.classList.add("wczytuje");</script>
+<style>
+html.wczytuje{background:#1b1917}
+.wczytywanie{--wt:.46875s;position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,2.2vh,24px);
+  overflow:hidden;background:radial-gradient(ellipse 80vmin 70vmin at 50% 42%,rgba(236,26,131,.30),rgba(236,26,131,.10) 46%,rgba(236,26,131,0) 78%),#1b1917;
+  opacity:.999;transition:opacity .35s ease;pointer-events:none}
+/* krycie .999, nie 1: pod w pełni kryjącą warstwą przeglądarka nie maluje menu (pomija zasłonięte kafle) i robiła to
+   dopiero przy znikaniu zasłony, 100–170 ms zacięcia; tak menu rasteryzuje się pod zasłoną w trakcie wczytywania */
+.wczytywanie.znika{opacity:0}
+.wczytywanie::before{content:"";position:absolute;inset:clamp(12px,2.2vmin,26px);border:2px dashed rgba(239,233,221,.24);border-radius:clamp(16px,3vmin,30px)}
+/* girlanda jak w menu (11-19): filcowe żarówki z grafiki menu w trzech kolorach (jeden plik, wybór koloru przez
+   object-position), zawieszone na kablu ze zwisami między nitami. Każda buja się we własnym tempie, a poświata przebiega
+   po kolorach na kolejne ćwierćnuty muzyki (3 × --wt). Rusza się tylko transform i krycie, kabel i poświaty malują się raz. */
+.wcz-girlanda{position:absolute;z-index:1;left:calc(clamp(12px,2.2vmin,26px) + 14px);right:calc(clamp(12px,2.2vmin,26px) + 14px);top:calc(clamp(12px,2.2vmin,26px) + 6px);
+  height:clamp(34px,7.4vmin,84px);--wl:clamp(34px,6.6vmin,78px)}
+.wcz-kabel{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:none}
+.wcz-kabel path{stroke:#4d453f;stroke-width:4;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.wcz-kabel path+path{stroke:rgba(239,233,221,.42);stroke-width:1.5;stroke-dasharray:5 7}
+.wcz-girlanda>b{position:absolute;top:13.3%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;
+  background:radial-gradient(circle at 38% 34%,#d9d0c2 0 18%,#8d857b 46%,#3f3934 100%)}
+.wcz-lampa{position:absolute;width:var(--wl);margin-left:calc(var(--wl) / -2);transform-origin:50% 0;
+  animation:wczBuja 2.3s ease-in-out -.4s infinite alternate;will-change:transform}
+.wcz-lampa:nth-of-type(4n+2){animation-duration:2.7s;animation-delay:-1.5s;--a:2.4deg}
+.wcz-lampa:nth-of-type(4n+3){animation-duration:2.05s;animation-delay:-.9s;--a:3.8deg}
+.wcz-lampa:nth-of-type(4n){animation-duration:2.5s;animation-delay:-2.1s;--a:2.9deg}
+.wcz-lampa>img{position:relative;display:block;width:100%;height:auto;aspect-ratio:200/197;object-fit:cover;object-position:0 0}
+.wcz-lampa.k1>img{object-position:50% 0}
+.wcz-lampa.k2>img{object-position:100% 0}
+/* poświata: koło 3 × szerokości lampy ze środkiem w kuli; kolor z klasy k0/k1/k2 */
+.wcz-lampa>i{position:absolute;left:50%;top:63%;width:300%;aspect-ratio:1;margin:-150% 0 0 -150%;border-radius:50%;--c:236,26,131;
+  background:radial-gradient(closest-side,rgba(var(--c),.62),rgba(var(--c),.26) 38%,rgba(var(--c),.07) 70%,rgba(var(--c),0));
+  opacity:.4;animation:wczSwiatlo calc(var(--wt) * 3) linear infinite;will-change:transform,opacity}
+/* żar: jasna plama na kuli, zapala się razem z poświatą (lampa nie tylko rzuca światło, ale sama jaśnieje) */
+.wcz-lampa>i+i{top:60%;width:64%;margin:-32% 0 0 -32%;background:radial-gradient(closest-side,rgba(255,255,255,.5),rgba(255,255,255,.16) 55%,rgba(255,255,255,0));
+  opacity:.15;animation-name:wczZar}
+.wcz-lampa.k1>i{--c:234,163,43;animation-delay:calc(var(--wt) * -2)}
+.wcz-lampa.k2>i{--c:166,216,97;animation-delay:calc(var(--wt) * -1)}
+@media (max-width:700px){.wcz-lampa:nth-of-type(even){display:none}}
+.wcz-scena{position:relative;display:flex;flex-direction:column;align-items:center;width:clamp(160px,32vh,380px)}
+.wcz-promienie{position:absolute;left:50%;top:44%;width:250%;aspect-ratio:1;margin:-125% 0 0 -125%;border-radius:50%;
+  background:repeating-conic-gradient(rgba(236,26,131,.30) 0 9deg,rgba(236,26,131,0) 9deg 18deg);
+  -webkit-mask:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 94%);mask:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 94%);
+  animation:wczObrot 30s linear infinite;will-change:transform}
+/* Naklejka z żabą pulsuje w rytm muzyki menu, tak jak naklejka z nazwą gry w samym menu (menu-koncert.js: pulsLogo):
+   skok na każdą stopę utworu „Dub Riot” i wygaszenie w ok. 0,16 s. --wt to jedna ćwierćnuta (128 BPM = .46875 s), takt
+   ma cztery, a stopy padają na 0, 1,5, 2 i 2,75 ćwierćnuty (wczPuls). Zasłona utworu podmienia --wt na tempo piosenki
+   i pulsuje równo co ćwierćnutę (wczPulsTakt w gry.css). Faza zgadza się z zegarem menu (wczytywanie.js). */
+.wcz-zaba{position:relative;width:100%;height:auto;transform-origin:50% 62%;animation:wczPuls calc(var(--wt) * 4) linear infinite;will-change:transform}
+.wcz-cien{position:relative;width:58%;height:clamp(8px,1.4vh,14px);margin-top:2px;border-radius:50%;background:rgba(0,0,0,.5);
+  animation:wczPuls calc(var(--wt) * 4) linear infinite;will-change:transform}
+.wcz-rytm{position:relative;display:flex;align-items:flex-end;gap:7px;height:clamp(24px,4vh,44px)}
+.wcz-rytm>i{width:9px;height:100%;border-radius:3px;background:#ec1a83;transform-origin:50% 100%;transform:scaleY(.2);
+  animation:wczRytm .62s ease-in-out infinite alternate;will-change:transform}
+.wcz-rytm>i:nth-child(3n+2){background:#eaa32b}
+.wcz-rytm>i:nth-child(3n){background:#a6d861}
+.wcz-rytm>i:nth-child(2){animation-duration:.47s;animation-delay:-.2s}
+.wcz-rytm>i:nth-child(3){animation-duration:.78s;animation-delay:-.5s}
+.wcz-rytm>i:nth-child(4){animation-duration:.53s;animation-delay:-.1s}
+.wcz-rytm>i:nth-child(5){animation-duration:.7s;animation-delay:-.35s}
+.wcz-rytm>i:nth-child(6){animation-duration:.44s;animation-delay:-.3s}
+.wcz-rytm>i:nth-child(7){animation-duration:.66s;animation-delay:-.6s}
+.wcz-rytm>i:nth-child(8){animation-duration:.5s;animation-delay:-.15s}
+.wcz-rytm>i:nth-child(9){animation-duration:.74s;animation-delay:-.4s}
+.wcz-pasek{position:relative;width:min(520px,64vw);height:20px;border-radius:999px;background:#0f0e0d;outline:2px dashed rgba(239,233,221,.38);outline-offset:4px;overflow:hidden}
+/* wypełnienie przesuwa się (translateX), nie rozciąga, więc paski zostają równe; paski „idą” w ::before, też samym transformem */
+.wcz-pasek>i{position:relative;display:block;height:100%;border-radius:inherit;overflow:hidden;background:#ec1a83;transform:translateX(-96%);transition:transform .25s ease-out;will-change:transform}
+.wcz-pasek>i::before{content:"";position:absolute;inset:0 0 0 -40px;
+  background:linear-gradient(rgba(255,255,255,.30),rgba(255,255,255,0) 58%),repeating-linear-gradient(-45deg,#ec1a83 0 10px,#f4589f 10px 20px);
+  animation:wczPasy .7s linear infinite;will-change:transform}
+@keyframes wczPuls{0%{transform:scale(1.07);animation-timing-function:cubic-bezier(.08,.6,.3,1)}35.9%{transform:scale(1.001);animation-timing-function:linear}
+  37.5%{transform:scale(1.07);animation-timing-function:cubic-bezier(.2,.5,.5,1)}48.4%{transform:scale(1.016);animation-timing-function:linear}
+  50%{transform:scale(1.07);animation-timing-function:cubic-bezier(.15,.55,.4,1)}67.15%{transform:scale(1.008);animation-timing-function:linear}
+  68.75%{transform:scale(1.07);animation-timing-function:cubic-bezier(.1,.6,.3,1)}98.4%{transform:scale(1.002);animation-timing-function:linear}
+  100%{transform:scale(1.07)}}
+@keyframes wczObrot{to{transform:rotate(360deg)}}
+@keyframes wczRytm{from{transform:scaleY(.16)}to{transform:scaleY(1)}}
+@keyframes wczPasy{to{transform:translateX(28.284px)}}
+@keyframes wczBuja{from{transform:rotate(calc(-1 * var(--a,3.2deg)))}to{transform:rotate(var(--a,3.2deg))}}
+@keyframes wczSwiatlo{0%{opacity:.4;transform:scale(.88)}5%{opacity:1;transform:scale(1.1)}36%{opacity:.4;transform:scale(.88)}100%{opacity:.4;transform:scale(.88)}}
+@keyframes wczZar{0%{opacity:.15;transform:scale(.9)}5%{opacity:1;transform:scale(1.05)}36%{opacity:.15;transform:scale(.9)}100%{opacity:.15;transform:scale(.9)}}
+@media (prefers-reduced-motion:reduce){.wcz-zaba,.wcz-cien,.wcz-promienie,.wcz-rytm>i,.wcz-pasek>i::before,.wcz-lampa,.wcz-lampa>i{animation:none}.wcz-lampa>i{opacity:.75}.wcz-lampa>i+i{opacity:.5}.wcz-rytm>i:nth-child(odd){transform:scaleY(.7)}.wcz-rytm>i:nth-child(even){transform:scaleY(.4)}}
+/* wejście menu (naklejka, stempel logo, wjazd przycisków) czeka na zdjęcie zasłony */
+html.wczytuje .menu,html.wczytuje .menu *{animation-play-state:paused!important}
+</style>
+</head>
+<body>
+<div id="wczytywanie" class="wczytywanie" aria-hidden="true">
+  <div class="wcz-girlanda">
+    <svg class="wcz-kabel" viewBox="0 0 1200 60" preserveAspectRatio="none" focusable="false"><path d="M0 8Q150 72 300 8Q450 72 600 8Q750 72 900 8Q1050 72 1200 8"/><path d="M0 8Q150 72 300 8Q450 72 600 8Q750 72 900 8Q1050 72 1200 8"/></svg>
+    <b style="left:0%"></b><b style="left:25%"></b><b style="left:50%"></b><b style="left:75%"></b><b style="left:100%"></b>
+    <span class="wcz-lampa k0" style="left:4.17%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k1" style="left:12.5%;top:66.7%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k2" style="left:20.83%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k0" style="left:29.17%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k1" style="left:37.5%;top:66.7%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k2" style="left:45.83%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k0" style="left:54.17%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k1" style="left:62.5%;top:66.7%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k2" style="left:70.83%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k0" style="left:79.17%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k1" style="left:87.5%;top:66.7%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+    <span class="wcz-lampa k2" style="left:95.83%;top:43%"><i></i><img src="../assets/koncert/lampki-wczytywanie.webp" alt="" width="200" height="197"><i></i></span>
+  </div>
+  <div class="wcz-scena"><i class="wcz-promienie"></i><img class="wcz-zaba" src="../assets/frog/mascot-beat.webp" alt="" width="686" height="760"><i class="wcz-cien"></i></div>
+  <div class="wcz-rytm"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="wcz-pasek"><i id="wczPasek"></i></div>
+</div>
+<!-- LOBBY = wszystkie ekrany przed grą (S.ekran "lobby"); który widać, mówi S.lobbyEkran i data-ekran:
+     menu → Zagraj: 1 Piosenka (#wybor) → 2 Rozgrywka (#konfiguracja) → gra.
+     Biblioteka (#biblioteka), podgląd partii (#podgladPartii) i pasek stanu (#lobbyStan) to JEDNE elementy,
+     które pokazLobby() przenosi do gniazd [data-gniazdo] widocznego ekranu.
+     Osobnego ekranu „Utwory” już nie ma — cała biblioteka, paczki i import mieszkają w kroku 1. -->
+<main id="lobby" class="ekran lobby" data-ekran="menu">
+  <section id="menu" class="lobby-ekran menu" aria-labelledby="menuTytul">
+    <!-- runda 4 „Kickflip”: warstwy zamiast dwóch połówek. Tło: dwie warstwy filcowych wycinanek (7 sztuk:
+         nuty, kapsel, gwiazdka) z wolnym dryfem i paralaksą do wskaźnika (--px/--py ustawia lobby-scena.js na .menu-tlo).
+         Od 10-18 jedna kolumna na środku: u góry duża naklejka z nazwą, pod nią przyciski; stopka i taśma stanu jako
+         naklejki u dołu. Identyfikatory przycisków i klucze data-t bez zmian. -->
+    <div class="menu-tlo" aria-hidden="true">
+      <svg class="wyc-defs" width="0" height="0" focusable="false">
+        <defs>
+          <pattern id="wycFilc" patternUnits="userSpaceOnUse" width="110" height="110"><image href="../assets/textures/felt.png" width="110" height="110"/></pattern>
+          <symbol id="wycNuta" viewBox="0 0 100 100">
+            <g fill="currentColor" stroke="none"><ellipse cx="34" cy="76" rx="18" ry="13" transform="rotate(-22 34 76)"/><rect x="45" y="14" width="9" height="64" rx="2"/><path d="M54 14 C60 26 84 30 80 54 C75 41 64 37 54 35 Z"/></g>
+            <g fill="url(#wycFilc)" stroke="none"><ellipse cx="34" cy="76" rx="18" ry="13" transform="rotate(-22 34 76)"/><rect x="45" y="14" width="9" height="64" rx="2"/><path d="M54 14 C60 26 84 30 80 54 C75 41 64 37 54 35 Z"/></g>
+            <g fill="none"><ellipse cx="34" cy="76" rx="14" ry="9.5" transform="rotate(-22 34 76)"/><path d="M49.5 20 V70"/></g>
+          </symbol>
+          <symbol id="wycNuty" viewBox="0 0 100 100">
+            <g fill="currentColor" stroke="none"><ellipse cx="22" cy="78" rx="14" ry="10" transform="rotate(-22 22 78)"/><ellipse cx="70" cy="70" rx="14" ry="10" transform="rotate(-22 70 70)"/><rect x="31" y="22" width="8" height="58" rx="2"/><rect x="79" y="14" width="8" height="58" rx="2"/><path d="M31 22 L87 14 L87 28 L31 36 Z"/></g>
+            <g fill="url(#wycFilc)" stroke="none"><ellipse cx="22" cy="78" rx="14" ry="10" transform="rotate(-22 22 78)"/><ellipse cx="70" cy="70" rx="14" ry="10" transform="rotate(-22 70 70)"/><rect x="31" y="22" width="8" height="58" rx="2"/><rect x="79" y="14" width="8" height="58" rx="2"/><path d="M31 22 L87 14 L87 28 L31 36 Z"/></g>
+            <g fill="none"><path d="M35 29 L83 22"/></g>
+          </symbol>
+          <symbol id="wycKapsel" viewBox="0 0 100 100">
+            <polygon fill="currentColor" stroke="none" points="50.0,2.0 56.4,7.5 64.1,4.1 68.7,11.3 77.0,10.3 79.2,18.5 87.5,20.1 87.2,28.5 94.7,32.5 91.9,40.4 97.9,46.4 92.9,53.2 96.8,60.7 90.0,65.7 91.6,74.0 83.6,76.8 82.6,85.2 74.2,85.5 70.8,93.2 62.7,91.1 57.2,97.5 50.0,93.0 42.8,97.5 37.3,91.1 29.2,93.2 25.8,85.5 17.4,85.2 16.4,76.8 8.4,74.0 10.0,65.7 3.2,60.7 7.1,53.2 2.1,46.4 8.1,40.4 5.3,32.5 12.8,28.5 12.5,20.1 20.8,18.5 23.0,10.3 31.3,11.3 35.9,4.1 43.6,7.5"/>
+            <polygon fill="url(#wycFilc)" stroke="none" points="50.0,2.0 56.4,7.5 64.1,4.1 68.7,11.3 77.0,10.3 79.2,18.5 87.5,20.1 87.2,28.5 94.7,32.5 91.9,40.4 97.9,46.4 92.9,53.2 96.8,60.7 90.0,65.7 91.6,74.0 83.6,76.8 82.6,85.2 74.2,85.5 70.8,93.2 62.7,91.1 57.2,97.5 50.0,93.0 42.8,97.5 37.3,91.1 29.2,93.2 25.8,85.5 17.4,85.2 16.4,76.8 8.4,74.0 10.0,65.7 3.2,60.7 7.1,53.2 2.1,46.4 8.1,40.4 5.3,32.5 12.8,28.5 12.5,20.1 20.8,18.5 23.0,10.3 31.3,11.3 35.9,4.1 43.6,7.5"/>
+            <circle fill="none" cx="50" cy="50" r="33"/>
+          </symbol>
+          <symbol id="wycGwiazda" viewBox="0 0 100 100">
+            <polygon fill="currentColor" stroke="none" points="50.0,5.0 61.8,36.8 95.7,38.2 69.0,59.2 78.2,91.8 50.0,73.0 21.8,91.8 31.0,59.2 4.3,38.2 38.2,36.8"/>
+            <polygon fill="url(#wycFilc)" stroke="none" points="50.0,5.0 61.8,36.8 95.7,38.2 69.0,59.2 78.2,91.8 50.0,73.0 21.8,91.8 31.0,59.2 4.3,38.2 38.2,36.8"/>
+            <polygon fill="none" points="50.0,17.0 58.6,40.2 83.3,41.2 63.9,56.5 70.6,80.3 50.0,66.6 29.4,80.3 36.1,56.5 16.7,41.2 41.4,40.2"/>
+          </symbol>
+          <!-- Tło angażujące i dopracowane, ale pastelowe i w tle: serce, płyta, iskra; ta sama budowa co wyżej (kolor, filc, ścieg przerywany w środku) -->
+          <symbol id="wycSerce" viewBox="0 0 100 100">
+            <path fill="currentColor" stroke="none" d="M50 88 C20 66 6 50 8 32 C10 16 26 8 38 12 C45 14 49 20 50 24 C51 20 55 14 62 12 C74 8 90 16 92 32 C94 50 80 66 50 88 Z"/>
+            <path fill="url(#wycFilc)" stroke="none" d="M50 88 C20 66 6 50 8 32 C10 16 26 8 38 12 C45 14 49 20 50 24 C51 20 55 14 62 12 C74 8 90 16 92 32 C94 50 80 66 50 88 Z"/>
+            <path fill="none" transform="translate(50 48) scale(.76) translate(-50 -48)" d="M50 88 C20 66 6 50 8 32 C10 16 26 8 38 12 C45 14 49 20 50 24 C51 20 55 14 62 12 C74 8 90 16 92 32 C94 50 80 66 50 88 Z"/>
+          </symbol>
+          <symbol id="wycPlyta" viewBox="0 0 100 100">
+            <circle fill="currentColor" stroke="none" cx="50" cy="50" r="46"/>
+            <circle fill="url(#wycFilc)" stroke="none" cx="50" cy="50" r="46"/>
+            <circle fill="none" cx="50" cy="50" r="38"/><circle fill="none" cx="50" cy="50" r="29"/>
+            <circle fill="#f3b8cc" stroke="none" cx="50" cy="50" r="15"/><circle fill="none" cx="50" cy="50" r="11"/>
+            <circle fill="#faf6ee" stroke="none" cx="50" cy="50" r="3"/>
+          </symbol>
+          <symbol id="wycIskra" viewBox="0 0 100 100">
+            <path fill="currentColor" stroke="none" d="M50 4 C54 36 64 46 96 50 C64 54 54 64 50 96 C46 64 36 54 4 50 C36 46 46 36 50 4 Z"/>
+            <path fill="url(#wycFilc)" stroke="none" d="M50 4 C54 36 64 46 96 50 C64 54 54 64 50 96 C46 64 36 54 4 50 C36 46 46 36 50 4 Z"/>
+            <path fill="none" transform="translate(50 50) scale(.62) translate(-50 -50)" d="M50 4 C54 36 64 46 96 50 C64 54 54 64 50 96 C46 64 36 54 4 50 C36 46 46 36 50 4 Z"/>
+          </symbol>
+        </defs>
+      </svg>
+      <div class="wyc-warstwa wyc-daleko">
+        <svg class="wyc wyc-1" viewBox="0 0 100 100" focusable="false"><use href="#wycNuta"/></svg>
+        <svg class="wyc wyc-2" viewBox="0 0 100 100" focusable="false"><use href="#wycKapsel"/></svg>
+        <svg class="wyc wyc-3" viewBox="0 0 100 100" focusable="false"><use href="#wycGwiazda"/></svg>
+        <svg class="wyc wyc-4" viewBox="0 0 100 100" focusable="false"><use href="#wycSerce"/></svg>
+      </div>
+      <!-- 7 wycinanek łącznie (limit smoke_kurtka: wydajność bezczynności); 10-10 na miejscach 4, 6
+           i 7 serce, płyta i migocząca iskra zamiast powtórek -->
+      <div class="wyc-warstwa wyc-blisko">
+        <svg class="wyc wyc-5" viewBox="0 0 100 100" focusable="false"><use href="#wycNuty"/></svg>
+        <svg class="wyc wyc-6" viewBox="0 0 100 100" focusable="false"><use href="#wycPlyta"/></svg>
+        <svg class="wyc wyc-7 wyc-mig" viewBox="0 0 100 100" focusable="false"><use href="#wycIskra"/></svg>
+      </div>
+    </div>
+    <!-- scena koncertowa: tło sceny, dwie kolumny z membranami i lampy na
+         kablu, ruch w rytm muzyki menu. Zawartość buduje js/menu-koncert.js, wygląd gry-menu-koncert.css; wycinanki wyżej
+         zostają w kodzie, ale w menu ze sceną są schowane. -->
+    <div class="menu-koncert" aria-hidden="true"></div>
+    <!-- naklejka RibbitFlip: strona projektu (aria-label i podpis wpisuje menu-koncert.js w języku gry).
+         Nad naklejką podpis „Gra demonstracyjna projektu”, a sama naklejka kiwa się w rytm
+         muzyki menu (--uderzenie z tej samej klatki co lampy i membrany). -->
+    <!-- Gra ma bardzo wyraźnie mówić, że powstała z pomocą AI, bez sprawiania wrażenia, że to ukrywa:
+         pod naklejką żółta metka „Stworzona z AI”, klik otwiera okno „O grze” (js/o-grze.js wpisuje napis
+         w języku gry). Naklejka i metka stoją razem w .menu-rog-lewy, żeby metka trzymała się etykiety. -->
+    <div class="menu-rog-lewy">
+    <a id="menuRibbitFlip" class="menu-ribbitflip" href="https://mastish.github.io/RibbitFlip/" target="_blank" rel="noopener"><span id="menuRibbitFlipOpis" class="menu-ribbitflip-opis"></span><img src="../assets/frog/mascot.png" alt="" width="685" height="760" draggable="false"></a>
+    <button id="menuAI" class="menu-ai" type="button"><span aria-hidden="true">✦</span><span class="menu-ai-tekst">Stworzona z AI</span></button>
+    </div>
+    <div class="menu-scena">
+      <!-- U góry sama duża naklejka z nazwą gry, pod nią wyśrodkowane opcje; śpiewającej żaby w menu już
+           nie ma. naklejka-nazwa.webp to napis wycięty z mascot-beat (ta sama grafika, brzeg pod deską odbudowany),
+           nalepia się raz przy wejściu. Tytuł i podtytuł zostają dla czytnika ekranu. -->
+      <div class="menu-bohater" aria-hidden="true">
+        <div id="naklejka" class="menu-naklejka" aria-hidden="true">
+          <img class="naklejka-obraz" src="../assets/frog/naklejka-nazwa.webp" alt="" width="1162" height="308">
+          <img class="naklejka-spod" src="../assets/frog/naklejka-nazwa.webp" alt="" width="1162" height="308">
+        </div>
+      </div>
+      <div class="menu-srodek">
+        <header class="menu-logo">
+          <h1 id="menuTytul" class="logo logo-duze" data-tytul>Ribbit<span class="beat">Beat</span></h1>
+          <p class="podtytul" data-t="podtytul"></p>
+        </header>
+        <nav class="menu-przyciski" data-t-aria="menuNawigacja">
+          <!-- „Utwory” nie są już osobnym przyciskiem — biblioteka, paczki i import są w kroku 1 pod „Zagraj” -->
+          <button id="btnZagraj" class="menu-przycisk glowny" type="button" data-t="menuZagraj"></button>
+          <button id="btnJakGrac" class="menu-przycisk menu-jak-grac" type="button" data-t="menuJakGrac"></button>
+          <!-- Studio instrumentów zamyka kolumnę, pod „Odbierz nagrody” -->
+          <button id="btnStudio" class="menu-przycisk" type="button" hidden></button>
+        </nav>
+      </div>
+    </div>
+    <!-- 10-18 prawy górny róg: wyciszenie muzyki menu (js/menu-koncert.js), konto, pod nimi „Odbierz nagrody” -->
+    <div class="menu-rog">
+    <button id="menuWycisz" class="menu-wycisz" type="button" aria-pressed="false"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path class="glosnik" d="M5 12h5l7-6v20l-7-6H5z"/><path class="fale" d="M21 11.5a6 6 0 0 1 0 9M24.5 8a11 11 0 0 1 0 16"/><path class="krzyzyk" d="M21 12l8 8M29 12l-8 8"/></svg></button>
+    <!-- pełny ekran: ta sama obsługa co klik w #menuEkran i F11 (menuPelnyEkran w zabi-chor.js); napis i stan wpisuje menu-koncert.js -->
+    <button id="menuPelny" class="menu-pelny" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="wejdz" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><path class="wyjdz" d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg><span class="menu-pelny-tekst"></span></button>
+    <!-- konto na tym komputerze (js/konta.js): jedyne wejście do kont i profili w menu; napisy i kolor wpisuje konta.js -->
+    <button id="menuKonto" class="menu-konto" type="button" hidden><span class="menu-konto-inicjal" aria-hidden="true"></span><span class="menu-konto-tekst"><span class="menu-konto-et"></span><b class="menu-konto-nazwa"></b></span></button>
+    <!-- nieodebrane losowania (10-17): widać tylko, gdy coś czeka; treść i licznik wpisuje odswiezNagrodyDoOdbioru() -->
+    <button id="btnNagrody" class="menu-przycisk menu-nagrody" type="button" hidden></button>
+    </div>
+    <div class="menu-stopka">
+      <!-- taśma stanu (kapsle czekające / łączność) nad podpowiedzią, na środku podłogi sceny -->
+      <div class="menu-dol" data-gniazdo="stan"></div>
+      <p class="menu-klawisze" data-t="menuKlawisze"></p>
+      <!-- pełny ekran (F11): tekst i stan wpisuje zabi-chor.js (menuPelnyEkran); klik przełącza tak samo jak F11 -->
+      <p id="menuEkran" class="menu-ekran"></p>
+      <div class="menu-linki">
+        <!-- „Zgłoś błąd” (js/zglos-blad.js): okno z opisem → plik z dziennikiem → forum #pomoc -->
+        <a id="menuZglos" class="menu-link menu-zglos" href="#" role="button"><span>Zgłoś błąd</span></a>
+        <a id="menuDiscord" class="menu-link" target="_blank" rel="noopener" data-t-aria="discordMenuAria"><img src="../assets/icons/discord.png" alt="" width="18" height="18">Discord ↗</a>
+        <!-- język gry PL/EN (js/jezyk.js podpina przyciski i zaznacza bieżący; zmiana przeładowuje grę) -->
+        <span id="menuJezyk" class="menu-link menu-jezyk" role="group"><button type="button" data-jezyk="pl" lang="pl" aria-label="Polski"><img src="../assets/flagi/flaga-pl.webp" alt="" width="40" height="31" draggable="false"></button><button type="button" data-jezyk="en" lang="en" aria-label="English"><img src="../assets/flagi/flaga-en.webp" alt="" width="40" height="31" draggable="false"></button></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- KROK 1 „Piosenka” = dawny ekran Utwory i dawny krok 1 w jednym (Utwory przeniesione z osobnego
+       przycisku i podmenu bezpośrednio do kroku 1). Góra: dwie zakładki „Wybierz utwór” ALBO „Wgraj własny”;
+       druga pokazuje wybór pliku, import z adresu, paczki do pobrania i licencje (Pakiety budują jej
+       wnętrze w #dodajPanel). Pierwsza: po lewej biblioteka jako zwarta lista wierszy (wygląd Utworów), po prawej karta
+       wybranej piosenki z podglądem partii, statystykami i tablicą. Ustawienia piosenki wysuwa ⚙ (szuflada
+       biblioteka.js, wjeżdża z prawej krawędzi nad kolumnę podglądu).
+       #btnLicencje i #btnUstawieniaPiosenki obsługuje zabi-chor.js; teksty data-tl ze słownika TL
+       w js/lobby-scena.js, stan paska wpisuje tamtejsze paskiDodaj(). -->
+  <section id="wybor" class="lobby-ekran wybor" aria-labelledby="wyborTytul" hidden>
+    <header class="ekran-gora">
+      <button class="przycisk wstecz" type="button" data-wstecz data-t="wstecz"></button>
+      <h2 id="wyborTytul" class="ekran-tytul" data-t="menuZagraj"></h2>
+      <ol class="okruszki" data-t-aria="krokiAria">
+        <li class="okruszek" aria-current="step"><b>1</b><span data-t="krokPiosenka"></span></li>
+        <li class="okruszek"><button class="okruszek-przycisk" type="button" data-krok="konfiguracja"><b>2</b><span data-t="krokRozgrywka"></span></button></li>
+      </ol>
+    </header>
+    <div class="ekran-tresc wybor-uklad lobby-kolumny">
+      <div class="dodaj-pasek">
+        <!-- dwie zakładki kroku 1: „Wybierz utwór” (biblioteka + karta piosenki) ALBO „Wgraj własny” (#dodajPanel);
+             przełącza je rozwinDodaj() w js/lobby-scena.js, klasa .wgraj na #wybor chowa kolumny pod panelem -->
+        <div class="zrodlo-zakladki" role="tablist" data-tl-aria="zrodloAria">
+          <button id="btnWybierzUtwor" class="zrodlo-zak" type="button" role="tab" aria-selected="true">
+            <span class="zrodlo-ikona zrodlo-ikona-nuta" aria-hidden="true"></span>
+            <span class="zrodlo-glowa">
+              <b class="zrodlo-tytul" data-tl="zakWybierz"></b>
+              <span id="zakWybierzOpis" class="zrodlo-opis"></span>
+            </span>
+          </button>
+          <span class="zrodlo-albo" aria-hidden="true" data-tl="zakAlbo"></span>
+          <button id="btnDodajUtwory" class="zrodlo-zak zrodlo-wgraj" type="button" role="tab" aria-selected="false" aria-controls="dodajPanel">
+            <span class="zrodlo-ikona zrodlo-ikona-plus" aria-hidden="true"></span>
+            <span class="zrodlo-glowa">
+              <b class="zrodlo-tytul" data-tl="zakWgraj"></b>
+              <span class="zrodlo-opis" data-tl="zakWgrajOpis"></span>
+            </span>
+            <span id="dodajStan" class="dodaj-stan"></span>
+          </button>
+          <p id="kafelDodano" class="kafel-dodano" role="status" hidden></p>
+        </div>
+        <div id="dodajPanel" class="dodaj-panel" role="tabpanel" aria-labelledby="btnDodajUtwory" hidden>
+          <!-- wnętrze wstawia Pakiety.zbuduj / Pakiety.zbudujImportUrl (js/pakiety.js) przy starcie biblioteki -->
+          <div class="dodaj-tresc"></div>
+          <p class="dodaj-upusc"><span class="kafel-upusc-ikona" aria-hidden="true"></span><span data-tl="wlasneUpusc"></span></p>
+          <p class="stopka-licencje"><span data-t="licKarteczka"></span> <button id="btnLicencje" class="link-licencje" type="button" data-t="licEkran"></button></p>
+        </div>
+      </div>
+      <section class="karta kol-piosenki" data-gniazdo="biblioteka" aria-labelledby="bibTytul">
+        <h2 id="bibTytul" class="kol-naglowek"><span><span data-tl="bibTytul"></span><span id="bibLiczba" class="bib-liczba"></span></span>
+          <span class="lista-podpowiedz" data-t="wybranaPodpowiedz"></span></h2>
+      </section>
+      <section class="karta kol-wybrana" aria-labelledby="hWybrana">
+        <h2 id="hWybrana" class="kol-naglowek"><span data-t="wybranaPiosenka"></span></h2>
+        <div id="wybrana" class="wybrana"></div>
+        <div class="wybrana-podglad" data-gniazdo="podglad"></div>
+        <div class="wybrana-akcje">
+          <button id="btnUstawieniaPiosenki" class="przycisk maly wybrana-ustawienia" type="button" data-tl="zakUstawienia"></button>
+          <button id="btnWybranaTablica" class="przycisk maly" type="button" data-tl="tablicaPelna"></button>
+        </div>
+        <div id="panelTablica" class="wybrana-tablica">
+          <ol id="wybranaTop" class="wybrana-top"></ol>
+        </div>
+        <button id="btnDalej" class="przycisk start dalej" type="button" data-t="dalej"></button>
+      </section>
+    </div>
+  </section>
+
+  <!-- Studio instrumentów, dawniej Studio dźwięków (js/studio.js + js/studio-ekrany.js): dedykowany ekran edytora własnych instrumentów, wejście z menu głównego
+       po wylosowaniu wszystkich instrumentów; treść (pasek brzmienia, lampa na shaderze, lista, rack z pokrętłami i ekranami CRT)
+       buduje studio.js w #studioTresc -->
+  <section id="studioEkran" class="lobby-ekran studio-ekran" aria-labelledby="studioTytul" hidden>
+    <header class="ekran-gora">
+      <button class="przycisk wstecz" type="button" data-wstecz data-t="wstecz"></button>
+      <h2 id="studioTytul" class="ekran-tytul"></h2>
+      <p id="studioPodtytul" class="ekran-podtytul"></p>
+    </header>
+    <div id="studioTresc" class="ekran-tresc studio-tresc"></div>
+  </section>
+
+  <section id="konfiguracja" class="lobby-ekran konfiguracja" aria-labelledby="konfTytul" hidden>
+    <header class="ekran-gora">
+      <button class="przycisk wstecz" type="button" data-wstecz data-t="wstecz"></button>
+      <h2 id="konfTytul" class="ekran-tytul" data-t="menuZagraj"></h2>
+      <ol class="okruszki" data-t-aria="krokiAria">
+        <li class="okruszek zrobiony"><button class="okruszek-przycisk" type="button" data-krok="wybor"><b>1</b><span data-t="krokPiosenka"></span></button></li>
+        <li class="okruszek" aria-current="step"><b>2</b><span data-t="krokRozgrywka"></span></li>
+      </ol>
+      <button id="konfPiosenka" class="konf-piosenka" type="button" data-krok="wybor"></button>
+    </header>
+    <div class="ekran-tresc konf-uklad lobby-kolumny">
+      <section class="karta kol-gracze" aria-labelledby="hGracze">
+        <h2 id="hGracze" class="kol-naglowek"><span data-t="naglGracze"></span><span id="liczbaGraczy" class="licznik"></span>
+          <button id="btnDodajGracza" class="przycisk maly glowny" type="button" data-t="dodajGracza"></button></h2>
+        <div id="siatkaGraczy" class="siatka-graczy"></div>
+        <div data-gniazdo="podglad"></div>
+      </section>
+      <section class="karta kol-ustawienia" aria-labelledby="hUst">
+        <h2 id="hUst" class="kol-naglowek"><span data-t="naglUstawienia"></span></h2>
+        <div id="ustawienia" class="ustawienia"></div>
+      </section>
+    </div>
+    <footer class="lobby-dol">
+      <div class="lobby-dol-stan" data-gniazdo="stan"></div>
+      <button id="btnStart" class="przycisk start" type="button"></button>
+    </footer>
+  </section>
+
+  <!-- elementy przenoszone do gniazd widocznego ekranu (pokazLobby) -->
+  <div class="lobby-schowek" hidden>
+    <div id="biblioteka" class="biblioteka"></div>
+    <div id="podgladPartii" class="podglad-partii" aria-labelledby="ppTytul"></div>
+    <div id="lobbyStan" class="lobby-stan">
+      <p class="jak-dolaczyc" data-t="jakDolaczyc"></p>
+      <div id="czekajace" class="czekajace" hidden></div>
+      <p id="zywiStan" class="zywi-stan" data-t="zywiRozlaczeni" hidden></p>
+      <p id="dzwiekLobby" class="dzwiek-lobby" data-t="kliknijDzwiek" hidden></p>
+    </div>
+  </div>
+</main>
+
+<section id="gra" class="ekran gra" hidden>
+  <canvas id="tlo" class="plotno"></canvas>
+  <canvas id="scena" class="plotno"></canvas>
+  <header id="hud" class="hud">
+    <div class="hud-lewa">
+      <img class="hud-zaba" src="../assets/frog/sing-2-96.png" alt="">
+      <div class="hud-tytul">
+        <span class="hud-gra" data-tytul>Ribbit<span class="beat">Beat</span></span>
+        <span id="hudPiosenka" class="hud-piosenka"></span>
+        <div class="hud-postep"><div id="hudPasek" class="hud-pasek"></div></div>
+        <span id="hudLicencja" class="hud-licencja" hidden></span>
+      </div>
+    </div>
+    <div id="hudGracze" class="hud-gracze"></div>
+    <div class="hud-prawa">
+      <button id="hudDzwiek" class="przycisk maly" type="button" data-t="dzwiekWylaczony" hidden></button>
+      <span class="hud-esc" data-t="escWyjscie"></span>
+    </div>
+  </header>
+  <div id="pauza" class="pauza" hidden data-klawisze-natywne>
+    <div class="karta pauza-karta" role="dialog" aria-modal="true" aria-labelledby="pauzaTytul">
+      <h2 id="pauzaTytul" class="pauza-tytul" data-t="pauza"></h2>
+      <div class="pauza-przyciski">
+        <button id="btnWroc" class="przycisk glowny" type="button" data-t="wroc"></button>
+        <button id="btnOdNowa" class="przycisk" type="button" data-t="odNowa"></button>
+        <button id="btnWyjdz" class="przycisk" type="button" data-t="wyjdz"></button>
+      </div>
+      <p class="pauza-podpowiedz" data-t="pauzaPodpowiedz"></p>
+    </div>
+  </div>
+</section>
+
+<section id="wyniki" class="ekran wyniki" hidden>
+  <div class="karta wyniki-karta" role="dialog" aria-modal="true" aria-labelledby="wynikiTytul">
+    <h2 id="wynikiTytul" class="wyniki-tytul" data-t="koniecTytul"></h2>
+    <p id="wynikiPodtytul" class="wyniki-podtytul"></p>
+    <p id="wynikiAtrybucja" class="wyniki-atrybucja" hidden></p>
+    <div id="wynikiGwiazdki" class="wyniki-gwiazdki"></div>
+    <div id="wynikiKategoria" class="wyniki-kategoria"></div>
+    <ol id="wynikiLista" class="ranking"></ol>
+    <div id="wynikiNagrody" class="nagrody"></div>
+    <div class="wyniki-przyciski">
+      <button id="btnJeszczeRaz" class="przycisk glowny" type="button" data-t="jeszczeRaz"></button>
+      <button id="btnWynikiNagrody" class="przycisk nagrody-odbierz" type="button" hidden></button>
+      <button id="btnInnaPiosenka" class="przycisk" type="button" data-t="innaPiosenka"></button>
+      <button id="btnTablica" class="przycisk" type="button" data-t="tablica"></button>
+      <button id="btnKopiujWynik" class="przycisk" type="button" data-t="kopiujWynik"></button>
+      <a id="wynikiDiscord" class="wyniki-discord" target="_blank" rel="noopener"><img src="../assets/icons/discord.png" alt="" width="18" height="18"><span data-t="discordPochwal"></span></a>
+    </div>
+    <p id="wynikiPodpowiedz" class="wyniki-podpowiedz" data-t="wynikiPodpowiedz"></p>
+    <p id="wynikiJakosc" class="wyniki-jakosc" hidden></p>
+  </div>
+  <canvas id="konfetti" class="konfetti" aria-hidden="true"></canvas>
+</section>
+
+<section id="tablica" class="tablica" hidden></section>
+<section id="okno" class="tablica okno" hidden></section>
+<section id="wyborGracza" class="tablica okno wybor-gracza" hidden></section>
+<img id="fokusKapsel" class="fokus-kapsel" alt="" hidden>
+<div id="upusc" class="upusc" hidden><div class="upusc-karta" data-t="upuscTutaj"></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="fps" class="fps" hidden></div>
+
+<!-- język gry PL/EN (RBJezyk) i angielskie napisy (RB_EN): pierwsze, bo kolejne pliki tłumaczą definicje przy wczytaniu -->
+<script src="js/wczytywanie.js"></script>
+<script src="js/jezyk.js"></script>
+<script src="js/jezyk-en.js"></script>
+<script src="js/tryb-oszusta.js"></script>
+<script src="js/zglos-blad.js"></script>
+<script src="js/o-grze.js"></script>
+<script src="js/piosenki.js"></script>
+<script src="js/glos.js"></script>
+<script src="js/wejscie.js"></script>
+<script src="js/dzwieki-ui.js"></script>
+<script src="js/gl-fx.js"></script>
+<script src="js/nuty-gl.js"></script>
+<script src="js/proba-sceny.js"></script>
+<script src="js/efekty.js"></script>
+<script src="js/efekty-widownia.js"></script>
+<script src="js/efekty-streak.js"></script>
+<script src="js/efekty-tlo.js"></script>
+<script src="js/efekty-klawisze.js"></script>
+<script src="js/efekty-nuty.js"></script>
+<script src="js/motywy.js"></script>
+<script src="js/motywy/filc.js"></script>
+<script src="js/motywy/8bit.js"></script>
+<script src="js/motywy/halloween.js"></script>
+<script src="js/motywy/komiks.js"></script>
+<script src="js/motywy/podwodny.js"></script>
+<script src="js/motywy/koncert.js"></script>
+<script src="js/motywy/synthwave.js"></script>
+<script src="js/motywy/szkicownik.js"></script>
+<script src="js/motywy/kosmos.js"></script>
+<script src="js/motywy/staw.js"></script>
+<script src="js/motywy/skatepark.js"></script>
+<script src="js/motywy/garaz.js"></script>
+<script src="js/motywy/wycinanka.js"></script>
+<script src="js/motywy/sweter.js"></script>
+<script src="js/motywy/sashiko.js"></script>
+<script src="js/motywy/piraci.js"></script>
+<script src="js/motywy/western.js"></script>
+<script src="js/motywy/disco.js"></script>
+<script src="js/motywy/cyrk.js"></script>
+<script src="js/motywy/tiki.js"></script>
+<script src="js/motywy/kuchnia.js"></script>
+<script src="js/motywy/szachy.js"></script>
+<script src="js/motywy/voodoo.js"></script>
+<script src="js/motywy/gielda.js"></script>
+<script src="js/motywy/muchomor.js"></script>
+<script src="js/motywy/zloto.js"></script>
+<script src="js/motywy/olimp.js"></script>
+<script src="js/motywy/kredki.js"></script>
+<script src="js/motywy/prawdziwy.js"></script>
+<script src="js/motywy/einstein.js"></script>
+<script src="js/motywy/kukielki.js"></script>
+<script src="js/postepy.js"></script>
+<script src="js/zasoby-menu.js"></script>
+<script src="js/przycisk-pomin.js"></script>
+<script src="js/zabi-chor.js"></script>
+<!-- kursor-łapka (drugi tryb sterowania menu): po zabi-chor.js (T, nawigujLobby, schowajPilota); wołają go
+     krokPilotow (kapsel) i krokPadaWMenu w wejscie.js (pad) -->
+<script src="js/kursor-lapka.js"></script>
+<script src="js/biblioteka.js"></script>
+<script src="js/lobby-scena.js"></script>
+<script src="js/pakiety.js"></script>
+<script src="js/jak-grac.js"></script>
+<script src="js/jingle.js"></script>
+<script src="js/tablica.js"></script>
+<script src="js/pakiet-piosenki.js"></script>
+<!-- dodatki menu głównego (js/menu-dodatki.js): po zabi-chor.js (S, IMG, Postepy, window.ZC), bez wzmianki w interfejsie -->
+<script src="js/menu-dodatki.js"></script>
+<!-- animacja postępu po piosence (nakładka nad wynikami): po zabi-chor.js, woła ją pokazWyniki -->
+<script src="js/kolo.js"></script>
+<script src="js/nagrody.js"></script>
+<!-- Studio dźwięków (własne instrumenty po zdobyciu wszystkiego): po zabi-chor.js; przycisk #btnStudio w menu.
+     studio-ekrany.js = lampa oscyloskopu i panele CRT na shaderach (port ekranów Syntha), PRZED studio.js;
+     studio-ikona.js = animowana ikona Studia (karta koła w nagrody.js i przycisk w menu), też PRZED studio.js;
+     js/probki-audio.js = obróbka próbek (mikrofon, WAV, przycięcie ciszy, strój) WSPÓLNA z panelem RibbitFlip
+     (panel ładuje ten sam plik jako /web/gry/js/probki-audio.js — także bez modułu gry i w Essential, bo serwer
+     przepuszcza go obok bramki modułów: SHARED_GAME_FILE). Mieszka W KATALOGU GRY, bo RibbitBeat.exe
+     pakuje tylko web/gry i web/assets, a serwer gry wystawia tylko te dwa katalogi (DOZWOLONE) —
+     jeden plik na dysku, dwa programy, żeby samplowanie brzmiało w obu tak samo;
+     studio-probki.js = magazyn próbek gry (bajty w IndexedDB) i wstawianie ich do silnika, PRZED studio.js
+     i PO biblioteka.js, bo korzysta z jej bibIdb* -->
+<script src="js/studio-ikona.js"></script>
+<script src="js/studio-ekrany.js"></script>
+<script src="js/probki-audio.js"></script>
+<script src="js/studio-probki.js"></script>
+<script src="js/studio.js"></script>
+<!-- awatary żab kont (10-19): rysunki i wybór żaby; PRZED konta.js i js/profile.js, które je pokazują -->
+<script src="js/awatary.js"></script>
+<!-- konto (aktywny profil i ustawienia za kontem): PRZED skryptem startowym, bo owija wczytajUstawienia, które woła ZC.init -->
+<script src="js/konta.js"></script>
+<!-- scena koncertowa w menu (10-18): tło, kolumny, lampy, muzyka menu i wyciszenie; po konta.js (S, Glos, RBJezyk, Nagrody) -->
+<script src="js/menu-koncert.js"></script>
+<script>
+"use strict";
+// HARNESS 2/2: parametry adresu → ZC.init (opis na górze pliku). window.ff to skrót jak w harnessach Syntha.
+// Podgląd stopni sceny (?widownia= ?streak= ?tlo= ?klawisze= ?stopien= ?gl=0 ?moc= ?odblokuj=1) ZC.init czyta sam z adresu.
+(function(){
+  const Q=new URLSearchParams(location.search);
+  const liczba=(k,d)=>{const v=Q.get(k);return v!=null&&v!==""&&Number.isFinite(+v)?+v:d;};
+  const tak=k=>Q.has(k)&&!/^(0|false|nie)$/i.test(Q.get(k)||"1");
+  const partie=Q.get("partie");
+  ZC.init({
+    // boty: poziom z lobby (Średni, jeśli nikt nie wybrał), a ?luz=0..1 to dawny jeden suwak niedbałości
+    piosenka:Q.get("piosenka"),boty:liczba("boty",0),luz:Q.has("luz")?liczba("luz",.3):null,ziarno:liczba("ziarno",7),
+    mysz:tak("mysz"),auto:tak("auto"),czekaj:liczba("czekaj",3),
+    // w aplikacji (ten sam origin co /stream) kapsle są od razu; ?zywe=0 wyłącza, ?zywe=1 włącza gdzie indziej
+    zywe:Q.has("zywe")?tak("zywe"):/^\/web\/gry\//.test(location.pathname),
+    tempo:liczba("tempo",null),glos:Q.get("glos"),latwy:Q.has("latwy")?tak("latwy"):null,fps:tak("fps"),
+    partie:partie==null?null:(partie==="kolejno"?partie:partie.split(",").map(Number))});
+  window.ff=ZC.ff;
+})();
+</script>
+<script src="js/profile.js"></script>
+</body>
+</html>

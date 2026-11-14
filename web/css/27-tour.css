@@ -1,0 +1,45 @@
+/* ===== Przewodnik po panelu (rf-39p-tour.js) =====
+   Warstwa na cały ekran blokuje kliknięcia w panel, podświetlenie wycina w niej „okno" cieniem
+   o promieniu 9999 px (jeden element zamiast czterech pasów maski), a dymek to ta sama karta,
+   co dialogi rfModal (07-felt-core), tylko węższa i wyrównana do lewej, bo czyta się ją jak akapit.
+   WHY: one fixed layer blocks clicks; a huge box-shadow on the spotlight draws the dimmed mask. */
+
+/* Przycisk w pasku górnym: „Przewodnik” z ikoną `pytanie.png` (UX 261120). „i” znaczy w aplikacji
+   wyłącznie Informacje modułu. Napis chowa się poniżej 1440 px razem z napisami linków
+   (budżet paska, 07-felt-core.css), wtedy zostaje sama ikona z dymkiem. */
+.bic-tour{background-image:url(/web/assets/icons/pytanie.png)}
+header #tourBtn{display:inline-flex;align-items:center}
+header #tourBtn .bic-tour{width:19px;height:19px}
+
+.rft{position:fixed;inset:0;z-index:10000;cursor:default}
+.rft-spot{position:fixed;border-radius:14px;pointer-events:none;
+  box-shadow:0 0 0 3px var(--pink,#ec1a83),0 0 0 9999px rgba(24,20,16,.55);
+  transition:left .28s var(--rf-ez-snap,ease),top .28s var(--rf-ez-snap,ease),
+             width .28s var(--rf-ez-snap,ease),height .28s var(--rf-ez-snap,ease)}
+.rft-spot.none{box-shadow:0 0 0 9999px rgba(24,20,16,.55)}
+
+.rft-card{position:fixed;width:min(360px,calc(100vw - 20px));box-sizing:border-box;
+  background:#faf5ea;background-image:var(--felt-tex-soft,none);color:#211f1d;
+  border-radius:18px;border:1px solid rgba(0,0,0,.10);
+  box-shadow:0 18px 44px rgba(0,0,0,.36),0 3px 0 rgba(0,0,0,.14);
+  padding:14px 18px 16px;font-family:var(--display,inherit);
+  transition:left .28s var(--rf-ez-snap,ease),top .28s var(--rf-ez-snap,ease);
+  animation:rfm-pop var(--rf-d-pop,220ms) var(--rf-ez-overshoot,ease) both}
+.rft-top{display:flex;align-items:center;justify-content:space-between;margin:0 0 4px}
+.rft-count{font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--dim,#57503f)}
+.rft-x{appearance:none;border:none;background:none;cursor:pointer;font-size:22px;line-height:1;
+  width:30px;height:30px;border-radius:9px;color:var(--dim,#57503f)}
+.rft-x:hover{background:#efe6d3;color:#211f1d}
+.rft-x:focus-visible{outline:2px solid var(--pink-btn,#d81678);outline-offset:1px}
+.rft-title{margin:0 0 6px;font-size:18px;font-weight:800;letter-spacing:.2px}
+.rft-body{margin:0 0 12px;font-size:14px;line-height:1.5;color:#4a453d;font-family:var(--sans,inherit)}
+.rft-dots{display:flex;gap:5px;margin:0 0 12px}
+.rft-dots i{width:7px;height:7px;border-radius:50%;background:#d8cdb8;transition:background .2s,transform .2s}
+.rft-dots i.on{background:var(--pink,#ec1a83);transform:scale(1.25)}
+.rft-acts{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.rft-acts .btn[hidden]{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  .rft-spot,.rft-card,.rft-dots i{transition:none}
+  .rft-card{animation:none}
+}

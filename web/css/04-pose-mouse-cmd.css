@@ -1,0 +1,369 @@
+/* Three cards: the 3D orientation preview, motion control (air mouse / analog stick / d-pad)
+   and the LED / raw-hex command sender. */
+
+  /* ===== 3D POSITION ===== */
+  .pose3d-wrap{position:relative;padding:8px;display:flex;flex-direction:column}
+  canvas.pose3d{display:block;width:100%;height:300px;border-radius:12px;
+    background:radial-gradient(120% 120% at 50% 25%,#1a2030 0%,#0c0e16 70%)}
+  /* tilt/rotation/speed readout: a row UNDER the 3D window (not overlaying the sphere).
+     Two lines are RESERVED even when one is enough: the text wraps as soon as a number grows a
+     digit ("9°" -> "100°"), and in this narrow column that reflow shoved everything below it down
+     a row, mid-reading. Tabular figures on top of that, so digits never change width. */
+  .pose3d-info{order:2;flex:0 0 auto;margin-top:6px;font-family:var(--mono);font-size:12px;
+    color:var(--muted);line-height:1.45;min-height:2.9em;text-align:center;pointer-events:none;
+    font-variant-numeric:tabular-nums lining-nums}
+  .pose3d-info .pm{white-space:nowrap}   /* fold between metrics, never between a number and its unit */
+  .pose3d-info b{color:var(--ink)}
+  .pose3d-axis{position:absolute;right:16px;top:14px;font-size:11px;color:var(--dim);text-align:right;
+    line-height:1.5;pointer-events:none}
+  /* MANUAL CONTROL (simulation): the widget stops being a picture and becomes a handle.
+     EVERYTHING it needs lives UNDER the sphere, in normal flow. The hover panel that floats over
+     the top of the canvas is fine for settings you touch once, and hopeless for a surface you are
+     dragging — it opened the moment the pointer arrived and covered the capsule you came to grab.
+     So while driving by hand: the floating panel stays shut unless explicitly pinned (⚙), and the
+     controls that matter sit in a bar that never overlaps a single pixel of the sphere. */
+  .pose3d-manual{order:3;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;
+    margin-top:6px;font-size:11px;line-height:1.35;color:var(--dim)}
+  .pose3d-manual[hidden]{display:none}
+  .pose3d-manual-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center}
+  .pose3d-manual-tag{font-family:var(--mono);font-weight:600;font-size:9px;letter-spacing:.09em;
+    padding:3px 6px;border-radius:6px;background:var(--az);color:#1a1206}
+  .pose3d-manual-vals{font-family:var(--mono);font-size:12px;color:var(--muted);gap:10px}
+  .pose3d-manual-vals .vpv{min-width:52px;text-align:center}
+  .pose3d-manual-tip{pointer-events:none;text-align:center}
+  /* the sphere has keyboard focus -> the line lists the KEYS, and says so */
+  .pose3d-manual-tip.is-keys{color:var(--az)}
+  /* the full instructions, folded away: one line is enough once you know, and the whole list has
+     to be within reach the first time — not in a help window three clicks off the widget */
+  .pose3d-manual-help{width:100%;font-size:11px;color:var(--dim)}
+  .pose3d-manual-help>summary{cursor:pointer;text-align:center;color:var(--muted);font-weight:700;
+    padding:2px 0;list-style:none;user-select:none}
+  .pose3d-manual-help>summary::-webkit-details-marker{display:none}
+  .pose3d-manual-help>summary::before{content:"▸ ";color:var(--az)}
+  .pose3d-manual-help[open]>summary::before{content:"▾ "}
+  .pose3d-manual-help>summary:hover{color:var(--az)}
+  .pose3d-manual-help ul{margin:4px 0 2px;padding:8px 10px 8px 24px;border-radius:9px;
+    background:var(--bg2);border:1px dashed var(--line);text-align:left;line-height:1.5}
+  .pose3d-manual-help li{margin:0 0 5px}
+  .pose3d-manual-help li:last-child{margin-bottom:0}
+  .pose3d-manual-help li::marker{color:var(--az)}
+  .pose3d-manual-help b{color:var(--ink);font-weight:700}
+  /* what actually leaves the app while driving by hand — said here, where the expectation forms */
+  .pose3d-manual-fx{pointer-events:none;text-align:center;font-size:10px;opacity:.75}
+  .pose3d-manual-note{display:inline-flex;align-items:center;gap:6px;text-align:center;color:var(--warn)}
+  .pose3d-manual-note[hidden]{display:none}
+  /* WCIŚNIĘTY = WIDAĆ. Selektor łapie oba zapisy tego samego stanu (klasa dla rysunku,
+     aria-pressed dla czytnika ekranu), żeby nie dało się mieć jednego bez drugiego. Gest koła
+     wyboru trwa pół sekundy i człowiek musi przez ten czas widzieć, że kapsel naprawdę trzyma. */
+  /* wciśnięty = pełne żółte tło i grafitowy napis (2026-11-20: kremowy napis na jasnym filcu był nieczytelny) */
+  #poseVBtn.on,#poseVBtn[aria-pressed="true"]{background:#ffd24c;border-color:#c8971a;color:#211f1d}
+  #poseVBtn[aria-pressed="true"]{transform:translateY(1px)}
+  /* „Trzymaj przycisk” ↔ „Puść przycisk” (rf-14b vpLatchToggle): wciśnięty wygląda jak trzymany Przycisk kapsla */
+  #poseVLatch .pl-on{display:none}  #poseVLatch[aria-pressed="true"] .pl-on{display:inline}  #poseVLatch[aria-pressed="true"] .pl-off{display:none}
+  #poseVLatch[aria-pressed="true"]{background:#ffd24c;border-color:#c8971a;color:#211f1d}
+  /* Stuknięcie trwa 80 ms, więc samo podświetlenie mrugnęłoby za szybko, żeby je zauważyć:
+     przycisk „Kliknij" dostaje własne, dłuższe potwierdzenie, że coś poszło. */
+  #poseVTap:active{transform:translateY(1px)}
+  #poseVTap.tapped{animation:vpTapFlash .45s ease-out}
+  @keyframes vpTapFlash{
+    0%{background:rgba(255,210,76,.34);border-color:var(--az);color:#fff0c0}
+    100%{background:none}
+  }
+  @media (prefers-reduced-motion:reduce){#poseVTap.tapped{animation-duration:.01ms}}
+  /* the entry point sits UNDER the sphere, by the hand that will use it */
+  .pose-manual-btn{font-size:12px;padding:5px 12px}
+  .pose-manual-btn[hidden]{display:none}
+  .pose-manual-btn.on{background:rgba(255,210,76,.16);border-color:var(--az);color:#fff0c0}
+  /* hands on the sphere -> the hover panel stops popping up (⚙ still pins it deliberately) */
+  #pose3dCard.vp-manual:hover .pose3d-controls:not(.pinned){opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none}
+  /* ---------- STEROWANIE RĘCZNE WIDAĆ NA CAŁEJ KARCIE, NIE TYLKO NA KULI ---------------------------
+     SKĄD: przy aktywnym „steruj ręcznie” orientacja 3D jest podświetlona, a jej ramka pulsuje
+     kolorem, żeby użytkownik wiedział, że może ręcznie
+     sterować.
+
+     Do tej pory jedynym znakiem był pierścień na SAMYM PŁÓTNIE (`canvas.pose3d.vp-on` niżej) —
+     widoczny dopiero wtedy, gdy się na kulę patrzy, czyli wtedy, gdy się już wie. Karta ma teraz
+     dwa poziomy: ŚCIEG (`.card::before`, czyli dosłownie ramka tej karty) świeci kolorem azymutu
+     na stałe, a OBWÓDKA wokół karty pulsuje między przygaszonym a pełnym złotem.
+
+     `outline`, a nie `border` ani `box-shadow`: border zmieniłby geometrię karty i przesunął jej
+     zawartość, a box-shadow karty jest już zajęty przez filcowy cień (`--felt-shadow` w 07-felt-core)
+     i nadpisanie go spłaszczyłoby kartę. Obwódka rysuje się poza pudełkiem, sama trzyma promień
+     rogów i nic nie kosztuje układu — animowany jest wyłącznie jej KOLOR, więc pulsowanie nie
+     wywołuje ani jednego przeliczenia rozmiarów. */
+  #pose3dCard.vp-manual{outline:2px solid var(--az);outline-offset:3px;
+    animation:vpCardPulse 1.7s ease-in-out infinite}
+  #pose3dCard.vp-manual::before{border-color:var(--az);opacity:1}
+  @keyframes vpCardPulse{
+    0%,100%{outline-color:rgba(200,151,26,.30)}
+    50%    {outline-color:rgba(200,151,26,1)}
+  }
+  /* Ruch jest tu informacją, nie ozdobą, więc przy wyłączonych animacjach nie znika: zostaje pełny
+     kolor obwódki, czyli ten sam komunikat bez migotania. */
+  @media (prefers-reduced-motion:reduce){
+    #pose3dCard.vp-manual{animation:none;outline-color:var(--az)}
+  }
+  canvas.pose3d.vp-on{cursor:grab;touch-action:none;                            /* touch-action: a drag must not scroll the page */
+    box-shadow:0 0 0 2px var(--az),0 0 22px -6px var(--az)}                     /* at a glance: this sphere answers to the hand */
+  canvas.pose3d.vp-grab{cursor:grabbing}
+  canvas.pose3d.vp-axis{cursor:crosshair}                       /* an axis handle is under the cursor */
+  /* The take-control button sits UNDER the preview, next to the hand that will use it — in the
+     card header it crowded the title and wrapped onto its own line in the narrow rail. */
+  .pose3d-manual-toggle{order:2;flex:0 0 auto;display:flex;justify-content:center;margin:5px 0 2px}
+  .pose3d-manual-toggle .btn[hidden]{display:none}
+  canvas.pose3d:focus-visible{outline:2px solid var(--az);outline-offset:2px}   /* keyboard control needs to say where it is */
+  /* WHERE THE MOVEMENT COMES FROM — the same widget draws a real capsule, a canned waveform and a
+     hand-driven one, so it says which of the three is moving right now instead of leaving it to be
+     guessed from a status line in another tab. */
+  .pose-src{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--dim);
+    background:var(--bg2);white-space:nowrap;cursor:help}
+  .pose-src[data-kind="live"]{color:#0f2a16;background:var(--ok,#7be39a);border-color:transparent}
+  .pose-src[data-kind="anim"]{color:var(--muted);border-style:dashed}
+  .pose-src[data-kind="hand"]{color:#1a1206;background:var(--az);border-color:transparent}
+  .pose-src[data-kind="off"]{opacity:.75}
+  /* 3D orientation controls — revealed on hovering the sphere (declutter) */
+  .pose3d-gear{position:absolute;top:9px;left:9px;width:26px;height:26px;border-radius:50%;display:flex;
+    align-items:center;justify-content:center;font-size:14px;cursor:pointer;z-index:4;user-select:none;
+    background:rgba(14,17,25,.6);border:1px solid var(--line);color:var(--muted);
+    transition:transform .25s var(--rf-ez-spring-stiff,cubic-bezier(0.2,0.9,0.25,1.2)),color .15s,border-color .15s,opacity .2s;opacity:.55}
+  #pose3dCard:hover .pose3d-gear{opacity:1}
+  .pose3d-gear:hover{color:var(--az);border-color:var(--az)}
+  .pose3d-controls.pinned ~ .pose3d-gear,#pose3dCard .pose3d-gear.on{color:var(--az);border-color:var(--az)}
+  /* gear rotates IN PLACE: rotation lives on the icon, not the button (button's off-center .bic margin made it arc) */
+  .pose3d-gear .bic{margin:0;vertical-align:0;transition:transform 150ms var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  .pose3d-gear:hover .bic{transform:rotate(60deg)}
+  .pose3d-controls.pinned ~ .pose3d-gear .bic,#pose3dCard .pose3d-gear.on .bic{transform:rotate(90deg)}
+  .pose3d-controls{position:absolute;top:8px;left:42px;right:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+    padding:7px 9px;border-radius:10px;background:rgba(12,15,23,.82);border:1px solid var(--line);
+    box-shadow:0 6px 20px rgba(0,0,0,.35);backdrop-filter:blur(4px);z-index:3;
+    opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;
+    transition:opacity .18s ease,transform .26s var(--rf-ez-spring-soft,cubic-bezier(0.2,0.9,0.25,1.15))}
+  #pose3dCard:hover .pose3d-controls,.pose3d-controls:focus-within,.pose3d-controls.pinned{
+    opacity:1;transform:none;pointer-events:auto}
+  .pose3d-controls select{font-size:11px;padding:3px 6px}
+  .pose3d-controls .btn{font-size:11px;padding:4px 8px}
+  .pose3d-controls .fld{font-size:12px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;margin-left:auto}
+  .pose3d-controls .fld input{accent-color:var(--az)}
+  @media (hover:none){  /* touch — no hover: show controls permanently, no overlay */
+    .pose3d-controls{position:static;opacity:1;transform:none;pointer-events:auto;background:none;border:none;
+      box-shadow:none;backdrop-filter:none;padding:6px 2px;right:auto}
+    .pose3d-gear{display:none}}
+
+  /* ===== MOUSE MODE (air mouse) ===== */
+  .mousebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px var(--card-x);border-bottom:1px solid var(--line)}
+  .mousebar .mtare{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);font-weight:500;cursor:pointer}
+  .mousebar .mtare input{accent-color:var(--pink)}
+  /* Stopka stanu (#mNote/#kNote) zawija się W WIERSZU obok chipa „○ wyłączony", zamiast spadać całym
+     zdaniem pod „Kalibruj": od iteracji 1.2 mówi, GDZIE jest przełącznik, i @1440 nie mieści się już w
+     jednej linii — a oderwana od chipa, który objaśnia, czytała się jak osobny komunikat.
+     WHY: keep the note beside the state chip it explains — wrap inside the row, not under it. */
+  .mousebar #mNote,.mousebar #kNote{flex:1 1 200px;min-width:200px}
+  #mEnable.on{background:rgba(124,255,176,.14);border-color:var(--ok);color:#bfffd9}
+  #mEnable.live{background:rgba(255,183,76,.16);border-color:var(--warn);color:var(--warn);animation:pulse 1.4s infinite}
+  .mstate{font-size:13px;font-weight:600}
+  .mouse-preview{position:relative;padding:8px 14px}
+  canvas.mscope{display:block;width:100%;height:120px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+  /* minmax(0,1fr), not 1fr: a bare `1fr` track refuses to go below its content's min-content
+     width, and one long <select> („🧭 Filtr 3D (pochylenie → ruch kursora)") was enough to push
+     the whole grid 104 px past the card at 1280×800 — every row in it clipped mid-word by the
+     card's own overflow. With the zero minimum the columns shrink and .fld's flex-wrap does the
+     rest, which is what it was there for. */
+  .mouse-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px 16px;padding:6px 14px 12px}
+  @media (max-width:620px){.mouse-grid{grid-template-columns:1fr}}
+  .mouse-grid .col2{grid-column:1/-1}
+  .mouse-grid .fld{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;flex-wrap:wrap}
+  .mouse-grid select,.mouse-grid input[type=number]{font:inherit;color:var(--ink);background:var(--bg2);
+    border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+  .mouse-grid input[type=number]{width:88px}
+  /* ONE TRACK LENGTH for every slider in a grid. `flex:1` gave each one whatever its own
+     label left over, so a single column came out with tracks 110, 141 and 209 px long — three
+     scales side by side, and a value read off one of them means nothing on the next. Fixed
+     width instead; `max-width:100%` keeps it inside a narrow column (the Kontroler tab's right
+     column uses this same grid), where .fld's flex-wrap drops it onto a line of its own. */
+  .mouse-grid input[type=range]{accent-color:var(--az);flex:0 0 auto;width:130px;max-width:100%}
+  /* Bez własnego rozmiaru pól wyboru (UX 261120, P-G2-11): 16 px zmniejszało filcowe pole 22 px
+     z 11-felt-forms-devices.css, więc w tej siatce wyglądały inaczej niż w reszcie aplikacji. */
+  .mouse-grid .vnum{font-family:var(--mono);min-width:46px;text-align:right;color:var(--ink)}
+  .mouse-adv{border-top:1px solid var(--line);padding:9px 14px;margin:0 0 4px}
+  .mouse-adv summary{cursor:pointer;font-size:12px;color:var(--muted);user-select:none}
+  .mouse-adv .mouse-grid{padding:10px 0 0}
+  .mouse-attr{padding:11px var(--card-x) 12px;margin:8px 0 0;border-top:1px solid var(--line);font-size:11px;color:var(--dim);line-height:1.55}
+  .mouse-attr a{color:var(--muted)}
+  .mouse-attr code{font-family:var(--mono);color:var(--muted);background:var(--bg2);padding:0 4px;border-radius:4px}
+  .seg.mmode{gap:8px;border:none;border-radius:0;background:transparent;overflow:visible}
+   .seg.mmode button{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:86px;height:86px;padding:8px 6px;font-size:11px;line-height:1.12;border:2px solid var(--stitch);border-radius:14px;background:#fff;box-shadow:0 2px 0 rgba(120,90,40,.10)}
+   .seg.mmode button.on{background:var(--felt-ink);color:#fff;border-color:var(--felt-ink)}
+   .seg.mmode .mm-ic{width:40px;height:40px}
+  .mouse-grid .mgrp-lbl{font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--dim);
+    font-weight:500;border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:2px}
+  .mouse-grid .fld small{font-size:11px}
+  /* A NUMBER AND ITS UNIT ARE ONE THING TO READ. At 1280 the bare „°" after a field kept wrapping
+     onto the next line by itself, under a box it was no longer beside. An inline-flex box cannot
+     be split by the line breaker, so the two stay together — while `min-width:0` keeps the long
+     explanatory tails („px na próbkę — przy pełnym wychyleniu") free to wrap INSIDE the unit
+     rather than shoving the whole grid past the card's edge. */
+  .mouse-grid .fldunit{display:inline-flex;align-items:center;gap:4px;min-width:0}
+  .mouse-grid .fldunit>small{min-width:0}
+  /* „Wskazywanie działa tylko ze źródłem Filtr 3D — przełączono." Sits directly under the
+     source picker it is talking about, and is drawn as a note rather than as a warning: nothing
+     went wrong, the app just moved a setting and owes an explanation. */
+  .mouse-grid .msrc-note{display:block;font-size:11px;line-height:1.45;color:var(--dim);
+    border-left:3px solid var(--az);padding:3px 0 3px 8px;margin:-3px 0 1px}
+  .mouse-avail{font-size:12px;color:var(--dim);line-height:1.45;padding:4px 0 0}
+  .mouse-avail.ok{color:var(--ok)} .mouse-avail.warn{color:var(--warn)}
+  /* 2-column layout: visualization on the left, parameters on the right.
+     The preview is the thing you actually watch while tuning a stick or a d-pad, and at a fixed
+     250x230 next to a 1300px column of settings it read as a footnote. It now takes a SHARE of the
+     card (clamped, so it never squeezes the settings on a small screen) and the canvas keeps its
+     shape from that width — everything inside is drawn from min(w,h), so it simply scales up. */
+  /* …and the preview column HAS to be able to stick, or a 276-px picture sits alone beside a
+     1000-px column of settings and the person tuning a slider cannot see what it does. It was
+     written as `position:sticky` long ago and never stuck: `.card{overflow:hidden}` (02-base)
+     turns the card into the sticky element's scrollport, and that scrollport never scrolls. The
+     clipping is not needed here — the felt card draws its edge with an inset ::before, not by
+     cutting children off — so it is lifted for this one card. Scoped by id on purpose: every
+     other card keeps the global rule. */
+  #mouseCard{overflow:visible}
+  .mouse-body{display:flex;gap:16px;padding:10px var(--card-x) 4px;align-items:flex-start}
+  /* `top` is not 8px any more. 8 px from the top of the WINDOW is 8 px under the app bar, which is
+     to say: behind it, and behind the module bar under it — 144 px of the preview were covered
+     (measured 14.09). `--rf-sticky-top` (22-modtabs.css) is the bottom edge of every sticky bar
+     above this card, all three of them measured rather than guessed. */
+  .mouse-viz{flex:0 0 clamp(300px,34%,520px);position:relative;position:sticky;
+    top:var(--rf-sticky-top,8px)}
+  .mouse-viz canvas.mscope{height:auto;aspect-ratio:1/0.92;max-height:min(560px,62vh)}
+  .mouse-params{flex:1 1 auto;min-width:0}
+  .mouse-params .mouse-grid{padding:6px 0 12px}
+  @media (max-width:720px){.mouse-body{flex-direction:column}.mouse-viz{flex:1 1 auto;width:100%;position:relative}
+    .mouse-viz canvas.mscope{aspect-ratio:auto;height:220px}}
+  /* LED / hex commands */
+  .cmd-note{padding:var(--card-y) var(--card-x);font-size:12px;color:var(--muted);line-height:1.55}
+  .cmd-note code{font-family:var(--mono);color:var(--ink);background:var(--bg2);padding:0 4px;border-radius:4px}
+  .cmd-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;padding:4px var(--card-x) 8px}
+  .cmd-grid .col2{grid-column:1/-1}
+  .cmd-grid .fld{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;flex-wrap:wrap}
+  .cmd-grid select,.cmd-grid input[type=text]{font:inherit;color:var(--ink);background:var(--bg2);
+    border:1px solid var(--line);border-radius:7px;padding:5px 8px}
+  .cmd-presets{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:0 var(--card-x) 8px}
+  .btn.sm.cmd-preset{font-family:var(--mono)}
+  .btn.sm.cmd-preset.warn{border-color:var(--warn);color:var(--warn)}
+  .cmd-result{padding:2px var(--card-x) 6px;font-size:12px;font-family:var(--mono);color:var(--dim)}
+  .cmd-result.ok{color:var(--ok)} .cmd-result.bad{color:var(--bad)}
+  .cmd-log{padding:0 var(--card-x) 12px;font-size:11px;font-family:var(--mono);color:var(--dim);max-height:120px;overflow:auto}
+  .cmd-log .row{padding:2px 0;border-bottom:1px solid var(--line)}
+  .dpad-keys{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  /* "prędkość czy położenie" — ta sama forma co „ile klawiszy naraz" u krzyżaka: jeden wybór
+     z dwoma NAZWANYMI stanami plus zdanie, co to znaczy. Checkbox „tryb absolutny" kazałby się
+     domyślać, czym jest jego odznaczona wersja. */
+  .mmode-opt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);
+    border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;transition:border-color .18s,background .18s}
+  .mmode-lbl{font-size:13px;font-weight:600;color:var(--ink)}
+  .mmode-opt .seg button{font-size:12px;padding:5px 11px}
+  .mmode-note{flex:1 1 100%;color:var(--dim);font-size:11px;line-height:1.45}
+  /* ===== MYSZ: PUDEŁKA NA WIERZCHU (UX 261120, P-G2-07/P-G2-08) =====
+     Trzy rzeczy, które opiekun ustawia po założeniu kapsla, stoją w kremowych pudełkach ze ściegiem
+     (ten sam materiał co „Ruch kapsla to"), a nie w kartach w karcie: druga warstwa filcu z cieniem
+     czytałaby się jak osobny moduł. Włącznik pudełka to dźwignia `rf-swi` w nagłówku, jak w każdym
+     wierszu z przełącznikiem. Tylko w karcie Myszy: Kontroler używa tej samej `.mouse-grid`. */
+  #mouseCard .mbox{background:var(--panel2);background-image:var(--felt-tex-soft);border:2px solid var(--stitch);
+    border-radius:14px;padding:12px 14px 14px;margin:0 0 12px;box-shadow:var(--felt-shadow-sm);gap:8px 16px}
+  #mouseCard .mbox-h{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink);margin:0;
+    text-transform:none;letter-spacing:0}
+  #mGrpArea>.mbox-h{margin:4px 0 2px}
+  #mouseCard .mbox-sw{min-height:40px}
+  #mouseCard .mbox-sub{margin:-4px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+  #mouseCard .mbox .fld{color:var(--ink)}
+  #mouseCard .mbox .fld>small{flex:1 0 100%;font-size:12px;color:var(--muted)}
+  #mouseCard .mbox .fld input[type=range]{flex:1 1 160px;width:auto}
+  #mouseCard .mbox .rf-swrow{min-height:34px;font-size:13px;color:var(--ink)}
+  #mouseCard .mscale{display:grid;grid-template-columns:auto minmax(120px,1fr) auto;align-items:start;gap:0 12px;
+    font-size:13px;color:var(--ink)}
+  #mouseCard .mscale>label,#mouseCard .mscale>.vnum{line-height:22px}
+  #mouseCard .mscale-track{display:flex;flex-direction:column;min-width:0}
+  #mouseCard .mscale-track input[type=range]{width:100%}
+  #mouseCard .mscale-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+  /* Uczciwy warunek pod pudełkiem: brakuje czegoś, bez czego funkcja nie zadziała. Ten sam
+     materiał co linia gotowości w stanie „todo" (08), w małej skali. */
+  #mouseCard .mouse-avail.mcond{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-top:2px;
+    padding:8px 10px;font-size:13px;color:var(--ink);background:color-mix(in srgb,var(--warn) 16%,var(--panel));
+    border:1.5px dashed color-mix(in srgb,var(--warn) 70%,var(--stitch));border-radius:10px}
+  #mouseCard .mouse-avail.mcond .mcond-tx{flex:1 1 220px}
+  #mouseCard .mouse-avail:not(.mcond){display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;font-size:13px}
+  #mouseCard .mouse-avail:not(.mcond) .mcond-tx{flex:1 1 220px}
+  /* „Dostrajanie ruchu": zwijak w karcie (08 `.cardfold.inset`); siatka w środku bez własnych marginesów. */
+  #mouseCard .mtune{margin:4px 0 12px}
+  #mouseCard .mtune .cardfold-body>.mouse-grid{padding:4px 0 2px}
+  #mouseCard .mtune .msub{padding:0}
+  /* PIĘTRA (UX 261120 L4d): zwijaki „ustawiasz raz” w pudełkach i pod nimi (08 `.cardfold.inset`),
+     „Zaawansowane” na dole karty (08 `.cardfold.adv`). W zwijakach te same pola co w pudełkach. */
+  #mouseCard .mfold{margin:0 0 12px}
+  #mouseCard .mbox .mfold{margin:0}
+  #mouseCard .mfold .cardfold-body>.mouse-grid{padding:4px 0 2px;gap:8px 16px}
+  #mouseCard .mfold .fld{color:var(--ink)}
+  #mouseCard .mfold .fld>small{flex:1 0 100%;font-size:12px;color:var(--muted)}
+  #mouseCard .mfold .fld input[type=range]{flex:1 1 160px;width:auto}
+  #mouseCard .mfold .rf-swrow{min-height:34px;font-size:13px;color:var(--ink)}
+  #mouseCard .mtune-h{margin:4px 0 10px;font-size:14px}
+  #mouseCard .mtune .mouse-attr{margin:12px 0 0;padding:10px 0 0}
+  /* MAPKA MONITORÓW — układ ekranów rysowany z GET /screens: kliknięcie wybiera monitor,
+     ramka pokazuje realny obszar kursora, kropka to żywy kursor. Wysokość stała, bo rysunek
+     skaluje się do proporcji pulpitu i pusta reszta i tak nie niesie treści. */
+  .areamap-wrap{padding:2px 0 0}
+  canvas.areamap{display:block;width:100%;height:132px;border-radius:10px;background:var(--bg);
+    border:1px solid var(--line);cursor:pointer}
+  .arearect{padding:0 !important;gap:8px 12px}
+  .arearect .fld{gap:6px}
+  .arearect input[type=number]{width:80px}
+  .dpad-keys-lbl{font-size:12px;color:var(--muted)}
+  .btn.sm.dpadkey{font-family:var(--mono);min-width:62px}
+  .btn.sm.dpadkey.cap{background:var(--amber);border-color:var(--amber);color:#3a2c08}
+  /* "how many keys at once" — one choice with two NAMED states instead of a checkbox whose
+     unticked meaning ("only ever one key") the user had to work out for themselves */
+  .dpad-diag-opt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;transition:border-color .18s,background .18s}
+  .dpad-diag-opt input{width:16px;height:16px;flex:0 0 auto;accent-color:var(--green)}
+  .dpad-diag-opt b{font-weight:800;color:var(--ink)}
+  .dpad-diag-opt small{color:var(--dim);font-weight:400;font-size:11px}
+  .dpad-diag-opt:has(input:checked){border-color:var(--green);background:rgba(108,179,63,.10)}
+  .dpad-diag-lbl{font-size:13px;font-weight:600;color:var(--ink)}
+  .dpad-diag-opt .seg button{font-size:12px;padding:5px 11px}
+  .dpad-diag-note{flex:1 1 100%;color:var(--dim);font-size:11px;line-height:1.45}
+  .dpad-zones-opt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);
+    border:1.5px dashed var(--line);border-radius:10px;padding:7px 11px}
+  .dpad-zones-opt input{width:16px;height:16px;flex:0 0 auto;accent-color:var(--az)}
+  .dpad-zones-opt b{font-weight:500;color:var(--ink);font-size:13px}
+  .dpad-zones-opt small{color:var(--dim);font-size:11px}
+  .dpad-zones-opt:has(input:checked){border-style:solid;border-color:var(--az)}
+
+  /* ===== MOVABLE IN-APP WINDOW (manual capsule control) =====
+     Taking the capsule by hand lifts the whole "Orientacja 3D" card out of its tab into this
+     window, so the sphere can sit next to whatever it is meant to prove — a trigger list, the
+     motion-control preview, a game. Dragged by its bar like a system window; position remembered. */
+  .rf-float{position:fixed;z-index:9100;width:min(432px,calc(100vw - 24px));
+    background:var(--panel);background-image:var(--felt-tex-soft);border-radius:20px;
+    box-shadow:0 22px 46px -16px rgba(60,45,20,.5),var(--felt-shadow)}
+  .rf-float-bar{display:flex;align-items:center;gap:9px;padding:9px 10px 9px 13px;
+    border-bottom:1.5px dashed var(--stitch);border-radius:20px 20px 0 0;
+    cursor:grab;user-select:none;touch-action:none}
+  .rf-float.is-dragging{box-shadow:0 30px 58px -16px rgba(60,45,20,.58)}
+  .rf-float.is-dragging .rf-float-bar{cursor:grabbing}
+  .rf-float-grip{color:var(--dim);font-size:15px;line-height:1}
+  .rf-float-title{font-weight:600;font-size:13px;color:var(--ink);margin-right:auto}
+  .rf-float-btn{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;width:27px;height:27px;cursor:pointer;font-size:13px;line-height:1;flex:0 0 auto}
+  .rf-float-btn:hover{color:var(--ink);border-color:var(--az)}
+  .rf-float-x:hover{color:var(--pink-d);border-color:var(--pink)}
+  .rf-float-body{max-height:calc(100vh - 132px);overflow:auto;border-radius:0 0 20px 20px}
+  /* the card inside drops its own shadow — the window carries it now */
+  .rf-float-body>.card{box-shadow:none;background:transparent;background-image:none;border-radius:0 0 20px 20px}
+  .rf-float-body>.card::before{inset:4px;border:0}
+  /* deliberately NO entrance animation: a window is furniture, not a notification — and a transform
+     that has not finished (a background tab does not tick animations) makes the box report a
+     position it is not actually at, which is the one thing a draggable, clamped window cannot afford */
+  /* the slot the card left behind — a panel that just vanishes reads as a bug */
+  .vpwin-hole{display:flex;flex-direction:column;align-items:flex-start;gap:7px;
+    padding:15px 17px;background:transparent;background-image:none;box-shadow:none;
+    border:1.5px dashed var(--line);border-radius:18px}
+  .vpwin-hole::before{display:none}
+  .vpwin-hole-t{font-weight:600;font-size:13px;color:var(--ink)}
+  .vpwin-hole-s{font-size:12px;line-height:1.5;color:var(--dim)}

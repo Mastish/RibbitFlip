@@ -1,0 +1,192 @@
+/* RibbitBeat: oprawa „bez ramek” (2026-11-19). Trzy dawne białe karty (pasek górny, wyniki, nakładka nagród) i okno pauzy
+   wyglądały jak okna aplikacji, nie gry. Teraz duże karty znikają: treść leży na przyciemnionej scenie, a tło dostają
+   tylko małe grafitowe naszywki tam, gdzie napis musi być czytelny na każdym motywie (żeton gracza, wiersz wyniku,
+   przycisk). Arkusz ładuje się PO gry.css i gry-nagrody.css i zmienia wyłącznie wygląd: znaczniki, klasy i pomiary
+   z nagrody.js zostają. Wyjątek: żeton gracza na pasku, który ma tu komplet swoich reguł (w gry.css została tylko
+   plakietka poziomu bota).
+   Zasady: w piosence żadnych animacji nieskończonych ani rozmyć na elementach, które się przemalowują (punkty, kombo);
+   na bursztynie i limonce zawsze grafit; obrys napisów = -webkit-text-stroke z paint-order (pod wypełnieniem). */
+:root{--op-filc:#211f1d;--op-okno:#3a352f;--op-obw:#5a5247;--op-tusz:#14110e;--op-krem:#fdf3d8;--op-krem2:#e3d7b8;--op-zloto:#ffd84a;
+  --op-naszywka:linear-gradient(rgba(33,31,29,.9),rgba(33,31,29,.9)),var(--felt)}
+
+/* ================= pasek górny w piosence ================= */
+/* Bez listwy: trzy osobne grupy (piosenka, żetony graczy, podpowiedź Esc), każda na własnej naszywce. */
+.hud{--ink:var(--op-krem);--muted:var(--op-krem2);--dim:var(--op-krem2);--panel2:var(--op-okno);--line:var(--op-obw);--pink-d:#ff86c2;
+  color:var(--op-krem);background:none;box-shadow:none;padding:0;align-items:stretch;min-height:56px}
+.hud::before{display:none}
+.hud-lewa,.hud-gracz{background:var(--op-filc);background-image:var(--op-naszywka);border-radius:14px}
+.hud-lewa{padding:6px 12px 6px 8px;box-sizing:border-box;box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.5)}
+.hud-postep{height:11px;box-shadow:inset 0 0 0 1.5px var(--op-obw)}
+.hud-postep::after{background:repeating-linear-gradient(to right,transparent 0 calc(var(--kreska,100%) - 1.5px),rgba(253,243,216,.3) calc(var(--kreska,100%) - 1.5px) var(--kreska,100%))}
+.hud-prawa{align-self:center}
+.hud-esc{padding:5px 11px;border-radius:999px;background:rgba(33,31,29,.88);box-shadow:0 0 0 2px var(--op-tusz);color:var(--op-krem2);font-weight:700}
+.hud .przycisk{--ink:#211f1d;color:#211f1d}
+/* ---- żeton gracza (komplet reguł; budowa w zbudujHud, życie w odswiezHud i odswiezRankingHud) ----
+   [miejsce][kapsel]  imię ▲ poziom ★★★★★ / punkty +zysk / pasek do następnej gwiazdki · strata do lidera  |  ×N, kreski, „kombo N” albo „zerwane!”
+   Z-26: imię i punkty nigdy nie są ucięte. Środkowa kolumna ma minimum = własna treść, prawa oddaje miejsce pierwsza.
+   Ozdoby znikają W CAŁOŚCI, nigdy w połowie: wiersz z imieniem i prawa kolumna to flex z zawijaniem o stałej
+   wysokości i overflow:hidden, więc to, co się nie mieści, spada do niewidocznego wiersza (w prawej kolumnie pusty
+   ::before o pełnej wysokości sprawia, że spada nawet jedyny element). Kolumny przypisane jawnie, bo przy 6–8
+   graczach w wąskim oknie kapsel ma display:none.
+   Ogień 1–3: pierścień i poświata STATYCZNE (10-10, płynność). Pulsujący box-shadow przemalowywał żeton przy każdym
+   odświeżeniu monitora (240 Hz) i zapychał wątek GPU: w piosence żadnych animacji nieskończonych w CSS. */
+/* kontener ucina nadmiar (overflow:hidden): zapas na obrys, cień, poświatę ognia i numer miejsca na rogu */
+.hud-gracze{gap:10px;padding:10px 8px 8px 10px;margin:-10px -8px -8px -10px}
+.hud-gracz{position:relative;flex:1 1 clamp(190px,16vw,250px);max-width:330px;min-width:0;display:grid;
+  grid-template-columns:auto minmax(min-content,1fr) minmax(0,auto);align-items:center;gap:8px;padding:5px 8px 8px 7px;
+  box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.5),inset 0 -5px 0 var(--kolor)}
+.hud-gracz[data-ogien="1"]{box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.5),inset 0 -5px 0 var(--kolor),0 0 0 4.5px var(--amber)}
+.hud-gracz[data-ogien="2"]{box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.5),inset 0 -5px 0 var(--kolor),0 0 0 4.5px var(--pink),0 -3px 10px 3px rgba(234,163,43,.55)}
+.hud-gracz[data-ogien="3"]{box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.5),inset 0 -5px 0 var(--kolor),0 0 0 5px var(--op-zloto),0 -4px 12px 4px rgba(236,26,131,.55)}
+.hud-gracz.zerwane{box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.5),inset 0 -5px 0 var(--kolor),0 0 0 4.5px var(--pink)}
+/* ranking (2+ graczy): numer miejsca na rogu żetonu, lider na różowo; przed pierwszym punktem i solo go nie ma */
+.hud-miejsce{position:absolute;left:-8px;top:-8px;z-index:2;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;
+  font:400 14px/1 var(--rebel);color:var(--op-krem);background:var(--op-okno);box-shadow:0 0 0 2px var(--op-tusz)}
+.hud-gracz.lider .hud-miejsce{background:var(--pink);color:#fff}
+.hud[data-graczy="1"] .hud-miejsce,.hud.bez-rankingu .hud-miejsce{display:none}
+.hud-kapsel{grid-column:1;width:34px;height:34px}
+.hud-tekst{grid-column:2;display:flex;flex-direction:column;min-width:0}
+.hud-glowka{display:flex;flex-wrap:wrap;align-items:center;align-content:flex-start;gap:30px 6px;height:15px;min-width:0;overflow:hidden}
+.hud-nazwa{font:800 12.5px/15px var(--sans);white-space:nowrap;color:var(--op-krem)}
+.hud-awans{font:400 11px/15px var(--rebel);color:var(--lime)}
+.hud-glowka .hud-poziom{order:2}   /* plakietka poziomu bota znika przed gwiazdkami */
+.hud-gwiazdki{order:1;flex:none;display:flex;gap:1px;pointer-events:none}
+.hud-gwiazdka{display:inline-block;font:400 12px/15px var(--rebel);color:#4a443d;-webkit-text-stroke:1.2px var(--op-tusz);paint-order:stroke fill}
+.hud-gwiazdka.pelna{color:var(--amber)}
+/* punkty i ostatni zysk: naklejka zysku wisi tuż za liczbą i nie zajmuje miejsca w układzie */
+.hud-wiersz{position:relative;align-self:flex-start}
+.hud-punkty{display:block;font:400 clamp(18px,1.5vw,24px)/1.08 var(--rebel);color:var(--op-zloto);white-space:nowrap;font-variant-numeric:tabular-nums}
+.hud-zysk{position:absolute;left:100%;top:50%;z-index:2;margin:-10px 0 0 7px;padding:1px 7px;border-radius:7px;font:400 13px/18px var(--rebel);
+  color:#211f1d;background:var(--lime);box-shadow:0 0 0 1.5px var(--op-tusz);white-space:nowrap;transform:rotate(-3deg);pointer-events:none}
+.hud-stopka{display:flex;align-items:center;gap:7px;height:10px;margin-top:3px;min-width:0}
+.hud-dogw{flex:1 1 0;min-width:22px;max-width:150px;height:6px;border-radius:3px;background:var(--op-okno);box-shadow:inset 0 0 0 1px var(--op-obw);overflow:hidden}
+.hud-dogw-w{display:block;height:100%;border-radius:inherit;background:var(--amber);transform-origin:left;transform:scaleX(0)}
+.hud-strata{flex:none;font:400 12px/10px var(--rebel);color:#ff86c2;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hud-strata.lider{font:800 9.5px/10px var(--sans);text-transform:uppercase;letter-spacing:.06em;color:var(--op-zloto)}
+.hud-strata:empty{display:none}
+/* prawa kolumna: mnożnik w kolorze stopnia, kreski do następnego (co KOMBO_CO trafień), linijka kombo */
+.hud-seria{grid-column:3;display:flex;flex-wrap:wrap;justify-content:flex-end;align-content:flex-start;height:54px;min-width:0;overflow:hidden}
+.hud-seria::before{content:"";width:0;height:54px}
+.hud-seria-blok{display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px 3px 0 6px}
+.hud-mnoznik{font:400 21px/1 var(--rebel);padding:3px 8px 4px;border-radius:9px;color:#211f1d;background:#8a8275;
+  box-shadow:0 0 0 2px var(--op-tusz),0 3px 0 2px var(--op-tusz);transform:rotate(-4deg)}
+.hud-mnoznik[data-m="2"]{background:var(--lime)}
+.hud-mnoznik[data-m="3"]{background:var(--amber)}
+.hud-mnoznik[data-m="4"]{background:var(--pink);color:#fff;text-shadow:1.5px 1.5px 0 #a4105c}
+.hud-gracz.zerwane .hud-mnoznik{transform:rotate(7deg) translateY(2px)}
+.hud-pipy{display:flex;gap:3px;margin-top:2px}
+.hud-pip{width:10px;height:6px;border-radius:3px;background:var(--op-okno);box-shadow:inset 0 0 0 1px var(--op-obw)}
+.hud-pip.on{background:var(--lime);box-shadow:inset 0 0 0 1px var(--op-tusz)}
+.hud-pipy.maks .hud-pip.on{background:var(--op-zloto)}
+.hud-kombo{height:10px;font:800 10px/10px var(--sans);color:var(--op-krem2);white-space:nowrap}
+.hud-kombo.zerwane{color:#ff86c2;text-transform:uppercase;letter-spacing:.05em}
+/* 1–2 graczy: żeton ma miejsce, więc punkty, kapsel i mnożnik rosną, a żeton nie rozciąga się w pustkę */
+.hud[data-graczy="1"] .hud-gracz,.hud[data-graczy="2"] .hud-gracz{flex:0 1 clamp(260px,22vw,340px);max-width:340px;padding-left:8px;gap:10px}
+.hud[data-graczy="1"] .hud-kapsel,.hud[data-graczy="2"] .hud-kapsel{width:42px;height:42px}
+.hud[data-graczy="1"] .hud-punkty,.hud[data-graczy="2"] .hud-punkty{font-size:clamp(22px,1.9vw,28px)}
+.hud[data-graczy="1"] .hud-nazwa,.hud[data-graczy="2"] .hud-nazwa{font-size:13.5px}
+.hud[data-graczy="1"] .hud-seria,.hud[data-graczy="2"] .hud-seria{height:58px}
+.hud[data-graczy="1"] .hud-seria::before,.hud[data-graczy="2"] .hud-seria::before{height:58px}
+.hud[data-graczy="1"] .hud-mnoznik,.hud[data-graczy="2"] .hud-mnoznik{font-size:24px}
+/* 6–8 graczy: ciasno, bez naklejki zysku i linijki kombo */
+.hud.ciasny .hud-gracze{gap:7px}
+.hud.ciasny .hud-gracz{flex-basis:clamp(96px,9vw,190px);gap:4px;padding:4px 5px 7px 5px}
+.hud.ciasny .hud-kapsel{width:22px;height:22px}
+@media (max-width:1280px){.hud.ciasny .hud-kapsel{display:none}}
+.hud.ciasny .hud-nazwa{font-size:11.5px}
+.hud.ciasny .hud-gwiazdka{font-size:9.5px}
+.hud.ciasny .hud-punkty{font-size:clamp(14px,1.15vw,19px)}
+.hud.ciasny .hud-zysk,.hud.ciasny .hud-kombo{display:none}
+.hud.ciasny .hud-strata{font-size:10.5px}
+.hud.ciasny .hud-seria{height:38px}
+.hud.ciasny .hud-seria::before{height:38px}
+.hud.ciasny .hud-seria-blok{padding:3px 3px 0 4px}
+.hud.ciasny .hud-mnoznik{font-size:14px;padding:2px 5px 3px;border-radius:7px}
+.hud.ciasny .hud-pip{width:6px;height:5px}
+.hud.ciasny .hud-miejsce{width:18px;height:18px;font-size:12px}
+
+/* ================= pauza ================= */
+.pauza{background:radial-gradient(ellipse 60% 70% at 50% 48%,rgba(58,18,44,.78),rgba(14,10,9,.93))}
+.pauza-karta{--ink:var(--op-krem);--dim:var(--op-krem2);color:var(--op-krem);background:none;box-shadow:none;gap:18px}
+.pauza-karta::before{display:none}
+.pauza-tytul{font-size:clamp(40px,7.4vh,76px);-webkit-text-stroke:9px var(--op-tusz);paint-order:stroke fill;text-shadow:5px 6px 0 var(--pink);transform:rotate(-2deg)}
+.pauza-tytul::before{display:none}
+
+/* ================= wyniki ================= */
+/* Scena w półmroku z ciepłym środkiem (widownia na dole zostaje odsłonięta, jak dotąd), treść bez karty. */
+.wyniki{background:radial-gradient(ellipse 62% 70% at 50% 46%,rgba(58,18,44,.76),rgba(14,10,9,.93)) top/100% calc(100% - clamp(54px,9vh,88px)) no-repeat}
+.wyniki-karta{--ink:var(--op-krem);--muted:var(--op-krem2);--dim:var(--op-krem2);--panel2:var(--op-okno);--line:var(--op-obw);--pink-d:#ff86c2;--green-d:#a6d861;
+  color:var(--op-krem);background:none;box-shadow:none;gap:clamp(6px,1.3vh,14px)}
+.wyniki-karta::before{display:none}
+.wyniki-tytul{font-size:clamp(36px,6.8vh,72px);-webkit-text-stroke:clamp(6px,1vh,10px) var(--op-tusz);paint-order:stroke fill;text-shadow:5px 6px 0 var(--pink);transform:rotate(-2deg)}
+.wyniki-tytul::before{display:none}
+.wyniki-podtytul{font-size:clamp(14px,2.2vh,19px);color:var(--op-krem);-webkit-text-stroke:4px var(--op-tusz);paint-order:stroke fill}
+.wyniki-gwiazdki svg{width:clamp(38px,6vh,56px);height:clamp(38px,6vh,56px)}
+.wyniki-gwiazdki .gwiazdka.pelna path{stroke:var(--op-tusz);stroke-width:2.2}
+.wyniki-gwiazdki .gwiazdka{filter:drop-shadow(0 4px 0 rgba(10,6,4,.7))}
+/* naszywki z treścią: wiersz gracza, sława, nagrody piosenki, osiągnięcia */
+.wyniki-karta .wiersz,.wyniki-karta .slawa-wyniki,.wyniki-karta .nagroda,.wyniki-karta .osiag{background:var(--op-filc);background-image:var(--op-naszywka);
+  box-shadow:0 0 0 2.5px var(--op-tusz),0 5px 0 2.5px rgba(10,6,4,.6)}
+.wyniki-karta .wiersz{box-shadow:0 0 0 2.5px var(--op-tusz),0 5px 0 2.5px rgba(10,6,4,.6),inset 6px 0 0 var(--kolor)}
+.wyniki-karta .wiersz .gwiazdka.pelna path{stroke:var(--op-tusz)}
+.wyniki-karta .wiersz-liczba b,.wyniki-karta .ranking[data-wg="punkty"] .wiersz-liczba.punkty b,.wyniki-karta .ranking[data-wg="precyzja"] .wiersz-liczba.precyzja b{color:var(--op-zloto)}
+.wyniki-karta .ranking{gap:clamp(7px,1.1vh,11px)}
+.wyniki-karta .slawa-wyniki{margin-top:12px}
+/* 6–8 wierszy: odstępy i tytuł ciasno jak dotąd, żeby ekran nie urósł w niskim oknie */
+.wyniki-karta:has(.ranking.ciasny){gap:clamp(4px,.9vh,10px)}
+.wyniki-karta:has(.ranking.ciasny) .wyniki-tytul{font-size:clamp(28px,5vh,50px);-webkit-text-stroke-width:6px}
+.wyniki-karta:has(.ranking.ciasny) .wyniki-podtytul{font-size:clamp(13px,1.9vh,17px)}
+.wyniki-karta:has(.ranking.ciasny) .wyniki-gwiazdki svg{width:clamp(30px,4.4vh,44px);height:clamp(30px,4.4vh,44px)}
+.wyniki-karta .ranking.ciasny{gap:clamp(6px,.9vh,9px)}
+.wyniki-karta .ranking.ciasny .wiersz{box-shadow:0 0 0 2px var(--op-tusz),0 3px 0 2px rgba(10,6,4,.6),inset 6px 0 0 var(--kolor)}
+.wyniki-karta .osiag-znak{background:var(--op-okno)}
+.wyniki-karta .odznaka.bot,.wyniki-karta .odznaka.na-tablicy:not(.pierwsze){background:var(--op-okno);color:var(--op-krem2);box-shadow:inset 0 0 0 1.2px var(--op-obw)}
+.wyniki-karta .segment{box-shadow:0 0 0 2px var(--op-tusz)}
+/* wyspy z własnym jasnym tłem liczą kolory po staremu: na bursztynie i limonce grafit */
+.wyniki-karta .trudnosc,.wyniki-karta .odznaka:not(.bot):not(.na-tablicy),.wyniki-karta .slawa-mnoznik,.wyniki-karta .slawa-cel,.wyniki-karta .slawa-instrument,
+.wyniki-karta .przycisk.nagrody-odbierz,.wyniki-karta .segment button[aria-pressed="true"],.wyniki-karta .segment button[aria-checked="true"]{
+  --ink:#211f1d;--muted:#524c3e;--dim:#57503f;--pink-d:#a4105c;--green-d:#46781f;color:#211f1d}
+.wyniki-karta .przycisk{box-shadow:0 0 0 2.5px var(--op-tusz),0 6px 0 2.5px rgba(10,6,4,.7)}
+.wyniki-karta .przycisk:hover:not(:disabled){box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.7)}
+.wyniki-karta .przycisk:not(.glowny):not(.nagrody-odbierz),.pauza-karta .przycisk:not(.glowny){background:var(--op-filc);background-image:var(--op-naszywka);color:var(--op-krem)}
+.wyniki-karta .przycisk:not(.glowny):not(.nagrody-odbierz)::after,.pauza-karta .przycisk:not(.glowny)::after{border-color:rgba(253,243,216,.3)}
+.pauza-karta .przycisk{box-shadow:0 0 0 2.5px var(--op-tusz),0 6px 0 2.5px rgba(10,6,4,.7)}
+.wyniki-podpowiedz,.wyniki-atrybucja,.wyniki-jakosc,.wyniki-discord,.pauza-podpowiedz{-webkit-text-stroke:3.5px var(--op-tusz);paint-order:stroke fill;font-weight:800}
+.wyniki-karta .link-przycisk{-webkit-text-stroke:3.5px var(--op-tusz);paint-order:stroke fill}
+.wyniki-karta .aplauz-miernik{-webkit-text-stroke:0;box-shadow:inset 0 0 0 1.5px var(--op-krem2)}
+
+/* ================= nakładka nagród (postęp, nagroda, koło) ================= */
+/* Podgląd zdobycia (data-scena="podglad") ma własne ciemne tło i kartę z koła: zostaje bez zmian. */
+/* Tło prawie kryjące: nakładka otwiera się nad ekranem wyników, a bez karty jego napisy prześwitywałyby przez treść. */
+#nagrody:not([data-scena="podglad"]){background:radial-gradient(ellipse 46% 56% at 50% 44%,rgba(84,24,62,.96),rgba(12,9,8,.97))}
+/* snop światła za sceną: nieruchoma warstwa, rysowana raz */
+#nagrody:not([data-scena="podglad"])::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-conic-gradient(from 4deg at 50% 44%,rgba(255,216,74,.085) 0 7deg,transparent 7deg 20deg);
+  -webkit-mask:radial-gradient(ellipse 50% 62% at 50% 44%,#000 20%,transparent 100%);mask:radial-gradient(ellipse 50% 62% at 50% 44%,#000 20%,transparent 100%)}
+#nagrody:not([data-scena="podglad"]) .ng-karta{--ink:var(--op-krem);--muted:var(--op-krem2);--dim:var(--op-krem2);--panel2:var(--op-okno);--line:var(--op-obw);
+  --pink-d:#ff86c2;--green-d:#a6d861;color:var(--op-krem);background:none;box-shadow:none}
+#nagrody:not([data-scena="podglad"]) .ng-karta::before,#nagrody:not([data-scena="podglad"]) .ng-karta::after{display:none}
+/* wyspy z własnym tłem (szafka koła, naklejki, żetony, plakietka gracza) liczą kolory po staremu */
+#nagrody .kolo-maszyna,#nagrody .ng-naklejka,#nagrody .ng-chip,#nagrody .kolo-kto{
+  --ink:#211f1d;--muted:#524c3e;--dim:#57503f;--panel2:#f5eede;--line:#d8cdb8;--pink-d:#a4105c;--green-d:#46781f;color:#211f1d}
+#nagrody:not([data-scena="podglad"]) .ng-naklejka{box-shadow:0 0 0 3px var(--op-tusz),0 6px 0 3px rgba(10,6,4,.7)}
+#nagrody[data-scena="kolo"] .ng-naklejka{font-size:26px;padding:9px 20px}
+#nagrody[data-scena="kolo"] .kolo-kto{box-shadow:0 0 0 2.5px var(--op-tusz),0 5px 0 2.5px rgba(10,6,4,.7)}
+#nagrody[data-scena="kolo"] .kolo-maszyna{box-shadow:0 9px 0 rgba(8,5,3,.6),inset 0 0 0 3px #3a352f,0 0 0 3px var(--op-tusz),0 0 70px 8px rgba(236,26,131,.4)}
+#nagrody:not([data-scena="podglad"]) .ng-kto:not(.kolo-kto),#nagrody:not([data-scena="podglad"]) .ng-nazwa,#nagrody:not([data-scena="podglad"]) .ng-poziom-et{
+  -webkit-text-stroke:5px var(--op-tusz);paint-order:stroke fill}
+#nagrody:not([data-scena="podglad"]) .ng-liczba{-webkit-text-stroke:8px var(--op-tusz);paint-order:stroke fill;text-shadow:0 5px 0 rgba(10,6,4,.7)}
+#nagrody:not([data-scena="podglad"]) .ng-opis,#nagrody:not([data-scena="podglad"]) .ng-dla,#nagrody:not([data-scena="podglad"]) .ng-liczba-et,
+#nagrody:not([data-scena="podglad"]) .ng-pasek-opis,#nagrody:not([data-scena="podglad"]) .ng-pop{-webkit-text-stroke:3.5px var(--op-tusz);paint-order:stroke fill}
+#nagrody:not([data-scena="podglad"]) .ng-pasek{box-shadow:0 0 0 2.5px var(--op-tusz),inset 0 0 0 1.5px var(--op-obw)}
+#nagrody:not([data-scena="podglad"]) .ng-nast{background:var(--op-filc);background-image:var(--op-naszywka);box-shadow:0 0 0 2.5px var(--op-tusz),0 5px 0 2.5px rgba(10,6,4,.6)}
+#nagrody[data-scena="kolo"] .kolo-log{background:var(--op-filc);background-image:var(--op-naszywka);box-shadow:0 0 0 2.5px var(--op-tusz),0 4px 0 2.5px rgba(10,6,4,.6)}
+#nagrody[data-scena="kolo"] .kolo-status{-webkit-text-stroke:4px var(--op-tusz);paint-order:stroke fill}
+#nagrody[data-scena="kolo"] .kolo-status.rzadkosc{-webkit-text-stroke:7px var(--op-tusz);text-shadow:0 4px 0 rgba(10,6,4,.7)}
+#nagrody[data-scena="kolo"] .kolo-status[data-rz="rzadki"]{--rz-kolor:#6db4ff}
+#nagrody[data-scena="kolo"] .kolo-status[data-rz="epicki"]{--rz-kolor:#b997ff}
+#nagrody[data-scena="kolo"] .kolo-status[data-rz="legendarny"]{--rz-kolor:var(--op-zloto)}
+#nagrody[data-scena="kolo"] .kolo-status[data-rz="sekretny"]{-webkit-text-stroke:0;background-image:linear-gradient(110deg,#fdf3d8 0%,#9ad6ff 28%,#ff9ad6 48%,#ffe08a 66%,#fdf3d8 100%)}
+#nagrody:not([data-scena="podglad"]) .przycisk{box-shadow:0 0 0 2.5px var(--op-tusz),0 5px 0 2.5px rgba(10,6,4,.7)}
+#nagrody:not([data-scena="podglad"]) .przycisk.pomin{background:var(--op-filc);background-image:var(--op-naszywka);color:var(--op-krem)}
+#nagrody:not([data-scena="podglad"]) .przycisk.pomin::after{border-color:rgba(253,243,216,.3)}

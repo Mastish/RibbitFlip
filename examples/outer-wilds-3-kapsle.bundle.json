@@ -1,0 +1,364 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "Outer Wilds (3 kapsle)",
+ "description": "Outer Wilds jako jeden pad Xbox, ten sam zestaw na piechotę i w statku, bo gra używa tych samych przycisków. Lewy kapsel: ruch i ciąg (lewy drążek), przycisk trzyma ciąg w górę (RT), obrót nadgarstkiem włącza i wyłącza ciąg w dół (LT), potrząśnięcie to sygnaloskop. Prawy kapsel: rozglądanie i obrót statku (prawy drążek), przycisk trzyma skok, doładowanie i wyrównanie prędkości (A), obrót nadgarstkiem to interakcja (X), potrząśnięcie to sonda (RB). Trzeci kapsel to koło narzędzi: trzymasz przycisk, przechylasz w stronę wycinka, puszczasz (mapa, latarka, tryb obrotu, autopilot, swobodne rozglądanie, namierzanie, pauza). Koło wczytujesz w module Koło wyboru z pliku outer-wilds-kolo-narzedzi.wheel.json. Przyciski z plików gry.",
+ "cassette": 1,
+ "howto": [
+  "Lewy kapsel: przechył to ruch i ciąg, przycisk trzyma ciąg w górę, obrót nadgarstkiem włącza i wyłącza ciąg w dół, potrząśnięcie wyjmuje sygnaloskop.",
+  "Prawy kapsel: przechył to kamera i obrót statku, przycisk to skok i wyrównanie prędkości, obrót nadgarstkiem to interakcja, potrząśnięcie wystrzeliwuje sondę.",
+  "Trzeci kapsel: wczytaj koło „Outer Wilds koło narzędzi” w module Koło wyboru, przypisz je do tego kapsla i trzymaj przycisk, żeby je otworzyć."
+ ],
+ "forApp": "Outer Wilds (Steam), wariant na trzy kapsle",
+ "author": "RibbitFlip",
+ "rev": 1,
+ "exe": [
+  "outerwilds.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Ruch i ciąg",
+   "role": {
+    "name": "Ruch i ciąg (lewa ręka)",
+    "note": "Lewy drążek. Przycisk to ciąg w górę, obrót włącza ciąg w dół, potrząśnięcie to sygnaloskop."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "ow-up",
+      "label": "Ciąg w górę (trzymaj przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 150
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:rt",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "ow-down-sw",
+      "label": "Przełącznik ciągu w dół (obrót nadgarstkiem)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": true,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "latch",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      },
+      "noAction": true
+     },
+     {
+      "id": "ow-down",
+      "label": "Ciąg w dół (trzyma LT, gdy przełącznik włączony)",
+      "enabled": true,
+      "source": {
+       "kind": "trigger",
+       "ref": "ow-down-sw"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:lt",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "ow-scope",
+      "label": "Sygnaloskop (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 18000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:y",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "own",
+     "stickBackend": "gamepad",
+     "stickWhich": "left",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 40,
+     "stickExpo": 1.6,
+     "stickInner": 0.1,
+     "stickOuter": 0.02,
+     "stickAccel": 0.6,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 1.0
+    }
+   }
+  },
+  {
+   "slot": "d1",
+   "name": "Kamera i statek",
+   "role": {
+    "name": "Kamera i statek (prawa ręka)",
+    "note": "Prawy drążek. Przycisk to skok i A, obrót to interakcja, potrząśnięcie to sonda."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "ow-a",
+      "label": "Skok, doładowanie, wyrównanie prędkości (przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 150
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:a",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "ow-x",
+      "label": "Interakcja (szybki obrót nadgarstkiem)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": true,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:x",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "ow-probe",
+      "label": "Sonda i narzędzie (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 12000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:rb",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "d0",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 50,
+     "stickExpo": 1.8,
+     "stickInner": 0.14,
+     "stickOuter": 0.0,
+     "stickAccel": 0.55,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 0.6
+    }
+   }
+  },
+  {
+   "slot": "d2",
+   "name": "Koło narzędzi",
+   "role": {
+    "name": "Koło narzędzi (trzeci kapsel)",
+    "note": "Bez ruchu na padzie. Przycisk otwiera koło narzędzi w module Koło wyboru."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [],
+    "mouse": {
+     "enabled": true,
+     "mode": "dpad",
+     "padShare": "d0",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 45,
+     "stickExpo": 1.6,
+     "stickInner": 0.9,
+     "stickOuter": 0.0,
+     "stickAccel": 0.7,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 0.1,
+     "stickSensY": 0.1,
+     "dpadBackend": "gamepad",
+     "padPark": true
+    }
+   }
+  }
+ ]
+}

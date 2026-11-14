@@ -1,0 +1,774 @@
+/* ============================================================================
+   OVERLAY SKIN — the cheat sheet dressed for life on top of a game.
+
+   The page is the SAME cheat sheet the panel shows (?view=overview); everything here strips it down
+   to what a player glances at mid-run and gets out of the way of the game underneath. Nothing in
+   this file changes behaviour — only what is on screen and how much room it takes.
+
+   There is no surround: everything the overlay does not draw is painted in the one colour Windows
+   removes from the window altogether, so the content floats over the game with nothing around it.
+   The card underneath it stays felt-cream by default, so the overlay is recognisably RibbitFlip and
+   not some other program's OSD.
+   ========================================================================= */
+/* #010203 is not a colour, it is a HOLE: Windows drops every pixel painted in exactly this value
+   from the window (see COLOR_KEY in ribbitflip_monitor.py), so the game shows through and clicks
+   land in it. Everything the overlay does NOT draw is painted in it — an overlay with a tinted
+   rectangle around its content has a frame, and a frame is the thing it exists not to have.
+   `html.ovl-bg` puts a real background back for anyone who wants the contrast. */
+html.rf-ovl, html.rf-ovl body{
+  background:#010203;
+  background-image:none;              /* the felt weave belongs to the panel, not to an OSD */
+  overflow:hidden;                    /* an overlay does not scroll; it is resized instead */
+  margin:0; padding:0;
+  scrollbar-width:none;
+  -webkit-user-select:none; user-select:none;   /* dragging the bar must not paint a text selection */
+}
+
+html.rf-ovl.ovl-bg, html.rf-ovl.ovl-bg body{background:#0b0d10}   /* the tint, when asked for */
+
+/* Everything that belongs to the panel and not to a glance: the brand header, the tab bar, the live
+   rail, the devices hub, the tip jar, the footer, and the cheat sheet's own toolbar with its "back
+   to the panel" button (there is no panel behind this window to go back to). */
+html.rf-ovl header,
+html.rf-ovl .tabbar,
+html.rf-ovl .live-rail,
+html.rf-ovl .rail-fold,
+html.rf-ovl .rf-kofi,
+html.rf-ovl footer,
+html.rf-ovl .devices-panel,
+html.rf-ovl #overviewCard > .head,
+html.rf-ovl .ov-wrap .tr-viewbar,
+html.rf-ovl .ov-pose-grip,
+/* The panel's own announcements belong to the panel. The overlay runs the same code, so the skull
+   pops up here too — over a cheat sheet somebody is watching mid-game, in a window with no way to
+   dismiss it, and over a cut-out background with nothing to read the text against. */
+html.rf-ovl #rfSkullSay,
+html.rf-ovl #rfSkullNotes,
+html.rf-ovl .rfm-backdrop,
+html.rf-ovl #rf-tip{display:none!important}
+
+/* Every pixel of margin here is a pixel of window that is not content, so the panel's comfortable
+   page gutters go: the card runs edge to edge. (.wrap is a class, not an id — the panel's outer
+   18px/24px padding lives there, and the card inside is width-limited and centred.) */
+html.rf-ovl .wrap{padding:0!important;margin:0!important;gap:0!important;max-width:none!important}
+html.rf-ovl .tab-panel{padding:0!important;gap:0!important}
+html.rf-ovl #overviewCard{background:transparent!important;border:none!important;box-shadow:none!important;
+  margin:0!important;padding:0!important;width:auto!important;max-width:none!important;
+  /* The panel springs its cards in on arrival. Here that animation only ever runs while the window
+     is being placed and styled, and a scaled card is a card inset from the edges. It is also the
+     animation that never finishes when the window is not compositing, leaving the card at 96 %. */
+  transform:none!important;animation:none!important}
+html.rf-ovl #overviewCard::before{display:none!important}   /* the felt stitch outline of the card */
+/* Edge to edge, and belt-and-braces about it: a 7 px strip of nothing down each side is invisible
+   over a bright game and reads as a dark border over a dark one — which is the frame all over
+   again. Measured after this: the card starts at x=0 and ends at the last pixel of the window. */
+html.rf-ovl .ov-wrap{padding:0!important;margin:0!important}
+/* W nakładce kapsel jest JEDEN, a okno bywa węższe niż minimalna szerokość kolumny w panelu —
+   bez tego wąska nakładka dostałaby poziomy pasek przewijania zamiast po prostu zwęzić kolumnę. */
+html.rf-ovl .ov-scroll{grid-auto-flow:row!important;grid-auto-columns:1fr!important;overflow:visible!important}
+html.rf-ovl .ov-scrollbar{display:none!important}   /* nie ma czego przewijać w bok, a nad grą to śmieć */
+html.rf-ovl #tab-wszystkie{margin:0!important}
+/* KOLUMNA JAKO PUDEŁKO `flex` — po to, żeby dało się przestawiać jej bloki (2026-09-01). Kolejność
+   nadaje `ovlOrderCol` w rf-41, wpisując `order` w każde dziecko; bez `display:flex` byłaby to
+   właściwość, która nic nie robi. `column` odtwarza dokładnie to, co robił blok, więc nic się nie
+   przesuwa u kogoś, kto niczego nie przestawiał. */
+html.rf-ovl .ov-col{margin:0!important;display:flex;flex-direction:column}
+
+/* DROBIAZGI WEWNĄTRZ BLOKÓW (2026-09-01). Ta sama zasada, co przy blokach: klasa na kolumnie chowa
+   jeden kawałek, a nie cały element. Dzięki temu „nagłówek bez słowa o połączeniu" albo
+   „naciśnięcia bez pasków" nie wymagają ani nowego elementu w ściądze, ani drugiego rysowania. */
+html.rf-ovl .ov-col.ovl-no-headlabel .ov-lbl,
+html.rf-ovl .ov-col.ovl-no-headconn .ov-conn,
+html.rf-ovl .ov-col.ovl-no-pressval .ov-press-val,
+html.rf-ovl .ov-col.ovl-no-presslane .ov-press-lane,
+html.rf-ovl .ov-col.ovl-no-wheellist .ov-whlist{display:none!important}
+
+/* The card is tightened: a glance needs the LED, the key and the shape of the widget — not the
+   generous spacing that suits a settings screen. */
+html.rf-ovl .ov-head{padding:5px 9px;gap:6px}
+html.rf-ovl .ov-head b{font-size:13px}
+html.rf-ovl .ov-rule{padding:4px 9px;gap:6px}
+html.rf-ovl .ov-key{font-size:13px}
+html.rf-ovl .ov-cond{font-size:10px}
+/* The motion widget keeps the cheat sheet's proportions (see .ov-mouse in 13) but is allowed less
+   of a narrow overlay window: it is one of several things being watched here, not the screen. */
+html.rf-ovl .ov-mouse{min-height:126px;max-height:210px}
+html.rf-ovl .ov-midi{padding:4px 9px 6px}
+
+/* WHICH PARTS ARE ON — the switches in this window's ⚙ drawer, put on the capsule's own column.
+   .ov-mouse carries !important both ways because the panel's own draw loop writes display straight
+   onto the element — it hides the widget when motion control is off, and here we show it anyway,
+   greyed, so the box does not appear and vanish under the player's eyes. */
+html.rf-ovl .ov-col .ov-mouse{display:block!important}
+/* The press widget exists only here (see .ov-press in 13) and follows its own switch. */
+html.rf-ovl .ov-col .ov-press{display:flex}
+html.rf-ovl .ov-col.ovl-no-press .ov-press{display:none}
+/* The virtual controller follows its own switch too. !important because rf-42 puts `.on` on the
+   box itself — in an overlay the drawing stays even with nothing mapped (faded), so the only
+   thing that may take it away is this switch. */
+html.rf-ovl .ov-col.ovl-no-pad .ov-padbox{display:none!important}
+/* KOŁO WYBORU. !important tylko na ukryciu: pokazywaniem rządzi pętla klatek (koło istnieje przez
+   czas jednego naciśnięcia), a jedyne, co ma prawo je zabrać na stałe, to ten przełącznik. */
+html.rf-ovl .ov-col.ovl-no-wheel .ov-wheel,
+/* Spis wycinków idzie za tym samym przełącznikiem, co rysunek: to jedna rzecz w dwóch
+   postaciach, a nie dwa elementy do osobnego chowania. */
+html.rf-ovl .ov-col.ovl-no-wheel .ov-whlist{display:none!important}
+/* W nakładce koło jest kwadratem, ale nie ma prawa zjeść wąskiego okna — tak jak widżet ruchu. */
+html.rf-ovl .ov-wheel{min-height:110px;max-height:200px}
+html.rf-ovl .ov-col.ovl-no-card{display:none!important}
+html.rf-ovl .ov-col.ovl-no-head .ov-head{display:none!important}
+html.rf-ovl .ov-col.ovl-no-pose .ov-pose{display:none!important}
+/* PRZÓD KAPSLA (rf-41e): istnieje tylko w nakładce. W panelu ściąga pokazuje wszystkie kapsle naraz
+   i nie należy do żadnego okna, więc nie ma czyjego przełącznika zapytać — element się nie pokazuje. */
+.ov-front{display:none}
+html.rf-ovl .ov-col .ov-front{display:block;width:100%;height:190px;margin:0}
+html.rf-ovl .ov-col.ovl-no-front .ov-front{display:none!important}
+html.rf-ovl .ov-col.ovl-no-motion .ov-mouse{display:none!important}
+html.rf-ovl .ov-col.ovl-no-rules .ov-rules{display:none!important}
+html.rf-ovl .ov-col.ovl-no-midi .ov-midi{display:none!important}
+html.rf-ovl .ov-col.ovl-no-cond .ov-cond{display:none!important}
+html.rf-ovl .ov-col.ovl-no-fires .ov-fires{display:none!important}
+/* The activation graph is the panel's "Szczegóły" canvas: the last ~6 s of every condition, with
+   its threshold line (and that threshold's value) and the trace going green while it is met. */
+html.rf-ovl .ov-col.ovl-no-graph .tr-detail{display:none!important}
+html.rf-ovl .tr-detail{margin:0 8px 6px}
+html.rf-ovl .tr-detail-cap{font-size:10px}
+/* Tall enough for the threshold figure to sit next to its dashed line instead of on the trace —
+   the panel can afford a 34 px strip in a settings tab, a glance mid-game cannot. */
+html.rf-ovl .tr-detail-scope{min-height:46px}
+
+/* EVERY PART AT ITS OWN SIZE (the drawer's "ukryj suwaki skali" block writes these).
+   `zoom` rather than `transform:scale()` on purpose: zoom takes part in layout, so a bigger ball
+   pushes the trigger list down instead of growing over the top of it — which is what an overlay
+   made of stacked blocks needs. It multiplies with the window-wide zoom on .wrap, so the two knobs
+   compose: "everything a bit bigger" still works after "this one twice the size".
+   The canvases stay sharp through it because fit() measures the zoom and raises the backing store
+   to match (rf-09) — without that, a ball at 200 % is a ball rendered at half resolution. */
+html.rf-ovl .ov-col .ov-head{zoom:var(--sc-head,1)}
+html.rf-ovl .ov-col .ov-pose{zoom:var(--sc-pose,1)}
+html.rf-ovl .ov-col .ov-front{zoom:var(--sc-front,1)}
+html.rf-ovl .ov-col .ov-mouse{zoom:var(--sc-motion,1)}
+html.rf-ovl .ov-col .ov-press{zoom:var(--sc-press,1)}
+html.rf-ovl .ov-col .ov-padbox{zoom:var(--sc-pad,1)}
+html.rf-ovl .ov-col :is(.ov-wheel,.ov-whlist){zoom:var(--sc-wheel,1)}
+html.rf-ovl .ov-col .ov-rules{zoom:var(--sc-rules,1)}
+html.rf-ovl .ov-col .tr-detail{zoom:var(--sc-graph,1)}
+html.rf-ovl .ov-col .ov-midi{zoom:var(--sc-midi,1)}
+/* The graph lives INSIDE the rule list, so its own zoom would multiply with the list's — set it
+   twice as big and a big list would make it huge. Divided back out, so "wykres 150 %" means 150 %
+   of the window, whatever the list is doing. */
+html.rf-ovl .ov-col .ov-rules .tr-detail{zoom:calc(var(--sc-graph,1) / var(--sc-rules,1))}
+
+/* ============================ THREE LOOKS =================================
+   They differ only in the CARD, because the window's background is cut away in all three:
+   felt — the panel's own cream card, dark — the same in dark, bare — no card at all, just the
+   drawing and the letters over the game.
+   The token overrides matter twice over: the CSS follows them, and so do the CANVASES — cv() reads
+   these custom properties live, so the sphere's grid and the widget labels re-colour with the rest
+   instead of staying tuned for cream. */
+/* RODZINA CIEMNYCH. Trzy wyglądy dzielą jedną paletę i jeden komplet reguł komponentów: `:is()`
+   zamiast wypisywania każdego selektora trzy razy, bo dołożenie czwartego ciemnego motywu ma być
+   dopisaniem JEDNEGO słowa, a nie przepisaniem dziesięciu linii. Neon nadpisuje po tym bloku
+   wyłącznie to, czym się różni — barwy. */
+html.rf-ovl:is([data-theme="dark"],[data-theme="bare"],[data-theme="neon"]){
+  --bg:#0e1013; --bg2:#12151a; --panel:#171b21; --panel2:#1c2128;
+  --line:#39414d; --ink:#eae5d9; --muted:#a7a294; --dim:#8d8879; --stitch:#39414d;
+  --felt-shadow:0 6px 0 rgba(0,0,0,.5); --felt-shadow-sm:0 3px 0 rgba(0,0,0,.55);
+  /* `--warn-ink` (01-assets-tokens.css) to bursztyn PRZYCIEMNIONY POD PAPIER — na kremie ma 4,9:1,
+     na tej karcie 3,2:1. Rodzina ciemnych zawraca go do jasnego bursztynu, którym te same napisy
+     były wcześniej (plakietka „Wii · DSU" widżetu pada, tagi stanu). Panel zostaje ciemny, nakładka
+     jasna — jeden token, dwie powierzchnie.
+     WHY: --warn-ink is amber darkened FOR PAPER; on the dark card it drops to 3.2:1, so the dark
+     family sends it back to the bright amber those labels used before. */
+  --warn-ink:#c8971a;
+}
+/* Ta sama zasada, co przy --warn-ink, tylko dla zieleni: `.ov-conn.on` nosi --green-d (atrament
+   pod papier), a na karcie #171b21 --green-d ma 2,0:1. Arkusz w ciemnej nakładce wraca do
+   rysunkowego --ok, którym ta linijka była wcześniej. Token został nietknięty — to jedna linia,
+   a nie cała paleta, więc cofnięcie jest regułą komponentu.
+   WHY: --green-d is paper ink (2.0:1 on the dark card), so the dark family sends this one
+   label back to the drawing green it used before. */
+html.rf-ovl:is([data-theme="dark"],[data-theme="bare"],[data-theme="neon"]) .ov-conn.on{
+  color:var(--ok)}
+/* ⚠️ BARWY POWIERZCHNI (karta, talerzyki pod widżetami, płytka wykresu) NIE STOJĄ JUŻ W TYCH
+   BLOKACH, tylko w zmiennych `--ovl-card` / `--ovl-sub` / `--ovl-sub2` niżej — bo suwak
+   przezroczystości dokłada im alfę i musi mieć JEDNO miejsce, w którym to robi. Wartości są
+   dokładnie te, co były. Tu zostaje wyłącznie TUSZ, którego alfa nie dotyczy. */
+html.rf-ovl:is([data-theme="dark"],[data-theme="bare"],[data-theme="neon"]) .ov-col{color:#eae5d9}
+html.rf-ovl:is([data-theme="dark"],[data-theme="bare"],[data-theme="neon"]) .ov-head b{color:#f2eee2}
+html.rf-ovl:is([data-theme="dark"],[data-theme="bare"],[data-theme="neon"]) .ov-key{color:#eae5d9}
+html.rf-ovl:is([data-theme="dark"],[data-theme="bare"],[data-theme="neon"]) .ov-rule-wrap{
+  border-top-color:#2b323c}
+/* NEON — ta sama ciemna karta, inne barwy: granat zamiast grafitu, cyjanowe linie, lodowy tusz.
+   Liczby z makiety koła, żeby karta i koło w niej mówiły jednym głosem. */
+html.rf-ovl[data-theme="neon"]{
+  --bg:#05070c; --bg2:#090d14; --panel:#0c1018; --panel2:#0a0e16;
+  --line:#1d2839; --ink:#eaf6ff; --muted:#9fb6cc; --dim:#7d94ab; --stitch:#1d2839;
+  --felt-shadow:0 6px 0 rgba(0,0,0,.6); --felt-shadow-sm:0 3px 0 rgba(0,0,0,.6);
+}
+html.rf-ovl[data-theme="neon"] .ov-col{color:#eaf6ff}
+html.rf-ovl[data-theme="neon"] .ov-head b{color:#ffffff}
+html.rf-ovl[data-theme="neon"] .ov-key{color:#eaf6ff}
+html.rf-ovl[data-theme="neon"] .ov-rule-wrap{border-top-color:#1d2839}
+/* SZKŁO — jasna, CHŁODNA karta (felt jest ciepły i kremowy, to jest jego przeciwieństwo na tej
+   samej jasności).
+   ⚠️ NIEPRZEZROCZYSTA, i to nie jest kompromis, tylko warunek działania: tło okna nakładki to
+   kolor dziury (#010203), a wszystko, co się z nim zmiesza, ginie razem z nim przy cięciu — patrz
+   uwaga „Nothing may BLEND into the hole colour" niżej. Rozmycie ma sens tylko tam, gdzie jest co
+   rozmywać, więc żyje w rysunku koła i w podglądzie w panelu, a nie w karcie nad grą. */
+html.rf-ovl[data-theme="glass"]{
+  --bg:#e8eef7; --bg2:#eef3fb; --panel:#f4f8fd; --panel2:#eaf0f8;
+  --line:#cdd7e6; --ink:#1b2330; --muted:#4a5666; --dim:#5a6675; --stitch:#c9d4e4;
+  --felt-shadow:0 10px 24px rgba(70,90,130,.18); --felt-shadow-sm:0 4px 12px rgba(70,90,130,.16);
+}
+html.rf-ovl[data-theme="glass"] .ov-col{color:#1b2330}
+html.rf-ovl[data-theme="glass"] .ov-head b{color:#101722}
+html.rf-ovl[data-theme="glass"] .ov-key{color:#1b2330}
+html.rf-ovl[data-theme="glass"] .ov-rule-wrap{border-top-color:#dbe3ee}
+
+/* ============ BARWY POWIERZCHNI W JEDNYM MIEJSCU (2026-08-31) ===============================
+   Karta i talerzyki pod widżetami mają teraz swoje barwy w zmiennych, a nie rozsypane po czterech
+   blokach motywów. Powód praktyczny: `.ov-padbox` (płytka pod rysunkiem pada) dostała kiedyś ciemny
+   wariant WYŁĄCZNIE dla wyglądu „Ciemny", więc w „Neonie" i w „Szkle" świeciła kremową płytką ze
+   środka — dokładnie ta usterka, przed którą ostrzega notatka przy liście „Samej treści" niżej
+   („EVERY surface has to be in this list"). Z jedną listą powierzchni nie da się już jej powtórzyć.
+
+   ⚠️ PRZEZROCZYSTOŚCI TU NIE MA I BYĆ NIE MOŻE. Przygaszaniem okna zajmuje się WINDOWS (alfa
+   warstwowa, `_apply` w ribbitflip_monitor.py) — zmierzone 2026-08-31: `LWA_COLORKEY | LWA_ALPHA`
+   działają naraz, więc wycięte tło zostaje wycięte przy każdej alfie, a to, co narysowane, gaśnie
+   liniowo. Każde przygaszanie po stronie strony (`opacity` na treści albo alfa w tych barwach)
+   DOKŁADAŁOBY SIĘ do tamtej alfy i 50% dawałoby 25%. Stąd tu same, pełne kolory. */
+html.rf-ovl{--ovl-card:#fff; --ovl-sub:#f6f1e5; --ovl-sub2:#fff}
+html.rf-ovl:is([data-theme="dark"],[data-theme="bare"],[data-theme="neon"]){
+  --ovl-card:#171b21; --ovl-sub:#101318; --ovl-sub2:#12151a}
+html.rf-ovl[data-theme="neon"]{--ovl-card:#0c1018; --ovl-sub:#070b12; --ovl-sub2:#090d14}
+html.rf-ovl[data-theme="glass"]{--ovl-card:#f4f8fd; --ovl-sub:#eaf0f8; --ovl-sub2:#eef3fb}
+/* „Sama treść" nie ma żadnej powierzchni — jej lista `background:transparent` niżej zostaje
+   nietknięta, a te zmienne tylko pilnują, żeby reguły niżej nie wstawiły jej karty z powrotem. */
+html.rf-ovl[data-theme="bare"]{--ovl-card:transparent; --ovl-sub:transparent; --ovl-sub2:transparent}
+html.rf-ovl .ov-col{background-color:var(--ovl-card)!important}
+/* `.ov-padbox` DOŁĄCZA TU DO RESZTY TALERZYKÓW — patrz notatka wyżej o kremowej płytce w Neonie. */
+html.rf-ovl :is(.ov-pose,.ov-front,.ov-mouse,.ov-press,.ov-wheel,.ov-padbox){
+  background-color:var(--ovl-sub)!important}
+html.rf-ovl .tr-detail{background-color:var(--ovl-sub2)!important}
+
+/* Nothing may BLEND into the hole colour, or the blend survives the cut as a dark fringe. Square
+   corners for the same reason — a rounded corner is a ramp of part-keyed pixels, which is what a
+   fringe is made of. With a real background underneath there is nothing to fringe against, so the
+   corners come back. */
+html.rf-ovl .ov-col{border-radius:0;box-shadow:none}
+html.rf-ovl.ovl-bg .ov-col{border-radius:10px;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+html.rf-ovl .ov-scroll{gap:4px}
+
+/* BARE: the card goes too. `transparent` rather than the hole colour on purpose — it then follows
+   whatever the page background is, so the same rule gives a cut-out over the game and a dim panel
+   when the background is switched on. The letters keep a dark halo: a shadow blends AWAY from the
+   hole colour, so it survives the cut and is exactly what keeps them readable over anything.
+   EVERY surface has to be in this list. One that is missed does not look like a missed rule — it
+   looks like a black brick floating over the game, because the look it is still wearing is the DARK
+   one and the card that used to justify it is gone. That is what happened to the virtual controller
+   (.ov-padbox): it was given a plate for the dark look and never a line here. */
+html.rf-ovl[data-theme="bare"] .ov-col,
+html.rf-ovl[data-theme="bare"] .ov-head,
+html.rf-ovl[data-theme="bare"] .ov-rule,
+html.rf-ovl[data-theme="bare"] .ov-rules,
+html.rf-ovl[data-theme="bare"] .ov-midi,
+html.rf-ovl[data-theme="bare"] .ov-pose,
+html.rf-ovl[data-theme="bare"] .ov-front,
+html.rf-ovl[data-theme="bare"] .ov-mouse,
+html.rf-ovl[data-theme="bare"] .ov-press,
+html.rf-ovl[data-theme="bare"] .ov-padbox,
+html.rf-ovl[data-theme="bare"] .ov-wheel,
+html.rf-ovl[data-theme="bare"] .ov-pose-grip,
+html.rf-ovl[data-theme="bare"] .tr-detail{background:transparent!important}
+html.rf-ovl[data-theme="bare"] .ov-rule-wrap{border-top-color:rgba(255,255,255,.14)}
+
+/* ---- THE OUTLINE (settings drawer → "Obrys") --------------------------------------------------
+   With no card, something has to separate the letters and the drawings from the game they are
+   lying on, and the only thing that can is a halo drawn AWAY from the hole colour — a blend
+   towards it would be cut away with it. Which colour that should be is not ours to decide: it
+   depends on what is being played. So it is a choice, and it comes in PAIRS, because an outline is
+   only half of a contrast:
+     dark  — light ink, black halo (the default; the only pairing that reads over anything);
+     light — DARK ink, white halo — the same trick the other way up, for bright games;
+     dcol  — light ink haloed in the capsule's own colour, which also says whose window this is;
+     none  — no halo at all. Cleanest, and over a busy game frequently unreadable. Their call. */
+html.rf-ovl[data-theme="bare"]{--ovl-halo:#000;--ovl-halo-soft:rgba(0,0,0,.7)}
+html.rf-ovl[data-theme="bare"][data-outline="light"]{--ovl-halo:#fff;--ovl-halo-soft:rgba(255,255,255,.75)}
+/* Per COLUMN, not per page: --dcol is set on the capsule's own card. */
+html.rf-ovl[data-theme="bare"][data-outline="dcol"] .ov-col{--ovl-halo:var(--dcol,#ffe236);
+  --ovl-halo-soft:color-mix(in srgb,var(--dcol,#ffe236) 70%,transparent)}
+html.rf-ovl[data-theme="bare"] .ov-col,
+html.rf-ovl[data-theme="bare"] .ov-col *{text-shadow:0 0 3px var(--ovl-halo,#000),0 1px 2px var(--ovl-halo,#000)}
+html.rf-ovl[data-theme="bare"][data-outline="none"] .ov-col,
+html.rf-ovl[data-theme="bare"][data-outline="none"] .ov-col *{text-shadow:none}
+
+/* ---- BARE, and the background actually cut away: THE INK CHANGES SIDES -----------------------
+   The colour key is ALL OR NOTHING: Windows removes the pixels that are EXACTLY #010203 and leaves
+   every other one as it was computed. A half-transparent pixel is therefore NOT half-transparent
+   over the game — it is the ink mixed with the hole colour, and the hole colour is black. So in
+   this one look:
+     • ink at 40 % comes out four-tenths of the way from BLACK to the ink, whatever is underneath;
+     • the dark look's ink (--line #39414d, --dim #8d8879) is already nearly black to begin with.
+   Together that is "everything went weirdly black": the widgets kept wearing the dark card's
+   clothes with the card taken away. Bare therefore gets LIGHT ink of its own — opaque values, not
+   rgba, for the same reason — and the canvases get the halo the letters already have (see the
+   alpha floor in fit(), rf-09, for the transparency the drawings ask for themselves).
+   With `bg` switched back on there IS a real background again, nothing is being cut, and the dark
+   look is right — hence :not(.ovl-bg).
+   The one pairing that does NOT get light ink is the LIGHT OUTLINE: a white halo round white
+   letters is a smudge. There the ink stays the dark look's and the halo does the separating. */
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg):not([data-outline="light"]){
+  --line:#cfc9ba; --stitch:#a8a294; --dim:#ded8c9; --muted:#efeade;
+}
+/* …and the pad turns over with the ink: the pale twin under a dark halo, the dark one under a
+   light halo. Same drawing, two colourways, and the widget is far too big to be left mismatched. */
+html.rf-ovl[data-theme="bare"][data-outline="light"] .gpv{
+  background-image:url(/web/assets/gamepad/base-black.svg)}
+/* …and the card's own border goes ENTIRELY, all four sides. Three of them are the 1 px hairline,
+   which with the dark look's ink nobody saw and which — once the ink went light — drew a pale
+   rectangle down the window: a FRAME, the one thing this look exists not to have. The fourth is
+   the capsule's 3 px colour stripe along the top, and it goes for the same reason: it is a line
+   across the width of the window, which is what a frame is made of, and it is not carrying
+   anything the window does not already say twice — the bar wears the capsule's name in its own
+   colour, and the card's header repeats both. */
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-col{border-color:transparent}
+/* The halo, for the drawings. Same job as the text-shadow above and the same reason it works: it
+   blends AWAY from the hole colour, so it survives the cut and reads over a bright game. On the
+   element rather than in the drawing code — a CSS filter follows the drawn pixels (it is alpha
+   aware) and is composited, where ctx.shadowBlur would be paid per stroke, sixty times a second. */
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-pose,
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-mouse,
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-press-lane,
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-wheel,
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .tr-detail-scope,
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .gpv{
+  filter:drop-shadow(0 0 2px var(--ovl-halo,#000)) drop-shadow(0 1px 2px var(--ovl-halo-soft,rgba(0,0,0,.7)))}
+html.rf-ovl[data-theme="bare"][data-outline="none"] .ov-pose,
+html.rf-ovl[data-theme="bare"][data-outline="none"] .ov-mouse,
+html.rf-ovl[data-theme="bare"][data-outline="none"] .ov-press-lane,
+html.rf-ovl[data-theme="bare"][data-outline="none"] .ov-wheel,
+html.rf-ovl[data-theme="bare"][data-outline="none"] .tr-detail-scope,
+html.rf-ovl[data-theme="bare"][data-outline="none"] .gpv{filter:none}
+/* The capsule's own tag is a wash of its colour — 22 % of it, which over the hole is 22 % of the way
+   from black and reads as a dark smudge round the name rather than as a tint. Here the colour goes
+   into the letters instead, where it is the whole point of the tag anyway. */
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-lbl{background:transparent;color:var(--dcol);font-weight:700;
+  padding:1px 3px}
+/* The two lamps say "nothing right now" by being dark, which over a cut-out background is the one
+   thing that cannot be seen at all — and where it can, it is a black dot on the game. Off is a pale
+   dot here instead. Written as the IDLE state only (:not(.active)/:not(.held)) rather than as a
+   blanket rule: this selector outweighs `.ov-rule.active .ov-led`, so as a blanket rule it would
+   have quietly taken the capsule's colour away from the lit lamp — the one thing the lamp is for. */
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-rule:not(.active) .ov-led,
+html.rf-ovl[data-theme="bare"]:not(.ovl-bg) .ov-press:not(.held) .ov-press-dot{background:#cfc9ba;
+  box-shadow:0 0 0 1px rgba(0,0,0,.75)}
+
+/* The bar is one soft strip in every look; over a cut-out background it fades almost away, but it
+   stays in ONE piece and stays painted — a cut-out pixel does not receive the mouse, so an
+   invisible bar could never be grabbed back. */
+html.rf-ovl:not(.ovl-bg) .ovl-bar{background:rgba(12,15,20,.62);opacity:.26}
+html.rf-ovl:not(.ovl-bg) .ovl-bar:hover,
+html.rf-ovl:not(.ovl-bg) .ovl-bar.ovl-open,
+html.rf-ovl:not(.ovl-bg) .ovl-bar.ovl-dragging{opacity:1;background:rgba(12,15,20,.92)}
+
+/* ---- the overlay's own bar ---------------------------------------------
+   The only thing here that is not the cheat sheet, so it fades to a hint of itself and comes back
+   under the pointer. The WHOLE bar is the handle (see ovlDrag): a title bar you can only grab by
+   one glyph is a title bar you miss.
+
+   OD 2026-09-09 TO PIERWSZY WIERSZ ŚCIĄGI, a nie pigułka nad nią: pasek okna stoi
+   u szczytu zawartości i ma wyglądać i wkomponowywać się tak samo jak jej wiersze. Stąd: zero marginesu, zero zaokrąglenia, zero obwódki dookoła — zostaje ta sama kreska
+   pod spodem (`--stitch`), którą bloki ściągi dzielą się między sobą, i to samo wcięcie 8 px, co
+   `.ov-press` i `.ov-padbox`. Miejsce w drzewie robi `ovlBarMount`.
+
+   ⚠️ MALOWANIE ZOSTAJE NIETKNIĘTE, I TO JEST TA SAMA LEKCJA, CO POPRZEDNIO. Pasek już raz był
+   pełną szerokością z kreską pod spodem — i w wyglądzie prześwitującym ta szerokość była WYCINANA,
+   przez co uchwyt, nazwa i przyciski zostawały jako cztery osobne wysepki. Powód był jeden: strip
+   nie miał czym być malowany. Reguła `html.rf-ovl:not(.ovl-bg) .ovl-bar` (wyżej) maluje go i dziś,
+   i dlatego zostaje jednym kawałkiem — a że wycięty piksel nie odbiera myszy, niemalowany pasek
+   byłby paskiem, którego nie da się złapać z powrotem.
+   ⚠️ I DLATEGO TEŻ NIE PRZEJMUJE KOLORU KARTY (`--ovl-card`), choć stoi teraz na jej szczycie.
+   Malowana jest KOLUMNA, nie karta (patrz `.ov-col` wyżej), a pasek — żeby przeżyć odrysowanie
+   ściągi — mieszka w karcie, obok kolumny. Wzięcie jej koloru wymagałoby przebrania na jasne tło
+   uchwytu, pigułki z nazwą, pinezki, zębatki, ✕ i całej szuflady, czyli przemalowania rzeczy,
+   o którą nikt nie prosił („niech wygląda tak samo"). Zmienił się KSZTAŁT i MIEJSCE, nie barwa. */
+.ovl-bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:5px;
+  margin:0;padding:3px 8px;border:0;border-bottom:1px solid var(--stitch,#39414d);cursor:move;
+  background:rgba(12,15,20,.9);
+  color:#e9e4d8;font:12px var(--sans,system-ui,sans-serif);opacity:.32;transition:opacity .18s ease}
+.ovl-bar:hover,.ovl-bar:focus-within,.ovl-bar.ovl-open{opacity:1}
+.ovl-bar.ovl-dragging{opacity:1;border-color:color-mix(in srgb,var(--dcol,#ffe236) 60%,transparent)}
+/* While clicks are passing through, this strip is the only part of the window that still takes the
+   mouse (the app keeps it solid — see OverlayWindow.in_grab). So it stops hiding: half-lit, marked,
+   and reachable. A bar you cannot find is a setting you cannot undo. */
+.ovl-bar.ovl-thru{border-color:color-mix(in srgb,var(--dcol,#ffe236) 55%,transparent)}
+/* Half-lit only while nothing is being DONE to it. This rule sits after the :hover/.ovl-open one and
+   carries the same specificity, so without the exclusions it wins on source order — and then the
+   settings drawer, which is a child of the bar and therefore inside its opacity, opened at 66 %
+   over the cheat sheet. Two pictures on top of each other, and the warning underneath it (the one
+   explaining how to switch this very setting off) unreadable through both. */
+html.rf-ovl:not(.ovl-bg) .ovl-bar.ovl-thru:not(:hover):not(.ovl-open):not(.ovl-dragging){opacity:.66}
+/* The drawer opens on a CLICK of the cog and stays open — never on hover. Hover is right for a
+   menu and wrong for anything you drag: leave the panel by two pixels mid-gesture and the control
+   you were holding disappears from under your hand. It OVERLAYS the cheat sheet rather than pushing
+   it down, because an overlay that reflows its own contents when the pointer crosses it is
+   unreadable.
+   It opens BELOW whatever the bar is currently saying: the two notes are siblings of the bar, so
+   `top:100%` alone put the drawer straight over them and the message vanished the moment you went
+   looking for the switch it was telling you about. --ovl-notes is their measured height (ovlNotes). */
+.ovl-more{display:none;position:absolute;top:calc(100% + 4px + var(--ovl-notes,0px));left:0;right:0;z-index:41;
+  flex-direction:column;gap:6px;padding:8px 9px 10px;border-radius:9px;cursor:default;
+  background:rgba(10,12,16,.97);border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 8px 18px rgba(0,0,0,.5);
+  /* A short window must not push the drawer's tail off screen with no way to reach it: the drawer
+     scrolls before the window clips it. */
+  max-height:calc(100vh - 52px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+/* ONLY the class opens it. It used to open on :focus-within as well, and since clicking the cog
+   focuses the cog, the drawer stayed open after the click that was meant to close it — the button
+   looked stuck, and then the drawer vanished later when something else took the focus. */
+.ovl-bar.ovl-open .ovl-more{display:flex}
+.ovl-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ovl-lbl{color:#8f8a7d;font-size:11px;margin-right:2px}
+.ovl-grip{cursor:move;padding:0 4px;font-size:14px;line-height:1;color:#8f8a7d;letter-spacing:-2px}
+.ovl-grip:active{cursor:grabbing}
+/* EVERY ACCENT IN THIS CHROME IS THE CAPSULE'S OWN COLOUR (--dcol, set on the root by ovlColumns) —
+   a green capsule's overlay must not wear another capsule's yellow. Yellow remains only as the
+   fallback for the moment before the capsule is known. */
+.ovl-chip,.ovl-pill{border:1px solid rgba(255,255,255,.16);background:#181b21;color:#9a9486;
+  border-radius:999px;padding:2px 8px;font:11px var(--sans,system-ui,sans-serif);cursor:pointer;line-height:1.5}
+.ovl-chip:hover,.ovl-pill:hover{border-color:color-mix(in srgb,var(--dcol,#ffe236) 55%,transparent);color:#e9e4d8}
+/* On-states are a wash of the capsule's colour under light letters, not coloured letters on dark —
+   the colour is whatever the capsule's is, and not every one of them can carry text. */
+.ovl-chip.on,.ovl-pill.on{background:color-mix(in srgb,var(--dcol,#ffe236) 26%,#181b21);
+  border-color:var(--dcol,#ffe236);color:#f4efe2}
+
+/* ---- section headers: three named shelves instead of one wall -------------------------------- */
+.ovl-sec{display:flex;align-items:center;gap:6px;margin-top:3px}
+.ovl-sec:first-child{margin-top:0}
+.ovl-sec span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8f8a7d}
+.ovl-sec i{flex:1 1 auto;border-top:1px solid rgba(255,255,255,.09)}
+.ovl-sec em{font-style:normal;font-size:10px;color:#6f6a5e}
+
+/* ---- "Elementy": one row per part — the eye and the size side by side ------------------------ */
+.ovl-els{display:flex;flex-direction:column;gap:1px}
+.ovl-el{display:flex;align-items:center;gap:7px;padding:3px 5px;border-radius:7px}
+.ovl-el:hover{background:rgba(255,255,255,.05)}
+.ovl-el-lbl{flex:1 1 auto;font-size:12px;color:#e9e4d8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovl-el.off .ovl-el-lbl{color:#8f8a7d}
+/* A hidden part's slider would size something nobody can see — it waits, dimmed, for the eye. */
+.ovl-el.off .ovl-pscale{opacity:.3;pointer-events:none}
+.ovl-el.off .ovl-val{opacity:.4}
+.ovl-el-sub{margin-left:18px}
+.ovl-el-chips{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:1px 5px 1px 23px}
+.ovl-eye{display:inline-flex;align-items:center;justify-content:center;width:24px;height:20px;padding:0;
+  flex:0 0 auto;border:1px solid transparent;background:transparent;border-radius:6px;
+  color:#5f5a50;cursor:pointer}
+.ovl-eye svg{width:15px;height:15px;display:block}
+.ovl-eye.on{color:var(--dcol,#ffe236)}
+.ovl-eye:hover{border-color:color-mix(in srgb,var(--dcol,#ffe236) 55%,transparent)}
+.ovl-eye .ovl-eye-slash{display:none}
+.ovl-eye:not(.on) .ovl-eye-slash{display:block}
+
+/* ---- sliders: label — track — figure. A control that shows no value cannot be told apart from a
+   broken one, so every one of them carries its number. ----------------------------------------- */
+.ovl-more input[type=range]{accent-color:var(--dcol,#ffe236);height:14px;cursor:ew-resize}
+.ovl-pscale{flex:0 0 96px;width:96px;height:12px}
+.ovl-slrow{flex-wrap:nowrap}
+.ovl-slrow .ovl-fl{flex:0 0 auto;font-size:12px;color:#c9c3b4}
+.ovl-slrow input[type=range]{flex:1 1 auto;width:auto;min-width:60px}
+.ovl-hint{font-size:11px;color:#6f6a5e;margin:-3px 2px 0}
+
+/* ---- "Okno": the name this overlay goes by, and the ＋ that makes another one ------------------
+   The name earns its place only once a capsule has more than one window — and then it is what the
+   bar, the panel's buttons and the tray menu all call this one. Same dark chrome as the buttons
+   around it: the drawer is the app's own furniture, not the cheat sheet. */
+.ovl-namerow{flex-wrap:nowrap}
+.ovl-namerow .ovl-fl{flex:0 0 auto;font-size:12px;color:#c9c3b4}
+#ovlLabel{flex:1 1 auto;min-width:60px;border:1px solid rgba(255,255,255,.16);background:#181b21;
+  color:#f4efe2;border-radius:6px;padding:3px 7px;font:500 12px var(--sans,system-ui,sans-serif)}
+#ovlLabel:focus{outline:2px solid var(--dcol,#ffe236);outline-offset:1px;
+  border-color:color-mix(in srgb,var(--dcol,#ffe236) 55%,transparent)}
+#ovlLabel::placeholder{color:#6f6a5e}
+.ovl-add-btn{width:100%;justify-content:center}
+
+/* ---- "Wygląd": the three looks as pictures. Three words used to stand here, and "Jasny" tells
+   you nothing a thumbnail of a cream card does not say faster. ---------------------------------- */
+/* Ile kolumn — z szerokości szuflady, nie z liczby wyglądów. Zaklepane „1fr 1fr 1fr" znaczyło, że
+   każdy nowy wygląd wymaga poprawki w CSS-ie, a piąty (Neon, Szkło) zostawiał pustą kolumnę. */
+.ovl-themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:6px}
+.ovl-theme{display:flex;flex-direction:column;gap:3px;padding:3px 3px 4px;border-radius:8px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);background:#14171d;color:#9a9486;
+  font:11px var(--sans,system-ui,sans-serif)}
+.ovl-theme:hover{border-color:color-mix(in srgb,var(--dcol,#ffe236) 55%,transparent);color:#e9e4d8}
+.ovl-theme.on{border-color:var(--dcol,#ffe236);color:#f4efe2;
+  background:color-mix(in srgb,var(--dcol,#ffe236) 14%,#14171d)}
+.ovl-th-lbl{text-align:center}
+.ovl-thumb{display:block;height:34px;border-radius:5px;padding:5px 7px;border:1px solid rgba(255,255,255,.1)}
+.ovl-thumb b{display:block;height:4px;border-radius:2px;margin-top:4px}
+.ovl-thumb b:first-child{margin-top:0;width:68%}
+.ovl-thumb b:nth-child(2){width:90%}
+.ovl-thumb b:nth-child(3){width:52%}
+.ovl-thumb-felt{background:#efe7d2}
+.ovl-thumb-felt b{background:#d3c8a8}
+.ovl-thumb-felt b:first-child{background:#b9ac86}
+.ovl-thumb-dark{background:#171b21}
+.ovl-thumb-dark b{background:#2c333e}
+.ovl-thumb-dark b:first-child{background:#39414d}
+/* "Sama treść": a checkerboard, the one drawing everyone reads as "see-through". */
+.ovl-thumb-bare{background:repeating-conic-gradient(#20242b 0% 25%,#181c22 0% 50%);background-size:10px 10px}
+.ovl-thumb-bare b{background:#ded8c9}
+.ovl-thumb-bare b:first-child{background:#efeade}
+/* Neon i Szkło poznaje się po BARWIE, a nie po układzie — miniatura pokazuje więc paletę:
+   granat z cyjanem i różem, oraz chłodną biel z błękitem. */
+.ovl-thumb-neon{background:#070b12}
+.ovl-thumb-neon b{background:#1d2839}
+.ovl-thumb-neon b:first-child{background:#37e6ff}
+.ovl-thumb-neon b:nth-child(3){background:#ec1a83}
+/* Miniatura szkła jest NASYCONA mocniej niż sam motyw: na kwadracie 34 px prawdziwa, ledwie
+   chłodna biel jest nie do odróżnienia od kremu „Jasnego" obok. Miniatura ma nazwać barwę, a nie
+   ją odmierzyć. */
+.ovl-thumb-glass{background:linear-gradient(135deg,#cfe0f7,#f0dcf2 55%,#cff0e2)}
+.ovl-thumb-glass b{background:#a9bfd9}
+.ovl-thumb-glass b:first-child{background:#7fa5cf}
+
+.ovl-tick{display:inline-flex;align-items:center;gap:5px;color:#c9c3b4;font-size:12px;cursor:pointer}
+.ovl-tick input{accent-color:var(--dcol,#ffe236);cursor:pointer;margin:0}
+
+/* POINTING AT THE REAL THING: hovering a row in the drawer puts this on the part it names, out on
+   the cheat sheet. Opaque dashed outline on purpose — over a cut-out background a translucent
+   anything blends towards the hole colour and comes out as a dark smudge. */
+.ovl-hl{outline:2px dashed var(--dcol,#ffe236)!important;outline-offset:-2px;
+  animation:ovlHlPulse 1s ease-in-out infinite}
+@keyframes ovlHlPulse{0%,100%{outline-color:var(--dcol,#ffe236)}
+  50%{outline-color:color-mix(in srgb,var(--dcol,#ffe236) 45%,#fff)}}
+@media (prefers-reduced-motion:reduce){.ovl-hl{animation:none}}
+.ovl-val{font:11px var(--mono,ui-monospace,monospace);color:#c9c3b4;min-width:34px;text-align:right;
+  font-variant-numeric:tabular-nums}
+/* Odczyt wielkości okna. Ta sama czcionka, co przy suwakach, ale rośnie w lewo od etykiety zamiast
+   stać w wąskiej kolumnie po prawej — bo to zdanie („400 × 712 px"), nie procent. */
+.ovl-whv{min-width:0;text-align:left;flex:0 1 auto}
+.ovl-btn{border:1px solid rgba(255,255,255,.16);background:#181b21;color:#c9c3b4;border-radius:6px;
+  cursor:pointer;font:12px var(--sans,system-ui,sans-serif);padding:2px 7px;line-height:1.5}
+.ovl-btn:hover{border-color:color-mix(in srgb,var(--dcol,#ffe236) 55%,transparent);color:#f4efe2}
+.ovl-btn.on{background:color-mix(in srgb,var(--dcol,#ffe236) 26%,#181b21);
+  border-color:var(--dcol,#ffe236);color:#f4efe2}
+.ovl-x:hover{border-color:#e5484d;color:#e5484d}
+/* The pin: "keep this window above everything" — a SWITCH, and lit from what the app measured on
+   the window itself rather than from what it was asked for. It used to be a read-only lamp shaped
+   exactly like the two buttons beside it, which is a button as far as anyone using it is concerned:
+   it was clicked, nothing happened, and "it only pins, it never unpins" is the fair conclusion.
+   Three states, and they must not be confused with one another:
+     on      — green pin, the window is on top and meant to be;
+     is-free — muted crossed pin, DELIBERATELY unpinned. Not a fault, so not red;
+     is-off  — red crossed pin, asked for and NOT achieved. That is the fault. */
+.ovl-pin{display:inline-flex;align-items:center;justify-content:center;width:23px;height:19px;padding:0;
+  border:1px solid rgba(255,255,255,.16);background:#181b21;border-radius:6px;color:#8fd6a0;cursor:pointer}
+.ovl-pin svg{width:15px;height:15px;display:block}
+.ovl-pin:hover{border-color:color-mix(in srgb,var(--dcol,#ffe236) 55%,transparent)}
+.ovl-pin .ovl-pin-slash{display:none}
+.ovl-pin.is-free{color:#9a9486}
+.ovl-pin.is-off{color:#ff9b9e;border-color:rgba(229,72,77,.5)}
+.ovl-pin.is-free .ovl-pin-slash,
+.ovl-pin.is-off .ovl-pin-slash{display:block}
+.ovl-spacer{flex:1 1 auto}
+
+/* Two things the overlay has to be able to say out loud. "Clicks pass through" takes away the way
+   to undo itself, and "no connection" is the state in which the size slider still works (it is
+   plain CSS) while nothing else does — which without a word on screen reads as a broken overlay. */
+.ovl-note{padding:4px 8px;font:11px var(--sans,system-ui,sans-serif)}
+.ovl-warn{background:#2a2410;color:#ffe236;border-bottom:1px solid rgba(255,226,54,.35)}
+.ovl-bad{background:#2c1416;color:#ff9b9e;border-bottom:1px solid rgba(229,72,77,.45)}
+.ovl-bar.ovl-offline{opacity:1}                       /* never fade a bar that is carrying bad news */
+.ovl-bar.ovl-offline .ovl-sl,.ovl-bar.ovl-offline .ovl-btn{opacity:.45}
+
+/* ROGU DO CIĄGNIĘCIA JUŻ NIE MA (2026-09-01). Stały tu trzy rzeczy naraz: sam róg, ramka rysowana
+   w trakcie ciągnięcia i pasek z liczbami pod kursorem — cała maszyneria po to, żeby okno dało się
+   zmieniać płynnie mimo kuli 3D i dwóch płócien w środku. Wielkość okna jest teraz WYNIKIEM tego,
+   co w nim włączone i jak duże (`ovlAutoFit` w rf-41), więc nie ma czego ciągnąć, a przy okazji
+   przestał istnieć jeden ze sposobów zrobienia okna większego niż jego treść. */
+
+@media (prefers-reduced-motion:reduce){.ovl-bar{transition:none}}
+
+/* Whose overlay this is. With one window per capsule and the capsule's own header switchable off,
+   the bar is the only place left that can answer it — in the capsule's colour, like everywhere else. */
+.ovl-who{font:500 12px var(--sans,system-ui,sans-serif);color:#e9e4d8;white-space:nowrap;
+  padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--dcol,#ffe236) 30%,#181b21);
+  border:1px solid var(--dcol,#ffe236)}
+
+/* ---- the panel side: opening the overlays from the cheat-sheet card -----
+   Two things that both "open a window" sit in this header, and until now the second one was a row
+   of loose buttons reading "🗗 Triki 1" — same shape and same place as "Otwórz w oknie", saying
+   neither what it does nor whether it is doing it. It is fenced off now: one chip, named, with the
+   mark that means "overlay" repeated on every button and on each capsule in "Twoje urządzenia". */
+.ovl-group{display:inline-flex;align-items:center;gap:8px;margin-left:10px;padding:3px 8px;
+  border-radius:999px;border:1px solid var(--line,#d9cfb8);
+  background:color-mix(in srgb,var(--panel2,#f1e9d6) 65%,transparent)}
+.ovl-group-lbl{display:inline-flex;align-items:center;gap:5px;cursor:help;
+  font:500 11px var(--sans,system-ui,sans-serif);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--muted,#8a8375)}
+.ovl-group-ic{display:inline-flex;width:14px;height:14px}
+.ovl-btns{display:inline-flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* ONE GROUP PER CAPSULE: its windows, then the ＋ that adds one more. The group is drawn as one
+   thing — a hairline around it and the capsule's own colour on the ＋ — because "which of these
+   buttons belong together" is the whole question a row of six overlay buttons asks.
+   The capsule's colour now carries the OUTLINE AND THE FILL of the ＋, not the glyph: DEV_COLORS
+   holds light hues (＃ffcb05, ＃a6d861) and a light glyph on cream landed at 1.3-1.4:1, i.e. a
+   button one could not read. The mark itself is --ink; the group still reads as one thing.
+   DLACZEGO: kolor kapsla przeniesiony na tło i obrys ＋, glif w --ink — jasne kolory kapsli jako
+   litera na kremie miały ~1,4:1. Intencja „grupa czyta się jako całość” zachowana. */
+.ovl-cap{display:inline-flex;align-items:center;gap:4px;padding:2px;border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--dcol,#8aa0b5) 32%,transparent)}
+.ovl-win{display:inline-flex;align-items:center}
+.ovl-open-btn{display:inline-flex;align-items:center;gap:6px}
+/* Removing a window is not the same as switching it off, and it is the rarer of the two — so it
+   waits, faint, until the pointer (or the keyboard) is on this group. It never appears at all where
+   there is only one window: a capsule's last overlay is switched off, never thrown away. */
+.ovl-del{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+  margin-left:-2px;padding:0;border:0;background:transparent;color:var(--dim,#8a8375);
+  font-size:12px;line-height:1;border-radius:999px;cursor:pointer;
+  opacity:0;transition:opacity .14s ease,color .14s ease}
+.ovl-cap:hover .ovl-del,.ovl-cap:focus-within .ovl-del{opacity:.75}
+.ovl-del:hover,.ovl-del:focus-visible{opacity:1;color:var(--bad,#c8452f);
+  background:color-mix(in srgb,var(--bad,#c8452f) 14%,transparent)}
+/* „Dołóż okno" (UX 261120 B5b): zwykły `.btn.sm` z filcowym plusem i napisem, cel 32 px. Wygląd
+   i stan nieczynny daje 14d-buttons.css; tu tylko to, żeby nie łamał się w wąskim pasku. */
+.ovl-add{white-space:nowrap}
+.ovl-cap .ovl-open-btn,.ovl-cap .ovl-add{min-height:32px}
+@media (prefers-reduced-motion:reduce){.ovl-del{transition:none}}
+/* The mark wears the capsule's own colour, the same one its card, its pill and its LEDs use: with
+   two capsules paired, "which one is this button for?" should not need reading. */
+.ovl-btn-ic{display:inline-flex;width:16px;height:16px;color:var(--dcol,currentColor)}
+.ovl-btn-nm{font-weight:700}
+.ovl-btn-act{font-size:11px;opacity:.7;white-space:nowrap}
+/* OKNO STOI NAD GRĄ = ZIELONA KROPKA (UX 261120 B5b, P-G6-10). Pigułka zawsze mówi czynność
+   („Pokaż nad grą", „Zostaw nad grą", „Schowaj"), a stan niesie kropka, nie róż `button.btn.on`.
+   Dopisek „teraz tylko podgląd" przy oknie, które ekran otworzył na czas ustawiania. */
+.ovl-open-btn.is-up .ovl-btn-act,.ovm-power.is-up{opacity:1}
+.ovl-open-btn.is-up .ovl-btn-act::before,.ovm-power.is-up::before{content:"";display:inline-block;width:8px;height:8px;
+  margin-right:5px;border-radius:50%;background:var(--green);box-shadow:0 0 0 1.5px var(--green-d);vertical-align:1px}
+.ovl-btn-note{font-size:11px;color:var(--muted);font-weight:500;white-space:nowrap}
+.ovl-btn-note[hidden]{display:none}
+/* 10-15: felt overlay icon instead of the stroked SVG; the capsule colour moved to a dot on its corner */
+.ovl-ic-filc{position:relative;width:100%;height:100%;display:block;background:var(--ic-overlay) center/contain no-repeat}
+.ovl-btn-ic .ovl-ic-filc::after{content:"";position:absolute;right:-2px;bottom:-1px;width:6px;height:6px;border-radius:50%;
+  background:var(--dcol,transparent);box-shadow:0 0 0 1.2px var(--panel,#faf6ee)}
+.ovl-panel-note{font-size:12px;color:var(--dim,#8a8375);margin-left:8px}
+.ovl-panel-warn{display:inline-flex;align-items:center;gap:6px;margin-left:8px;padding:2px 8px;
+  border-radius:999px;background:color-mix(in srgb,var(--warn,#c8971a) 18%,transparent);
+  color:var(--warn,#c8971a);font-size:12px;font-weight:500}
+
+/* (There used to be a greyed-out state for a slider that could not do anything. The transparency
+   slider was in it every time the drawer was opened, because "content only" is the usual look and
+   a cut-out window cannot be faded — so the control taught people it was broken. It now turns the
+   background on instead of refusing; see the handler in rf-41.) */
+
+/* ======================= KOŁO PRZY KURSORZE (?wheel=1) ====================================
+   Okno, którego nikt nie stawia: kwadrat wielkości koła, wołany przez aplikację pod kursor
+   dokładnie w chwili, w której koło się otwiera (OverlayWindow.center_on_cursor). Strona jest ta
+   sama co w każdej nakładce — rysunek koła musi mieszkać w jednym miejscu — a poniżej znika z niej
+   wszystko, co jest OPRAWĄ okna, nie treścią.
+
+   DLACZEGO NIE MA PASKA. Pasek nakładki to uchwyt (przeciągnij), narożnik (zmień rozmiar) i zębatka
+   (ustawienia). Tutaj żadne z tych trzech nie ma sensu: miejsce wyznacza kursor, rozmiar i wygląd
+   ustawia się w karcie „Koło wyboru" w zakładce Mapowanie, a okno stoi DOKŁADNIE pod wskaźnikiem —
+   pasek, który zostaje klikalny (bo taki jest jego sens przy przepuszczaniu kliknięć), zjadłby
+   kliknięcie zatwierdzające wybór w trybach „Kliknij, pochyl, kliknij", „Pochyl i kliknij" oraz
+   „Przełączaj kliknięciami". Serwer domyka to od swojej strony: in_grab dla okna „przy kursorze"
+   zawsze odpowiada „nie", więc nawet gdyby pasek tu wrócił, nie przechwyciłby myszy. */
+html.rf-ovl-wheel .ovl-bar,
+html.rf-ovl-wheel .ovl-note{display:none!important}
+/* …i NIC POZA KOŁEM. Reguła jest napisana od drugiej strony niż reszta pliku — nie „schowaj to
+   i tamto", tylko „pokaż wyłącznie treść" — bo to okno ma jedno zadanie i lista rzeczy do ukrycia
+   rosłaby z każdym nowym pływającym okienkiem panelu. Złapało to od razu okno „Sterowanie ręczne
+   kapslem" (.rf-float, rf-14c), które w tej nakładce wyświetlało się nad kołem. Elementy <script>
+   i tak nic nie rysują, więc nic tu nie tracą. */
+html.rf-ovl-wheel body > *:not(.wrap){display:none!important}
+
+/* Kolumna kapsla przestaje być kaflem: bez ramki, bez kolorowego paska u góry, bez zaokrągleń.
+   Zostaje samo płótno. (Widoczności koła NIE ustawiamy tutaj — robi to pętla klatek rf-46, bo koło
+   istnieje przez czas jednego naciśnięcia; wymuszenie `display` zostawiłoby na ekranie ostatnią
+   narysowaną klatkę po zamknięciu koła.) */
+html.rf-ovl-wheel .ov-col{border:none!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important}
+html.rf-ovl-wheel .ov-wheel{width:100%;height:100vh;max-height:none;min-height:0;aspect-ratio:auto;
+  border-bottom:none!important;background:transparent!important}
+
+/* ==================================================================================================
+   ŻYWA MINIATURA W PANELU (`?overlay=1&…&preview=1`, klasa `rf-ovl-preview`, rf-41 + rf-41d)
+
+   Ta sama strona i ten sam skin, tylko w ramce na ekranie „Nakładka" zamiast nad grą. Zmienia się
+   DOKŁADNIE jedna rzecz, której nie da się przenieść: TŁO.
+
+   Nad grą wszystko, czego nakładka nie rysuje, jest w kolorze dziury (#010203) — Windows go wycina
+   i widać grę. W ramce nikt niczego nie wycina, więc dziura zostałaby prawie czarnym prostokątem
+   i podgląd kłamałby dwa razy naraz: pokazywałby tło, którego nad grą nie ma, i kazał wybierać
+   wygląd oraz obrys wobec czerni, której gracz nigdy nie zobaczy.
+   Dlatego pod treść wjeżdża UMOWNA GRA — dwa warianty, bo cały sens obrysu i motywu to kontrast
+   względem tego, co leci pod spodem, a „ciemna gra" i „jasna gra" to dwie różne odpowiedzi.
+   Przełącza je panel, wpisując klasę wprost do dokumentu ramki (rfOvlPreviewBackdrop w rf-41d).
+   ============================================================================================== */
+html.rf-ovl-preview, html.rf-ovl-preview body{
+  /* Ciemna „gra" — domyślna, bo nad taką najczęściej stoi nakładka (gry pełnoekranowe). Ukośny
+     gradient plus dwie siatki: bez nich prostokąt czyta się jak tło strony, a nie jak coś POD. */
+  background-color:#20262e;
+  background-image:
+    linear-gradient(135deg,rgba(255,255,255,.055) 0%,rgba(0,0,0,.28) 100%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.045) 0 1px,transparent 1px 34px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 34px);
+}
+html.rf-ovl-preview.rf-ovl-bg-light, html.rf-ovl-preview.rf-ovl-bg-light body{
+  background-color:#cfd6dd;
+  background-image:
+    linear-gradient(135deg,rgba(255,255,255,.55) 0%,rgba(0,0,0,.14) 100%),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 34px),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 34px);
+}
+/* `ovl-bg` (przyciemnione tło pod treścią) MUSI dalej wygrywać — to jest realna różnica, którą
+   podgląd ma pokazywać, a nie nasza umowna gra. Powtórzone tu, bo reguła wyżej jest późniejsza. */
+html.rf-ovl-preview.ovl-bg, html.rf-ovl-preview.ovl-bg body{background:#0b0d10;background-image:none}
+
+/* Miniatura niczym nie steruje: nie ma paska, rogu do ciągnięcia, ramki zmiany rozmiaru ani
+   komunikatów o przypinaniu — to wszystko są odpowiedzi na pytania, które zadaje się PRAWDZIWEMU
+   oknu. Pisane od strony „pokaż wyłącznie treść", tak jak przy oknie koła wyżej, żeby lista nie
+   rosła z każdym nowym pływającym okienkiem panelu. */
+html.rf-ovl-preview body > *:not(.wrap):not(.ovl-bar){display:none!important}
+html.rf-ovl-preview .ovl-note,
+html.rf-ovl-preview .ovl-grab{display:none!important}
+/* PASEK ZOSTAJE, BO NAD GRĄ TEŻ TAM JEST — i zabiera te same kilkanaście pikseli u góry. Bez niego
+   miniatura byłaby o pasek „pustsza na dole" od prawdziwego okna, czyli kłamałaby o jedynej
+   rzeczy, po którą się na nią patrzy. Nie przyjmuje myszy: to widok, nie drugi komplet przycisków
+   obok konfiguracji stojącej dwa centymetry dalej (nasłuchów i tak nie dostaje — patrz rf-41). */
+html.rf-ovl-preview .ovl-bar{pointer-events:none}
+/* Kliknięcia w miniaturze nie mają dokąd trafić — jej zadaniem jest być widokiem, a nie drugim
+   kompletem przycisków obok konfiguracji stojącej dwa centymetry dalej. */
+html.rf-ovl-preview .wrap{pointer-events:none}
+
+/* MIEJSCE NA POŚWIATĘ WOKÓŁ PADA (2026-09-07, zgłoszenie: „jak kontroler dotyka od lewej do prawej
+   ramki, albo od dołu — to jego obrys lekko wychodzi poza okno i wydaje się ucięty"). Rysunek pada
+   ma w panelu `.ov-pad{overflow:hidden}` i pudełko bez bocznych marginesów — nad grą, przy dużym
+   „kontrolerze", rysunek dochodzi więc do samej krawędzi okna, a poświata (drop-shadow z sekcji
+   „halo" wyżej) i pierścienie części nie mają się gdzie narysować: ścina je pudełko z lewej, z prawej
+   i od dołu, a resztę — krawędź okna. Tu pudełko dostaje po 8 px z boków i od dołu, a obcinanie
+   schodzi: `.gpv` jest skalowany transformem do dokładnie tej szerokości, więc poza pudełko wychodzi
+   WYŁĄCZNIE poświata — i o nią tu chodzi. Tylko nad grą; w panelu nic się nie zmienia. */
+html.rf-ovl .ov-col .ov-padbox{padding:7px 8px 8px}
+html.rf-ovl .ov-col .ov-pad{overflow:visible}
+
+/* NOTATKA GRACZA (2026-11-21, rf-41 `ovlNoteHtml`): klawiszologia napisana przez człowieka dla tego
+   okna. Jak przód kapsla istnieje tylko w nakładce; pusta notatka nie zajmuje miejsca. Klawisz stoi
+   w ciemnej, przeszytej ramce (czytelna nad jasną i ciemną grą), opis dziedziczy kolor i poświatę
+   karty, więc działa z każdym wyglądem i każdą obwódką okna. */
+.ov-note{display:none}
+html.rf-ovl .ov-col .ov-note{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;align-items:baseline;padding:8px 10px;margin:0;
+  background-color:var(--ovl-sub)!important;zoom:var(--sc-note,1)}
+html.rf-ovl .ov-col .ov-note:empty,
+html.rf-ovl .ov-col.ovl-no-note .ov-note{display:none!important}
+html.rf-ovl[data-theme="bare"] .ov-note{background:transparent!important}
+.ov-note-row{display:contents;font-size:14px;line-height:1.3}
+.ov-note-row>.ov-note-v:only-child{grid-column:1/-1}
+.ov-note-k{justify-self:start}
+.ov-note-v{font-size:14px;line-height:1.3}
+.ov-note-k{flex:0 0 auto;padding:1px 7px;border-radius:6px;background:#211f1d;color:#f5eede;
+  font-weight:800;font-size:12px;letter-spacing:.02em;border:1px dashed rgba(245,238,222,.55)}
+.ov-note-v{min-width:0;color:inherit;overflow-wrap:anywhere}

@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Strings/Violin Section/susVib"
+ },
+ "probki": [
+  {
+   "plik": "smyczki-1.wav",
+   "nazwa": "VlnEns_susVib_B2_v2.wav",
+   "nuta": 59,
+   "root": 59.044,
+   "petla": [
+    0.8892,
+    1.718
+   ]
+  },
+  {
+   "plik": "smyczki-2.wav",
+   "nazwa": "VlnEns_susVib_A3_v2.wav",
+   "nuta": 69,
+   "root": 68.912,
+   "petla": [
+    1.0827,
+    1.8338
+   ]
+  },
+  {
+   "plik": "smyczki-3.wav",
+   "nazwa": "VlnEns_susVib_G4_v2.wav",
+   "nuta": 79,
+   "root": 78.867,
+   "petla": [
+    1.5736,
+    2.1759
+   ]
+  }
+ ]
+}

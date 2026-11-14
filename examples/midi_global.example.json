@@ -1,0 +1,5 @@
+{
+  "midiPortIndex": -1,
+  "oscHost": "127.0.0.1",
+  "oscPort": 9000
+}

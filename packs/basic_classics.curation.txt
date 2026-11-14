@@ -1,0 +1,187 @@
+# Pakiet B „Podstawowe klasyki”: kuracja utworów ze zbioru TiMauzi/imslp-midi-by-sa.
+# Jedna linia = jeden plik (kolumna file_name zbioru); po „#” opis dla człowieka. Kolejność = priorytet:
+# skrypt tools/build_song_manifests.py bierze z tej listy najwyżej 60 utworów, które przejdą reguły licencyjne
+# (1–5 i 4b), a odrzucone wypisuje w packs/basic_classics.rejections.json z powodem.
+# Pierwsza wersja ułożona 2026-10-03 po rozpoznawalności tytułów; do akceptacji przez autora RibbitFlipa.
+
+WIMA.4390-FurElise-WoO59.mid  # Beethoven | Für Elise, WoO 59
+WIMA.6f19-Grieg01.mid  # Grieg | Peer Gynt, Op.23
+WIMA.58f8-donau.mid  # Strauss Jr. | Nad pięknym modrym Dunajem, Op.314
+WIMA.3363-ELGAR,MilitaryMarch-1.mid  # Elgar | Pomp and Circumstance No.1
+PMLP02799-Träumerei.mid  # Schumann | Träumerei (Kinderszenen, Op.15)
+PMLP22223-Wiegenlied.mid  # Brahms | Kołysanka (5 Lieder, Op.49)
+WIMA.4084-DVORAK_humor.mid  # Dvořák | Humoreska (8 Humoresek, Op.101)
+WIMA.c315-HymJoySco.mid  # Beethoven | Oda do radości (IX Symfonia)
+PMLP1855-Mozart_Sonata_I.mid  # Mozart | Sonata C-dur KV 545
+PMLP126435-4SeasonsWinterLargo12.mid  # Vivaldi | Zima, Largo (Cztery pory roku)
+PMLP4611-_gigue_in_d_for_string_synths.mid  # Pachelbel | Kanon i gigue D-dur
+PMLP01969-Etude,_Op._10,_No._12_'Revolutionary'.mid  # Chopin | Etiuda Rewolucyjna, Op.10 nr 12
+WIMA.8b56-Tchaikovsky_The-witch.mid  # Czajkowski | Album dla dzieci, Op.39
+WIMA.972a-satie-menuet.mid  # Satie | Premier menuet
+PMLP35287-Please_Say_You_Will.mid  # Joplin | Please Say You Will
+WIMA.98b0-erlkonig.mid  # Schubert | Król elfów, D.328
+WIMA.e06b-gadagio.mid  # Beethoven | Sonata Patetyczna, Adagio
+WIMA.6602-invention01vla.mid  # Bach | Inwencja C-dur, BWV 772
+WIMA.2965-Bach_Inv13_BWV784(AA).mid  # Bach | Inwencja a-moll, BWV 784
+PMLP82078-bwv1047.2.mid  # Bach | Koncert brandenburski nr 2
+PMLP82084-bwv1051.2.mid  # Bach | Koncert brandenburski nr 6
+WIMA.672c-Wassermusik.mid  # Händel | Muzyka na wodzie, suita nr 2
+PMLP116885-Menuett_No_1_Wolfgang_Amadeus_Mozart_1761.mid  # Mozart | Menuet G-dur KV 1
+PMLP116890-Moz_PfMenuet-kv2.mid  # Mozart | Menuet F-dur KV 2
+PMLP116895-Menuett_No_3_Wolfgang_Amadeus_Mozart_1762.mid  # Mozart | Menuet F-dur KV 4
+PMLP116902-Menuett_No_4_Wolfgang_Amadeus_Mozart_1762.mid  # Mozart | Menuet F-dur KV 5
+PMLP160185-clementi-op42-les48-bach-minuet.mid  # Clementi | Menuet (Bach), Op.42
+WIMA.5a2d-volksweise.mid  # Grieg | Utwory liryczne, Op.12
+WIMA.e28f-Grieg-Vaaren.mid  # Grieg | Wiosna, Op.34
+PMLP149049-Fruhlingsstimmen31.mid  # Strauss Jr. | Głosy wiosny, Op.410
+WIMA.6a76-StIIPerMSco.mid  # Strauss Jr. | Perpetuum mobile, Op.257
+PMLP03585-St_Antoni_Choral.mid  # Brahms | Chorał św. Antoniego (Wariacje na temat Haydna)
+PMLP18079-Mendelssohn_Marcia_funebre.mid  # Mendelssohn | Sen nocy letniej, Op.61
+WIMA.eb1f-Opus_62_nr_4.mid  # Mendelssohn | Pieśń bez słów, Op.62 nr 4
+PMLP2592-Consolation_no_5_final.mid  # Liszt | Pocieszenie nr 5
+PMLP09865-Liszt_Dulci_jubilo_S.186_D.mid  # Liszt | Choinka, S.186
+WIMA.8c4a-op88.mid  # Schubert | Do muzyki, D.547
+WIMA.80ad-Schubert_Deut.Tanz-D.420.12.mid  # Schubert | Tańce niemieckie, D.420
+WIMA.03cb-W.A.Moz.Adagio_KV540.mid  # Mozart | Adagio h-moll KV 540
+WIMA.04be-Adagio_K361.mid  # Mozart | Serenada Gran Partita, Adagio
+WIMA.abcd-Moz554Sco.mid  # Mozart | Kanon KV 554
+WIMA.84c7-Andante-of-SymphonyNr.1_Beethoven.mid  # Beethoven | I Symfonia, Andante
+PMLP566528-Russian_Folk_Song_Ludwig_Van_Beethoven_1790.mid  # Beethoven | Pieśń rosyjska, Op.107
+PMLP587994-Bach_812_Sarabande.mid  # Bach | Suita francuska nr 1, Sarabanda
+PMLP111717-bwv539.mid  # Bach | Preludium i fuga d-moll, BWV 539
+PMLP574688-bwv869Prelude.mid  # Bach | Preludium h-moll, BWV 869
+WIMA.649d-Can1073Sco.mid  # Bach | Kanon a-moll, BWV 1073
+PMLP480756-Handel_486_Chaconne_Gm.mid  # Händel | Chaconne g-moll, HWV 486
+PMLP672186-hwv604.mid  # Händel | Aria a-moll, HWV 604
+WIMA.767c-Air_Haendel.mid  # Händel | Aria D-dur
+PMLP595148-Handel_64_Joshua_March.mid  # Händel | Jozue, marsz
+WIMA.b0f2-herkules_play4_march.mid  # Händel | Herkules, marsz
+PMLP679008-Handel_516_Minuetpf.mid  # Händel | Menuet F-dur, HWV 516
+PMLP249813-op6no4Largo.mid  # Händel | Concerto grosso a-moll, Largo
+PMLP63859-Pachelbel_P.40_Ciacona_D.mid  # Pachelbel | Ciaccona D-dur
+PMLP733567-Pachelbel_P.409_Prelude_G.mid  # Pachelbel | Preludium G-dur
+PMLP29257-Domine_Deus.mid  # Vivaldi | Gloria, Domine Deus
+PMLP536372-Vivaldi_ConcertoRV558_Andante.mid  # Vivaldi | Koncert C-dur RV 558, Andante
+PMLP574980-Violin_Concerto_In_D_Minor_RV_243_Movement_One_of_Three_1725.mid  # Vivaldi | Koncert skrzypcowy d-moll RV 243
+PMLP69503-z628Passa.mid  # Purcell | Król Artur, passacaglia
+PMLP130876-awhile.mid  # Purcell | Music for a While (Edyp)
+PMLP713898-Purcell_Oh_Solitude_AT.mid  # Purcell | O Solitude
+WIMA.132b-AD(II)Sco.mid  # Albinoni | Koncert obojowy d-moll, Op.9 nr 2
+PMLP81899-Haydn_Flotenuhr_Hob_19_20.mid  # Haydn | Zegar fletowy, Hob.XIX:20
+PMLP409200-HayHO74Sco.mid  # Haydn | Koncert waltorniowy nr 2
+PMLP662815-Canzonetta.mid  # Rossini | Canzonetta
+WIMA.66d8-Grieg_Piano-Concerto-in-A-minor_Op.16_string-ensemble-arrangement--5Brequires-adjusting-5D.mid  # Grieg | Koncert fortepianowy a-moll
+PMLP9130-cahier_score.mid  # Debussy | D'un cahier d'esquisses
+
+# Dopisane 2026-10-03 (rozszerzenie do limitu 60): rozpoznawalni kompozytorzy na zmianę, tytuły z formami
+# znanymi z nauki gry (menuety, preludia, marsze, kanony…) przed resztą; bez tytułów z obraźliwymi słowami.
+# Pliki ze zbioru CC0 nie trafiają tu, bo są w pakietach A albo „Klasyka z atrybucją”.
+WIMA.82c1-bwv1087_14.mid  # Bach | 14 Canons, BWV 1087
+WIMA.5c41-Mozart_Menuett-KV65a.mid  # Mozart | 7 Minuets, K.61b
+WIMA.414e-Bee15Sco.mid  # Beethoven | 15 Fugues
+PMLP350812-Vivaldi-Dubious-Midi.mid  # Vivaldi | Cello Sonata in A major
+PMLP236911-hwv338Vivace.mid  # Handel | Adagio and Allegro, HWV 338
+WIMA.dab6-GRIEG_halling72-4.mid  # Grieg | Norwegian Peasant Dances, Op.72
+WIMA.5ecc-Schubert_Deut.Tanz-D.972.2.mid  # Schubert | 3 German Dances, D.972
+PMLP52910-Brahms_13_Canons.mid  # Brahms | 13 Canons, Op.113
+PMLP81899-Haydn_Flotenuhr_Hob_19_10.mid  # Haydn | Flötenuhr in C major, Hob.XIX:10
+WIMA.43e2-6hexar_m.mid  # Pachelbel | Aria and 8 Variations in F minor, P.198
+WIMA.c148-MENDELSSOHN,Andante,D-dur.mid  # Mendelssohn | Andante in D major, MWV W 6
+PMLP02699-schufugue4.mid  # Schumann | 4 Fugues, Op.72
+PMLP2166-Harmonies_-7.mid  # Liszt | Harmonies poétiques et religieuses III, S.173
+PMLP967736-La_Plus_Belle.mid  # Strauss Jr. | La Plus Belle
+PMLP85784-Purcell_4Parts_Sonata_No1.mid  # Purcell | Sonata in B minor, Z.802
+WIMA.0ce6-Al75(III)Sco.mid  # Albinoni | Concerto for 2 Oboes in C major, Op.7 No.5
+PMLP322220-Elgar_After_orch_Gm_m.mid  # Elgar | 2 Songs, Op.31
+PMLP29942-RosDD4Sco.mid  # Rossini | Petite messe solennelle
+WIMA.aa17-cl366b.mid  # Clementi | 6 Piano Sonatinas, Op.36
+WIMA.eff8-Tel_Grace.mid  # Telemann | 12 Marches héroiques 'Heldenmusik', TWV 50:31-42
+PMLP815744-corop1no3.mid  # Corelli | Trio Sonata in A major, Op.1 No.3
+PMLP488358-Scarlatti_Sonate_K.204a.mid  # Scarlatti | 2 Keyboard Sonatas in F minor, K.204a-b
+PMLP153699-Bach_587_Aria.mid  # Couperin | Les nations
+PMLP19078-Rameau_Menuet.mid  # Rameau | Pièces de clavecin avec une méthode, RCT 2-4
+WIMA.0ded-Paganini_Perigoldino.mid  # Paganini | Perigoldino, MS 104
+WIMA.cc96-weber-abend.mid  # Weber | 8 Volkslieder, Op.64
+PMLP54610-Faure_Op.7no1_Apres_un_reve_Organ_taille.mid  # Fauré | 3 Songs, Op.7
+WIMA.a444-onzevakol.mid  # Rimsky-Korsakov | Liturgy of St. John Chrysostom, Op.22
+PMLP306605-Autumn_Waltz.mid  # Foster | Autumn Waltz
+PMLP13993-Ave_Maria_(meditazione_sul_primo_preludio_de_Il_Clavicembalo_ben_temperato_,_BWV_846).mid  # Gounod | Ave Maria, CG 89
+PMLP255646-Massenet_Prelude.mid  # Massenet | Prélude in C major
+PMLP2018-Op.32,_No.4.mid  # Rachmaninoff | 13 Preludes, Op.32
+WIMA.9a83-Scriabin-5-preludes.mid  # Scriabin | 24 Preludes, Op.11
+PMLP1360458-albeniz-3-improvisations-2.mid  # Albéniz | 3 Improvisations
+PMLP13346-Bach_742_Choral.mid  # Bach | Ach Herr, mich armen Sünder, BWV 742
+PMLP116955-Allegro_Wolfgang_Amadeus_Mozart_1762.mid  # Mozart | Allegro in B-flat major, K.3
+WIMA.90e3-marmotte.mid  # Beethoven | 8 Lieder, Op.52
+PMLP289553-Cello_Sonata_in_A_Minor_RV_43_Movement_Four_of_Four_Antonio_Vivaldi_1740.mid  # Vivaldi | Cello Sonata in A minor, RV 43
+PMLP481335-Handel_468_Air_JoshuaBH.mid  # Handel | Air in A major, HWV 468
+WIMA.5dd9-grieg_elegie47_7.mid  # Grieg | Lyric Pieces, Op.47
+WIMA.6fe7-arpviola.mid  # Schubert | Arpeggione Sonata, D.821
+PMLP52928-Brahms_Fugue_la_min.mid  # Brahms | Fugue, WoO 8
+PMLP81899-Haydn_Flotenuhr_Hob_19_11.mid  # Haydn | Flötenuhr in C major, Hob.XIX:11
+PMLP299342-Pachelbel_P.139_Fuge_A.mid  # Pachelbel | Fugue in A major, P.139
+PMLP02678-Mendelssohn_Faith_Op.102_6.mid  # Mendelssohn | Lieder ohne Worte, Op.102
+PMLP02707-Schumann_Op.68_41.Choral_figuré.mid  # Schumann | Album für die Jugend, Op.68
+PMLP641562-son2.mid  # Purcell | Sonata in E-flat major, Z.803
+WIMA.58dc-Al99(III)Sco.mid  # Albinoni | Concerto for 2 Oboes in C major, Op.9 No.9
+PMLP118009-Elgar_In_the_Dawn_orch.mid  # Elgar | 2 Songs, Op.41
+WIMA.eb9a-Telemann_Sonata-Nr.1.4.F-Dur.mid  # Telemann | 6 Sonatas, TWV 40:101-106
+PMLP816060-corop4no3.mid  # Corelli | Trio Sonata in A major, Op.4 No.3
+PMLP577056-Scarlatti_Cary703_g.mid  # Scarlatti | Keyboard Sonata in A major, Cary 703
+PMLP200271-Couperin_25_5_Ombres.mid  # Couperin | Pièces de clavecin, Livre 4
+PMLP19132-Rameau_4.7_Gavotte.mid  # Rameau | Suite in A minor, RCT 5
+PMLP198715-Scale_Study.mid  # Paganini | Scala per pianoforte
+WIMA.e976-Jaegerchoer_Weber.mid  # Weber | Der Freischütz, Op.77
+PMLP351508-Beautiful_Child_of_Song.mid  # Foster | Beautiful Child of Song
+PMLP8797-III_Romance.mid  # Rachmaninoff | Suite No.2, Op.17
+PMLP7337-8score.mid  # Albéniz | Iberia
+PMLP09471-Bach_419_Choral.mid  # Bach | Chorale Harmonisations, BWV 1-438
+PMLP120045-Allegro_K1C_Wolfgang_Amadeus_Mozart_1761.mid  # Mozart | Allegro in F major, K.1c
+PMLP121650-WoO_95.mid  # Beethoven | Chorus for the Allied Princes, WoO 95
+WIMA.5232-vivaldi-sonata-RV44-Midi.mid  # Vivaldi | Cello Sonata in A minor, RV 44
+PMLP480790-Handel_Air_HWV471.mid  # Handel | Air in B-flat major, HWV 471
+PMLP01784-trabalho_2_grieg.mid  # Grieg | Lyric Pieces, Op.68
+WIMA.23a6-Schubert_D795.20-Baches-Wiegenlied_Part.mid  # Schubert | Die schöne Müllerin, D.795
+PMLP6495-set_2.mid  # Brahms | Variations on a Theme by Paganini, Op.35
+PMLP81899-Haydn_Flotenuhr_Hob_19_12.mid  # Haydn | Flötenuhr in C major, Hob.XIX:12
+PMLP207865-Pachelbel_P.141_Fuge_hmoll.mid  # Pachelbel | Fugue in B minor, P.141
+PMLP02676-Mendelssohn_Fileuse_Op.67No4.mid  # Mendelssohn | Lieder ohne Worte, Op.67
+WIMA.436d-Als-das-Christkind_R.Schumann.mid  # Schumann | Liederalbum für die Jugend, Op.79
+PMLP85784-Purcell_4Parts_Sonata_No6.mid  # Purcell | Sonata in G minor, Z.807
+WIMA.5f8b-Al96(III)Sco.mid  # Albinoni | Concerto for 2 Oboes in G major, Op.9 No.6
+PMLP896019-Elgar_The_Torch_orch_G_Morrison_sound.mid  # Elgar | 2 Songs, Op.60
+PMLP398170-Tel43g3Sco.mid  # Telemann | Concerto di Camera, TWV 43:g3
+PMLP1150001-corop1no4.mid  # Corelli | Trio Sonata in A minor, Op.1 No.4
+PMLP335267-Scarlatti_Sonate_K.101.mid  # Scarlatti | Keyboard Sonata in A major, K.101
+PMLP71132-F.Couperin_Apotheose_Apollon_persuade.mid  # Couperin | L'apothéose de Lully
+PMLP18912-Rameau_La_Dauphine.mid  # Rameau | La Dauphine, RCT 12
+PMLP343105-Fairy_Belle.mid  # Foster | Fairy-Belle
+WIMA.251f-BWV_1030.mid  # Bach | Flute Sonata in B minor, BWV 1030
+PMLP119983-Andante_In_C_Major_Wolfgang_Amadeus_Mozart_1761.mid  # Mozart | Andante in C major, K.1a
+PMLP110002-Beethoven_Fugue.mid  # Beethoven | Fugue for Organ, WoO 31
+PMLP283340-Cello_Sonata_In_B_Flat_Major_RV_47_Movement_Four_of_Four_Antonio_Vivaldi_1740.mid  # Vivaldi | Cello Sonata in B-flat major, RV 47
+PMLP480901-Handel_465_Air_doubles.mid  # Handel | Air in F major, HWV 465
+WIMA.7356-Schubert_Menuetto-emoll-D600.mid  # Schubert | Minuet in C-sharp minor, D.600
+PMLP52813-Brahms_Op74_2_O_Heiland,_reiss_die_Himmel_auf_Brass_Quintet_Adams.mid  # Brahms | 2 Motets, Op.74
+PMLP81899-Haydn_Flotenuhr_Hob_19_13.mid  # Haydn | Flötenuhr in C major, Hob.XIX:13
+PMLP733717-Pachelbel_P.143_Fugue_C.mid  # Pachelbel | Fugue in C major, P.143
+PMLP27285-Z731.mid  # Purcell | 3 Parts upon a Ground, Z.731
+WIMA.749b-A(III)Sco.mid  # Albinoni | Concerto in D major, R.II.E.4.1.2
+PMLP896261-Elgar_Oh_Soft_was_the_Song_D_orch_Morrison_sound.mid  # Elgar | 3 Songs, Op.59
+PMLP258188-Telemann_Concerto2Clv_III.mid  # Telemann | Concerto for Flute, Harpsichord and Continuo, TWV 42:D6
+PMLP815847-corop3no10.mid  # Corelli | Trio Sonata in A minor, Op.3 No.10
+PMLP335451-Scarlatti_Sonate_K.114.mid  # Scarlatti | Keyboard Sonata in A major, K.114
+PMLP111977-Rameau_Pigmalion_Contredanse.mid  # Rameau | Pigmalion, RCT 52
+PMLP365569-Id_Be_a_Fairy.mid  # Foster | I'd Be a Fairy
+PMLP05771-gigue.mid  # Bach | French Suite No.5 in G major, BWV 816
+WIMA.4f10-CanMozart3Leck.mid  # Mozart | Canon for 3 Voices in B-flat major, K.233/382d
+PMLP294184-Cello_Sonata_in_E_Minor_RV_40_Movement_Four_of_Four_Antonio_Vivaldi_1740.mid  # Vivaldi | Cello Sonata in E minor, RV 40
+PMLP480814-Handel_466_Concertino.mid  # Handel | Air in G minor, HWV 466
+WIMA.4ddd-ValSenSco.mid  # Schubert | Valses sentimentales, D.779
+PMLP52573-Brahms_Regina_coeli.mid  # Brahms | 3 Sacred Choruses, Op.37
+PMLP81899-Haydn_Flotenuhr_Hob_19_14.mid  # Haydn | Flötenuhr in C major, Hob.XIX:14
+WIMA.0355-Fugue-in-d.mid  # Pachelbel | Fugue in D minor, P.154
+PMLP592640-z655.mid  # Purcell | A New Scotch Tune, Z.655
+WIMA.5880-Alb95Sco.mid  # Albinoni | Oboe Concerto in C major, Op.9 No.5
+PMLP897238-Elgar_Rondel_orch_Morrison_sound.mid  # Elgar | 7 Lieder
+PMLP80536-TWV52F2.mid  # Telemann | Concerto for Oboe and Violin, TWV 52:F2

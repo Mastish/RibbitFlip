@@ -1,0 +1,573 @@
+# Artwork for the banner build_exe.bat prints - the wordmark when the build starts, then the frog
+# for a build that worked or the punk skull for one that did not. Each comes in several widths
+# (the pictures at roughly 87, 80 and 60 columns, the wordmark at 120 and 76) and the widest one
+# that fits wins; a console too narrow for the smallest gets plain text instead, because wrapped
+# ASCII art is just noise.
+#
+# Each picture is two blocks. "@name <patch.png>" is the drawing. "@name.colours" is one
+# palette letter per character, generated from that .png by tools/make_banner_art.py - run it
+# again after touching either, and do not hand-edit the colour blocks.
+#
+# A block whose header has no .png (@wordmark, @wordmark76) is coloured by the word rather than
+# by a photo: "ribbit" is w, "FLIP" is P, and the gap between them belongs to neither. Those
+# colour blocks are written by hand and make_banner_art.py passes them through untouched.
+#
+# Palette: k/K black felt (printed near-white, or it vanishes on a dark console), b pupil,
+# p/P mohawk pink, g/G/D felt green, t tan bone, s metal, w stitching.
+
+@frog assets/ribbitflip_head.png
+                                                 ++:
+                                                +%%+
+                                               +%@%%.
+                                              +%@@%%*.                   =*=-
+                           -=                -#%%%@@%-                -+#%%*-
+                          -#%*-             :%%#++%@@*.             +*%%%%%+
+                          :#%%%#:          :%%%+++#@%#+           -#@@%@@%%=
+                          -%%%%%%*        =#%%*+***%@%+         +#%%%##%%@#:
+                          =%%##%%@%*      +%@#+*#**#%%#-     -#%@%#**+*%%@+
+                          +@%+*+*%%%#-   :@%%+#*-+**@%%=    +#%%#++***#@@#-
+                         :*@#*****%@%%+::%%%**+=*=**%@@%:-#@%%#++*****@@%=
+          --.            :#@%*#++*+*%%%##%%***++*#**#@@@%%%@%*+***#**#@@#=
+          *%%#*+:        -%@%**-*+*+*%%@@@%**#***=+**%@@@@%***##*=#*#%%%*
+          =#%@@@%@%*++=  =%@%**=+*=+++#%%%++=+***+=*+%@%%*******-++*%@@%+
+           +%%%#*#%%%%@%##%@#+*#+++=+**+#+*+=*++**#***#*+**#+******#@@%+
+            +%%*+++++*%@%%@@#*+-*****+*******++*+*+=*****##++**++*#%@@#
+            :#%%**##***++*#%#*+-****+**+##++*+*+++++***+=*+***+-+*%@@%+
+             +%@#**-+*=+*******+**+****+*++********++***+*****+**#@@@#
+              *%@#+*=++**+=-=*##****++++**+******+***++***+**#***%@@%+
+              -#@%*+******+**+*+*******************+*+**+***+=+*#@@@@@@%#++-
+       ::-=+*###%%%**+********+***+************************#++**%%#%%@@@@@@%#*:
+  *%%#%%%%%%%%%%%%%*+++*******#######**#*****************####**#*======---+%%%%+
+  :#%@@%++++++++++++**#***#%%%*******#%%#********#*****#********+====--------#%%*-
+    *%%%#**+**++++*#***###*++=++=++++==++*%###************-++*#*+===---=#*::--+%@%=
+     -*@@%***+=*******#*+=+===-:::::--=++++*###******#****+++#**++=+=-=*@-:..*-=%%#-
+       =%@@%***=-***#%*++++-:----------:=+===+**************##++:==+=--*@@%#%@#=%@%*
+         *%@@%***++*#*==+------=+=...:--::=====+*#**********#+===+*++=-+%@@@@@#=+@@+
+         -*%@@%****#*===-:--=#%@@#.::..----======+*###%#%###*=====:++*+==#@@@@*-+@@*
+      +*%%%%#******#+++=---=@@@@%%%=--#@+--========+=++++**+=======+++**+==+++==@@@*
+   +#%%%%*++**+*****+++=---@@@@@@@@%%@@@*--=+++=============+++====++******+==+%@@%+
+:+%%%%%*+****-******+++=---#@@@@@@@@@@@#=--+*++============++=+====++*=+****##@@@@#
+ -#%%@%#***+**+=***#++++----+@@@@@@@@@#---=+++=++==++==++=+++=+===+*%#*+=+#*+*#%@@%*
+    +#%@@@@%#**+****+++++=----=+**#*=-----**+=======+++++%%%#+====+#@#+++++====+%@%%*
+       #%%%%@@@%%#*#*+++**=------------=+%#*++========+++*#%@%+=++=+++=+==+=:++==%@@@#
+             %%@@@@#+****+*#*=-----===*%##*+++++===++++=++++++=+++=++==+=====+++=+%%@%+
+              #%@@#=--===++++*#%%%%%%##**+===++++++++=+++=++++*###%%%%%%%%##**++=+#%%%+
+              #@@@*=+=+====++*#******+++++++++++++++++++*%##%%%%%%%##*****#%%%%%##%@@%+
+             +#%@#++*+==++=++=++++=++++++++=+==++++##%%@@#*+==-----=-==--------=-*%%@%=
+             *%%@+=-==+===++==+===++++++++++++*#%##%#++=-=---:--==-:-====--=+--=+%%%%=
+             +%%#+=:======++++++++++++++++*##%@%#+=----:-=---------------=-----*@@@%+
+             *@@%+++*+++++*%@@%%#######%#%%%%*=====++-==--:-:-:---=----------=%@@@%*
+             +%@%++=*++++**==+*##%%%%%##**+===----------------------=--===--=%@@@#*
+             =#@@#++==++*#-:------=====----=-------------------------=::--=#%%%%#
+              *%%%*++++*#=----=-::::==-=------------------=--=---=---:=--=%@@%%*
+              -*@@@%++**=------------------------------===-=--=====+----*@@@%#
+                +%@%%#*=-:::::-------------=-------------===-===-:=---+%@@%%#
+                  *%@@@%%=--:---=--===--===--===-==-======--=+=:---=#@%@@%#
+                    *%@@%%%#*=-------===---=====--==-===-:::----=*#%@@@%#
+                      ###%%%%%%%*=+----------==-:------------=*%%@@@@%#
+                           #%%@@@@@@@%#*+==-----=-==---=++*%@@@@@@%#
+                              ##%%%@@@@@@@%%@@@@@@@@@@@@@@@@@%%%#
+                                   ##%%%%%%%@@@@@@@@@@@@%%%%#
+
+@frog.colours
+                                                 KKs
+                                                Kbbb
+                                               sbkbbs
+                                              sbkkkbbw                   tKts
+                           ss                sbbbbkkbK                ssbbbbs
+                          sbbKs             sbbbPPkkkkw             tbbbbbbb
+                          sbbbbbs          sbbbPPPpbbbw           sbkkbbkkkK
+                          Kbbbbbbb        sbbbPPPPPbbbK         Kbbbbbbbbkks
+                          sbbbbbbbbb      kbbbPPpPPbbbbs     tkbbbbPPPPbbkb
+                          sbbPPPPbbbbb   KbbbPppspppbbkK    sbbbbPPPPPpbkkt
+                         tbbbPPPPPbbbbbssKbbPPpsPpppbkkkswKbbbbPPPPpppbkkb
+          sKs            sKkbPpppPPPbbbbkbbPPpPPPpPPpkkkbbkbbPPPPppPPpkkkt
+          bbbKbKG        skkbpptpppPPbbbkbbPppPPPppPpbkkkbkPPPpppspPPbbkb
+          GbbbbbbbbbbKt  skkbPPPppppPPbbbbPPPpPPPPPPPbbbbPPPPpppsPPPpkkkG
+           kbbbbPbbbbbkbbbbbbPPpPPPPPPPPPPPppPPPPPppPPbPPPppPPPPpPppkkkK
+            kbbPPPPPPPbbbbbbbPPppPPPPPppPPPpPPPPPPPppPPPPppPPPPppppkkkk
+            tbbbppppppPPPPPbPPpspPPPPPPPppPPPPPPPPPPpppPPPPPPPpsPPpkkkK
+             bkkpPpwppPPpPPPPppPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPppPPpkkkK
+              bkkpPPPPPPPPPpppppPPPPPPPPPPPPPpPPPPPPPPPPPPPPppPPPbkkkK
+              KKbbPPPPPPPPPPPPPPPPPPPPPPPPPPPPPpPPPPPPPPPPPPpPPPpkkkkkkkbbbG
+       GbKbkkbbbbbbPPppPPPPPPPPpPpPppppPPpPpPPPPPPPPPPPPPPpppPPpbkGkkkkkkkkkbks
+  KbKbbbbbbbbbbbbbbPPpPPPpppppppppbpppppppPpPPPPPPPPPPPppppppPPpGGggggtttttkbbbs
+  sbbkkbPPPPPPPPPPPPPPpPpppbbbDDDbGDbbbbpppppPPPPPPPPPPpppppPPpDGGGGGttttttttsbbbs
+    KbbbkPPPppppppppPPppbbDGGGGGGGGGGGGGGDbbpppPPPPPPPPpppsPPPKDGGGGtttttbwwtsskkks
+     sKkkkPPPppppppPPpbbGGGGGGttttttttGGGGGDDbppPPPPPppPppPPPKDDDGGGttttkkwwwsstkkks
+       GkkkbPpPpppPPpbGGGGGtttttttttttttGGGGGGGppppppppppppPpKGGDDGGttttkkkkkkkttkkk
+         KkkkkPPPPPpbGGGGtttttttttwwwwttttGGGGGGDpppppppppppKGGGGGGGDDttkkkkkkbttkkk
+         KKbkkpPPPpbGGGGtttttkkkkkwwwwwttttGGGGGGGDDbbbKbppKDGGGGGsDGDDtttkkkktttkkk
+      KbbbbbPPPPPPpKDGGGttttkkkkbbkwwwkkttttGGGGGGGGGGGGGDDDGGGGGGGGDDDDGtttttttkkkk
+   bkkkbPPPPPPpppPpKDDDttttkkkkkkkkkkkkkttttGGGGGGGGGGGGGGGGGGGGGGGGGGDDDDDttttkkkkK
+sKbbbkbPPPPPpspppppKDGDGtttkkkkkkkkkkkkkttttDGGGGGGGGGGGGGGGGGGGGGGGGGGGDDDDDKkkkkk
+ KbbbkbbPPPPPPPpppppDGDDtttttkkkkkkkkktttttDDGGGGGGGGGGGGGGGGGGGGGGGbbKGGGDDDDGkkkkk
+    KKbkkbkkppPPppppDGDDDtttttttttttttttttDDGGGGGGGGGGGGGkkbbGGGGGGGkbGGGGGGwGGGkkbkk
+       KbbbbkkkkkbpKGGDDDDtttttttttttttttbDDGGGGGGGGGGGGGDDkkkGGGGGGGGGGGGGGGDGGGkkkkk
+             bkkkkkkDDDDDDDDttttttttttbbDDDGGDGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGkbkkK
+              KkkkkggsGGGGGDDDDDbbKbbbDDDGGGGGGGGGGGGGGGGGGGGGbkkbbkkkbbbbbbbGGGGGbbbbK
+              kkkkGGGGGGGGGGGDDDDDDDDDGGGGGGGGGGGGGDDDDDDkbbbbbbbkkggGgggggbbkbbKKbbkkK
+             GkbbGGGDGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGKKbkkkkGgggggggggggggggggggggggkkkkt
+             KbkkGGGGGGGGGGGGGGGGGGGGGGGGDDDDGGbkbbgggggggggggggggggggggggggGggggkkkkK
+             bbbbGGwGGGGGGDDGDDDGDGGGDDDDDDbKkkkGggggggwGgggggggggggggggggggggggkkkkK
+             bbkbGGGDGGGGDDkkkkkbbKbKKbbbkkbGGggggggggggggggggggggggggggggggggkkkkkK
+             KbkkGGGGGGGDDDgggggkkkbkbGGggGGGggggggggggggggggggggggggggggggggkkkkKK
+             DkkkbGGGGGDDbsggggggggggggggggggggggggggggggggggggggggggggggggkbbkkK
+              KkkkGGGGDDbgggggggggggggggggggggggggggggggggggggggggggggggggkkkbKK
+              GbkkkkGDDDgggggggggggggggggggggggggggggggggggggggggggGggggkkkkkK
+                KkkkkkDgggttwgggggggggggggggggggggggggggggGggggggggggggkkkkKK
+                  KkkkkkbggggggggggggggggggggggggggggGggggggggggggggkkkkkkK
+                    KkkkbbkkkkgggggggggggggggGggggggggGggsgggggggkkkkkkkK
+                      kKKbbbbkkkkgggggggggggggggggggggggggggggbkkkkkkKK
+                           KkkkkkkkkkkkkgggggggggggggggggggkkkkkkkkK
+                              KKKbbkkkkkkkbkkkkkkkkkkkkkkkkkkkkkK
+                                   kKKbbKbkKKkkkkkkkkkkkkbKKk
+
+@frog60 assets/ribbitflip_head.png
+                              =+
+                             +#%=
+                             #@%#           +*+
+                 +*=        #%#%%=        **%%*
+                *#%#*      *%+*#%#      *#%%@%+
+                *#%%%#*   *%#***%%=   #%%#+*%%-
+                #%#**%%#+=%%*+=*%%#=*%%#***%@*
+      -+=       *%#*+*#%#%%**+**#@%%%#****#@%=
+       #%%%#*=  *%#++*+*%%*+*++=*%%#***=+*%@*
+       +%%**#%%%%%***++****++************%@#
+        *%#*#****#*++**++*+*++*+***+**++*@@*
+         #%*+=++++*****++*****+**++****+%@#
+         +%%******+******************++#@@@%%%*+
+ *#%###%%%%%#++***######************#***+===++#%#*
+  *#%#*+*++****##**+++++**#*********+**+==--+-:=#%*
+    #%%#*++***#++=------==+*********+**+++-=%+-++#%*
+      #%%#***#==---=+-::--===+*##*****==+++=#@@%*+%#
+    *#%%#***#++--=%@%*==+=-+===++****+===++*++#*+#%#
+ =#%%#*++***#++-=#@@@@@@@+-+=========++==++***++#@%*
+ *#%%#**+=+**++=-=#%@@@%+-=*++=+===+++===*%++***#@%#
+    #%@@%%#**++++=---=--=+#+===++++#%#+==**+=+==+*%%#
+        %%@@#++++**+==+*#*++++++++++++++++++++++++#%#*
+         %%%+====+*****+++++++++++*##%%%%######%##%@%*
+        +%%+++==++++=+++++++++##%#*==--==--++-==-+%%#
+        +%%+-++++***+++++*#%@#+--::-------------+%%%
+        +%%+++++*++*#%%##*++----------------=-=*@%%
+         *%#+++*+---::==---------------------+%%%#
+          #@%**=-:-----------------=--====--#@%#
+           #%@%#=--------=====-========--=#%@%%
+             #%%%%#*=------=+=--==----=*%@@%%
+                #%%%@%%%#**+++*****##%@@%%
+                    %%%%%%%%@@@@@@%%%%%
+
+@frog60.colours
+                              Kb
+                             sbbb
+                             bbkb           sbb
+                 KbK        bbPPkk        bbbbb
+                bbbbb      bbPPPbb      bbbbbkk
+                bbbPbbb   kbbPppbbb   bbbPPPbkb
+                sbPPPPbbbskbPpPppkkbbbbPPPppkk
+      sbb       skppppPbbkbPpPPpPkkkbPPpppPbkK
+       Kbbbbbb  KkPPPPpPPbPPPPPPPpbPPPppPPpkk
+       bbbPPPPbbbbPPpPPPPPPPPPPPpPPPpPPpppkk
+        KbbpppPPPPPPPPPPPPPPPPPPPpPPPPpPPkkk
+         KbbPPPPPPppPPPPPPPPPPPPPPPPPppPPkk
+         bbbPPpPPPPPPPPppPPPPPPPPPPPPpPPbkkkkkkb
+ KKbbbbbPbbPPPPPpppppbbbpppPPPPPPPPpppPpGGgtttttbb
+  bbbbPPpppppPPbbGGGGGGGGGbpppPPPPpppPPDGGGtttwwskk
+    GkkpPpppppbGGGtttttttGGGGGpPPppppPKDDGGttkwwktkk
+      KkkkPPPGGGttttkwwwtttGGGGppppppKGGGGGttkkkktkk
+    bbbbPPPPpGGtttkkkbwsktttGGGGGGGGGGGGGGDDDtttttkk
+ KbbbbPPPppppDDtttkkkkkkktttGGGGGGGGGGGGGGGGDDDDtkkk
+ KbbbbPPPPPppGGDtttkkkkktttDGGGGGGGGGGGGGGkbGGDDGkkk
+    KkkkbkkppDDDDtttttttttbDGGGGGGGGDkGGGGGGGGGGGGkbk
+        bbkkkgGGGDDDttttDDGGGGGGGGGGGGGGGGGGGGGGGGGbbk
+         KkkGGGGGGGDDDDDGGGGGGGGDGDkbbbbggggggggggDbkk
+        bbkGGGGGGGGGGGGGGGDGGGGKKgggggggggggggggggkkk
+        bbkGGGGGGDkDDDGDDDbbkkgggggggggggggggggggkkk
+        bbkGGDGGDDgggbbKbgGGggggggggggggggggggggkkk
+         KkkGGGDGgggggggggggggggggggggggggggggkkbk
+          bkkGDggggggggggggggggggggggggggggggkkk
+           KkkkkgggggggggggggggggggggggggggkkkK
+             Kkkbbkkggggggggggggggggggggkkkkk
+                KKkkkkkkkkgggggggggkkkkkkk
+                    KKbbkkkbkkkkkkkkkkk
+
+@skull web/assets/icons/punkskull2.png
+                                    :--:
+              ::                   :-=--
+              --::                :--==-:
+              ----:::            ::-+*+=-:
+              --++=--::         :--+***+=-.             ::::
+              -=+**+=--::       :-=*****=-:          ::----:
+              -=+****+=---:   ::-=******+=-:     :::--===--
+              --+******++=--:::-=+*******+=-:  ::--==+**+--
+              --=+*******++=---=+*********=--:--==+****+=-:
+              --=+**********+==+**********+====+*******+=-:
+              :--+*************************+++*********+-:
+               --=+**+*********************+***********=-:
+               :-=+************+**-+***+=-************+=-::::::::::::::
+              ::-=++**************+:+***==************+=--------------:
+            :--=*%%#**********=+++++=*%@%%@@@%##******++*++******+=---
+          :--+%@@@@%****++****+-=+*%%@@@@@@@@@@@%##**************+=--
+        :--+%@@@@@@@****+*****+++#@@@@@@@@@@@@@@@@@%************+=-
+       :-=#%@@@@@@@@#*****+**+**@@@@@@@@@@@@@@@@@@@@@#********+=--
+      :-+%@@@@@@@@@@%**********@@@@@@@@@@@@@@@@@@@@@@@%******+=-
+     :-=%@@@@@@@@@@@@@%#####%%@@@@@@@@@@@@@@@@@@@@@@@@@%***+=--
+    :-=*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#**++=--::
+    --=%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*****++=--::
+   --=*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#*******+=---::
+   :-=%@@#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%********+=---:.
+   --=%@@##@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%**#*++==--=
+   --=%@@#%@@@@@%####@@@@@@@@@@@@@@%#**#%@@@@@@@%#@@@@@@@#===--=
+   --=#@%*@@@*--------=%@@@@@@@@@*--------=*@@@@@=@@@@@@@*--
+    --+%*%@#-----------=@@@@@@@@#-------==---%@@@=%@@@@@%+--
+    --=*%@%=-----------=@@@@@@@@*-------------%@@#%@@@@@*=--
+    :-=*@@%-------=----*@@@@@@@@#=------------%@@%+%@@@%=--
+    --=#@@%+----------=%@@@@@@@@%+=---------==@@@@%#%@%+=--
+    --+@@@@%=-------=*%@@@#++%@@@@*=--------=%@@@@@@#**=--
+   --=#@@@@@@%#+++*%@@@@@#===+%@@@@%#+====+*%@@@@@@@@%+--
+   --=#@@@@@@@@@@@@@@@@@@+=--=+@@@@@@@@@@@@@@@@@@***@@+=-
+    --+@@@@@@@@@@@@@@@@@*==--==#@@@@@@@@@@@@@@@@@#####=-:
+    --=*%@@@@@@@@@@@@@@@#=*%%++%@@@@@@@@@@@@@@@@@%@@#+=-:
+      --=*%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%+====--:
+        -==++**#%@@@@@@@@@@@@@@@@@@@@@@@@#***%%*==+=--==--:
+          --+%@#*%@@@@@@@@@@@@@@@@@@@@@%*=+%@@@%====--===--:
+          --=%@@**@@#=@@-%@@#@@##@@=#@@#==*@@@@#=====-=+*=--:
+          --=%@@#+*#+*@@-%@%=@@+*@@**##+==%@@@@*====+*+*#+=-:
+          --=#@@%+#%=+#*-===-==-=*#=*%%*=#@@@@%*==+=+*+=++=-:
+           -=#@@@@@@+@@@-%@%-%@#+@@##@@@@@@@@@%+--  +=+++=--
+           --*@@@@@@@@@@%@@@%@@@#@@@@@@@@@@@@@#=-      ===
+           --=#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#+--
+            --+#@@@@@@@@@@@@@@@@@@@@@@@@@@@#+=--
+             --=+*%%@@@@@@@@@@@@@@@@@@@%#*+===
+               ---=++*#%%@@@@@@@@@@%#+====-
+                   ==-===+++++++++==--=
+                          ========
+
+@skull.colours
+                                    gtts
+              ss                   ttggs
+              tgsg                gtggggt
+              ggggttt            ssgtPPggs
+              ggtggtttg         ttggPPPPgtt             gttt
+              ggPPPPgggst       gggPPPPPggt          ssggggt
+              ggPPPPPtggtss   gtggPPPPPPPggt     ggsggggggg
+              ggPPPPPPPPggggtstggPPPPPPPPtggt  ssgggggPPPgg
+              gggPPPPPPPPPggggggPPpPPPPPPPtgtttggggPPPPPPgg
+              gggPPPPPPPPPPPgggPPPPPPPPPPPPgggggPPPPPPPPggg
+              gggPPPPPPPPPPPPPPPPPPPPPPPPPPPgPPPPPPPPPPPgg
+               ggGPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPgg
+               gggPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPpgtggtgssssssggg
+              ttggGPPPPPPPPPPPPPPPPPPPPPPwPPPPPPPPPPPPPggggtttggggggggg
+            tggggkkPPPPPPPPPPPPPPPPPPPPPPskkPPPPPpppPPPPPPPPPPPPPPPggg
+          stgggkkkkkPPPPPPPPPPPPPPPPskkkkkkkkkkkpppppPPPPPPPPPPPPPPgg
+        gggggkkkkkkkPPPPPPPPPPPPPPbkkkkkkkkkkkkkkkkppppPPPPPPPPPPgg
+       ggggkkkkkkkkkPPPPPPPPPPPPkkkkkkkkkkkkkkkkkkkkkppPPPPPPPPpgg
+      gggkkkkkkkkkkkPPPPPPPPPPPpkkkkkkkkkkkkkkkkkkkkkkppPPPPPPDg
+     gggkkkkkkkkkkkkkPPPPPPPPPkkkkkkkkkkkkkkkkkkkkkkkkkKpPPPDgg
+    sggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkpPPPPggttt
+    ggbkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkPPPPPPggtgss
+   gggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkpPPPPPPPPggggtt
+   gggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkPPPPPPPPPPggggs
+   gggkkkDkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkKPPPPPDpggg
+   gggkkkDkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkKggggg
+   gggkkkkkkkkkttgggtgkkkkkkkkkkkkggggggggkkkkkkkKkkkkkkkkgg
+    ggkkkkkkggggggggggggkkkkkkkkkggggggggggggkkkkbkkkkkkkGgg
+    ggDGkkkgggggggggggggkkkkkkkkkgggggggggggggkkkkKkkkkkkGgg
+    gggkkkkgggggggggggggkkkkkkkkkggggggggggggggkkkKkkkkkGgg
+    tggkkkkggggggggggggkkkkkkkkkkggggggggggggggkkkkDkkkkggg
+    ggkkkkkgggggggggggkkkkkkkkkkkkggggggggggggkkkkkkkkkDgg
+   gggkkkkkkggggggggGkkkkkDggkkkkkkggggggggggkkkkkkkkkKgg
+   gggkkkkkkkkkkkkkkkkkkkgggggkkkkkkkkkkkkkkkkkkkkkkkkkgg
+    ggkkkkkkkkkkkkkkkkkkkgggggGkkkkkkkkkkkkkkkkkkKKKKkkgg
+    ggKkkkkkkkkkkkkkkkkkgggggggGkkkkkkkkkkkkkkkkkkkkkbggg
+      gDbkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkbkGGgggs
+        gGkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkbkbGgggggggt
+          ggGkDDkkkkkkkkkkkkkkkkkkkkkkkkkGGGkkkbggGGgggggggg
+          ggbkkkDkkkkkkkkkkkkkkkkkkkkkkkGggkkkkkGggGGggggtggs
+          gggkkkGGkkskkkKkkkKkkbkkkkkkkDgggkkkkkggggGDggDKtgg
+          tggkkkkGGKsskKskksskbsskkGGKKgggkkkkkkggggGDDDsGGgg
+           ggkkkkkkkKkkkskkssKksskkGkkkkkkkkkkkbgg  ggDDDDGg
+           ggkkkkkkkbkkkkkkkKkkkkkkkkkkkkkkkkkkGg      Ggg
+           ggbkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkgg
+            ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkDgg
+             gGKkkkkkkkkkkkkkkkkkkkkkkkkkkkGgg
+               ggGGDkkkkkkkkkkkkkkkkkkkkggg
+                   gggkkkkkkkkkkkkkkggg
+                          GggggggG
+
+@frog80 assets/ribbitflip_head.png
+                                           ##.
+                                          #%%*
+                                         +@@%%-               =*=
+                         -+             =%%%@@+             =#%%*
+                         #%#*          =%%++%@%:          +%%%%@=
+                         *%%%%+       -%%+++#@%*        *%@%%%@%-
+                         +%%#%@#+    -%@#****%%#.    =#@%#*+*%%+
+                         *%+*+%%@*-  #%%+#=+*#@%=  =#%%#+***#@%:
+                        :%%+****@%%==@%**-****%@%-#%%%++***#@@*
+            ##=:        :%%*+=-*+@%@@%**#+*+**%@@%@%+***+**%%%+
+            +%%@@%%*-   =@@**=*=*+#%%#+++++*++#@%%+***#-++*@@*
+             +%%#+#%%%%%%%%+#*+++**+*+*++*+*#*+#++*#+*****@@%+
+              #%#***++*#%@%++=****=***+*+++**=***=*++*=+*%@@*
+              =%@**=**+*++***+*+**++*+*+*+**++**++*+**++*@@#
+               *%%*+=++*+=+*#***+*++*******+**+++*+*#**+%@@*
+                #%%+*****+*+*+****************+***+*=++#@@@@@%##-
+      :=******#%%%@*+=***+*****************+*******#+**#*+*##%%@@%*-
+     =%%@@%*####***+*****##%%%%#%%%##****+*********#*+*+===------*%%=
+       *%%#**+*****#*+*##*+++++++=++*#%*#**+*******++*#+===--=#::--%%*
+         %@%**+-*****##+=+==:::::-=++++*#**********+*#*+++=-=%*:.-+-%%-
+          *%@@***+#*#*+=+---:------:-=====#********+*++=+++==%@%@%@=#@%
+            *@@%**+#*+=+---=%@#:...--:+===+*%%%#***#*+===++*==%@@@%=+%%=
+          *#%%*+***#+++---#@@@%#-:+%=--+====+++++***=====+++*+==**==@@%
+      -#%@%*++*++***++=--+@@@@@@%@@@+--++===========++===+++***#+==%@@+
+    =#%%%#+***==****+++---%@@@@@@@@#--=*+++========+======*#++***#%@@%=
+      +#%%@%%*******++++---=#%@@%*=---**====+=++=*##+====+@%++++++=*@@%+
+          #%%%@@%#****+**=---------=+#*+=====+=+++#@@#==++*+=+=+=-+=+%%%*
+              %%@@@#+*+*+*#+=---==*%#*++++++++++=+++++++++++======++=#%@#
+               #%@%=--===****##%##*++==+++++++++++***#%%%@@@%%%%%%#*+#%%#
+               #%%+++=+=++==+++++++++=+=+=+++*##%%%%#+====-===--===++%%@#
+              =%@#====+==++=+===++++++++++#%#%#+===----==:-=+*--+=-==%%%=
+              -%%*=:=+=+=+++++++++++++##@@#=----.=--------:--------*@@%+
+              =%@#+**++++*%@@@%#%##%%%%*==--++==-----------------=@@@%*
+              :#@#+==+++*-=--==+++====++--------::--------------+%@@#
+               +@@#+++*#+---=:::-+=---------------------=--:---%@%%#
+                *@%%*+*=------------------------===--====+=--+%@@#
+                 *#@%%*=--:--==---------==------======-:---*%@@%#
+                   *%@@%%*=------=========--=====---==--=*@@@%#
+                      ##%%%%%*==--------+=-::--=-----=*#@@@%#
+                          %%@@@@@@%#*+======++==+**%@@@@@%
+                              ##%%@@@%%@@@@@@@@@@@@@%#*
+                                     *####%%%%##*
+
+@frog80.colours
+                                           Ksb
+                                          Kbbs
+                                         skkbbw               tts
+                         ss             bbbkkbs             sbbbK
+                         KbKs          bbbPPkkkw          kbbbbkw
+                         bbbbbs       bbbPPPbbbs        bbkbbkkkk
+                         bbbbbbbD    DbbPPPPpbbbs    KbbbbPPKbkK
+                         bbPPPbbbbb  kbbPppppbbbs  sbbbkPPPpbkbG
+                        KbbPpPPbbbbssbbPpsPPppkkkwKbbbPPPpppkkt
+            bbss        skbppppPPbbkkbPPpPPpPPkkkbbbPPPppppbkkt
+            KbbbbbbKs   skkPPpppPPbbbbPpPPPPPPbkkbPPPppspPbkkG
+             bbbbbbbbkkbbkkPpPPPPPPbbPPPPPPPpPPbPPPpppPPPpkkkG
+              bbPPPPPbbbbbbPPpPPPPPPPPPPPPPPppPPPPpPPPppppkkK
+              KbbppppPPPPPPPPPPPPPPPpPPPPPPPPPpPPPPPPpPPpkkK
+               bkpPPpPPPPPPppPPPPPPPPPPPPPPPPPPPPPPPppPPkkkG
+                bbPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPppPPpkkkkkbbGk
+      bsKKbKbkKbbbbPppPPPPPPPPPPPppPpPPPPPPPPPPPPPppPPpbkkkkkkkkbksb
+     sbbbbbbbbbbbbbPPPPPppppppbbbpppppPPPPPPPPPPppppPPKGGggtttttbbbks
+       bkbPPPPPPPPPpPPppbbDGGGGGGGGGKbpppPPPPPPppppPPKDGGGtttttttskbbs
+         kkpPppppppPPpbGGGGGGtttGGGGGGDpppPPPPppPpPPPKDGGGtttkwwwtskkkw
+          kkkPPPpPPPpbGGGtttttttttttGGGGGpppPppppppPKGDDGGtttkkkkkttkks
+            kkkPPPPpbGGGtttttttwwwttttGGGGDppppppppKDGGGDGDtttkkkkktkkbK
+          bbbbkPPPpKGGGttttkkkbwwwwtttGGGGGGGGDDKDKDGGGGGGGDDttkkkttkkb
+      GKkbbbPPPPpppDDGGtttkkkkbkbkkktttGGGGGGGGGGGGGGGGGGGGDDDtttttkkkK
+    KbbbbbPPPPsppppDDDGtttkkkkkkkkkktttGGGGGGGGGGGGGGGGGGGGGGDDDDKkkkkk
+      bbbbPPPPPPpppDGGDttttkkkkkkkttttDDGGGGGGGGGGGGGGGGGGbKGGDDDGGkkkkG
+          kbkkpkPpppGDDDtttttttttttttbDGGGGGGGGGGDkkkGGGGGkGGGGGGGGGkbkkt
+              kkkkkkDDDDDDtttttttttbbDDGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGkkkK
+               KkkkggGGGDDDDDbbbbbDDDGGGGGGGGGGGGGGGGGGGbbkkbbbbGGGGGkbbK
+               kkkGGGGGGGGGDDDDDDDGGGGGGGGGGGGGDDkbKbbbgkkgggggbbbbDKbkkk
+              GbbbGDDGGGGGGGGGGGGGGGGGGGGGGKKKbkkggggggggggggggggggggkkkb
+              bbbGGwGGGGGGGGGGGGGGGDDDDDkkkbggggggggggggggggggggggggkkkb
+              bbkGGGDGGGGDkkkDDDDKDbbkbkkgggggggggggggggggggggggggkkkkK
+              KbkGGGGGGDDDgggkkkbbbGgGGGgggggggggggggggggggggggggkkkk
+               kkkGGGGDDgggggggggggggggggggggggggggggggggggggggkkbkb
+                kkkGGDDgggggggggggggggggggggggggggggggggggggggkkkb
+                 kkkkDDggtggggggggggggggggggggggggggggggggggkkkkK
+                   kkkkbggggggggggggggggggggggGgggggggggggkkkkk
+                      kbkkkkgggggggggggggggggggGggggggggkkkkk
+                          bbkkkkkgggggggggggggggggggkkkkkk
+                              kkkkkkkbbkkkkkkkkkkkkkkkk
+                                     kbkkkkkkkkkk
+
+@skull80 web/assets/icons/punkskull2.png
+                                          :
+                                        :--:
+                       :-:              --=-:
+                       ----::          -=++=-:
+                       -=++=--:      .-=+**+=-         ::--:
+                       -=+**+=--:    -=+****+-:     ::-----:
+                       :=+*****=--:::-+******=-: ::--=+**=-
+                        -+******++=--=*******+=---=++***+=:
+                        -=+********++*********+==+******+-:
+                        -=+*++*****+*******************+=-
+                        :-+********+++*=++*+==***+*****+=-
+                       :--=+**********++-+**=+*********+=-----------:
+                     :-=#%@%********-++++#@@%@@@%%#*************+=--
+                   :-=#@@@@%**+**++*+=+%@@@@@@@@@@@@%**********+=-
+                 :-=*%@@@@@@#****+*+*#@@@@@@@@@@@@@@@@#*******+--
+                :-=%@@@@@@@@%********@@@@@@@@@@@@@@@@@@%****+=-
+                -=%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%**+=--
+               :-*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#**++=--:
+               -=#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%******+=-::
+               -=%@#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*******+---:
+               -=%@%#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#*+==-=
+               -=%@*@@@%=----=@@@@@@@@@+-----+@@@@@+@@@@@%=-
+               -=##%@+--------=%@@@@@@=--=--==-=@@@+@@@@@#=-
+               --+%@#---------=%@@@@@%-----------@@%%@@@@+--
+               :-+@@#-----=---+@@@@@@@+---------=@@@*%@@*=-
+               --*@@@+------=+@@@%#%@@@+--------#@@@@#*%=-
+               -=%@@@@#*+=+#%@@@#=-+@@@@%+=-==+%@@@@@@@*--
+               -=%@@@@@@@@@@@@@%=--=+@@@@@@@@@@@@@@*##@*--
+               --*@@@@@@@@@@@@@*=====%@@@@@@@@@@@@@%#@*=-:
+                --+%@@@@@@@@@@@@%@@@@@@@@@@@@@@@@@@%#+++-:
+                  -==+**%@@@@@@@@@@@@@@@@@@@@%**##+=+=-==-:
+                    --#@#*@@@@@@@@@@@@@@@@@@+=#@@@*===-===-:
+                    --#@@+%@*%@-%@=@@=@@=%@#=+@@@%+==++=+*--:
+                    --*@@#+*===-*#=##=+=-*#==#@@@%====*+===-:
+                    :-+@@@@@=@@-%@=%@+@@*@@@@@@@@#=- +=+*+=-
+                     -=@@@@@@@@%@@%@@%@@@@@@@@@@@+=-    ==
+                     --*%@@@@@@@@@@@@@@@@@@@@@@%*=-
+                      --+#%@@@@@@@@@@@@@@@@@%#+=-
+                        --=+*%%@@@@@@@@@%#+==-=
+                            =-===+++++=====
+
+@skull80.colours
+                                          t
+                                        tggg
+                       tgg              ggPgg
+                       ggtgtt          gtPPPgt
+                       ggPPPggg      tggPPPPgg         sgggt
+                       ggPPPPPPgg    ggPPPPPPgg     ggggPggg
+                       ggPPPPPPPPgggggPPPPPPPPgg ggggPPPPgg
+                        ggPPPPPPPPPggPPPPPPPPPtgggPPPPPPPgg
+                        ggPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPgg
+                        ggGPPPPPPPPPPPPPPPPPPPPPPPPPPPPPGg
+                        tggPPPPPPPPPPPPPPPPPPPPPPPPPPPPPgg
+                       ggggGPPPPPPPPPPPPPPPPPPPPPPPppPPPPgPttPgPggggt
+                     gggkkkkPPPPPPPPPPPPPkkkkkkkkkkpppPPPPPPPPPPPggg
+                   gggkkkkkkPPPPPPPPPPskkkkkkkkkkkkkkpppPPPPPPPDgg
+                 tggkkkkkkkkkPPPPPPPPkkkkkkkkkkkkkkkkkkpPPPPPPggg
+                tggkkkkkkkkkkPPPPPPPPkkkkkkkkkkkkkkkkkkkpPPPDgg
+                ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkPPPggt
+               gggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkpPPPPPPtg
+               ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkPPPPPPPgggg
+               ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkKPPPPDgggggg
+               ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkKgggggg
+               ggkkkkkkktgggggkkkkkkkkkgggggggkkkkkkkkkkkkgg
+               gggkkkggggggggggkkkkkkkgggggggggggkkkkkkkkkgg
+               tggkkkggggggggggkkkkkkkgggggggggggkkkkkkkkggg
+               tggkkkggggggggggkkkkkkkkggggggggggkkkkkkkkgg
+               gggkkkgggggggggkkkkgkkkkkggggggggkkkkkkkkgg
+               ggkkkkkkkgggkkkkkkgggkkkkkkgggggkkkkkkkkkgg
+               ggkkkkkkkkkkkkkkkgggggkkkkkkkkkkkkkkkKKkkgg
+               gggkkkkkkkkkkkkkkgggggkkkkkkkkkkkkkkkkkbggg
+                gggDkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkbgGGgg
+                  ggggGbDkkkkkkkkkkkkkkkkkkkkGDDkkGgGgggggg
+                    ggbkkGkkkkkkkkkkkkkkkkkkGgGkkkGggGgggggg
+                    gggkkGGkkkkkkkKkkKkkkkkkggkkkkKgggDgDKtgg
+                    tggkkkGkssksskssksKksskKgkkkkkDggGDDDDGgg
+                    gggkkkkkkkkkkkkKkKkkkkkkkkkkkkgg ggDDDgg
+                     ggbkkkkkkkkkkkkkkkkkkkkkkkkkggg    DD
+                     gggkkkkkkkkkkkkkkkkkkkkkkkkGgg
+                      gggDkkkkkkkkkkkkkkkkkkkGggg
+                        gggggkkkkkkkkkkkkkggggg
+                            ggggGgggggggggg
+
+@skull60 web/assets/icons/punkskull2.png
+                               --
+                 :::          -=-:
+                 -----:      -=*=-:        ::
+                 -=*+=--:   -=***=-     ::---
+                 -=+**+=--:-=+***+=- :--=++=-
+                 -=+****+===+*****+--=+***+-
+                 --=***************++*****=-
+                  -=+******+*+**+++******+=-
+                 :-=*********+-**+*******+=======--:
+              :-=#%@%**+***+=*%%@@@@@%%#********+=-
+             :-*%@@@%#******#@@@@@@@@@@@%*****+=-
+            :=#@@@@@@%*****%@@@@@@@@@@@@@%***+=-
+           :-#@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*+=--:
+           -=%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#***+=--:
+           -+%%%@@@@@@@@@@@@@@@@@@@@@@@@@@@#****+=--:
+           -+%%%@%##*#%@@@@@@%***#%@@@%%@@@#=====
+           -=%#@+-----=#@@@@#------+%@%%@@@+-
+           --*@*------=#@@@@*-------+@%%@@#=-
+           --#@#-----=*%@@@@%=-----=*@@#%%+-
+           -+%@@#+==+#@@*=+%@@*====*@@@@%*=-
+           -+%@@@@@@@@@#+-=*@@@@@@@@@@%#%*--
+           --*%@@@@@@@@#*#**%@@@@@@@@@@%#=--
+             -=+#%%@@@@@@@@@@@@@@@%##*+====-
+               -+@%#@@@@@@@@@@%@%++@@#=====--
+               -=@%***%#%*%##@+#*=#@@*==++*+-:
+               -=%@%%#%*#*#%*%*@%%@@%*==++++-
+                -#@@@@@@@@@@%@@@@@@@#+=   =-
+                -=#@@@@@@@@@@@@@@@%*==
+                 -==*#%@@@@@@@%#++==
+                    ===++++++===-
+
+@skull60.colours
+                               gg
+                 ggs          gggt
+                 gggtts      ggPPgt        tt
+                 ggPPgggt   ggPPPgg     ttggg
+                 ggPPPPPggttgPPPPPgg sgggPPgg
+                 ggPPPPPPPggPPPPPPPgggPPPPPg
+                 gggPPPPPPPPPPPPPPPPPPPPPPPg
+                  ggPPPPPPPPPPPPPPPPPPPPPPgg
+                 gggGPPPPPPPPPPPPPPPPPPPPPPgPtPPPggg
+              sggkkkkPPPPPPPPPkkkkkkkkkpppPPPPPPPgg
+             gggkkkkkPPPPPPPPkkkkkkkkkkkkpPPPPPgg
+            ggkkkkkkkkPPPPPPkkkkkkkkkkkkkkpPPPgg
+           ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkPPPgtg
+           ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkPPPPPggg
+           ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkPPPPPgggg
+           ggkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkKgggg
+           ggkkkkggggggkkkkkkgggggggkkkkkkkkg
+           ggDkggggggggkkkkkkggggggggkkkkkkgg
+           ggkkkgggggggkkkkkkggggggggkkkkkkg
+           ggkkkkggggkkkkggkkkggggggkkkkkkgg
+           ggkkkkkkkkkkkggggkkkkkkkkkkkkkkgg
+           ggkkkkkkkkkkkgkggkkkkkkkkkkkkkGgg
+             ggkkkkkkkkkkkkkkkkkkkkkkkbGgggg
+               ggkGkkkkkkkkkkkkkkGGkkkggggggg
+               ggkkGkskKkkkkKkkkkggkkkgggDDKgg
+               ggkkkkkksskskskskkkkkkkgggDDDg
+                gkkkkkkkkkkkkkkkkkkkkgg   gg
+                ggkkkkkkkkkkkkkkkkkkgg
+                 gggkkkkkkkkkkkkkggg
+                    ggggGgggggggg
+
+@wordmark
+8888888b.  d8b 888      888      d8b 888    8888888888 888 d8b         
+888   Y88b Y8P 888      888      Y8P 888    888        888 Y8P         
+888    888     888      888          888    888        888             
+888   d88P 888 88888b.  88888b.  888 888888 8888888    888 888 88888b. 
+8888888P"  888 888 "88b 888 "88b 888 888    888        888 888 888 "88b
+888 T88b   888 888  888 888  888 888 888    888        888 888 888  888
+888  T88b  888 888 d88P 888 d88P 888 Y88b.  888        888 888 888 d88P
+888   T88b 888 88888P"  88888P"  888  "Y888 888        888 888 88888P" 
+                                                               888     
+                                                               888     
+                                                               888
+@wordmark.colours
+wwwwwwwww  www www      www      www www    PPPPPPPPPP PPP PPP         
+www   wwww www www      www      www www    PPP        PPP PPP         
+www    www     www      www          www    PPP        PPP             
+www   wwww www wwwwwww  wwwwwww  www wwwwww PPPPPPP    PPP PPP PPPPPPP 
+wwwwwwwww  www www wwww www wwww www www    PPP        PPP PPP PPP PPPP
+www wwww   www www  www www  www www www    PPP        PPP PPP PPP  PPP
+www  wwww  www www wwww www wwww www wwwww  PPP        PPP PPP PPP PPPP
+www   wwww www wwwwwww  wwwwwww  www  wwwww PPP        PPP PPP PPPPPPP 
+                                                               PPP     
+                                                               PPP     
+                                                               PPP
+@wordmark76
+╔══╗   ╦   ╦      ╦  ╔══╗ ╗      
+║  ║ o ║   ║   o  ║  ║    ║ o    
+╠═╦╝ ╦ ╠═╗ ╠═╗ ╦ ═╬═ ╠═╣  ║ ╦ ╔═╗
+║ ╚╗ ║ ║ ║ ║ ║ ║  ║  ║    ║ ║ ║ ║
+╩  ╩ ╩ ╚═╝ ╚═╝ ╩  ╚╝ ╩    ╩ ╩ ╠═╝
+                              ║  
+                              ╩
+@wordmark76.colours
+wwww   w   w      w  PPPP P      
+w  w w w   w   w  w  P    P P    
+wwww w www www w www PPP  P P PPP
+w ww w w w w w w  w  P    P P P P
+w  w w www www w  ww P    P P PPP
+                              P  
+                              P

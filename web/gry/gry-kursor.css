@@ -1,0 +1,19 @@
+/* RIBBITBEAT: kursor-łapka, drugi tryb sterowania menu (js/kursor-lapka.js).
+   .lapka = łapka jednego kapsla albo pada. To te same rysunki, rozmiar i punkt kliknięcia co wskaźnik myszy gry
+   (web/assets/cursor/, reguły na końcu gry.css), w tych samych pozach: spoczynek, najazd na coś klikalnego
+   (różowy obrys) i wciśnięcie. Element .lapka ma zerowy rozmiar i stoi dokładnie w PUNKCIE KLIKNIĘCIA; każdy
+   rysunek jest od niego odsunięty o swój punkt czuły (ustawia to moduł). Ruch tylko przez transform. */
+.lapka{position:fixed;left:0;top:0;z-index:2147483000;width:0;height:0;pointer-events:none;opacity:0;transition:opacity .16s;
+  will-change:transform}
+.lapka.widac{opacity:1}
+.lapka-rys{position:absolute;display:none;max-width:none;user-select:none}
+.lapka:not(.nad):not(.klik) .lapka-spoczynek,.lapka.nad:not(.klik) .lapka-najazd,.lapka.klik .lapka-wcisk{display:block}
+/* jedyna różnica względem wskaźnika myszy: numerek gracza na kółku w kolorze jego kapsla, przy nadgarstku */
+.lapka-nr{position:absolute;left:9px;top:21px;display:grid;place-items:center;min-width:19px;height:19px;padding:0 3px;box-sizing:border-box;
+  border-radius:999px;background:var(--kolor,#6cb33f);color:var(--napis,#fff);box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #1b1917;
+  font:400 12.5px/1 var(--rebel,"Titan One",system-ui,sans-serif);font-variant-numeric:tabular-nums}
+.lapka-nr:empty{display:none}
+@media (prefers-reduced-motion:reduce){.lapka{transition:none}}
+/* element, który łapka kliknie */
+.lapka-nad{outline:3px solid #f0a92c!important;outline-offset:2px!important}
+

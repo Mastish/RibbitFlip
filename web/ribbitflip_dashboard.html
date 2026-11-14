@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- „Inspektor urządzenia" was the name of this page when it WAS one: three oscilloscopes and a
+     3D puck. It is a whole panel now, and the window title is what shows up in the task bar and in
+     a screenshot pasted into a bug report. The i18n walker never sees this: it walks document.body,
+     and the overlay window (the same file with ?overlay=1) overwrites document.title with a marker
+     the server hunts for — translating it here would lose that window. The EN pair is in I18N_EN. -->
+<title>RibbitFlip — panel</title>
+<link rel="icon" type="image/png" href="/web/assets/icons/favicon-64.png">
+<link rel="apple-touch-icon" href="/web/assets/icons/favicon-64.png">
+<!-- Preload what the first paint needs: the felt texture is the page background, the
+     wordmark/logo sit in the app bar, and the latin fonts avoid a flash of unstyled text. -->
+<link rel="preload" as="image" href="/web/assets/textures/felt.png">
+<link rel="preload" as="image" href="/web/assets/icons/logo.png">
+<link rel="preload" as="image" href="/web/assets/icons/wordmark.png">
+<link rel="preload" as="font" type="font/woff2" href="/web/assets/fonts/baloo2-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/web/assets/fonts/titan-one-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/web/assets/fonts/nunito-600-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/web/assets/fonts/jetbrains-mono-latin.woff2" crossorigin>
+<!-- ...and the latin-ext subsets of the three text faces. The interface is written in Polish, so
+     the very first headings already need ą/ę/ł — but latin-ext lives in a separate file that the
+     browser only discovers while laying out the first character that needs it, some 0.5-0.7 s
+     after latin. Until then those letters were painted in the fallback face and jumped when the
+     real one arrived. JetBrains Mono is deliberately NOT here: it is only discovered after ~2.5 s
+     and in the English UI it would never be used at all ("preloaded but not used"). -->
+<link rel="preload" as="font" type="font/woff2" href="/web/assets/fonts/baloo2-latin-ext.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/web/assets/fonts/titan-one-latin-ext.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="/web/assets/fonts/nunito-600-latin-ext.woff2" crossorigin>
+<!-- Stylesheet order is load-bearing. 01-06 define tokens and the base layout, 07-11 repaint
+     it with the light "felt" skin, 12-14 add the REST tab, the dialogs and the motion layer.
+     Later files beat earlier ones on source order alone (equal specificity), so 07 only wins
+     because it comes after 02-06, and 14 only wins because it comes last. Do not reorder. -->
+<link rel="stylesheet" href="/web/css/01-assets-tokens.css">
+<link rel="stylesheet" href="/web/css/02-base.css">
+<link rel="stylesheet" href="/web/css/03-triggers.css">
+<link rel="stylesheet" href="/web/css/04-pose-mouse-cmd.css">
+<link rel="stylesheet" href="/web/css/05-macro-tabs.css">
+<link rel="stylesheet" href="/web/css/06-connect-midi-pads.css">
+<link rel="stylesheet" href="/web/css/07-felt-core.css">
+<link rel="stylesheet" href="/web/css/08-felt-components.css">
+<link rel="stylesheet" href="/web/css/09-felt-pads-synth.css">
+<link rel="stylesheet" href="/web/css/10-icons-controls.css">
+<link rel="stylesheet" href="/web/css/11-felt-forms-devices.css">
+<link rel="stylesheet" href="/web/css/12-rest-api.css">
+<link rel="stylesheet" href="/web/css/13-dialogs-overview.css">
+<link rel="stylesheet" href="/web/css/14-motion.css">
+<!-- 14b is the virtual controller's drawing. Numbered "b" rather than 16 for the reason below:
+     15 has to stay last, and nothing in the pad widget needs to beat the overlay skin. -->
+<link rel="stylesheet" href="/web/css/14b-gamepad.css">
+<!-- 14c dresses the Kontroler tab (the capsule hub, its sections and the pad tiles). After 14b so
+     it can put the pad drawing into a tile without restating its geometry, before 15 for the same
+     reason 14b is. -->
+<link rel="stylesheet" href="/web/css/14c-controller.css">
+<!-- 14d sews the seam onto the button family. Last of the panel sheets on purpose: it only adds a
+     ::after ring, and it has to sit after every file that skins a button (07 .btn, 08 tabs and
+     group toggles, 09 pad buttons, 10 the rail, 13 dialogs) so its variant colours win on source
+     order. Before 15 for the same reason 14b and 14c are. -->
+<link rel="stylesheet" href="/web/css/14d-buttons.css">
+<!-- 16 skins the "Moduły" matrix in the devices hub. After 10, whose .rf-toggle it shrinks for
+     the grid, and after 14d, whose button rules the fold's „Moduły" button borrows. -->
+<link rel="stylesheet" href="/web/css/16-devmods.css">
+<!-- 17 — KOŁO WYBORU: wygląd rysunku (SVG). Osobny plik, bo ten sam rysunek noszą cztery
+     powierzchnie — scena w zakładce, ściąga w panelu, nakładka nad grą i okienko przy kursorze —
+     a wszystkie ładują ten sam arkusz. -->
+<link rel="stylesheet" href="/web/css/17-wheel.css">
+<!-- 18 — PASEK TOŻSAMOŚCI KONFIGURACJI (rf-49): „Konfiguracja: X · zmienione" plus działania.
+     Wspólny dla modułów, w których kapsel nosi nazwaną konfigurację, więc arkusz też jest
+     wspólny, a nie doklejony do tego, który akurat go pierwszy potrzebował. Po przejściu
+     Mapowania, Myszy i MIDI/OSC na hub (19) zostaje przy Nakładce, Syntezatorze i Czujniku —
+     tam nośnikiem nazwy bywa CAŁY EKRAN albo cała zakładka, a nie kapsel, więc kafle z chipami
+     kapsli nie miałyby czego pokazać. Arkusz zostaje, dopóki zostaje choć jeden pasek. -->
+<link rel="stylesheet" href="/web/css/18-cfgid.css">
+<!-- 19 — HUB KONFIGURACJI (rf-49i): kafle biblioteki z opisem, chipy kapsli, tacka i zdanie
+     o tym, co znaczy zapis. Po 18, bo to następna warstwa tej samej sprawy — pasek odpowiadał na
+     „jak się to nazywa", hub na „co jest w bibliotece i kto co nosi". Język wizualny (kafel, chip,
+     upuszczenie, tacka) celowo ten sam, co pas padów w 14c. Jeden arkusz na wszystkie huby
+     (Mapowanie, Mysz, MIDI, OSC) — klasy `.cfh-*` nie znają swojej karty. -->
+<link rel="stylesheet" href="/web/css/19-cfghub.css">
+<!-- 20 — UKŁAD TRZECH KOLUMN (nawigacja · treść · kapsle i podgląd), chowanie paneli i scrolle.
+     Numer 20, czyli PO wszystkich arkuszach komponentów: to warstwa rozmieszczenia i musi móc
+     przestawić rzeczy, które tamte ustawiły pod jedną, pionową stronę (pigułka kapsla, pas
+     podglądu, pasek „Okno/Pauza/Zeruj"). Własnego wyglądu nie wnosi — kolory, promienie i ruch
+     bierze z tokenów i z 14-motion.css. Nadal PRZED 15, bo ostatnie słowo ma nakładka. -->
+<link rel="stylesheet" href="/web/css/20-cols.css">
+<!-- Wyglad listy presetow, chipow kapsli, panelu opisu i bloku stanu. PRZED 15-overlay.css. -->
+<link rel="stylesheet" href="/web/css/21-presets.css">
+<!-- 22 — MODUL = TRZY ZAKLADKI (Konfiguracja / Biblioteka / i). Uklad obu zakladek i pasek
+     przelacznika; PO 21, bo nadpisuje jego dawny podzial „lista obok konfiguracji". -->
+<link rel="stylesheet" href="/web/css/22-modtabs.css">
+<!-- 23 — NAKŁADKI NAD GRĄ: karta zarządzania oknami na ekranie „Nakładka" (rf-41b/rf-41c).
+     PRZED 15, bo 15 ubiera OKNO stojące nad grą, a to jest zwykła karta panelu i ostatnie słowo
+     ma mieć nakładka. Miniatury wyglądów (.ovl-thumb-*) są wspólne — mieszkają w 15. -->
+<link rel="stylesheet" href="/web/css/23-overlay-manage.css">
+<!-- 24 — GALERIA NAKŁADEK I ŻYWA MINIATURA (rf-41d): górna, stała część ekranu „Nakładka".
+     PO 23, bo pożycza z niego pigułki (.ovm-pill) i dokłada wiersz suwaka bez oka; PRZED 15
+     z tego samego powodu, co 23. -->
+<link rel="stylesheet" href="/web/css/24-overlay-gallery.css">
+<!-- Recorded gestures: the editor's mode bar, the recorder box and the simple-mode layout. -->
+<link rel="stylesheet" href="/web/css/25-gesture.css">
+<link rel="stylesheet" href="/web/css/26-scan.css">
+<!-- Podgląd skanera w Bibliotece (rf-39i4): plansze z obrysami sekcji i legenda. -->
+<link rel="stylesheet" href="/web/css/28-scan-preview.css">
+<!-- Oscyloskop nad pokrętłami edytora brzmień (rf-25c): listwy z filcu i rama szyby. PO 09, bo nadpisuje
+     jego układ edytora (ekran na całą szerokość nad parametrami zamiast kolumny z prawej). -->
+<link rel="stylesheet" href="/web/css/29-sound-screens.css">
+<!-- Edytor brzmień jako „rack” (rf-25d, etap E4a): pasek brzmienia, kolumna z listą, karty modułów. PO 29, bo
+     układa oscyloskop w prawej kolumnie i na wąskim instrumencie zmienia jego układ (zapytania o kontener). -->
+<link rel="stylesheet" href="/web/css/30-sound-rack.css">
+<!-- Płaskie edytory krzywych w kartach modułów (rf-25e, etap E6): pasek narzędzi i canvas z ramą z filcu. PO 30,
+     bo zdejmuje wewnętrzny odstęp kontenera `.se-sec-editor` (margines ma sama rama). -->
+<link rel="stylesheet" href="/web/css/31-curve-editors.css">
+<!-- Kasety zestawów (rf-28e): wybór kasety przy zapisie, kaseta na liście i w podglądzie, scena wczytania. -->
+<link rel="stylesheet" href="/web/css/32-kasety.css">
+<!-- Przewodnik po panelu (rf-39p): warstwa z podświetleniem i dymek. -->
+<link rel="stylesheet" href="/web/css/27-tour.css">
+<!-- 15 is the overlay skin: it only ever applies inside html.rf-ovl, so it has to come last for
+     the same reason 14 does — it is undressing the panel, and every rule it overrides is above. -->
+<link rel="stylesheet" href="/web/css/15-overlay.css">
+<!-- Set before the first paint, so the overlay window never flashes the full panel on its way to
+     being a small floating one. rf-41-overlay.js repeats it; this is purely about the flash. -->
+<!-- Same trick, same reason, one line lower: until rf-40-boot has run its init list the page is a
+     raw one-column stack of cards (0.3 s on a fast machine, 3.7 s on a slow one) that then jumps
+     into three columns. `rf-boot` hides the chrome for exactly that stretch — `visibility`, never
+     `display`, because several inits measure sizes while it is on (02-base.css says which). The
+     8 s timer is a dead-man's switch: if an init throws before the class comes off, the page shows
+     up anyway. This too is purely about the flash. -->
+<script>if(/[?&]overlay=1/.test(location.search))document.documentElement.classList.add("rf-ovl");
+document.documentElement.classList.add("rf-boot");setTimeout(function(){document.documentElement.classList.remove("rf-boot");},8000);
+// First-start question (rf-48b): did this browser use the panel before? Read before any rf-* file
+// writes its own keys on load, otherwise a brand-new browser always looks like a returning one.
+try{window.RF_LS_PRIOR=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i)||"";if(k.indexOf("ribbitflip.")===0&&k!=="ribbitflip.lang"){window.RF_LS_PRIOR=true;break;}}}catch(e){window.RF_LS_PRIOR=true;}</script>
+<!-- CZARNY PASEK NAD WSZYSTKIM — ta sama sztuczka, trzeci raz, i tym razem nie o mignięcie chodzi.
+     Okno nakładki staje na ekranie z WŁASNĄ belką przeglądarki, a znika ona dopiero, gdy aplikacja
+     (1) znajdzie to okno po znaczniku w tytule i (2) dostanie zmierzoną wysokość tej belki, żeby ją
+     wyciąć regionem (patrz OverlayWindow._await_window i set_chrome w ribbitflip_monitor.py). Jedno
+     i drugie robił dotąd rf-41-overlay.js — OSTATNI ze 156 tagów <script>, w dodatku pod
+     `window load`. Do tego czasu reszta okna jest już wycięta kluczem koloru, więc na ekranie stoi
+     sam pasek: ciemna kreska szerokości okna nad wszystkim, czym akurat jest pełny ekran.
+     Zmierzone na tej maszynie: 0,5 s przy ciepłym starcie, 8-23 s przy pierwszym po zbudowaniu
+     `dist`, a dwa razy znacznik przyszedł już PO tym, jak aplikacja przestała szukać (30 s) — wtedy
+     pasek zostaje do końca sesji. Wystarczy też jeden zasób, który się zawiesi: `load` nie pada,
+     rf-41 nigdy nie mierzy, pasek stoi.
+     Dlatego oba kroki są TUTAJ: przed pierwszym malowaniem, przed pierwszym arkuszem, bez związku
+     z tym, czy strona zdąży się załadować. rf-41 dalej robi swoje — to jest fora, nie przeprowadzka:
+     tytuł ustawia na ten sam napis, a set_chrome milczy, gdy dostaje tę samą liczbę drugi raz. -->
+<script>(function(){
+  var q=location.search;
+  // Miniatura w panelu mierzy się z niczego (`outerHeight-innerHeight` w ramce to zero) i niczym
+  // nie steruje — ten sam wyjątek, co RF_OVL_PREVIEW w rf-41.
+  if(!/[?&]overlay=1/.test(q)||/[?&]preview=1/.test(q))return;
+  var p=null;try{p=new URLSearchParams(q);}catch(e){return;}
+  var mk=p.get("mark")||"",dev=p.get("dev")||"",win=p.get("win")||dev;
+  document.title="RibbitFlip"+(mk?(" · "+mk):"");
+  // Odczyt liczy się dopiero, gdy powtórzy się dwa razy pod rząd i w ogóle wygląda na belkę —
+  // ta sama zasada, co w ovlReportChrome, i z tego samego powodu: liczba złapana w trakcie zmiany
+  // rozmiaru wycina tyle samo pikseli TREŚCI.
+  // I DLATEGO TEN LICZNIK NIE GAŚNIE NA PIERWSZEJ ODPOWIEDZI. Tu, sekundę przed resztą strony, okno
+  // dopiero się układa i pierwsza para równych odczytów potrafi kłamać — zmierzone na tej maszynie
+  // 45 zamiast 54 i 57 zamiast 53, czyli region o te kilkanaście pikseli za wysoko. Więc mierzymy
+  // dalej przez 6 s i meldujemy PONOWNIE, gdy liczba się zmieni: pierwszy strzał zdejmuje czarny
+  // pasek od razu, a poprawka przychodzi w setkach milisekund zamiast czekać na rf-41 (`load`).
+  // Pętli z tego nie będzie: `outerHeight-innerHeight` to wysokość belki, a ta nie zmienia się od
+  // tego, że okno urosło albo się przesunęło — w przeciwieństwie do nasłuchu `resize`, na którym
+  // rf-41 się kiedyś na tym przejechał.
+  var cand=null,sent=-1,t0=Date.now(),id=setInterval(function(){
+    if(Date.now()-t0>6000){clearInterval(id);return;}
+    var css=window.outerHeight-window.innerHeight;
+    if(!(css>=8&&css<=120)){cand=null;return;}
+    if(cand!==css){cand=css;return;}
+    var bar=Math.round(css*(window.devicePixelRatio||1));
+    if(bar===sent)return;
+    sent=bar;
+    // Nagłówek z tokenem dokładamy sami: dokleja go zwykle opakowany `fetch` z rf-05, a tego tu
+    // jeszcze nie ma. Serwer wstawia token ostatnią linią sekcji <head>, czyli i tak zanim ten
+    // licznik pierwszy raz wystrzeli.
+    // ⚠️ ŻADEN KOMENTARZ W TYM PLIKU NIE MOŻE ZAWIERAĆ ZAMYKAJĄCEGO ZNACZNIKA SEKCJI <head>.
+    // Serwer wstrzykuje ten blok przez `body.replace(b"</hea"+"d>", …, 1)` (rf, _serve_dashboard),
+    // czyli w PIERWSZE takie miejsce w pliku — a wstrzykiwany kawałek kończy się `</scr`+`ipt>`,
+    // które zamknęłoby ten skrypt w połowie. Kosztowało to godzinę: skrypt był w źródle, był
+    // w odpowiedzi serwera i po prostu się nie wykonywał.
+    var h={"Content-Type":"application/json"};
+    if(window.RIBBITFLIP_TOKEN)h["X-RibbitFlip-Token"]=window.RIBBITFLIP_TOKEN;
+    try{fetch("/overlay",{method:"POST",headers:h,
+      body:JSON.stringify({act:"chrome",win:win,dev:dev,bar:bar})});}catch(e){}
+  },100);
+})();</script>
+</head>
+<body>
+
+<header>
+  <div class="brand" role="link" tabindex="0" title="Wróć do panelu głównego"
+       onclick="goHome()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goHome();}">
+    <span class="rf-frog" role="img" aria-label="RibbitFlip"></span>
+    <!-- Under the wordmark goes the project's claim, the same line the project page carries — it
+         says what RibbitFlip is FOR. "inspektor urządzenia" only described this one screen. -->
+    <span class="rf-word"><span class="rf-wordmark" role="img" aria-label="RibbitFlip"></span><small>Skumaj swój Triki z komputerem</small></span>
+  </div>
+  <span id="connBadge" class="badge off" role="status" aria-live="polite"><span class="led"></span><span id="connText">łączę…</span></span>
+  <div id="deviceSel" class="devsel" style="display:none" role="tablist" aria-label="Wybór urządzenia"></div>
+  <button type="button" id="modeToggle" class="modesw" role="switch" aria-checked="false" aria-label="Tryb pracy: LIVE albo symulacja" title="Tryb pracy: LIVE albo symulacja. Przełączenie uruchamia aplikację ponownie">
+    <span class="modesw-seg real"><span class="modesw-ic" aria-hidden="true"></span><span class="modesw-txt">LIVE</span></span>
+    <span class="modesw-seg sim"><span class="modesw-ic" aria-hidden="true"></span><span class="modesw-txt">Symulacja</span></span>
+    <span class="modesw-thumb" aria-hidden="true"></span>
+  </button>
+  <!-- The project's own page (GitHub Pages). A real <a>, not a scripted button, so middle-click,
+       "open in new tab" and "copy link address" behave the way people expect from a link. It is a
+       direct child of <header> because initTabs (rf-34) empties .ctrl and then re-appends the
+       right-hand group itself — this one rides along there, between the mode and language switches. -->
+  <a class="btn" id="siteLink" href="https://mastish.github.io/RibbitFlip/"
+     target="_blank" rel="noopener noreferrer"
+     aria-label="Strona projektu RibbitFlip. Otworzy się w przeglądarce"
+     title="Strona projektu RibbitFlip. Otworzy się w przeglądarce"><span class="bic bic-site" aria-hidden="true"></span><span class="btn-lbl">Strona projektu</span></a>
+  <!-- ⚠️ ETYKIETY W `<span class="btn-lbl">`, A NAZWA DOSTĘPNA W `aria-label`. Poniżej 1100 px
+       07-felt-core.css chowa te dwa napisy (`display:none`), żeby pasek górny nie złamał się na
+       dwa wiersze — a schowany tekst wypada też z drzewa dostępności i link zostałby SAMĄ ikoną
+       bez nazwy. `title` na to nie wystarczy: rf-05 przepisuje go do `data-rftip` i — gdy
+       element ma własny tekst — podpina jako OPIS, nie jako nazwę. Stąd jawny `aria-label`
+       (klucz EN ten sam, co dla `title`). -->
+  <!-- Serwer społeczności. Też prawdziwy <a> i z tego samego powodu co wyżej: ma się zachowywać
+       jak zwykły odnośnik. Etykieta „Discord" jest nazwą własną, więc nie podlega tłumaczeniu —
+       przekładany jest wyłącznie title. -->
+  <!-- href zostaje w markupie, żeby odnośnik był odnośnikiem, zanim JavaScript cokolwiek zrobi —
+       ale PRAWDZIWY adres wpisuje initTabs (rf-34) z RF_INVITE_HEADER. Dopóki stała była tu
+       przepisana ręcznie, dwa miejsca mówiły to samo i wygrywało to, które ktoś zapomniał poprawić.
+       Podpowiedź wymienia pokoje z nazwy: „pomoc, zestawy i pokazy" nie mówi, że są to KANAŁY, ani
+       że jest jeszcze czwarty. -->
+  <a class="btn" id="discordLink" href="https://discord.gg/tyv2MjjVdb"
+     target="_blank" rel="noopener noreferrer"
+     aria-label="Serwer Discord RibbitFlip: #pomoc, #zestawy, #pochwal-się, #pomysły"
+     title="Serwer Discord RibbitFlip: #pomoc, #zestawy, #pochwal-się, #pomysły"><span class="bic bic-discord" aria-hidden="true"></span><span class="btn-lbl">Discord</span></a>
+  <div class="spacer"></div>
+  <div class="ctrl">
+    <span class="rail-range" id="winRange"><span class="rail-range-lbl" id="winLbl">Zakres czasu</span><span class="seg seg-sm" id="win" role="group" aria-labelledby="winLbl"><button type="button" data-sec="5">5 s</button><button type="button" data-sec="10" class="on">10 s</button><button type="button" data-sec="20">20 s</button><button type="button" data-sec="30">30 s</button></span></span>
+    <button class="btn" id="pause">⏸ Pauza</button>
+    <button class="btn" id="tare" title="Odejmuje bieżące przesunięcie od wykresów. Zmienia tylko obraz, dane i wyjścia zostają bez zmian">Zeruj wykresy</button>
+    <button class="btn" id="recToggle" title="Rozpocznij / zatrzymaj nagrywanie surowych próbek do CSV"><span class="bic bic-camera" aria-hidden="true"></span>Nagrywaj CSV</button>
+    <button class="btn" id="csv" title="Pobierz nagrane surowe próbki jako CSV"><span class="bic bic-export" aria-hidden="true"></span>Pobierz <span class="num" id="recInfo" style="color:var(--dim);font-size:11px"></span></button>
+    <button class="btn" id="clear" title="Czyści wykresy, dziennik wyzwalaczy i surowy strumień. Nagranie CSV zostaje do pobrania"><span class="bic bic-bin" aria-hidden="true"></span>Wyczyść wykresy</button>
+    <button class="btn" id="langToggle" title="Język / Language: PL ↔ EN" style="margin-left:auto">EN</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ===== CONNECTION + DEVICE + STATS =====
+       UX 261120 L4b: trzy piętra. Na wierzchu stan łącza (Status, Sygnał, Bateria), Uśpij/Wznów
+       i „Dodaj kapsel”; nazwa z diodą i oszczędzanie baterii w dwóch zwijakach pod spodem;
+       liczniki, komendy hex, częstotliwość strumienia i CSV w jednym „Zaawansowane” na dole
+       ekranu (#connAdv, rf-34 dokłada tam nagrywanie). Id pól zostają, piszą do nich rf-08 i rf-13. -->
+  <div class="card" id="connCard">
+    <div class="head"><h2>Połączenie z urządzeniem</h2><span class="hint" id="connHint">—</span></div>
+    <div class="conngrid conngrid-p1">
+      <div class="cell" title="Kapsel przyjmuje tylko jedno połączenie naraz. Jeśli nie chce się połączyć, zamknij Żappkę na telefonie oraz inne programy sterujące kapslem, odczekaj chwilę i spróbuj ponownie.">
+        <div class="k">Status <span class="hinti rfic info-ic" aria-hidden="true"></span></div><div class="v" id="dStatus">—</div></div>
+      <div class="cell"><div class="k">RSSI</div><div class="v" id="dRssi">—</div></div>
+      <div class="cell" id="battCell" title="Odczyt baterii jest orientacyjny — tanie urządzenia BLE raportują poziom zgrubnie (często pokazują 100% niemal do końca, potem szybko spadają). Traktuj to jako przybliżenie, a nie dokładny pomiar.">
+        <div class="k">Bateria <span class="hinti rfic info-ic" aria-hidden="true"></span></div><div class="v" id="dBatt">—</div></div>
+    </div>
+    <div class="powerbar conn-acts">
+      <button class="btn" id="sleepBtn" title="Uśpij urządzenie — zatrzymaj strumień"><span class="bic bic-zzz" aria-hidden="true"></span>Uśpij</button>
+      <button class="btn" id="wakeBtn" style="display:none">▶ Wznów</button>
+      <span class="pw-state" id="pwState">—</span>
+      <span class="pw-msg" id="pwMsg" role="status" aria-live="polite"></span>
+      <!-- Ten sam przycisk, co w prawej kolumnie (#deviceAddBtn): tu ląduje osoba, której kapsel
+           się nie łączy, a parowanie było dotąd tylko tam. -->
+      <button class="btn rf-cta" id="connAddBtn" type="button"><span class="bic bic-plus" aria-hidden="true"></span>Dodaj kapsel</button>
+    </div>
+
+    <details class="cardfold inset" id="connNameFold">
+      <summary>Nazwa i dioda</summary>
+      <div class="cardfold-body">
+        <div class="conn-name-row"><span class="k">Nazwa</span><b class="v" id="dName">—</b>
+          <button class="btn sm" id="connEditBtn" type="button">Zmień nazwę i kolor</button></div>
+        <div class="cmd-presets conn-led">
+          <span class="dpad-keys-lbl">Dioda kapsla:</span>
+          <button class="btn sm cmd-preset" data-hex="01" data-uuid="6e400004-b5a3-f393-e0a9-e50e24dcca9e" title="Włącz LED (0x01 na 6e400004)"><span class="rfic thunder-ic sm" aria-hidden="true"></span>LED ON</button>
+          <button class="btn sm cmd-preset" data-hex="00" data-uuid="6e400004-b5a3-f393-e0a9-e50e24dcca9e" title="Wyłącz LED (0x00 na 6e400004)">LED OFF</button>
+        </div>
+      </div>
+    </details>
+
+    <!-- ===== BATTERY SAVING ===== (id #powerCard zostaje: style pól w 03 i 08 idą po nim) -->
+    <details class="cardfold inset" id="powerCard">
+      <summary>Oszczędzanie baterii</summary>
+      <div class="cardfold-body">
+        <div class="powerbar">
+          <label class="pw-auto"><input type="checkbox" id="pwAuto"> Auto-uśpienie po
+            <input type="number" id="pwIdle" min="1" max="120" step="1" value="5"> min bezczynności</label>
+          <label class="pw-auto">Odczyt baterii co
+            <input type="number" id="pwBatt" min="5" max="600" step="5" value="120"> s
+            <small style="color:var(--dim)">(rzadziej = mniej zapytań przez Bluetooth)</small></label>
+        </div>
+        <div class="powerbar pw-idlehold">
+          <label class="pw-auto"><input type="checkbox" id="pwAutoPause"> Wstrzymuj wyjścia przy bezczynności</label>
+          <label class="pw-auto">Po czasie
+            <input type="range" id="pwAutoPauseSec" min="5" max="600" step="5" value="60"
+                   aria-describedby="pwAutoPauseNote">
+            <span class="num" id="pwAutoPauseVal">60 s</span></label>
+          <p class="pw-note" id="pwAutoPauseNote">Kapsel odłożony na bok przestaje sterować, pierwszy ruch przywraca
+            działanie od razu. To co innego niż usypianie kapsla: tu nic się nie rozłącza.</p>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <details class="cardfold adv" id="connAdv"><summary>Zaawansowane</summary><div class="cardfold-body">
+  <div class="card" id="connStatsCard">
+    <div class="head"><h2>Szczegóły połączenia</h2></div>
+    <div class="conngrid">
+      <div class="cell"><div class="k">Adres</div><div class="v mono" id="dAddr" style="font-size:13px">—</div></div>
+      <div class="cell"><div class="k">MTU</div><div class="v num" id="dMtu">—</div></div>
+      <div class="cell"><div class="k">Częstotliwość</div><div class="v"><span class="num" id="sHz">0</span>&nbsp;<small>Hz</small></div></div>
+      <div class="cell"><div class="k">Przepływ</div><div class="v"><span class="num" id="sBps">0</span>&nbsp;<small>B/s</small></div></div>
+      <div class="cell"><div class="k">Pakiety IMU</div><div class="v num" id="sImu">0</div></div>
+      <div class="cell"><div class="k">Pakiety status</div><div class="v num" id="sStat">0</div></div>
+      <div class="cell"><div class="k">Odrzucone B</div><div class="v num" id="sUnk">0</div></div>
+      <div class="cell"><div class="k">Czas sesji</div><div class="v num" id="sUp">0s</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="connRateCard">
+    <div class="head"><h2>Częstotliwość strumienia</h2><span class="hint">eksperymentalne</span></div>
+    <div class="pw-advbody">
+      <p class="pw-note">Niższa częstotliwość = mniej prądu, ale wyzwalacze reagują wolniej.
+        Komenda wybudzenia (hex) pochodzi z inżynierii wstecznej — <b>zmień i obserwuj „Częstotliwość (Hz)”</b>
+        w panelu połączenia. Domyślna ≈ 50 Hz. Po zmianie: Uśpij → Wznów (lub połącz ponownie).</p>
+      <label class="fld">Komenda wybudzenia
+        <input type="text" id="pwWake" class="mono" style="flex:1;min-width:200px" placeholder="201000d007340003"></label>
+      <button class="btn sm" id="pwWakeReset">↺ Domyślna (≈50 Hz)</button>
+    </div>
+  </div>
+
+  <!-- ===== LED / DEVICE COMMANDS (raw hex sender) ===== -->
+  <div class="card" id="cmdCard">
+    <div class="head"><h2><span class="rfic thunder-ic" role="img" aria-label="LED"></span>LED / komendy urządzenia</h2>
+      <span class="hint">steruj diodą kapsla i wysyłaj surowe komendy BLE</span></div>
+    <div class="cmd-note" id="cmdNote">
+      <span class="rfic thunder-ic sm" role="img" aria-label="LED"></span><b>LED</b> sterujesz zapisem <code>01</code> (włącz) / <code>00</code> (wyłącz) do charakterystyki <code>6e400004…</code>.
+      Możesz też wysłać dowolną surową komendę BLE (np. <b>SLEEP</b>, które wyłącza strumień): wpisz hex i wyślij.
+    </div>
+    <!-- Wypełnia i odsłania to rf-39f-simnotice, gdy aplikacja chodzi w symulacji: przyciski
+         zostają klikalne (to poligon), ale karta mówi o tym PRZED kliknięciem, a nie po nim. -->
+    <div class="cmd-note cmd-simnote" id="cmdSimNote" hidden></div>
+    <div class="cmd-grid">
+      <label class="fld col2">Charakterystyka (UUID zapisu)
+        <select id="cmdUuid">
+          <option value="6e400002-b5a3-f393-e0a9-e50e24dcca9e">RX 6e400002 (komendy — potwierdzone)</option>
+          <option value="6e400004-b5a3-f393-e0a9-e50e24dcca9e">6e400004 (LED — zweryfikowane)</option>
+          <option value="__custom">Własny UUID…</option>
+        </select></label>
+      <label class="fld col2" id="cmdUuidCustomFld" style="display:none">Własny UUID
+        <input type="text" id="cmdUuidCustom" class="mono" placeholder="np. 6e400004-b5a3-f393-e0a9-e50e24dcca9e" style="flex:1;min-width:240px"></label>
+      <label class="fld col2">Hex <input type="text" id="cmdHex" class="mono" placeholder="np. 20 10 00 d0 07 34 00 03" style="flex:1;min-width:220px">
+        <button class="btn sm" id="cmdSend">▶ Wyślij</button></label>
+    </div>
+    <div class="cmd-presets" id="cmdPresets">
+      <span class="dpad-keys-lbl">Presety:</span>
+      <button class="btn sm cmd-preset" data-hex="20 00 00 00 00 00 00" title="SLEEP — wyłącz strumień danych kapsla">SLEEP</button>
+    </div>
+    <div class="cmd-result" id="cmdResult">—</div>
+    <div class="cmd-log" id="cmdLog"></div>
+  </div>
+  </div></details>
+
+  <!-- ===== MOUSE — one of the two halves of motion control =====
+       The engine has ONE motion mode per capsule (mouse | stick | dpad), but the two things it can
+       drive have nothing in common for the person setting them up: a cursor is Windows, a stick and
+       a d-pad are a game controller. They therefore live in two tabs (Mysz / Kontroler) over the
+       same `state.mouse`, and each card's own switch means "put the motion into MY output" — which
+       is why turning one on turns the other off. -->
+  <div class="card" id="mouseCard">
+    <div class="head"><h2><span class="rfic hd-ic hd-ic-mmouse" aria-hidden="true"></span>Mysz</h2>
+      <span class="hint">ruch kapsla steruje kursorem Windows</span>
+      <div class="rf-toggle" id="mEnable" role="switch" aria-checked="false" tabindex="0" title="Ruch kapsla steruje kursorem Windows. Kapsel ma jeden tryb ruchu naraz, więc włączenie myszy wyłącza ruch na ekranie Kontroler."><span class="rf-tg-lbl off">Wył.</span><span class="rf-tg-knob"></span><span class="rf-tg-lbl on">Wł.</span></div></div>
+    <!-- HUB KONFIGURACJI (rf-49i, montowany przez rf-49c) wchodzi TUTAJ, zaraz pod nagłówkiem —
+         kafle biblioteki profili ruchu z opisem, chipy kapsli, tacka i zdanie o tym, co znaczy
+         zapis. Stał tu cienki pasek tożsamości (rf-49), usunięty 2026-08-28 razem z jego
+         odpowiednikami w MIDI i OSC: „prosty, nieczytelny i ukryty pasek […] a nie wybór
+         z biblioteki". Mechanika została, zmienił się kształt. -->
+    <!-- PASEK KARTY (UX 261120, P-G2-06/P-G2-09; L4d: akcja główna ekranu, `rf-cta`): jedno „Wyśrodkuj kapsel” (rfCenterCapsule, ten sam
+         przycisk w Kontrolerze, Kole i Skanerze). Stan modułu mówi linia gotowości nad kartą
+         (rfReadyMysz, rf-31e-mouse-ready.js), dlatego chipu „○ wyłączony” i zdania obok już tu nie ma. -->
+    <div class="mousebar">
+      <button class="btn rf-cta" id="mCalib" title="Ustaw kapsel tak, jak będzie noszony, i kliknij. To położenie stanie się środkiem ruchu."><span class="bic bic-connect" aria-hidden="true"></span>Wyśrodkuj kapsel</button>
+      <span class="trignote" id="mAutoHint" style="display:none">🔀 Tryb przełącza się automatycznie wg pozycji (reguła na ekranie Kontroler)</span>
+    </div>
+    <div class="mouse-body">
+      <!-- LEFT: visualization of the current mode -->
+      <div class="mouse-viz">
+        <canvas id="mScope" class="mscope"></canvas>
+      </div>
+      <!-- RIGHT: parameters. PIĘTRA (UX 261120 L4d): na wierzchu „Ruch kapsla to” i włącznik
+           „Klik bez klikania” z warunkiem; to, co ustawia się raz (czułość i kierunek, czas kliknięcia,
+           przycisk kapsla, obszar kursora), w zwiniętych zwijakach z wartościami w nagłówku; strojenie
+           filtru w jednym „Zaawansowane” na dole. Id pól bez zmian: czytają je mFill (rf-15) i MOUSE_KEYS. -->
+      <div class="mouse-params">
+        <!-- A. JAK KAPSEL PROWADZI KURSOR. Odwrócenie działa na oba źródła (oś i filtr 3D) i jest
+             osobne dla każdego trybu (mysz, drążek, krzyżak); nagłówek zwijaka mówi, czy jest włączone. -->
+        <div class="mouse-grid mgrp mbox" id="mGrpMouse">
+          <h3 class="mbox-h col2">Jak kapsel prowadzi kursor</h3>
+          <!-- PRĘDKOŚĆ czy POŁOŻENIE. Pierwszy wybór karty, bo zmienia znaczenie wszystkiego
+               poniżej: przy prędkości wychylenie mówi „jak szybko", przy położeniu „gdzie". -->
+          <div class="fld col2 mmode-opt">
+            <span class="mmode-lbl">Ruch kapsla to</span>
+            <div class="seg" id="mAbsSeg" role="group" aria-label="Ruch kapsla to">
+              <button type="button" data-v="0" title="Wychylenie mówi, JAK SZYBKO kursor jedzie. Puszczasz kapsel — kursor zostaje tam, gdzie dojechał.">Prędkość</button>
+              <button type="button" data-v="1" title="Wychylenie mówi, GDZIE kursor jest: kapsel wskazuje punkt w obszarze jak pilot. Wymaga źródła „Filtr 3D”.">Położenie (wskazywanie)</button>
+            </div>
+            <small class="mmode-note" id="mAbsNote">—</small>
+          </div>
+          <!-- PIĘTRO 2 (UX 261120 L4d): czułość, odwracanie i martwa strefa ustawia się raz, po
+               założeniu kapsla. Zwinięte; nagłówek mówi wartości i liczbę zmian (rfTier w rf-31e). -->
+          <details class="cardfold inset col2 mfold" id="mSensFold">
+            <summary>Czułość i kierunek</summary>
+            <div class="cardfold-body"><div class="mouse-grid">
+              <!-- Jeden suwak zamiast pola liczbowego „pełna prędkość przy … ° wychylenia”. Przy
+                   „Położeniu” ta sama liczba znaczy brzeg obszaru, więc podpis zmienia rf-31e
+                   (mMouseScaleSync); przy źródle „Oś” ten slot zajmują Czułość X i Y. -->
+              <div class="col2 mscale" id="mMouseScaleFld" style="display:none">
+                <label for="mMouseFilterScale" id="mMouseScaleTx" data-noi18n>Ile trzeba wychylić do pełnej prędkości</label>
+                <span class="mscale-track"><input id="mMouseFilterScale" type="range" min="2" max="90" step="1">
+                  <span class="mscale-ends" aria-hidden="true"><span>mały ruch</span><span>duży ruch</span></span></span>
+                <span class="vnum" id="mMouseFilterScalev">—</span>
+              </div>
+              <label class="fld" id="mSensXFld">Czułość X <input id="mSensX" type="range" min="0.005" max="0.3" step="0.005"><span class="vnum" id="mSensXv">—</span></label>
+              <label class="fld" id="mSensYFld">Czułość Y <input id="mSensY" type="range" min="0.005" max="0.3" step="0.005"><span class="vnum" id="mSensYv">—</span></label>
+              <label class="rf-swrow col2"><input type="checkbox" class="rf-swi sm" id="mInvX"><span class="rf-swrow-tx">Odwróć lewo i prawo</span></label>
+              <label class="rf-swrow col2"><input type="checkbox" class="rf-swi sm" id="mInvY"><span class="rf-swrow-tx">Odwróć górę i dół</span></label>
+              <!-- „∡" fell back to a font in which it reads as the digit 4 — „Martwa strefa 4" — so the
+                   unit is spelled out as a word instead of drawn as a glyph nothing guarantees. -->
+              <label class="fld col2" id="mMouseFilterDeadFld" style="display:none">Martwa strefa (kąt) <span class="fldunit"><input id="mMouseFilterDead" type="number" min="0" max="30" step="1" style="width:60px"><small style="color:var(--dim)">°</small></span> <small style="color:var(--dim)">drżenie przy środku nie rusza kursora</small></label>
+            </div></div>
+          </details>
+        </div>
+        <!-- B. KLIK BEZ KLIKANIA. Kursor, który przystanie, klika sam. Ułatwienie dostępności:
+             prowadzenie kursora i wciśnięcie przycisku to dwie różne sprawności, a to pudełko
+             zdejmuje z listy tę drugą. Działa w „Prędkości” i w „Położeniu”. Silnik liczy bezruch
+             tylko wtedy, gdy kapsel naprawdę prowadzi kursor, więc warunek pod pudełkiem
+             (#mDwellNote, rf-31e) mówi to wprost, zamiast obiecywać klik przy wyłączonej Myszy. -->
+        <div class="mouse-grid mbox" id="mDwellBox">
+          <label class="rf-swrow end col2 mbox-sw"><input type="checkbox" class="rf-swi" id="mDwellOn"><span class="rf-swrow-tx"><span class="mbox-h">Klik bez klikania</span></span></label>
+          <p class="mbox-sub col2">Zatrzymaj kursor, a aplikacja kliknie.</p>
+          <details class="cardfold inset col2 mfold" id="mDwellFold">
+            <summary>Czas i rodzaj kliknięcia</summary>
+            <div class="cardfold-body"><div class="mouse-grid">
+              <label class="fld col2">Czas zatrzymania <input id="mDwellMs" type="range" min="150" max="5000" step="50"><span class="vnum" id="mDwellMsv">—</span><small style="color:var(--dim)">jak długo kursor ma stać, zanim padnie klik</small></label>
+              <label class="fld col2">Promień spokoju <input id="mDwellRad" type="range" min="2" max="60" step="1"><span class="vnum" id="mDwellRadv">—</span><small style="color:var(--dim)">drżenie w tym promieniu też liczy się jako bezruch</small></label>
+              <div class="fld col2"><span>Rodzaj kliknięcia</span>
+                <div class="seg seg-sm" id="mDwellClickSeg" role="group" aria-label="Rodzaj kliknięcia">
+                  <button type="button" data-v="left">Lewy</button><button type="button" data-v="right">Prawy</button><button type="button" data-v="middle">Środkowy</button><button type="button" data-v="double">Podwójny</button>
+                </div></div>
+            </div></div>
+          </details>
+          <div class="mouse-avail col2" id="mDwellNote" data-noi18n>—</div>
+        </div>
+        <!-- C. PRZYCISK KAPSLA JAKO PRZYCISKI MYSZY. Pudełko NIE trzyma własnego stanu: włącznik
+             pisze CZTERY ZWYKŁE REGUŁY (zachowanie „taps" i „dwell") do listy Mapowania, więc widać
+             je tam, da się je poprawić i jadą w zestawie jak wszystko inne. Dlatego warunkiem jest
+             moduł Mapowanie, a nie Mysz (rf-31d, warunek w rf-31e). -->
+        <!-- PIĘTRO 2 (L4d): funkcję włącza się raz. Nagłówek zwijaka mówi, czy działa, a gdy czegoś
+             brakuje (Mapowanie, sterowanie), mówi to samo zdanie co warunek w środku. -->
+        <details class="cardfold inset mfold" id="mBtnFold">
+          <summary>Przycisk kapsla klika</summary>
+          <div class="cardfold-body">
+        <div class="mouse-grid" id="mBtnClicksBox">
+          <label class="rf-swrow end col2 mbox-sw"><input type="checkbox" class="rf-swi" id="mBtnClicksOn"><span class="rf-swrow-tx">Klikaj przyciskiem kapsla</span></label>
+          <p class="mbox-sub col2">Puknij: lewy. Dwa razy: dwuklik. Trzy razy: środkowy. Przytrzymaj: prawy.</p>
+          <label class="fld col2">Okno puknięć <input id="mBtnClicksWin" type="range" min="200" max="1200" step="50"><span class="vnum" id="mBtnClicksWinv">—</span><small style="color:var(--dim)">tyle aplikacja czeka na kolejne puknięcie</small></label>
+          <label class="fld col2">Przytrzymanie to <input id="mBtnClicksHold" type="range" min="250" max="3000" step="50"><span class="vnum" id="mBtnClicksHoldv">—</span></label>
+          <div class="mouse-avail col2" id="mBtnClicksNote" data-noi18n>—</div>
+        </div>
+          </div>
+        </details>
+        <!-- ===== OBSZAR KURSORA =====
+             Dokąd kapsel może zaprowadzić kursor. Bez tego jedyną ścianą jest krawędź WSZYSTKICH
+             monitorów razem, więc na dwóch ekranach kursor ucieka na sąsiedni i szuka się go
+             wzrokiem. Mapka to nie ozdoba: układ monitorów zna tylko serwer (GET /screens),
+             strona nie ma jak go policzyć, a „monitor 2" nic nie mówi o tym, który to fizycznie
+             jest. Ten sam prostokąt jest celem trybu „Położenie". -->
+        <details class="cardfold inset mfold" id="mAreaFold">
+          <summary>Obszar kursora</summary>
+          <div class="cardfold-body">
+        <div class="mouse-grid mgrp" id="mGrpArea">
+          <label class="fld col2">Ogranicz do <select id="mArea">
+            <option value="desktop">🖥 Cały pulpit (wszystkie monitory)</option>
+            <option value="monitor">📺 Wybrany monitor</option>
+            <option value="cursor">🎯 Monitor, na którym stoi kursor</option>
+            <option value="custom">🔲 Własny prostokąt</option></select></label>
+          <label class="fld col2" id="mMonitorFld" style="display:none">Monitor <select id="mMonitor"></select></label>
+          <div class="col2 areamap-wrap"><canvas id="mAreaMap" class="areamap"></canvas></div>
+          <label class="fld" id="mAreaWorkFld"><input type="checkbox" id="mAreaWork"> Pomiń pasek zadań</label>
+          <label class="fld" id="mAreaPadFld">Margines <input id="mAreaPad" type="number" min="0" max="500" step="5"> <small style="color:var(--dim)">px od krawędzi</small></label>
+          <div class="mouse-grid col2 arearect" id="mRectFld" style="display:none">
+            <label class="fld">X <input id="mRectX" type="number" min="-32000" max="32000" step="1"></label>
+            <label class="fld">Y <input id="mRectY" type="number" min="-32000" max="32000" step="1"></label>
+            <label class="fld">Szerokość <input id="mRectW" type="number" min="8" max="32000" step="1"></label>
+            <label class="fld">Wysokość <input id="mRectH" type="number" min="8" max="32000" step="1"></label>
+            <div class="fld col2">
+              <button class="btn sm" type="button" id="mRectPickA" title="Ustaw kursor w lewym górnym rogu obszaru — po odliczaniu wezmę jego pozycję">🎯 Lewy górny róg…</button>
+              <button class="btn sm" type="button" id="mRectPickB" title="Ustaw kursor w prawym dolnym rogu obszaru — po odliczaniu wezmę jego pozycję">🎯 Prawy dolny róg…</button>
+              <button class="btn sm" type="button" id="mRectMon" title="Wpisz do pól prostokąt monitora zaznaczonego na mapce">📺 Weź z monitora</button>
+            </div>
+          </div>
+          <div class="mouse-avail col2" id="mAreaNote">—</div>
+        </div>
+          </div>
+        </details>
+        <!-- PIĘTRO 3 (UX 261120 L4d): jedno „Zaawansowane” na dole karty. W środku dostrajanie ruchu
+             (źródło, filtr, wygładzanie, akceleracja, scroll) i stopka o pochodzeniu algorytmu.
+             Licznik zmian i „Przywróć domyślne” z rfTier (rf-31e, klucz „mysz.dostrajanie”). -->
+        <details class="cardfold adv mtune" id="mTune">
+          <summary>Zaawansowane</summary>
+          <div class="cardfold-body">
+            <h3 class="mbox-h mtune-h">Dostrajanie ruchu</h3>
+            <div class="mouse-grid">
+              <label class="fld col2">Źródło ruchu <select id="mMouseSource">
+                <option value="axis">📈 Oś (prędkość z żyro)</option>
+                <option value="filter">🧭 Filtr 3D (pochylenie → ruch kursora)</option></select></label>
+              <!-- WHY THE SOURCE MOVED BY ITSELF. Picking „Położenie (wskazywanie)" switches the source
+                   to the 3D filter — it has to, only the filter knows an angle — and half the fields
+                   below vanish with it. Said here, under the control that moved, for as long as
+                   pointing is on. Written by rf-15 mFill in both languages, hence data-noi18n. -->
+              <div class="fld col2 msrc-note" id="mMouseSrcNote" style="display:none" data-noi18n></div>
+              <!-- SOURCE (puck axis) — the mouse mode's own raw axes and dead zone -->
+              <div class="mouse-grid col2 msub" id="mGrpSource">
+                <label class="fld">Oś pozioma (X) <select id="mAxisX"></select></label>
+                <label class="fld">Oś pionowa (Y) <select id="mAxisY"></select></label>
+                <label class="fld col2">Martwa strefa <input id="mDead" type="number" min="0" max="20000" step="5"> <small style="color:var(--dim)">LSB — szum przy środku ignorowany</small></label>
+              </div>
+              <label class="fld col2" id="mMouseFilterFld" style="display:none">Filtr 3D: oś X
+                <select id="mMouseMetricX"></select> · Y <select id="mMouseMetricY"></select></label>
+              <label class="fld col2" id="mMouseEdgeFld"><input type="checkbox" id="mMouseEdge"> Bez sztywnego zakresu — po max wychyleniu kursor sunie dalej/szybciej</label>
+              <label class="fld col2">Wygładzanie <select id="mSmoothMode">
+                <option value="classic">Klasyczne (EMA)</option>
+                <option value="oneeuro" title="algorytm „One Euro Filter” — mocno wygładza powolne ruchy, nie opóźnia szybkich">Adaptacyjne</option></select></label>
+              <!-- TWO DIFFERENT KNOBS with two nearly identical names. `smooth` averages consecutive
+                   samples (this one) and `tighten` below swallows micro-jitter without touching real
+                   movement — separate fields in state.mouse, separate jobs. -->
+              <label class="fld col2" id="mSmoothFld" title="Uśrednia kolejne próbki ruchu: większe = płynniej, ale kursor odrobinę zostaje za ręką. Inny suwak niż „Stabilizacja kursora”.">Siła wygładzania <input id="mSmooth" type="range" min="0" max="0.95" step="0.01"><span class="vnum" id="mSmoothv">—</span><small style="color:var(--dim)">uśrednia kolejne próbki — inny suwak niż „Stabilizacja kursora”</small></label>
+              <label class="fld col2" id="mOeMinFld" style="display:none">Stabilność w spoczynku <input id="mOeMin" type="range" min="0.05" max="8" step="0.05"><span class="vnum" id="mOeMinv">—</span><small style="color:var(--dim)">mniejsze = stabilniej w bezruchu (tłumi drżenie)</small></label>
+              <label class="fld col2" id="mOeBetaFld" style="display:none">Reaktywność ruchu <input id="mOeBeta" type="range" min="0" max="0.1" step="0.001"><span class="vnum" id="mOeBetav">—</span><small style="color:var(--dim)">większe = mniejsze opóźnienie przy szybkim ruchu</small></label>
+              <label class="fld" id="mMaxFld">Maks. krok <span class="fldunit"><input id="mMax" type="number" min="1" max="200" step="1"><small style="color:var(--dim)" id="mMaxNote">px</small></span></label>
+              <label class="fld col2" id="mMouseExpoFld">Krzywa odpowiedzi <input id="mMouseExpo" type="range" min="0.5" max="3" step="0.05"><span class="vnum" id="mMouseExpov">—</span><small style="color:var(--dim)">W lewo: żywszy przy małym ruchu. W prawo: spokojniejszy przy małym ruchu.</small></label>
+              <label class="fld col2" id="mTightenFld" title="Próg drżenia: ruchy mniejsze od niego są tłumione, większe idą w całości. Inny suwak niż „Siła wygładzania”, który uśrednia wszystko po równo.">Stabilizacja kursora (próg drżenia ręki) <input id="mTighten" type="range" min="0" max="30" step="1"><span class="vnum" id="mTightenv">—</span><small style="color:var(--dim)">0 = wył. · tłumi mikro-drgania, nie odcina ruchu · działa tylko ze źródłem 📈 Oś</small></label>
+              <details class="mouse-adv col2" id="mAccelFold" open>
+                <summary>Akceleracja (dwie czułości: wolno/szybko)</summary>
+                <div class="mouse-grid">
+                  <label class="fld col2"><input type="checkbox" id="mAccelOn"> Włącz akcelerację — wolno = precyzyjnie, szybko = jeszcze szybciej</label>
+                  <label class="fld col2">Czułość przy szybkim ruchu <input id="mSensFast" type="range" min="0.005" max="0.3" step="0.005"><span class="vnum" id="mSensFastv">—</span></label>
+                  <label class="fld">Próg wolny <input id="mAccelLo" type="number" min="0" max="20000" step="10"> <small style="color:var(--dim)">jedn. prędkości</small></label>
+                  <label class="fld">Próg szybki <input id="mAccelHi" type="number" min="0" max="20000" step="10"> <small style="color:var(--dim)">jedn. prędkości</small></label>
+                </div>
+              </details>
+              <details class="mouse-adv col2" id="mScrollFold" open>
+                <summary>Scroll: kręcenie zamiast ruchu kursora</summary>
+                <div class="mouse-grid">
+                  <label class="fld col2"><input type="checkbox" id="mScroll"> Tryb scrolla, gdy wybrana oś przekroczy próg (zamiast ruchu)</label>
+                  <label class="fld">Oś scrolla <select id="mScrollAxis"></select></label>
+                  <label class="fld">Próg scrolla <input id="mScrollThr" type="number" min="0" max="32000" step="100"></label>
+                  <label class="fld col2">Czułość scrolla <input id="mScrollSens" type="range" min="0.02" max="2" step="0.02"><span class="vnum" id="mScrollSensv">—</span></label>
+                </div>
+              </details>
+              <label class="rf-swrow col2" id="mAutoTareFld" title="Gdy kapsel leży nieruchomo &gt;2 s, powoli zeruje dryf żyroskopu (kanały ruchu). Nie rusza akcelerometru."><input type="checkbox" class="rf-swi sm" id="mAutoTare"><span class="rf-swrow-tx">Auto-środkowanie przy bezruchu</span></label>
+            </div>
+            <div class="mouse-attr" id="mAttr"></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTROLLER — the virtual pad, whole, and navigated BY the pad =====
+       Everything about the Xbox pad RibbitFlip plugs into Windows, arranged the way the question
+       is actually asked: WHO plays on which pad (the strip of pads on top, with the capsules as
+       chips you can re-plug), THE PAD itself (one big drawing on the left — the map: every input
+       says whether it is used, by which capsule, and whether it is going down right now), and THE
+       INPUT YOU CLICKED (the right column: stick tuning, the d-pad configurator or the mappings of
+       a button). The button rules used to sit in Mapowanie among the keyboard ones, where the
+       drawing of the pad they press was three tabs away. -->
+  <div class="card" id="padCard">
+    <!-- No subtitle here: the type is on the controller tile, and the module bar carries the
+         name. With the title and the switch moved to that bar, rf-49m drops this empty head. -->
+    <div class="head"><h2><span class="rfic hd-ic hd-ic-gamepad" aria-hidden="true"></span>Kontroler</h2>
+      <div class="rf-toggle" id="kEnable" role="switch" aria-checked="false" tabindex="0" title="Ruch kapsla steruje wirtualnym padem: drążkiem albo krzyżakiem. Kapsel ma jeden tryb ruchu naraz, więc włączenie tego wyłącza ruch na ekranie Mysz."><span class="rf-tg-lbl off">Wył.</span><span class="rf-tg-knob"></span><span class="rf-tg-lbl on">Wł.</span></div></div>
+
+    <!-- 1. WHO PLAYS ON WHAT. One box per PAD the game will see (not per capsule), straight from
+         the server's registry: a controller is a thing you create, name and remove, and capsules
+         are plugged into it. Two capsules on one controller show up as two chips in ONE box with
+         one number, which is the whole answer the old per-capsule tiles could only imply. Rendered
+         by rf-44; every change goes to POST /pads, which moves the capsule's own `mouse.padShare`,
+         re-wires the emitters and tells every other open dashboard. -->
+    <!-- THE TRAY. Capsules plugged into no controller live here, and this is where one lands when
+         you press ✕ on its chip. It is a drop target as well as a source, so unplugging is the same
+         gesture as plugging in, backwards. Deliberately in the HEAD rather than among the boxes: a
+         capsule waiting to be given a controller is not a controller, and a fifth box that looked
+         like one is exactly the confusion the pad-centric strip was built to end. Filled by rf-44. -->
+    <!-- THE ONE MESSAGE ABOUT THE DRIVER. Shown only when ViGEmBus (or vgamepad) is missing, as
+         "something outside the app is missing" right under the readiness line, whose row names the
+         same thing. With the driver present it stays hidden: the line already says so (rf-15). -->
+    <div class="mouse-avail" id="padCtlAvail" hidden></div>
+    <div class="head sub" id="padHubHead"><h2>Kontrolery</h2>
+      <div id="padHubFree" class="ph-free" aria-label="Kapsle bez kontrolera"></div>
+      <span class="hint">utwórz wirtualny kontroler i przypnij do niego kapsel</span></div>
+    <div class="padsec" id="padHubSec">
+      <div id="padHubList"></div>
+    </div>
+
+    <!-- The second section gets its own head, NAMING the controller it configures (rf-44 keeps
+         the name current). Without it the strip of tiles and the map below read as one section,
+         and "which controller am I editing" had no answer on screen once the strip scrolled by. -->
+    <div class="head sub" id="padCfgHead"><h2 id="padCfgTitle">Kontroler</h2></div>
+    <!-- The one instruction of the whole screen, as a sentence under the name rather than a grey
+         hint at the far right. Only until a part is picked (rf-44 _padCfgHeadSync). -->
+    <p class="pp-lead pad-cfg-lead" id="padCfgHint">Kliknij gałkę, krzyżak albo przycisk na rysunku, żeby go ustawić.</p>
+    <!-- A STRIP THAT SAYS WHY NOTHING ARRIVES (2026-09-08). Pad mappings leave through the Mapping
+         group, and with that group off they fire on screen (red on the drawing) and never reach the
+         game. The mirror switch at the bottom of the column is easy to miss; this sentence is not,
+         and it carries the switch. Filled by rf-43 padOffNoteSync, hidden when there is nothing to say. -->
+    <div id="padOffNote" class="pad-offnote" role="status" hidden></div>
+
+    <!-- 2. THE MAP AND THE PART — two columns.
+         LEFT is the pad being viewed: one merged drawing (rf-44) fed by EVERY capsule plugged into
+         it — a ring in the capsule's colour on every input its rules or its motion use, lit when it
+         goes down, red when nothing left the app — plus the legend that says which capsule feeds
+         what, the live preview canvas for the stick/d-pad, and the ViGEmBus status. It is sticky on
+         purpose: the drawing is the menu, and a menu that scrolls away with every click is a menu
+         you can use exactly once.
+         RIGHT is whatever input was clicked: the stick's tuning, the d-pad configurator, a button's
+         mappings — or, with nothing selected, the spis of every pad mapping. rf-43 owns which block
+         is visible (padPartSync); mFill only fills values. -->
+    <div class="padsec pad-cols" id="padColsSec">
+      <div class="pad-left" id="padLeftCol">
+        <div id="padViewBox"></div>
+        <div id="padLegend"></div>
+        <!-- The live preview of the selected motion half (same canvas the old panel had, same
+             draggable rings). Under the drawing rather than inside the right column: it is a
+             PICTURE, and both pictures of the pad belong on the picture side. -->
+        <div class="pad-scope" id="kScopeBox" style="display:none">
+          <canvas id="kScope" class="mscope"></canvas>
+        </div>
+        <!-- The same slot, for a controller that needs no driver but does need an address: a Wii
+             controller answers an emulator over the network, so what belongs here is where to point
+             it and whether anything turned up. Two separate elements rather than one rewritten by
+             two owners — rf-15 and rf-31 keep writing the ViGEmBus pair on their own schedule, and
+             rf-44 only decides which pair is on screen. -->
+        <div class="mouse-avail" id="padWiiAvail" style="display:none">—</div>
+        <details class="setup-details" id="padWiiSetup" style="display:none"></details>
+      </div>
+
+      <div class="pad-right" id="padRightCol">
+        <!-- The heading names the selected part (padPartSync writes it), because everything under
+             it is only ever about that part. Not a `.card>.head`: it is a column header now. -->
+        <div class="pp-head" id="padPartHead"><b id="padPartTitle">Mapowania pada</b>
+          <span class="pp-hint" id="padPartHint">wszystkie mapowania tego pada</span></div>
+
+        <!-- Variant OBCY KAPSEL: the clicked part is driven by a capsule other than the one being
+             edited. Its numbers belong to THAT capsule, so showing the active capsule's fields here
+             would show the right controls holding the wrong values — the panel says whose part it
+             is and offers the one honest action: switch to that capsule. -->
+        <div id="padPartForeign" style="display:none">
+          <div class="pp-drive"><span class="pp-drive-state" id="padPartForeignState">—</span>
+            <button class="btn sm primary" type="button" id="padPartForeignBtn">Przełącz</button></div>
+          <p class="pp-lead" id="padPartForeignNote">Ustawienia tej części należą do tamtego kapsla. Przełącz się na niego, aby je dostroić.</p>
+        </div>
+
+        <div id="padPartPanel" style="display:none">
+          <!-- Variant DRĄŻEK / KRZYŻAK: the motion half. One line says whether the motion is going
+               into THIS part right now, and the button next to it either redirects it here or stops
+               it (never both — the second would always be the button that does nothing). -->
+          <div id="padPartMotion" style="display:none">
+            <div class="pp-drive">
+              <span class="pp-drive-state" id="padPartDriveState">—</span>
+              <!-- ONE switch, not the two half-buttons it replaces: „Napędzaj" only showed while the
+                   part was NOT aimed and „⏹ Zatrzymaj" only while it was live, so the control
+                   disappeared exactly when it was working. Same `rf-toggle` as the card header's
+                   own switch, same confirmation gate. The sentence to its left carries the third
+                   state (aimed but silent), which a two-position switch cannot. -->
+              <div class="rf-toggle" id="padPartDrive" role="switch" aria-checked="false" tabindex="0" title="Ruch kapsla napędza tę część pada. Włączenie odbiera ruch myszy albo drugiej połówce, bo kapsel ma jeden tryb ruchu naraz. Wyłączenie PARKUJE sam ruch: mapowania przycisków pada dalej wychodzą, a ustawienia zostają."><span class="rf-tg-lbl off">Wył.</span><span class="rf-tg-knob"></span><span class="rf-tg-lbl on">Wł.</span></div>
+            </div>
+            <div class="mousebar">
+              <button class="btn" id="kCalib" title="Ustaw kapsel tak, jak będzie noszony, i kliknij. To położenie stanie się środkiem ruchu."><span class="bic bic-connect" aria-hidden="true"></span>Wyśrodkuj kapsel</button>
+              <span class="mstate" id="kState">—</span>
+              <span class="trignote" id="kNote">—</span>
+            </div>
+            <!-- UX 261120 L4b: piętra. Na wierzchu zostaje kalibracja, stan części i wiersz stanu
+                 wirtualnego pada (#mStickAvail / #mDpadAvail). Czułość, martwa strefa, odwracanie
+                 i wyjście są w „Czułość i martwa strefa” (#kTune, piętro 2); źródło, osie, krzywa
+                 i auto-przełączanie w „Zaawansowane” (#kAdv, piętro 3, na dole kolumny).
+                 Kontenery *Tune i *Adv pokazuje i chowa padPartSync (rf-43) tak samo jak mGrpStick/mGrpDpad. -->
+            <div class="mouse-params">
+        <div class="mouse-grid mgrp" id="mGrpStick" style="display:none">
+          <label class="fld" id="mStickWhichFld" style="display:none">Drążek <select id="mStickWhich"><option value="left">Lewy (LS)</option><option value="right">Prawy (RS)</option></select></label>
+          <div class="mouse-avail col2" id="mStickAvail">—</div>
+        </div>
+        <div class="mouse-grid mgrp" id="mGrpDpad" style="display:none">
+          <div class="mouse-avail col2" id="mDpadAvail">—</div>
+        </div>
+        <details class="cardfold inset" id="kTune">
+        <summary>Czułość i martwa strefa</summary>
+        <div class="cardfold-body">
+          <div class="mouse-grid" id="kGrpInvert">
+            <label class="fld col2 mgrp-lbl">Odwróć oś <small style="color:var(--dim)">— korekta kierunku nakładana na kalibrację osi 3D</small></label>
+            <label class="fld"><input type="checkbox" id="kInvX"> Odwróć X</label>
+            <label class="fld"><input type="checkbox" id="kInvY"> Odwróć Y</label>
+          </div>
+        <!-- ANALOG STICK MODE -->
+        <div class="mouse-grid mgrp" id="mGrpStickTune" style="display:none">
+          <!-- The heading follows the OUTPUT below it (rf-15 mFill writes it): with „Palec na
+               touchpadzie" chosen, a section still headed „GAŁKA ANALOGOWA" was naming a control
+               the capsule had just stopped being. data-noi18n because JS writes it in both
+               languages; the fallback text is what stands here before the first fill. -->
+          <label class="fld col2 mgrp-lbl" id="mStickGrpLbl" data-noi18n>Gałka analogowa</label>
+          <label class="fld col2">Wyjście <select id="mStickBackend">
+            <option value="gamepad">🎮 Drążek analogowy (kontroler)</option>
+            <option value="wsad">⌨ Klawiatura WSAD (skosy = combo)</option>
+            <option value="touchpad">🖐 Palec na touchpadzie (DualShock)</option></select></label>
+          <!-- Only shown for the touchpad. Two things a person has to know BEFORE they tune
+               anything, and both of them are about what will happen outside this app. -->
+          <div class="fld col2 pp-tp-note" id="mStickTpNote" style="display:none">
+            <b>Pochylenie kapsla = miejsce na panelu.</b> Pełne pochylenie sięga krawędzi, a wewnątrz
+            martwej strefy palec <b>podnosi się</b> z panelu — bo drążek wraca na środek, a palec nie.
+            <br>⚠️ Panel dotykowy ma tylko DualShock 4 i kontroler Wii. Samą <b>powierzchnię</b> czyta
+            niewiele programów: Steam Input (jako gładzik/gesty) i emulatory mówiące DS4/DSU.
+            Zwykła gra bez Steam Input zobaczy tylko <b>kliknięcie</b> panelu, nie palec.
+          </div>
+          <label class="fld">Martwa strefa wewn. <input id="mStickInner" type="range" min="0" max="0.5" step="0.01"><span class="vnum" id="mStickInnerv">—</span></label>
+          <!-- „Anti-deadzone" was the one untranslated word on the screen, standing next to
+               „Martwa strefa wewn." as if the two were unrelated. They are the same idea from the
+               two ends: one is silence at the centre HERE, the other is the silence the GAME has
+               at its centre, jumped over so the character starts moving the moment you tilt.
+               Stick-only, and hidden for the touchpad output — a finger has no stick to jump. -->
+          <label class="fld" id="mStickOuterFld" title="Gry mają własną martwą strefę przy środku drążka. To pole ją przeskakuje: minimalne wychylenie kapsla wychodzi już za nią, więc postać rusza od razu, zamiast po chwili.">Strefa rozruchu (anti-deadzone) <input id="mStickOuter" type="range" min="0" max="0.5" step="0.01"><span class="vnum" id="mStickOuterv">—</span></label>
+          <!-- CZUŁOŚĆ OSOBNO NA KAŻDĄ OŚ. Jedno pokrętło na obie osie wystarcza do chodzenia i jest
+               złe do celowania: kamera ma skręcać na boki szybko, a w górę i w dół delikatnie. Mnożnik
+               wychylenia — 0,5 znaczy „połowa pochylenia się liczy": pochylasz dwa razy dalej po to
+               samo wychylenie, a oś kończy się na pół drążka. Tylko drążek analogowy: palec na
+               touchpadzie to MIEJSCE na szkle, a WSAD ma własny próg. -->
+          <label class="fld" id="mStickSensXFld" title="Mnożnik wychylenia w poziomie. Więcej = kamera skręca na boki szybciej przy tym samym pochyleniu kapsla. 0,00 wyłącza tę oś.">Czułość osi X <input id="mStickSensX" type="range" min="0" max="3" step="0.05"><span class="vnum" id="mStickSensXv">—</span></label>
+          <label class="fld" id="mStickSensYFld" title="Mnożnik wychylenia w pionie. Mniej = w górę i w dół idzie delikatniej, choćbyś pochylił kapsel na maksa. 0,00 wyłącza tę oś.">Czułość osi Y <input id="mStickSensY" type="range" min="0" max="3" step="0.05"><span class="vnum" id="mStickSensYv">—</span></label>
+          <div class="fld col2" id="mStickSensNote"><small style="color:var(--dim)">1,00 = bez zmian · niżej = trzeba pochylić dalej i oś nie dochodzi do końca · 0,00 = oś wyłączona · do celowania zwykle X wyżej niż Y</small></div>
+          <label class="fld col2">Przyspieszenie wejścia <input id="mStickAccel" type="range" min="0" max="1" step="0.05"><span class="vnum" id="mStickAccelv">—</span><small style="color:var(--dim)">płynnie ↔ natychmiast</small></label>
+          <label class="fld col2" id="mStickThrFld" style="display:none">Próg WSAD <input id="mStickWsadThr" type="range" min="0.1" max="0.95" step="0.05"><span class="vnum" id="mStickWsadThrv">—</span><small style="color:var(--dim)">wychylenie → klawisz</small></label>
+          <div class="dpad-keys col2" id="mStickKeysRow" style="display:none">
+            <span class="dpad-keys-lbl">Klawisze WSAD (klik → naciśnij klawisz; skos = dwa naraz):</span>
+            <button class="btn sm dpadkey" id="mStickUp" title="Klawisz dla kierunku GÓRA">↑ —</button>
+            <button class="btn sm dpadkey" id="mStickDown" title="Klawisz dla kierunku DÓŁ">↓ —</button>
+            <button class="btn sm dpadkey" id="mStickLeft" title="Klawisz dla kierunku LEWO">← —</button>
+            <button class="btn sm dpadkey" id="mStickRight" title="Klawisz dla kierunku PRAWO">→ —</button>
+          </div>
+        </div>
+        <!-- D-PAD MODE (D-pad) -->
+        <div class="mouse-grid mgrp" id="mGrpDpadTune" style="display:none">
+          <label class="fld col2 mgrp-lbl">Krzyżak (D-pad)</label>
+          <label class="fld">Wyjście <select id="mDpadBackend"><option value="keyboard">⌨ Klawiatura</option><option value="gamepad">🎮 Kontroler (D-pad)</option></select></label>
+          <div class="fld col2 dpad-diag-opt">
+            <span class="dpad-diag-lbl">Klawisze naraz</span>
+            <div class="seg" id="mDpadDiagSeg">
+              <button type="button" data-v="0" title="Krzyżak wciska zawsze jeden klawisz — wygrywa kierunek dominujący, jak w prawdziwym krzyżaku 4-kierunkowym">Jeden kierunek</button>
+              <button type="button" data-v="1" title="Ruch po przekątnej — dwa klawisze kierunku naraz (↖↗↙↘), ważne w grach retro">Dwa (skosy ↖↗↙↘)</button>
+            </div>
+            <small class="dpad-diag-note" id="mDpadDiagNote">—</small>
+          </div>
+          <label class="fld col2 dpad-zones-opt" title="Rysuje na podglądzie przerywane granice progów i pokazuje, który klawisz wciśnie się w której strefie"><input type="checkbox" id="mDpadZones" checked> <b>Pokaż strefy klawiszy na podglądzie</b> <small>— przerywane linie progu i podpisy „gdzie który klawisz”</small></label>
+          <label class="fld col2" id="mDpadFilterDeadFld" style="display:none" title="Jak daleko trzeba pochylić kapsel, żeby kierunek się załączył — w środku panuje cisza">Martwa strefa (kąt) <span class="fldunit"><input id="mDpadFilterDead" type="number" min="0" max="720" step="0.5" style="width:64px"><small style="color:var(--dim)">°</small></span> <small style="color:var(--dim)">— za nią załącza się kierunek</small></label>
+          <label class="fld" id="mDpadInnerFld" title="Ile pełnego wychylenia zostaje ciszą. Za martwą strefą kierunek się załącza — dokładnie jak w gałce">Martwa strefa <input id="mDpadInner" type="range" min="0.05" max="0.9" step="0.01"><span class="vnum" id="mDpadInnerv">—</span></label>
+          <div class="dpad-keys col2" id="mDpadKeysRow">
+            <span class="dpad-keys-lbl">Klawisze kierunków (klik → naciśnij klawisz):</span>
+            <button class="btn sm dpadkey" id="mDpadUp" title="Klawisz dla kierunku GÓRA">↑ —</button>
+            <button class="btn sm dpadkey" id="mDpadDown" title="Klawisz dla kierunku DÓŁ">↓ —</button>
+            <button class="btn sm dpadkey" id="mDpadLeft" title="Klawisz dla kierunku LEWO">← —</button>
+            <button class="btn sm dpadkey" id="mDpadRight" title="Klawisz dla kierunku PRAWO">→ —</button>
+          </div>
+        </div>
+        <div class="mouse-grid">
+              <label class="fld col2 mtare" id="kAutoTareFld" title="Gdy kapsel leży nieruchomo &gt;2 s, powoli zeruje dryf żyroskopu (kanały ruchu). Nie rusza akcelerometru."><input type="checkbox" id="kAutoTare"> Auto-środkowanie żyro przy bezruchu</label>
+        </div>
+        </div>
+        </details>
+            </div>
+          </div><!-- /#padPartMotion -->
+
+          <!-- Variant PRZYCISK: no settings of its own — a pad button is only ever what presses it. -->
+          <div id="padPartBtn" style="display:none">
+            <p class="pp-lead">Mapowanie to jeden warunek z kapsla, na przykład pochylenie albo jego przycisk, który wciska ten przycisk pada.</p>
+          </div>
+
+          <!-- The mappings that aim at the selected part. A lightweight list on purpose: the full
+               rows (with the live bar, the counter and the buttons) are the ones in the spis this
+               column shows when no part is picked, and one rule cannot carry the same element id
+               twice in one document — which is also why the two lists are never on screen together. -->
+          <div id="padPartRules" style="display:none">
+            <div class="pp-rules-head">
+              <b id="padPartRulesTitle">Mapowania</b>
+              <button class="btn sm rf-cta" type="button" id="padPartAdd"><span class="bic bic-plus" aria-hidden="true"></span>Nowe mapowanie</button>
+              <button class="btn sm" type="button" id="padPartGest" title="Nagraj gest kapslem, który wciśnie ten przycisk pada"><span class="gr-ic" aria-hidden="true">✋</span>Nagraj gest</button>
+            </div>
+            <div id="padPartRulesList"></div>
+          </div>
+
+          <!-- PIĘTRO 3 (UX 261120 L4b): jeden „Zaawansowane” na ekran, ostatni w kolumnie części.
+               Źródło ruchu, osie surowego kanału, krzywa, pełne wychylenie i auto-przełączanie
+               trybu. Widać go tylko przy gałce i krzyżaku (padPartSync). -->
+          <details class="cardfold adv" id="kAdv"><summary>Zaawansowane</summary><div class="cardfold-body">
+          <!-- SOURCE — the axes/inversion/dead zone of the pad part that is selected (stick or d-pad;
+               they are stored separately and never shared) -->
+          <div class="mouse-grid" id="kGrpSource">
+            <label class="fld col2 mgrp-lbl">Źródło — oś kapsla</label>
+            <label class="fld">Oś pozioma (X) <select id="kAxisX"></select></label>
+            <label class="fld">Oś pionowa (Y) <select id="kAxisY"></select></label>
+            <label class="fld col2">Martwa strefa <input id="kDead" type="number" min="0" max="20000" step="5"> <small style="color:var(--dim)">LSB — szum przy środku ignorowany</small></label>
+          </div>
+        <div class="mouse-grid mgrp" id="mGrpStickAdv" style="display:none">
+          <label class="fld col2 mgrp-lbl">Źródło i krzywa</label>
+          <label class="fld col2">Źródło wychylenia <select id="mStickSource">
+            <option value="axis">📈 Oś (surowy kanał)</option>
+            <option value="filter">🧭 Filtr 3D (pochylenie/obrót)</option></select></label>
+          <label class="fld col2" id="mStickFilterFld" style="display:none">Filtr 3D: oś X
+            <select id="mStickMetricX"></select> · Y <select id="mStickMetricY"></select>
+            · pełne <input id="mStickFilterScale" type="number" min="2" max="720" step="1" style="width:64px"> <small style="color:var(--dim)">° (lub °/s dla obrotu)</small></label>
+          <label class="fld" id="mStickRangeFld">Pełne wychylenie <input id="mStickRange" type="range" min="1000" max="20000" step="250"><span class="vnum" id="mStickRangev">—</span></label>
+          <label class="fld col2">Krzywa odpowiedzi (expo) <input id="mStickExpo" type="range" min="0.5" max="3" step="0.1"><span class="vnum" id="mStickExpov">—</span><small style="color:var(--dim)">1 = liniowo · &gt;1 = precyzja przy środku</small></label>
+        </div>
+        <div class="mouse-grid mgrp" id="mGrpDpadAdv" style="display:none">
+          <label class="fld col2 mgrp-lbl">Źródło krzyżaka</label>
+          <label class="fld col2">Źródło wychylenia <select id="mDpadSource">
+            <option value="axis">📈 Oś (surowy kanał)</option>
+            <option value="filter">🧭 Filtr 3D (pochylenie/obrót)</option></select></label>
+          <label class="fld col2" id="mDpadFilterFld" style="display:none">Filtr 3D: oś X
+            <select id="mDpadMetricX"></select> · Y <select id="mDpadMetricY"></select>
+            · pełne <input id="mDpadFilterScale" type="number" min="2" max="720" step="1" style="width:64px"> <small style="color:var(--dim)">° (lub °/s dla obrotu)</small></label>
+          <label class="fld" id="mDpadRangeFld" title="Jak daleko sięga podgląd — czyli ile wychylenia uznajemy za „na maksa”">Pełne wychylenie <input id="mDpadRange" type="range" min="1000" max="20000" step="250"><span class="vnum" id="mDpadRangev">—</span></label>
+        </div>
+          <!-- AUTO-SWITCH MODE by condition (e.g. 3D filter = device position). Inside „Zaawansowane” (L4b)
+               and shown only for the two motion parts: it is about which mode the capsule runs, so
+               under a plain button it would be an answer to a question nobody asked there. -->
+          <div class="k-auto" id="mAutoFold">
+          <div class="mouse-grid">
+            <label class="fld col2 mgrp-lbl">🔀 Auto-przełączanie trybu wg pozycji (filtr 3D / oś)</label>
+            <label class="fld col2"><input type="checkbox" id="mAutoSwitch"> Włącz — o faktycznym trybie decyduje warunek, a nie część pada, którą klikniesz</label>
+            <label class="fld col2">Warunek: <select id="mSwitchKind"><option value="filter">🧭 Filtr 3D</option><option value="axis">📈 Oś (CH)</option></select>
+              <span id="mSwitchMetricFld"><select id="mSwitchMetric"></select></span>
+              <span id="mSwitchChannelFld" style="display:none"><select id="mSwitchChannel"></select></span>
+              <select id="mSwitchCmp"><option value="&gt;">&gt;</option><option value="&lt;">&lt;</option><option value="&gt;=">≥</option><option value="&lt;=">≤</option></select>
+              <input id="mSwitchThreshold" type="number" step="1" style="width:78px"><span id="mSwitchUnit" style="color:var(--dim)">°</span>
+              <label style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" id="mSwitchAbs"> |x|</label></label>
+            <label class="fld">Histereza <input id="mSwitchHyst" type="number" min="0" step="1" style="width:64px"> <small style="color:var(--dim)">zapobiega migotaniu</small></label>
+            <label class="fld col2">Gdy <b>spełniony</b> → <select id="mModeTrue"><option value="mouse">🖱 Mysz</option><option value="stick">🎮 Gałka</option><option value="dpad">✛ Krzyżak</option></select>
+              &nbsp; gdy <b>nie</b> → <select id="mModeFalse"><option value="mouse">🖱 Mysz</option><option value="stick">🎮 Gałka</option><option value="dpad">✛ Krzyżak</option></select></label>
+            <div class="mouse-avail col2" id="mAutoState">—</div>
+          </div>
+          </div>
+          </div></details>
+        </div><!-- /#padPartPanel -->
+
+        <!-- THE EDITOR, IN THE COLUMN OF THE PART IT EDITS. #ruleEditor is ONE element, normally
+             living in #trigCard; a pad rule borrows it here (rf-43 moves it, never copies). It sits
+             directly under the part panel so editing is always the same short distance from the
+             drawing that was just clicked. -->
+        <div id="padRuleEditorSlot"></div>
+
+        <!-- THE SPIS. Every pad-button mapping, in one place — the answer to „what have I mapped at
+             all", which is a different question from „which part is this". It is what the column
+             shows when NO part is selected; pick a part and it steps aside for that part's panel.
+             The active capsule's rules are the same rule objects, rows and editor Mapowanie uses (a
+             filtered view over `state.rules`, specIsPad); the OTHER capsules plugged into this pad
+             get their own quieter list underneath (#padForeignRules, rf-43), because their rows
+             cannot reuse ids that already stand in this document. -->
+        <div id="padAllRulesSec">
+          <div class="trigbar">
+            <button class="btn rf-cta" id="padRuleAdd"><span class="bic bic-plus" aria-hidden="true"></span>Nowe mapowanie przycisku</button>
+            <button class="btn" id="padRuleGest" type="button" title="Nagraj gest kapslem, który wciśnie ten przycisk pada"><span class="gr-ic" aria-hidden="true">✋</span>Nagraj gest</button>
+            <!-- NO SWITCH HERE (2026-09-08). Until now a mirror of the Mapping group stood in this bar,
+                 because pad buttons left through that group like keys. They answer to the CONTROLLER
+                 module now — the switch in this card's head, the same one that lets motion reach the
+                 pad — so the bar only says where the switch is. -->
+            <span class="trignote">Przyciski pada wychodzą razem z ruchem, a włącznik modułu stoi na górze ekranu.</span>
+          </div>
+          <div id="padRulesList" class="ruleslist"></div>
+          <div id="padForeignRules"></div>
+        </div>
+      </div><!-- /.pad-right -->
+    </div><!-- /.pad-cols -->
+  </div>
+
+
+  <!-- „Co jest czym: zestaw a preset" NIE jest już kartą z kafelkami prozy. To rozwijany graf,
+       budowany w js/rf-39k-whatis.js i wstawiany na górę tej zakładki obok poradnika. Powód: proza
+       była poprawna i nieczytana, bo wyjaśniana rzecz jest RELACJĄ (który plik zawiera które części
+       konfiguracji), a relacji nie widać w akapicie. Wybrane po porównaniu obu wersji. -->
+
+  <!-- ===== EXCHANGE: the first row of this tab is OTHER PEOPLE =====
+       Sharing used to be something you found once you had already built a setup of your own: a
+       button at the bottom of a card called "save and share". That is the wrong order — the fastest
+       way to a working configuration is somebody else's, and until you know that exists you are
+       building from zero for no reason. So the tab opens with the two directions the exchange runs
+       in, and the library of what YOU have follows underneath. -->
+  <div class="card" id="exchangeHero">
+    <div class="head"><h2><span class="rfic hd-ic hd-ic-frogtag" aria-hidden="true"></span>Wymiana z innymi</h2>
+      <span class="hint">gotowe zestawy od ludzi i Twoje dla nich, na forum #zestawy</span></div>
+    <div class="xh-row">
+      <div class="xh-tile">
+        <span class="xh-ic xh-ic-envelope" aria-hidden="true"></span>
+        <!-- „Może" jest tu na serio: forum jest młode, a obietnica bez „może" jest obietnicą, której
+             pierwsza wizyta na #zestawy nie dotrzyma. -->
+        <div class="xh-tx"><b>Weź gotowy zestaw</b><p>Może ktoś już ustawił Twoją grę. Zajrzyj na forum albo wczytaj plik lub odnośnik.</p></div>
+        <div class="xh-btns">
+          <!-- href = RF_FORUM_URL, wpisywany przez initExchangeHero (rf-39l). W markupie zostaje
+               atrapa, żeby element był odnośnikiem od pierwszej klatki. -->
+          <a class="btn sm" id="xhBrowse" href="https://discord.com/channels/1540354827517693952/1540416138704457820" target="_blank" rel="noopener noreferrer">Przeglądaj forum ↗</a>
+          <button class="btn rf-cta" id="xhTake" type="button">Wczytaj plik lub odnośnik</button>
+        </div>
+      </div>
+    </div>
+    <!-- The lesson stays quiet and last, the way it does inside the exchange window: somebody who
+         came here to grab a setup should not have to step over an explanation first. The „zacznij tu"
+         chip is added by rf-39l until the guide has been opened once. -->
+    <!-- TRZECI POKÓJ. Wymiana jest o PLIKACH, a nagranie z tego, jak ktoś gra własnym kapslem,
+         plikiem nie jest — i wrzucone na #zestawy zaśmieca listę zestawów. Do 2026-09-02 aplikacja
+         nie wspominała o #pochwal-się ani razu, więc jedyne miejsce, w którym dało się pokazać
+         swoją robotę, było takie, o którym trzeba było wiedzieć skądinąd. Jedna cicha linijka, nie
+         karta: to zaproszenie, nie zadanie. Nazwa kanału ma `data-noi18n`, bo jest nazwą własną —
+         reszta zdania idzie przez słownik jak każdy inny tekst. I adres, i nazwę kanału wpisuje
+         initExchangeHero (rf-39l) z RF_SHOWCASE_URL / RF_SHOWCASE_NAME; poniżej stoją atrapy. -->
+    <!-- PIĘTRO 2 (UX 261120 L4c): dzielenie się własnym robi się rzadko, po stworzeniu czegoś swojego.
+         Kafel „Podziel się swoim” i obie ciche linijki stoją w zwijaku, jeden klik dalej. -->
+    <details class="cardfold inset xh-fold" id="xhShareFold"><summary>Udostępnianie</summary>
+    <div class="cardfold-body">
+      <div class="xh-row">
+      <div class="xh-tile">
+        <span class="xh-ic xh-ic-mega" aria-hidden="true"></span>
+        <div class="xh-tx"><b>Podziel się swoim</b><p>Kreator ułoży post za Ciebie: tytuł, tagi i plik.</p></div>
+        <div class="xh-btns">
+          <button class="btn sm" id="xhShare" type="button">Podziel się</button>
+        </div>
+      </div>
+      </div>
+    <div class="xh-foot"><a class="xh-howto" id="xhShowcase" href="https://discord.com/channels/1540354827517693952/1540416132035514410"
+         target="_blank" rel="noopener noreferrer">Masz coś fajnego? Pokaż to na <span data-noi18n>#pochwal-się</span> ↗</a></div>
+    <div class="xh-foot"><button class="xh-howto" id="xhHowto" type="button">Jak działa dzielenie się?</button></div>
+    </div></details>
+  </div>
+
+  <!-- ===== LIBRARY: everything saved on this computer, in one list =====
+       Zestawy, wyzwalacze i osie leżą obok siebie w Library/, a do tej pory każde miało własną
+       listę rozwijaną w innej zakładce. Lista pokazuje to, czego rozwijana nigdy nie pokazała:
+       do czego zestaw jest, czyj jest, co zmieni po wczytaniu i kiedy powstał. -->
+  <div class="card" id="libraryCard">
+    <!-- „…wszystkich modułów", bo każdy moduł ma własną pigułkę „Biblioteka" w nagłówku karty;
+         ta karta to ich suma na jednym ekranie, a dwie rzeczy o tej samej nazwie czyta się jak jedną. -->
+    <div class="head"><h2><span class="rfic hd-ic hd-ic-save" aria-hidden="true"></span>Biblioteka wszystkich modułów</h2>
+      <span class="hint">wszystko, co masz zapisane na tym komputerze: zestawy, wyzwalacze, osie</span></div>
+    <!-- UKŁAD LISTA + OPIS (etap 3, 2026-08-29). Do tej pory zawartość Biblioteki była siatką kafli,
+         a każdy kafel niósł własny komplet przycisków. Teraz jest to ten sam kształt, co w module:
+         po lewej wyszukiwarka, filtr modułów i lista, po prawej OPIS wybranej pozycji.
+         ZASADA: Biblioteka OPISUJE, moduł ZMIENIA. W panelu opisu nie ma ani jednego pola do
+         wpisywania — do edycji prowadzi „Otwórz w module X", bo te same ustawienia nie mogą mieć
+         dwóch edytorów, które rozjadą się po cichu. -->
+    <div class="rflib-split">
+      <div class="rflib-col">
+        <div class="rflib-h">
+          <span class="rflib-search">
+            <input type="search" id="libFind" class="lib-find" aria-label="Szukaj w bibliotece" placeholder="szukaj po nazwie, grze albo autorze…">
+          </span>
+        </div>
+        <!-- Filtr modułów jako CHIPY-IKONY. Nazwy wszystkich rodzajów zajmowały w wąskiej kolumnie
+             trzy linijki i przykrywały listę, więc nazwę pokazuje tylko chip wybrany, a reszta
+             zostaje ikoną z podpowiedzią (ta sama ikona, co w nawigacji tego modułu). -->
+        <div class="lib-kinds" id="libKinds" role="group" aria-label="Filtr modułów"></div>
+        <div class="lib-list" id="libList"></div>
+        <!-- Pod listą NIE MA stopki (usunięta 2026-09-02). Stały w niej dwa przyciski, które
+             wyłącznie klikały za człowieka kafle karty „Wymiana z innymi" — tej samej, która stoi
+             nad tą listą, w tej samej zakładce. Jedno wejście narysowane dwa razy. -->
+      </div>
+      <div class="rflib-main" id="libDetail"></div>
+    </div>
+    <!-- Co ten rodzaj w ogóle znaczy + zapis nowego. Do tej pory biblioteka umiała wczytać, pobrać
+         i usunąć preset, ale zapisać go dało się tylko w zakładce, z której pochodzi — więc miejsce
+         nazwane „presety" jako jedyne nie umiało presetu utworzyć. Wypełniane w rf-39i. -->
+    <div class="lib-explain" id="libExplain"></div>
+    <div class="lib-save" id="libSave"></div>
+    <!-- Saving the current configuration as a setup used to be a card of its own, sitting directly
+         under this one: the same subject with a card border through the middle of it, and the list
+         of setups pointing down at "the card below" for the one thing it could not do itself. It is
+         one card now. The row hides itself while the list shows presets instead, because you cannot
+         save a setup into the drawer of trigger presets (rf-39i `_rflRenderTools`).
+         The six file buttons that used to stand here (export, import from disk, import from a
+         link, and the same three for a bundle) are gone on purpose: the exchange window and the
+         one import window took over every one of those jobs, and the functions behind them are
+         still called — from there. -->
+    <div class="setupbar setupsave" id="setupSaveRow" hidden>
+      <span class="setuplbl"><span class="bic bic-save" aria-hidden="true"></span>Zapisz obecną konfigurację jako zestaw:</span>
+      <!-- ETYKIETY DOSTĘPNE PÓL. Placeholder znika po pierwszej wpisanej literze i nie jest
+           nazwą kontrolki — czytnik mówił tu cztery razy „pole tekstowe", a #setupExe brał za
+           nazwę swoją 200-znakową podpowiedź. Napisy w aria-label są kluczami w rf-01 (walker
+           tłumaczy aria-label tak samo jak tekst).
+           WHY: a placeholder is not an accessible name; these five fields say what they are. -->
+      <input type="text" id="setupName" aria-label="Nazwa zestawu" placeholder="nazwa (np. Minecraft)">
+      <button class="btn sm" id="setupSave"><span class="bic bic-save" aria-hidden="true"></span>Zapisz zestaw</button>
+      <!-- Wymiana zestawu. Kliknięcie otwiera okno wymiany (rf-39l): wyślij swój, zobacz cudze,
+           wczytaj od kogoś — te same drzwi co przy presetach i paczkach REST. href zostaje po to,
+           żeby Ctrl/środkowy klik miał normalne znaczenie i prowadził PROSTO na forum (nie na front
+           serwera); PRAWDZIWY adres wpisuje initExchangeHero (rf-39l) z RF_FORUM_URL, a to poniżej
+           jest tylko atrapą, żeby element był odnośnikiem od pierwszej klatki. Kto nie jest jeszcze na serwerze, dostaje zaproszenie w stopce okna i w ostatnim
+           kroku kreatora. Zwykły <a>, jak pozostałe odnośniki w pasku aplikacji. -->
+      <a class="btn sm" id="setupShare" href="https://discord.com/channels/1540354827517693952/1540416138704457820"
+         target="_blank" rel="noopener noreferrer" aria-haspopup="dialog" aria-expanded="false"
+         title="Podziel się na forum, zobacz cudze albo wczytaj od kogoś"><span class="bic bic-swap" aria-hidden="true"></span>Wymiana</a>
+      <span class="setupmsg" id="setupMsg" role="status" aria-live="polite"></span>
+      <!-- PIĘTRO 2 (UX 261120 L4c): gra, plik gry i opis wpisuje się raz na zestaw. Te same pola i id
+           (czytają je rf-28, rf-29, kreator wymiany rf-39f i auto-zestawy rf-39o). -->
+      <details class="cardfold inset setup-more" id="setupMoreFold"><summary>Gra i opis</summary>
+      <div class="cardfold-body">
+          <input type="text" id="setupFor" aria-label="Dla programu lub gry" placeholder="dla programu/gry" size="14">
+          <!-- Plik gry. To NIE to samo co pole obok: „dla programu/gry" jest po to, żeby człowiek
+               poznał zestaw na liście, a tutaj wpisuje się nazwę procesu, którą widzi Windows — po
+               niej aplikacja rozpoznaje, że gra jest na wierzchu, i sama wczytuje zestaw. Można podać
+               kilka po przecinku (np. gdy gra ma launcher). Serwer i tak normalizuje: małe litery,
+               bez ścieżki, zawsze z .exe. -->
+          <input type="text" id="setupExe" aria-label="Plik gry (auto-wczytywanie)" placeholder="gra.exe" size="18"
+                 title="Auto-wczytywanie: nazwa pliku gry, np. eldenring.exe. Gdy ta gra znajdzie się na wierzchu, aplikacja sama wczyta ten zestaw. Kilka nazw oddziel przecinkiem. Wielkość liter nie ma znaczenia — zapisuję małymi.">
+          <input type="text" id="setupDesc" aria-label="Krótki opis zestawu" placeholder="krótki opis (co robi)" size="22">
+      </div></details>
+      <!-- Second line, and only with two capsules paired: a bundle is the ONLY format that carries
+           more than one, so offering it to somebody with a single capsule is offering nothing. The
+           sentence is written by rfBundleRowSync() in rf-39i, which also decides whether this shows. -->
+      <div class="setuprow2" id="bundleRow" hidden><span id="bundleRowTxt"></span>
+        <!-- Bundle to jedyny format na 2+ kapsle, więc drzwi na forum stoją przy nim. Rola każdego
+             kapsla powstaje w kreatorze. Etykieta, ikona i podpowiedź są takie same jak przy
+             pozostałych miejscach zapisu: przycisk nazywa CZYNNOŚĆ (wymiana), nie miejsce. -->
+        <button class="btn sm" id="bundleDiscord" aria-haspopup="dialog" aria-expanded="false"
+                title="Podziel się na forum, zobacz cudze albo wczytaj od kogoś"><span class="bic bic-swap" aria-hidden="true"></span>Wymiana</button>
+      </div>
+      <!-- Autor i wersja jadą RAZEM z plikiem. Bez nich każda poprawka wygląda na nowy zestaw
+           i nikt nie wie, który wątek jest aktualny. Nick pamiętany w localStorage, żeby nie
+           przepisywać go przy każdym zestawie; wersja startuje o jeden dalej niż zestaw, z
+           którego przeróbka powstała (patrz rodowód w kreatorze posta).
+           HIDDEN, NOT DELETED: the post wizard (rf-39f) and rfShareMeta() in rf-28 read AND write
+           these two fields by id, and the signature step of the wizard is where a person actually
+           fills them in. Removing the nodes would silently drop the author and the revision from
+           every exported file. -->
+      <div id="setupMetaHidden" hidden>
+        <input type="text" id="setupAuthor" placeholder="Twój nick (autor)" size="14">
+        <!-- Bez value="…" celowo: pole wypełnia initShare, żeby przeróbka cudzego zestawu
+             startowała od NASTĘPNEJ wersji, a nie od pierwszej. Wpisana wartość ma pierwszeństwo. -->
+        <label class="setuprev" title="Wersja tego zestawu. Podnieś ją, gdy publikujesz poprawkę.">v<input type="number" id="setupRev" min="1" max="999" step="1"></label>
+        <!-- JAK TEGO UŻYWAĆ — kroki autora, jeden na linię. Tu stoi bliźniak pola (jak nick i wersja
+             wyżej): wpisuje się je w kreatorze posta, gdzie jest na to miejsce i gdzie człowiek
+             i tak opisuje zestaw dla innych, a zapis i eksport czytają je STĄD. Bez tego bliźniaka
+             instrukcja byłaby przywilejem paczek pisanych skryptem: aplikacja umiałaby ją pokazać
+             (okno importu, szuflada Biblioteki), ale nie umiałaby jej zapisać. -->
+        <textarea id="setupHowto" rows="4" aria-label="Jak tego używać — kroki, jeden na linię"></textarea>
+      </div>
+    </div>
+    <!-- Lista stoi WYŻEJ, w lewej kolumnie podziału „lista + opis" (etap 3). Tutaj był jej dawny dom,
+         pod paskiem zapisu zestawu — dwie rzeczy o różnych rzeczach jedna pod drugą. -->
+  </div>
+  <!-- PIĘTRO 3 (UX 261120 L4c): „Zaawansowane” na dole ekranu Zestawy; rf-34 stawia je za kartą biblioteki. -->
+  <details class="cardfold adv" id="zsAdv"><summary>Zaawansowane</summary>
+  <div class="cardfold-body">
+    <div class="setup-note"><b>Wczytaj</b> podmienia konfigurację od razu (da się cofnąć), <b>Pobierz</b> tylko zapisuje plik. Pliki leżą w folderze <code>Library</code> obok programu.</div>
+  </div></details>
+
+  <!-- ===== TRIGGERS: threshold -> any key ===== -->
+  <div class="card" id="trigCard">
+    <div class="head"><h2><span class="rfic hd-ic hd-ic-sinus" aria-hidden="true"></span>Twoje wyzwalacze</h2>
+      <span class="hint">Ruch albo przycisk kapsla naciska klawisz lub klika myszą.</span>
+      <div class="rf-toggle" id="trigEnable" role="switch" aria-checked="false" tabindex="0" title="Włącz albo wyłącz moduł Mapowanie. Działa niezależnie od Myszy, Kontrolera, MIDI i OSC."><span class="rf-tg-lbl off">Wył.</span><span class="rf-tg-knob"></span><span class="rf-tg-lbl on">Wł.</span></div></div>
+    <!-- Reguły wychodzą i przychodzą wyłącznie jako PRESETY (pasek niżej + przycisk „Wymiana").
+         Dawne „Eksport/Import" dublowały to drugim formatem pliku; stare pliki wyzwalaczy nadal
+         wczytują się przez okno „Wczytaj od kogoś" i upuszczenie (rozjazd rozpoznaje je po treści). -->
+    <div class="trigbar">
+      <!-- „Nowy wyzwalacz” otwiera nad listą wybór ruchu (rf-10 trigStartToggle), ten sam co pusty
+           stan; „Nagraj własny gest” i „Ustaw ręcznie” stoją tam, pod kaflami. Na pustym module
+           pasek jest schowany (`#trigCard.rules-none`), bo kafle są tuż pod nim. -->
+      <button class="btn primary" id="addRule"><span class="bic bic-plus" aria-hidden="true"></span>Nowy wyzwalacz</button>
+      <!-- WARSTWY MAPOWAŃ. Ukryte, dopóki żadna reguła nie używa warstw (trigLayersRender w rf-10):
+           rząd przycisków, który u większości ludzi nic nie robi, tylko zaprasza do kliknięcia.
+           Chipy buduje JS, bo ich stan (aktywna / pusta) zna dopiero po wczytaniu reguł. -->
+      <span class="triglayers" id="trigLayers" hidden>
+        <span class="triglayers-lbl">Warstwa:</span>
+        <span class="triglayers-btns" id="trigLayerBtns" role="group" aria-label="Warstwa mapowań"></span>
+      </span>
+      <span class="trignote" id="trigKeysNote">—</span>
+      <span class="trigmsg" id="trigMsg" role="status" aria-live="polite"></span>
+    </div>
+    <!-- HUB KONFIGURACJI (rf-49i, montowany przez rf-49b) wchodzi TUTAJ, zaraz pod nagłówkiem —
+         kafle biblioteki, chipy kapsli, tacka i zdanie o tym, co znaczy zapis.
+
+         Stał tu rząd „Presety wyzwalaczy" (lista + Wczytaj + pole nazwy + Zapisz + kosz + Wymiana)
+         i cienki pasek tożsamości. Oba usunięte 2026-08-28: trzy powierzchnie zapisujące ten sam
+         plik trzema słowami były źródłem zamętu, a hub robi wszystko, co robiły. Przycisk „Wymiana"
+         przeniósł się do nagłówka huba i ZACHOWAŁ id `profDiscord`, bo celują w nie rf-39l (podpięcie
+         okna wymiany) i przewodnik z rf-39m. -->
+    <div class="seqrun" id="seqRun">
+      <div class="seqrun-head"><span>▶ Makro w toku:</span> <b id="seqRunLabel">—</b>
+        <span class="tag" id="seqRunTag"></span></div>
+      <div class="seqrun-steps" id="seqRunSteps"></div>
+      <div class="seqrun-bar"><i id="seqRunBar"></i></div>
+    </div>
+    <div id="ruleEditor" class="ruleeditor" style="display:none"></div>
+    <div id="rulesList" class="ruleslist"></div>
+    <div class="head sub trig-log-head"><h2>Ostatnie zadziałania</h2><span class="hint">klawiatura = wysłano, oko = tylko podgląd</span></div>
+    <div class="log" id="trigLog"></div>
+    <!-- Pusty dziennik mówi, co zrobić (P-G1-14); znika, gdy w #trigLog pojawi się wpis (03-triggers). -->
+    <p class="trig-log-empty">Tu pojawi się każde zadziałanie. Porusz kapslem, żeby sprawdzić.</p>
+  </div>
+
+  <!-- ===== MIDI / OSC CONTROLLER ===== -->
+  <div class="card" id="midiCard">
+    <div class="head"><h2><span class="rfic hd-ic hd-ic-midi" aria-hidden="true"></span>Kontroler MIDI</h2>
+      <div class="rf-toggle" id="miEnable" role="switch" aria-checked="false" tabindex="0" title="Włącz albo wyłącz moduł MIDI. Działa niezależnie od OSC, Mapowania, Myszy i Kontrolera."><span class="rf-tg-lbl off">Wył.</span><span class="rf-tg-knob"></span><span class="rf-tg-lbl on">Wł.</span></div></div>
+    <!-- HUB KONFIGURACJI (rf-49i, montowany przez rf-49d) wchodzi TUTAJ, zaraz pod nagłówkiem —
+         i DRUGI, bliźniaczy, tak samo pod nagłówkiem karty „Kontroler OSC" (#oscCard powstaje
+         dopiero w rf-34). Jeden stan, dwa widoki: preset niesie CAŁĄ listę mapowań, a ta jest
+         wspólna dla obu wyjść. Stały tu cienkie paski tożsamości (rf-49), usunięte 2026-08-28. -->
+    <div class="mi-grouphint">Gdy włączone, ruch kapsla wysyła MIDI (CC, nuty) do DAW, Resolume czy wizualizacji.</div>
+    <div class="mi-warn" id="miWarn" style="display:none"></div>
+    <!-- ===== XY PAD - live 2D motion preview + built-in browser sounds (WebAudio) ===== -->
+    <div class="pad-sec" id="padSec">
+      <div class="pad-sec-h"><span class="rfic hd-ic hd-ic-synth" aria-hidden="true"></span><b>Pady grające</b>
+        <span class="hint">dotknij pada albo rusz kapslem, żeby zagrać · dźwięk lokalny, nie wysyła MIDI ani OSC</span>
+        <div class="rf-toggle" id="padEnable" role="switch" aria-checked="false" tabindex="0" title="Włącz/wyłącz pady (dźwięk i podgląd — lokalnie w przeglądarce)"><span class="rf-tg-lbl off">Wył.</span><span class="rf-tg-knob"></span><span class="rf-tg-lbl on">Wł.</span></div><button class="btn sm pad-new-sound" id="padNewSound" type="button" title="Otwiera zakładkę Brzmienia z pustym brzmieniem: ustaw je, nazwij i zapisz, a pojawi się na liście brzmień każdego pada"><span class="bic bic-plus" aria-hidden="true"></span>Nowe brzmienie</button><button class="btn sm pad-kill" id="padKill" title="Zatrzymaj zacięte / wiszące dźwięki (panika)"><span class="pad-kill-ic" aria-hidden="true"></span>⏹ Ucisz zacięte dźwięki</button></div>
+      <div class="playpads" id="playPads"></div>
+      <div class="pads-off" id="padsOff">
+        <span class="pads-off-ic" aria-hidden="true"></span>
+        <span class="pads-off-txt"><b>Pady są wyłączone.</b> Po włączeniu zagrasz od razu: rusz kapslem albo przeciągnij palcem lub myszą po padzie.</span>
+        <button class="btn rf-cta pads-off-go" id="padsOffOn" type="button" title="Włącza pady, odblokowuje dźwięk w przeglądarce i włącza granie z ruchu kapsla na pierwszym padzie"><span class="bic bic-synth" aria-hidden="true"></span>Włącz i zagraj</button>
+      </div>
+      <details class="sound-editor" id="soundEditor">
+        <summary><span class="rfic lib-ic" role="img" aria-label="Biblioteka dźwięków"></span><b>Biblioteka dźwięków</b> <span class="hint">własne brzmienia i ich edycja</span></summary>
+        <div class="se-body">
+          <!-- Edytor jako „rack” (rf-25d + css/30, etap E4a, 2026-10-02). U góry pasek brzmienia: emoji, nazwa, rodzaj
+               (nowe / bazowe / własne / zmienione), „niezapisane zmiany”, głośność i akcje; stoi przyklejony pod paskiem
+               modułu. Niżej dwie kolumny: lista brzmień (szukanie, filtr rodzaju, „+ Nowe”, „⧉ Duplikuj”, ▶ szybki odsłuch
+               w wierszu) i instrument: lampa oscyloskopu nad rackiem, czyli czterema kartami modułów jedna pod drugą,
+               i pętla testowa zwinięta pod nimi. Lampa jest wizualizacją; edytory krzywych (fala, korektor, obwiednia)
+               montuje rf-25e (etap E6) w kontenerach `.se-sec-editor[data-editor]` pod pokrętłami kart i zdejmuje im
+               `hidden` (bez skryptu zostają ukryte). Identyfikatory pól i przycisków są te same co przed przebudową
+               (szukają ich rf-25, rf-25e i rf-knob).
+               Głośność stoi poza modułami, więc jej pokrętło ma skórkę „master”; nagłówki modułów zachowują słowa,
+               po których rf-knob dobiera skórkę (oscylator, filtr, obwiednia, charakter). -->
+          <div class="se-bar" role="group" aria-label="Brzmienie">
+            <label class="se-fld se-emoji-fld" title="Systemowe menu wyboru emoji otworzysz skrótem Win + kropka"><span>Emoji</span><input id="seEmoji" type="text" maxlength="4" value="🎛" title="Systemowe menu wyboru emoji otworzysz skrótem Win + kropka"></label>
+            <div class="se-bar-id">
+              <label class="se-fld se-name-fld"><span>Nazwa</span><input id="seName" type="text" maxlength="24" placeholder="np. Moja Żaba"></label>
+              <div class="se-bar-state">
+                <span class="se-kind" id="seKind" data-kind="new">nowe</span>
+                <span class="se-dirty" id="seDirty" hidden><span class="se-dirty-dot" aria-hidden="true"></span>niezapisane zmiany</span>
+                <span class="se-msg" id="seMsg" role="status" aria-live="polite"></span>
+              </div>
+            </div>
+            <label class="se-fld se-lvl-fld"><span>Głośność <b id="seLvlV">42</b></span><input id="seLvl" type="range" min="5" max="100" step="1" value="42"></label>
+            <div class="se-bar-acts">
+              <button class="btn sm" id="seRandom" type="button" title="Wylosuj brzmienie do dostrojenia">🎲 Zaskocz mnie</button>
+              <button class="btn sm" id="seNew" type="button" title="Wyczyść formularz i zacznij nowe brzmienie od ustawień domyślnych"><span class="bic bic-plus" aria-hidden="true"></span>Nowe brzmienie</button>
+              <button class="btn sm" id="seDup" type="button" title="Skopiuj edytowane brzmienie (wersję zapisaną) do nowego własnego" disabled>⧉ Duplikuj</button>
+              <button class="btn sm rf-cta" id="seSave" type="button" title="Zapisz brzmienie na liście"><span class="bic bic-save" aria-hidden="true"></span>Zapisz brzmienie</button>
+              <button class="btn sm" id="seCancelEdit" type="button" title="Anuluj edycję i wróć do tworzenia nowego" hidden>✕ Anuluj edycję</button>
+              <button class="btn sm" id="seResetBase" type="button" title="Przywróć fabryczne ustawienia tego brzmienia bazowego" hidden>↺ Przywróć domyślny</button>
+            </div>
+          </div>
+          <div class="se-main">
+            <div class="se-side">
+              <!-- Oscyloskop (rf-25c + css/29, 2026-10-02): okrągła lampa z kopułą szkła i pulpit obok (etap E5), od
+                   etapu E6 wyłącznie wizualizacja dźwięku laba, od E7 jeden obraz (pierścień przebiegu i słońce widma)
+                   pod szkłem CRT. Lampę rysuje shader „skop” (PadPlate._mk wstawia canvas GL jako pierwsze dziecko
+                   .sk-glass), nakładka 2D rysuje tylko tarczę zastępczą bez WebGL2. Pulpit: legenda, podgląd dźwięku na górze (te same id i klasy,
+                   rf-25 ich słucha), pod nim wskaźnik poziomu i „Powiększ”. Od 2026-10-03 lampa stoi w lewej
+                   kolumnie nad listą brzmień (.se-side, przyklejona razem z listą), podpisy „przebieg / widmo” są
+                   legendą pod tarczą, a nie napisami na szkle. -->
+              <div class="se-scope">
+                <div class="sk-scope" id="skScope">
+                  <div class="sk-glass" id="skGlass"><canvas class="sk-overlay" id="skOverlay" aria-hidden="true"></canvas></div>
+                  <div class="sk-panel">
+                    <div class="sk-legend" aria-hidden="true"><span class="sk-lg sk-lg-w">przebieg</span><span class="sk-lg sk-lg-s">widmo</span></div>
+                    <div class="sk-sec">
+                      <span class="sk-cap">Podgląd</span>
+                      <div class="sk-prev se-preview">
+                        <button class="btn sm" id="seTest" type="button" title="Zagraj krótkie demo (arpeggio)"><span class="sk-pi" aria-hidden="true">▶</span><span class="sk-pl">Testuj</span></button>
+                        <button class="btn sm" id="seHold" type="button" title="Naciśnij i przytrzymaj, aby usłyszeć atak/podtrzymanie/zwolnienie"><span class="sk-pi" aria-hidden="true">⬇</span><span class="sk-pl">Przytrzymaj</span></button>
+                        <button class="btn sm" id="seCont" type="button" title="Ciągły dźwięk — słyszysz zmiany parametrów na żywo"><span class="sk-pi" aria-hidden="true">🔁</span><span class="sk-pl">Podgląd ciągły</span></button>
+                      </div>
+                    </div>
+                    <div class="sk-sec">
+                      <span class="sk-cap">Poziom</span>
+                      <div class="sk-row">
+                        <div class="sk-vu" id="skVu" role="img" aria-label="Wskaźnik poziomu"><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span><span class="sk-led"></span></div>
+                        <button type="button" class="sk-tb sk-big" id="skBig" aria-pressed="false" title="Powiększ albo zmniejsz tarczę oscyloskopu"><span class="sk-b1">⤢ Powiększ</span><span class="sk-b0">⤡ Zmniejsz</span><span class="sk-b3">⤢ Pokaż ekran</span><span class="sk-b2">⤡ Schowaj ekran</span></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="se-lib">
+                <button type="button" class="se-lib-toggle" id="seLibToggle" aria-expanded="false" aria-controls="seLibBody" title="Pokaż albo schowaj listę brzmień"><span>Lista brzmień</span> <span class="se-lib-n" id="seLibN"></span></button>
+                <div class="se-lib-body" id="seLibBody">
+                  <input class="se-search" id="seSearch" type="search" placeholder="szukaj brzmienia…" aria-label="Szukaj brzmienia po nazwie" autocomplete="off" spellcheck="false">
+                  <div class="se-chips" id="seFilter" role="group" aria-label="Rodzaj brzmienia">
+                    <button type="button" class="se-chip on" data-kind="all" aria-pressed="true">Wszystkie <span class="se-chip-n"></span></button>
+                    <button type="button" class="se-chip" data-kind="base" aria-pressed="false">Bazowe <span class="se-chip-n"></span></button>
+                    <button type="button" class="se-chip" data-kind="custom" aria-pressed="false">Własne <span class="se-chip-n"></span></button>
+                    <button type="button" class="se-chip" data-kind="over" aria-pressed="false">Zmienione <span class="se-chip-n"></span></button>
+                  </div>
+                  <div class="se-list" id="seList"></div>
+                  <div class="se-lib-empty hint" id="seLibEmpty" hidden>Nic tu nie pasuje do wyszukiwania</div>
+                </div>
+              </div>
+            </div>
+            <div class="se-inst">
+              <!-- UX 261120 L4a (piętra): oscylatory, filtr i obwiednia to „kształt brzmienia”, ustawiany raz na brzmienie,
+                   więc stoją w zwiniętym zwijaku z bieżącymi wartościami w nagłówku (rfTier w rf-25d). Próbka, Charakter
+                   i pętla testowa to piętro 3: jedno „Zaawansowane” na dole ekranu. Id pól i kart bez zmian. -->
+              <details class="cardfold inset se-shape" id="seShapeFold">
+                <summary>Kształt brzmienia</summary>
+                <div class="cardfold-body">
+                  <div class="se-rack">
+                    <details class="se-sec" data-module="osc" open>
+                      <summary><span class="se-sec-t">🎛 Oscylatory</span><span class="se-sec-tools"><button type="button" class="se-st se-st-rnd" data-rnd="osc" title="Losuj ten moduł" aria-label="Losuj: Oscylatory">🎲</button></span></summary>
+                      <div class="se-grid">
+                        <label class="se-fld"><span>Fala</span><select id="seWave"><option value="sawtooth">Piła</option><option value="square">Kwadrat</option><option value="triangle">Trójkąt</option><option value="sine">Sinus</option><option value="custom">Własna</option></select></label>
+                        <label class="se-fld"><span>Oktawa</span><select id="seOct"><option value="-3">−3</option><option value="-2">−2</option><option value="-1">−1</option><option value="0" selected>0</option><option value="1">+1</option><option value="2">+2</option><option value="3">+3</option></select></label>
+                        <label class="se-fld"><span>Detune <b id="seDetV">0</b> ct</span><input id="seDet" type="range" min="0" max="60" step="1" value="0"></label>
+                        <label class="se-fld se-check"><input id="seSub" type="checkbox"><span>Sub-oktawa</span></label>
+                        <label class="se-fld se-check"><input id="seOsc2" type="checkbox"><span>2. oscylator</span></label>
+                        <label class="se-fld se-osc2-detail" hidden><span>Osc 2 — fala</span><select id="seOsc2Wave"><option value="sawtooth">Piła</option><option value="square">Kwadrat</option><option value="triangle">Trójkąt</option><option value="sine">Sinus</option></select></label>
+                        <label class="se-fld se-osc2-detail" hidden><span>Osc 2 — półtony <b id="seOsc2SemiV">0</b></span><input id="seOsc2Semi" type="range" min="-24" max="24" step="1" value="0"></label>
+                        <label class="se-fld se-osc2-detail" hidden><span>Osc 2 — detune <b id="seOsc2DetV">0</b> ct</span><input id="seOsc2Det" type="range" min="-60" max="60" step="1" value="0"></label>
+                        <label class="se-fld se-osc2-detail" hidden><span>Osc 2 — miks <b id="seOsc2MixV">50</b></span><input id="seOsc2Mix" type="range" min="0" max="100" step="1" value="50"></label>
+                      </div>
+                      <div class="se-sec-editor" data-editor="wave" hidden></div>
+                    </details>
+                    <details class="se-sec" data-module="filter" open>
+                      <summary><span class="se-sec-t">🎚 Filtr</span><span class="se-sec-tools"><button type="button" class="se-st se-st-rnd" data-rnd="filter" title="Losuj ten moduł" aria-label="Losuj: Filtr">🎲</button></span></summary>
+                      <div class="se-grid">
+                        <label class="se-fld se-wide2"><span>Typ filtra</span><select id="seFilt"><option value="lowpass">Dolnoprzepustowy</option><option value="highpass">Górnoprzepustowy</option><option value="bandpass">Pasmowy</option><option value="notch">Wycinający</option></select></label>
+                        <label class="se-fld"><span>Filtr min <b id="seFMinV">260</b> Hz</span><input id="seFMin" type="range" min="80" max="2000" step="10" value="260"></label>
+                        <label class="se-fld"><span>Filtr max <b id="seFMaxV">7800</b> Hz</span><input id="seFMax" type="range" min="1000" max="12000" step="100" value="7800"></label>
+                        <label class="se-fld"><span>Rezonans Q <b id="seQV">6</b></span><input id="seQ" type="range" min="0.3" max="12" step="0.1" value="6"></label>
+                        <label class="se-fld"><span>Obwiednia filtra <b id="seFEnvV">0</b> %</span><input id="seFEnv" type="range" min="-100" max="100" step="1" value="0"></label>
+                        <label class="se-fld"><span>Czas obwiedni <b id="seFEnvTV">200</b> ms</span><input id="seFEnvT" type="range" min="5" max="2000" step="5" value="200"></label>
+                        <label class="se-fld"><span>Rozświetlenie <b id="seFSwellV">0</b></span><input id="seFSwell" type="range" min="0" max="200" step="5" value="0"></label>
+                      </div>
+                      <div class="se-sec-editor" data-editor="eq" hidden></div>
+                    </details>
+                    <details class="se-sec" data-module="env" open>
+                      <summary><span class="se-sec-t">📉 Obwiednia głośności</span><span class="se-sec-tools"><button type="button" class="se-st se-st-rnd" data-rnd="env" title="Losuj ten moduł" aria-label="Losuj: Obwiednia głośności">🎲</button></span></summary>
+                      <div class="se-grid">
+                        <label class="se-fld"><span>Typ</span><select id="seType"><option value="legato">Ciągły (legato)</option><option value="pluck">Szarpany (pluck)</option></select></label>
+                        <label class="se-fld"><span>Atak <b id="seAttV">12</b> ms</span><input id="seAtt" type="range" min="1" max="500" step="1" value="12"></label>
+                        <label class="se-fld se-dec"><span>Zanik <b id="seDecV">340</b> ms</span><input id="seDec" type="range" min="60" max="2000" step="10" value="340"></label>
+                        <label class="se-fld se-sus"><span>Podtrzymanie <b id="seSusV">100</b> %</span><input id="seSus" type="range" min="0" max="100" step="1" value="100"></label>
+                        <label class="se-fld se-rel"><span>Zwolnienie <b id="seRelV">180</b> ms</span><input id="seRel" type="range" min="30" max="1500" step="10" value="180"></label>
+                        <label class="se-fld"><span>Glide <b id="seGlideV">40</b> ms</span><input id="seGlide" type="range" min="0" max="200" step="5" value="40"></label>
+                      </div>
+                      <div class="se-sec-editor" data-editor="env" hidden></div>
+                    </details>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+          <details class="cardfold adv se-adv" id="seAdvFold">
+            <summary>Zaawansowane</summary>
+            <div class="cardfold-body">
+              <div class="se-rack se-rack-adv">
+                <!-- PRÓBKA (rf-25f, 2026-10-19): brzmienie może zamiast fal grać własne nagranie — z mikrofonu
+                     albo z pliku na dysku (także upuszczonego na tę kartę). Obróbkę dźwięku robi web/gry/js/probki-audio.js,
+                     wspólny z grą RibbitBeat; bajty idą do Library/Probki/, a patch niesie sam identyfikator.
+                     Pola `seSmpId`, `seSmpSr`, `seSmpLen` i `seSmpSrc` są ukryte: to tożsamość bajtów, nie nastawa.
+                     2026-10-20: wycinek, poziom, centy, wstecz, zlepek pętli i „nie przestrajaj” to NASTAWY w patchu
+                     — bajty zostają całe, więc wszystko da się cofnąć, a kopia brzmienia ma własne. `seSmpCount`
+                     i `seSmpNorm` to jedyne pola, których patch NIE niesie: dotyczą tego, jak wchodzi NOWE nagranie. -->
+                <details class="se-sec" data-module="smp" open>
+                  <summary><span class="se-sec-t">🎙 Próbka</span></summary>
+                  <div class="se-smp">
+                    <input id="seSmpId" type="hidden" value=""><input id="seSmpSr" type="hidden" value="32000">
+                    <input id="seSmpLen" type="hidden" value="0"><input id="seSmpSrc" type="hidden" value="file">
+                    <p class="hint se-smp-opis">Nagraj coś mikrofonem albo wczytaj dźwięk z dysku. Brzmienie zagra tym po całej skali.</p>
+                    <div class="se-smp-acts" id="seSmpActs">
+                      <select class="se-smp-dev" id="seSmpDev" aria-label="Mikrofon" title="Z którego mikrofonu nagrywać" hidden></select>
+                      <button class="btn sm" id="seSmpMon" type="button" aria-pressed="false" title="Otwórz mikrofon i pokaż poziom, jeszcze nic nie nagrywając">🎧 Podsłuch</button>
+                      <button class="btn sm se-smp-rec" id="seSmpRec" type="button" title="Mikrofon włącza się dopiero teraz i gaśnie po nagraniu">⏺ Nagraj</button>
+                      <button class="btn sm" id="seSmpFile" type="button" title="Wybierz plik z dysku albo upuść go na tę kartę"><span class="bic bic-import" aria-hidden="true"></span>Wczytaj dźwięk</button>
+                      <input id="seSmpPick" type="file" accept="audio/*,.wav,.mp3,.ogg,.m4a,.flac,.opus" hidden tabindex="-1">
+                      <label class="se-smp-opt"><input id="seSmpCount" type="checkbox"><span title="Trzy sekundy na wzięcie oddechu, zanim ruszy nagranie">Odliczaj 3-2-1</span></label>
+                      <label class="se-smp-opt"><input id="seSmpNorm" type="checkbox" checked><span title="Nowe nagranie dostaje poziom 1,00×. Bez tego zostaje tak ciche albo tak głośne, jak wyszło">Wyrównaj poziom</span></label>
+                    </div>
+                    <div class="se-smp-bar" id="seSmpBar" hidden>
+                      <i class="se-smp-dot" aria-hidden="true"></i>
+                      <span class="se-smp-time" id="seSmpTime" role="status" aria-live="polite">Nagrywam…</span>
+                      <div class="se-smp-vu" id="seSmpVu" aria-hidden="true"><i></i></div>
+                      <button class="btn sm yellow" id="seSmpStop" type="button">⏹ Zatrzymaj</button>
+                    </div>
+                    <p class="se-smp-empty se-smp-none hint">Nie ma jeszcze próbki. Nagraj albo wczytaj dźwięk.</p>
+                    <canvas class="se-smp-wave se-smp-have" id="seSmpWave" role="img" aria-label="Przebieg próbki — przeciągnij znaczniki, żeby wybrać kawałek" hidden></canvas>
+                    <p class="se-smp-info se-smp-have" id="seSmpInfo" role="status" aria-live="polite" hidden></p>
+                    <div class="se-smp-tools se-smp-have" hidden>
+                      <button class="btn sm" id="seSmpPlay" type="button" title="Zagraj próbkę brzmieniem, jak usłyszy ją pad">▶ Odsłuchaj</button>
+                      <button class="btn sm" id="seSmpDetect" type="button" title="Znajdź nutę, którą słychać w próbce">🎯 Wykryj nutę</button>
+                      <button class="btn sm" id="seSmpTrim" type="button" title="Przestaw znaczniki na granice ciszy. Bajty zostają całe">✂ Przytnij ciszę</button>
+                      <button class="btn sm" id="seSmpBake" type="button" title="Zostaw w pliku sam wycinek. Tego się nie cofnie, ale plik jest mniejszy">🔒 Przytnij na stałe</button>
+                      <button class="btn sm" id="seSmpSave" type="button" title="Zapisz to, co słychać, jako plik WAV">💾 Zapisz WAV</button>
+                      <button class="btn sm" id="seSmpDel" type="button" title="Usuń próbkę i wróć do fal"><span class="bic bic-bin" aria-hidden="true"></span>Usuń próbkę</button>
+                    </div>
+                    <div class="se-grid se-smp-have" hidden>
+                      <label class="se-fld se-smp-tune" hidden><span>Nuta próbki <b id="seSmpRootV">60</b> <i id="seSmpNote">C4</i></span><input id="seSmpRoot" type="range" min="24" max="96" step="0.5" value="60" title="Którą nutę słychać w próbce. Od niej liczy się cała skala"></label>
+                      <label class="se-fld se-smp-tune" hidden><span>Dostrój <b id="seSmpCentV">0</b> ct</span><input id="seSmpCent" type="range" min="-50" max="50" step="1" value="0" title="Dostrojenie w centach: pół tonu to 100 centów, a pokrętło nuty skacze po 50"></label>
+                      <label class="se-fld"><span>Wycinek od <b id="seSmpStartV">0</b> %</span><input id="seSmpStart" type="range" min="0" max="100" step="0.1" value="0" title="Od tego miejsca nagrania próbka zaczyna grać"></label>
+                      <label class="se-fld"><span>Wycinek do <b id="seSmpEndV">100</b> %</span><input id="seSmpEnd" type="range" min="0" max="100" step="0.1" value="100" title="Tu próbka się kończy. Resztę nagrania słychać nie będzie"></label>
+                      <label class="se-fld"><span>Poziom <b id="seSmpLvlV">1.00</b> ×</span><input id="seSmpLvl" type="range" min="0.1" max="2" step="0.01" value="1" title="Jak głośno gra nagranie. 1,00× to tyle, ile w nim zapisano"></label>
+                      <!-- Trzy przełączniki w jednym wierszu na całą szerokość siatki: wmieszane między pokrętła
+                           rozbijały wiersze, bo są o połowę niższe od tarcz. -->
+                      <div class="se-smp-chips">
+                        <label class="se-fld se-check"><input id="seSmpFix" type="checkbox"><span title="Klaśnięcie, bęben albo słowo gra tak samo na całej skali">Nie przestrajaj</span></label>
+                        <label class="se-fld se-check"><input id="seSmpRev" type="checkbox"><span title="Próbka gra od końca do początku">Gra wstecz</span></label>
+                        <label class="se-fld se-check"><input id="seSmpLoop" type="checkbox"><span>Zapętl</span></label>
+                      </div>
+                      <label class="se-fld se-smp-loop" hidden><span>Pętla od <b id="seSmpFromV">10</b> %</span><input id="seSmpFrom" type="range" min="0" max="100" step="0.1" value="10" title="Od tego miejsca próbka zaczyna się powtarzać"></label>
+                      <label class="se-fld se-smp-loop" hidden><span>Pętla do <b id="seSmpToV">60</b> %</span><input id="seSmpTo" type="range" min="0" max="100" step="0.1" value="60" title="Tu pętla wraca na swój początek"></label>
+                      <label class="se-fld se-smp-loop" hidden><span>Zlepek <b id="seSmpGlueV">20</b> ms</span><input id="seSmpGlue" type="range" min="0" max="200" step="1" value="20" title="Zlewa koniec pętli z jej początkiem, żeby szew nie trzaskał"></label>
+                    </div>
+                    <div class="se-smp-note se-smp-have hint" hidden>Próbka zastępuje oscylatory: nuta rozciąga ją w górę i w dół, a filtr, obwiednia i efekty działają jak zwykle. Znaczniki na przebiegu przeciąga się myszą.</div>
+                  </div>
+                </details>
+                <details class="se-sec" data-module="char" open>
+                  <summary><span class="se-sec-t">✨ Charakter</span><span class="se-sec-tools"><button type="button" class="se-st se-st-rnd" data-rnd="char" title="Losuj ten moduł" aria-label="Losuj: Charakter">🎲</button></span></summary>
+                  <div class="se-grid">
+                    <label class="se-fld"><span>Drive <b id="seDriveV">0</b></span><input id="seDrive" type="range" min="0" max="100" step="1" value="0"></label>
+                    <label class="se-fld se-check"><input id="seCroak" type="checkbox"><span>Rechot żaby</span></label>
+                    <label class="se-fld se-am" hidden><span>Tempo rechotu <b id="seAmV">29</b> Hz</span><input id="seAm" type="range" min="1" max="120" step="1" value="29"></label>
+                    <label class="se-fld se-check"><input id="seNoise" type="checkbox"><span>Szum (efekt)</span></label>
+                  </div>
+                  <div class="se-noise-note hint">Szum to samodzielny efekt dźwiękowy — zastępuje oscylatory i filtr.</div>
+                </details>
+              </div>
+              <details class="se-sec se-seq-sec">
+                <summary>🎹 <b>Pętla testowa</b></summary>
+                <div class="se-seq">
+                  <div class="se-seq-h"><span class="hint">klik = osobna nuta · przeciągnij = jedna długa (przytrzymana) · klik w nutę = usuń. Zapętl, by usłyszeć</span>
+                    <span class="se-seq-ctrls">
+                      <button class="btn sm" id="seqPlay" type="button" title="Odtwórz / zatrzymaj pętlę">▶ Zapętl</button>
+                      <label class="se-seq-tempo" title="Tempo pętli">♩ <b id="seqBpmV">120</b><input id="seqBpm" type="range" min="60" max="200" step="5" value="120"></label>
+                      <label class="se-seq-tempo" title="Swing — przesuwa co drugą 16-tkę (shuffle)">Swing <b id="seqSwingV">0</b>%<input id="seqSwing" type="range" min="0" max="60" step="1" value="0"></label>
+                      <button class="btn sm" id="seqClear" type="button" title="Wyczyść pętlę"><span class="bic bic-bin" aria-hidden="true"></span>Wyczyść</button>
+                    </span>
+                  </div>
+                  <div id="seqGrid" class="seq-grid"></div>
+                </div>
+              </details>
+            </div>
+          </details>
+        </div>
+      </details>
+      <!-- Programmed pads (rf-25b): a written melody line or drum pattern that plays itself. Between the
+           play pads (a hand makes the notes) and the effects pads (a hand turns knobs) — no capsule
+           drives it, but an effects pad can target it like any play pad. -->
+      <!-- A section shows only once it has a pad (rf-25b / rf-25 set `hidden`); pads are ADDED in one
+           place only, the "Dodaj pad" strip at the bottom (owner, 2026-09-30: the three add buttons sat
+           in three different spots). Tempo and swing belong to the whole section: one transport. -->
+      <div class="fxpads-sec seqpads-sec" id="seqPadsSec" hidden>
+        <div class="fxpads-h seqpads-h"><b><span class="seqpads-ic" aria-hidden="true">🎼</span>Pady zaprogramowane</b> <span class="hint">zapisana melodia albo rytm, gra sam · kapsel nim nie steruje, pad efektów może</span></div>
+        <div class="seqpads-transport" role="group" aria-label="Wspólne tempo padów zaprogramowanych">
+          <button class="btn sm" id="seqAllBtn" type="button" title="Uruchom albo zatrzymaj wszystkie pady zaprogramowane naraz, równo w takt">▶ Graj wszystkie</button>
+          <label class="sq-fld" title="Tempo wspólne dla wszystkich padów zaprogramowanych — grają zawsze równo w takt">♩ <b id="seqTempoV">110</b> BPM<input id="seqTempo" type="range" min="40" max="240" step="1" value="110"></label>
+          <label class="sq-fld" title="Swing — przesuwa co drugą 16-tkę (shuffle)">Swing <b id="seqSwingAllV">0</b>%<input id="seqSwingAll" type="range" min="0" max="60" step="1" value="0"></label>
+          <span class="hint">tempo i swing są wspólne, więc pady nigdy się nie rozjadą</span>
+        </div>
+        <div class="seqpads" id="seqPads"></div>
+      </div>
+      <div class="fxpads-sec" id="fxPadsSec" hidden>
+        <div class="fxpads-h"><b><span class="fx-spray" aria-hidden="true"></span>Pady efektów</b> <span class="hint">pady XY sterujące efektami</span></div>
+        <div class="fxpads" id="fxPads"></div>
+      </div>
+      <!-- UX 261120 L4a (piętra): „Dodaj pad” to piętro 3, bo po pierwszym padzie potrzebny rzadko. Sekcje
+           padów zaprogramowanych i efektów zostają na wierzchu: pokazują się dopiero, gdy ktoś taki pad ma. -->
+      <details class="cardfold adv pad-adv" id="padAdvFold">
+        <summary>Zaawansowane</summary>
+        <div class="cardfold-body">
+          <div class="pad-adder" id="padAdder">
+            <div class="pad-adder-h"><span class="bic bic-plus" aria-hidden="true"></span><b>Dodaj pad</b> <span class="hint">nowy pad pojawi się w swojej sekcji powyżej</span></div>
+            <div class="pad-adder-row">
+              <button class="pad-add-tile" id="playPadAddBtn" type="button" title="Dodaj kolejny niezależny pad grający"><span class="pat-ic rfic hd-ic hd-ic-synth" aria-hidden="true"></span><span class="pat-txt"><b>Pad grający</b><span>grasz palcem albo kapslem</span></span></button>
+              <button class="pad-add-tile" id="seqAddBtn" type="button" title="Dodaj pad, który sam gra zapisaną linię melodyczną albo rytm"><span class="pat-ic pat-emo" aria-hidden="true">🎼</span><span class="pat-txt"><b>Pad zaprogramowany</b><span>zapisana melodia albo rytm, gra sam</span></span></button>
+              <button class="pad-add-tile" id="fxAddBtn" type="button" title="Dodaj pad sterujący efektami"><span class="pat-ic fx-spray" aria-hidden="true"></span><span class="pat-txt"><b>Pad efektów</b><span>kręci efektami innego pada</span></span></button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+    <div class="midibar">
+      <button class="btn rf-cta" id="miAdd"><span class="bic bic-plus" aria-hidden="true"></span>Nowe mapowanie</button>
+      <button class="btn" id="miPanic" title="Wyślij All Notes Off na wszystkich kanałach (zatrzymaj wiszące nuty)">⏹ MIDI panic</button>
+      <span class="hint">źródło (oś / pochylenie) → komunikat MIDI; pasek = wartość na żywo</span>
+      <span class="midimsg" id="miMsg" role="status" aria-live="polite"></span>
+    </div>
+    <div id="miEditor" class="midieditor" style="display:none"></div>
+    <div id="miList" class="midilist"></div>
+    <!-- PIĘTRO 2 (UX 261120 L4c): port, kanał i skala ustawia się raz, więc stoją w zwijaku pod listą
+         mapowań. W nagłówku bieżące wartości (rf-16 miTierInit). Grupę „Cel domyślny OSC” rf-34 i tak
+         wyjmuje stąd do karty OSC, po id pola. -->
+    <details class="cardfold inset mi-fold" id="miOutFold"><summary>Port MIDI i skala</summary>
+    <div class="cardfold-body">
+      <div class="midi-target">
+        <div class="mi-group">
+          <div class="mi-group-h">🎹 Wyjście MIDI</div>
+          <div class="mi-fields">
+            <label class="mi-f">Port OUT
+              <span class="mi-f-row"><select id="miPort"><option value="-1">— brak (wyłączony) —</option></select>
+                <button class="btn sm" id="miPortRefresh" title="Odśwież listę portów MIDI">🔄</button></span></label>
+            <label class="mi-f">Kanał MIDI (1–16) <input type="number" id="miChannel" min="1" max="16" value="1"></label>
+          </div>
+          <div class="mi-portstatus" id="miPortStatus">—</div>
+        </div>
+        <div class="mi-group">
+          <!-- HOST AND PORT ARE APP-WIDE, THE PREFIX IS NOT. The default target and the receiver
+               list live at the top level of the configuration (`oscHost` / `oscPort` /
+               `oscTargets`), so every capsule sees the same ones; the address prefix and the group
+               switch belong to the capsule. The sub-tab above says "settings of this module on the
+               selected capsule", so the two cards that are NOT per capsule have to say so. -->
+          <div class="mi-group-h">📡 Cel domyślny OSC<span class="mi-group-sh">host i port wspólne dla wszystkich kapsli</span></div>
+          <div class="mi-fields">
+            <label class="mi-f">Host <input type="text" id="miOscHost" value="127.0.0.1"></label>
+            <label class="mi-f">Port <input type="number" id="miOscPort" min="1" max="65535" value="9000"></label>
+            <label class="mi-f">Prefiks adresu <input type="text" id="miOscPrefix" value="/ribbitflip"></label>
+          </div>
+          <!-- Cel domyślny nie jest pozycją listy odbiorników i nie da się go usunąć — tu się go zmienia.
+               Mapowanie bez wskazanego odbiornika mówi właśnie tutaj. -->
+          <div class="mi-portstatus">Tu mówi każde mapowanie, któremu nie wskazano odbiornika. Prefiks adresu jest własny dla każdego kapsla.</div>
+        </div>
+        <div class="mi-group">
+          <div class="mi-group-h">🎼 Skala <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--dim)">dla nut</span></div>
+          <div class="mi-fields">
+            <label class="mi-f">Tonika <select id="miScaleRoot"></select></label>
+            <label class="mi-f">Rodzaj <select id="miScale"></select></label>
+          </div>
+        </div>
+      </div>
+    </div></details>
+  </div>
+  <!-- PIĘTRO 3: jedno „Zaawansowane” na dole ekranu MIDI: wymagania zewnętrzne (loopMIDI) i dziennik
+       wysyłek (rf-16b montuje go w #miLogCard). rf-34 stawia ten zwijak w zakładce zaraz za kartą. -->
+  <details class="cardfold adv" id="miAdv"><summary>Zaawansowane</summary>
+  <div class="cardfold-body">
+      <details class="setup-details" id="miSetup">
+        <summary><span class="rfic info-ic" aria-hidden="true"></span>Jak połączyć z DAW albo wizualami? Wymagania zewnętrzne <span class="setup-badge">przeczytaj</span></summary>
+        <div class="setup-body">
+          <h4>🎹 MIDI → DAW / VJ (Ableton, Reaper, FL Studio, Resolume) — wymaga loopMIDI</h4>
+          <!-- <p> zamiast gołego tekstu: miara czytania z 22-modtabs.css działa na `.setup-body p,li`,
+               a akapit bez znacznika brał całą szerokość karty (110-166 znaków w wierszu) tuż nad listą,
+               która już była zwężona. Treść węzłów tekstowych bez zmian → klucze I18N_EN nietknięte.
+               WHY: bare text nodes escaped the 86ch measure; wrapping them keeps the same words. -->
+          <p>Windows nie ma wbudowanego wirtualnego portu MIDI. Aby Twój program zobaczył RibbitFlip jako urządzenie MIDI,
+          użyj darmowego <b>loopMIDI</b> — tworzy „wirtualny kabel MIDI” między tą aplikacją a DAW/wizualami.</p>
+          <ol>
+            <li>Pobierz i zainstaluj <b>loopMIDI</b>:
+              <a href="https://www.tobias-erichsen.de/software/loopmidi.html" target="_blank" rel="noopener">tobias-erichsen.de/software/loopmidi</a>.</li>
+            <li>Uruchom loopMIDI → na dole wpisz nazwę portu (np. <code>RibbitFlip</code>) i kliknij <b>+</b>.</li>
+            <li>Tutaj kliknij <b>🔄 Odśwież</b> i wybierz ten port na liście „Port MIDI OUT” wyżej.</li>
+            <li>W DAW / Resolume wybierz ten sam port jako <b>wejście MIDI</b> — gotowe, od teraz steruje ruch kapsla.</li>
+          </ol>
+          <div class="setup-note">Bez loopMIDI MIDI trafia tylko do wbudowanego „Microsoft GS Wavetable Synth”
+            (usłyszysz dźwięki, ale DAW go nie zobaczy). loopMIDI to darmowy program zewnętrzny (Tobias Erichsen) —
+            <b>instalujesz je samodzielnie</b>; nie dołączamy go do RibbitFlip, aby uszanować licencję autora.</div>
+          <h4>📡 OSC (TouchOSC, Resolume, TouchDesigner, VRChat) — bez instalacji</h4>
+          <p>OSC działa od razu po sieci UDP i ma teraz <b>własny ekran „📡 OSC”</b> z osobnym włącznikiem.
+          Tam ustaw <b>host</b> i <b>port</b> na adres aplikacji nasłuchującej
+          (np. <code>127.0.0.1:9000</code> lokalnie, albo IP tabletu/telefonu z TouchOSC w tej samej sieci Wi‑Fi).
+          Cel OSC ma <b>typ argumentu</b>: <code>float 0..1</code>, <code>float (zakres)</code>, <code>int</code> lub <code>bool</code>.</p>
+          <h4>🎛 Cele MIDI — co wybrać dla którego parametru</h4>
+          <ul>
+            <li><b>CC 7-bit</b> — standardowy Control Change 0–127 (głośność, filtr, dowolny fader w DAW).</li>
+            <li><b>CC 14-bit</b> — para CC (numer + numer+32) dla precyzji 0–16383 (płynne przemiaty bez schodków).</li>
+            <li><b>Pitch Bend</b> — 14-bit, wycentrowany (środek 8192) — naturalny dla pitch/roll; włącz <b>wycentrowane</b> + <b>martwą strefę środka</b>.</li>
+            <li><b>Aftertouch</b> — nacisk kanału (channel pressure) 0–127 — do vibrato / dynamiki.</li>
+            <li><b>Program</b> — Program Change: przełącza preset w DAW; działa tylko w <b>trybie progowym</b> (na zboczu).</li>
+            <li><b>Nuta</b> — nuta ze skali; w trybie progowym opcja <b>zatrzask</b> (każde przekroczenie włącza/wyłącza).</li>
+          </ul>
+          <div class="setup-note">Dodatkowo każde mapowanie ma własny <b>kanał</b> (— = kanał slotu),
+            <b>wygładzanie</b> (0–500 ms) i — dla celów dwubiegunowych — <b>wycentrowanie</b> z martwą strefą środka.
+            Przycisk <b>⏹ MIDI panic</b> u dołu wysyła „All Notes Off” na wszystkich kanałach (gasi wiszące nuty).</div>
+        </div>
+      </details>
+    <div class="card mi-logcard" id="miLogCard"></div>
+  </div></details>
+
+  <main>
+    <!-- ===== LEFT: sensors + oscilloscopes ===== -->
+    <div class="col">
+      <div class="card" id="axesCard">
+        <div class="head"><h2>Czujniki: 6 kanałów na żywo</h2><span class="hint">surowe odczyty czujnika (LSB) · auto-detekcja grawitacji/ruchu</span></div>
+        <!-- Axis map for this unit: CH0–2 = gyroscope, CH3–5 = accelerometer (gravity ~2048 LSB/g);
+             cap axis = CH5, CH3 = front/back, CH4 = left/right. The 3D filter relies on this map. -->
+        <div class="axes" id="axes"></div>
+      </div>
+
+      <div class="card" id="accelCard">
+        <div class="head"><h2>Kanały 0–2</h2><span class="hint">Żyroskop: jak szybko kapsel się obraca</span>
+          <div class="legend" id="legAccel"></div></div>
+        <div class="scopewrap" id="wrapAccel"><span class="pausetag">PAUZA</span><canvas class="scope" id="scopeAccel"></canvas></div>
+        <div class="btnlane-wrap" title="Naciśnięcia przycisku w czasie — długość paska to czas trzymania; ta sama oś czasu i zoom co wykres powyżej"><span class="btnlane-lbl">⌖ klik</span><canvas id="btnLane" class="btnlane"></canvas></div>
+      </div>
+
+      <div class="card" id="gyroCard">
+        <div class="head"><h2>Kanały 3–5</h2><span class="hint">Akcelerometr: grawitacja i przyspieszenie</span>
+          <div class="legend" id="legGyro"></div></div>
+        <div class="scopewrap" id="wrapGyro"><span class="pausetag">PAUZA</span><canvas class="scope" id="scopeGyro"></canvas></div>
+      </div>
+
+      <div class="card" id="filterCard">
+        <div class="head"><h2>Filtr 3D: osie</h2><span class="hint">Wynik filtra: ile procent wychylenia</span>
+          <div class="legend" id="legFilter"></div></div>
+        <div class="scopewrap" id="wrapFilter"><span class="pausetag">PAUZA</span><canvas class="scope" id="scopeFilter"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT: 3D position + buttons/status + raw stream ===== -->
+    <div class="col">
+      <div class="card" id="pose3dCard">
+        <div class="head"><h2><span class="rfic hd-ic hd-ic-atom" aria-hidden="true"></span>Orientacja 3D</h2>
+          <span class="pose-src" id="poseSrcPill" data-kind="off" title="Skąd bierze się ruch kapsla">—</span>
+          <span class="pose-help" id="poseHelp" title="Kliknij — wyjaśnienie podglądu i trybów">?</span></div>
+        <div class="pose3d-wrap">
+          <canvas id="pose3d" class="pose3d" tabindex="0" aria-label="Orientacja 3D — w symulacji można chwycić kapsel myszą i sterować nim ręcznie"></canvas>
+          <div class="pose3d-manual" id="pose3dManual" hidden>
+            <div class="pose3d-manual-row pose3d-manual-vals" id="pose3dManualVals" title="Kliknij liczbę, aby wpisać dokładny kąt">
+              <span class="vpv" id="vpvPitch">↕ 0°</span>
+              <span class="vpv" id="vpvRoll">↔ 0°</span>
+              <span class="vpv" id="vpvTwist">↻ 0°</span>
+            </div>
+            <div class="pose3d-manual-row">
+              <button class="btn xs" id="poseVBtn" type="button" aria-pressed="false" title="Przytrzymaj myszą, a kapsel trzyma wciśnięty przycisk tak długo, jak długo trzymasz. Spacja robi to samo.">Przycisk kapsla</button>
+              <button class="btn xs pose-latch" id="poseVLatch" type="button" aria-pressed="false" title="Kliknij, a kapsel trzyma przycisk wciśnięty, aż klikniesz drugi raz. Ręka jest wolna: możesz pochylać kulą albo klikać w grze."><span class="pl-off">Trzymaj przycisk</span><span class="pl-on">Puść przycisk</span></button>
+              <button class="btn xs" id="poseVTap" type="button" title="Krótkie stuknięcie przycisku kapsla. Tego potrzebują tryby koła wyboru, w których wybiera się kliknięciem.">Kliknij</button>
+              <button class="btn xs" id="poseVLevel" type="button" title="Ustaw kapsel płasko i wyzeruj obrót (klawisz 0)">Wypoziomuj</button>
+              <button class="btn xs" id="poseVWin" type="button" title="Otwórz sterowanie w osobnym okienku, które można przeciągnąć po ekranie">🗗 Okienko</button>
+              <button class="btn xs" id="poseVExit" type="button" title="Koniec sterowania ręcznego — kapsel wraca do własnego ruchu (Esc)">Koniec</button>
+            </div>
+            <span class="pose3d-manual-tip" id="pose3dManualTip">chwyć kulę — pochyl · chwyć literę osi i przesuń w poprzek — obróć wokół niej · Ctrl — co 5°</span>
+            <details class="pose3d-manual-help">
+              <summary>Jak sterować?</summary>
+              <ul>
+                <li><b>Lewy przycisk — pochylasz.</b> Od siebie: dalsza krawędź kapsla idzie w dół, do siebie: w górę. Na boki: przechył lewo/prawo. Możesz go przewracać bez końca — nie ma martwego punktu.</li>
+                <li><b>Litery osi to uchwyty.</b> Chwyć X, −X, Y, −Y, Z albo −Z i przesuń mysz W POPRZEK tej osi — kapsel obróci się wokół niej, a powierzchnia kuli pójdzie za ręką. Z to oś kapsla (obrót jak pokrętłem), X i Y to przewroty przez przód i przez bok. Litera pod kursorem podświetla się kółkiem i to właśnie ona zostanie chwycona.</li>
+                <li><b>Prawy przycisk</b> — skrót na obrót wokół pionu, bez celowania w literę: prowadź rękę po okręgu wokół środka kuli.</li>
+                <li><b>Podgląd „Filtr” a osie.</b> Kapsel obraca się dokładnie wokół chwyconej litery, ale litery mogą lekko odjechać: czujnik nie widzi obrotu wokół pionu, więc podgląd odtwarza go z żyroskopu. Prawdziwy kapsel zachowuje się tak samo. Chcesz, żeby stały jak wryte — przełącz podgląd na „Żyro”.</li>
+                <li><b>Kółko myszy — obrót co 6°</b> (z Shiftem co 18°). Szybko zakręć i puść: kapsel kręci się dalej i wyhamowuje.</li>
+                <li><b>Przycisk kapsla i „Kliknij”.</b> Pierwszy trzyma przycisk tak długo, jak długo trzymasz mysz, drugi stuka nim krótko. Koło wyboru w trybie „trzymaj i puść” otwiera się pierwszym, a tryby klikane („kliknij”, „pochyl i kliknij”, „krokowy”) obsługuje drugi. Pochylenie zostaje tam, gdzie je zostawisz, więc możesz najpierw wycelować kulą, a dopiero potem sięgnąć po przycisk.</li>
+                <li><b>Trzymaj przycisk / Puść przycisk.</b> Przełącznik: pierwsze kliknięcie wciska przycisk kapsla i go zostawia, drugie puszcza. W tym czasie ręka jest wolna, więc możesz pochylać kulą albo klikać w grze. Puszczają go też „Przycisk kapsla”, „Kliknij”, spacja i koniec sterowania.</li>
+                <li><b>Klawiatura</b> (kliknij kulę): strzałki — pochylanie, <b>Q</b>/<b>E</b> — obrót, <b>spacja</b> — przycisk kapsla, <b>0</b> — wypoziomuj, <b>Esc</b> — koniec. Spacja i strzałki działają naraz, więc tak zrobisz pełny gest koła jedną ręką.</li>
+                <li><b>Ctrl</b> — krok co 5° (obrót co 15°). <b>Alt</b> — ćwierć prędkości na ostatnie stopnie przed progiem. <b>Shift</b> z lewym przyciskiem — obrót zamiast pochylania.</li>
+                <li><b>Liczby ↕ ↔ ↻ pod kulą</b> można kliknąć i wpisać dokładny kąt (Enter zatwierdza, Esc anuluje).</li>
+                <li><b>🗗 Okienko</b> — sterowanie wyskakuje jako osobne okienko nad aplikacją: przeciągasz je za pasek, gdzie chcesz, i widzisz kapsel obok wyzwalaczy, podglądu krzyżaka albo listy MIDI. <b>⇱ Przypnij</b> wraca z kartą na jej miejsce; położenie okienka jest zapamiętywane.</li>
+              </ul>
+            </details>
+            <span class="pose3d-manual-fx">wyzwalacze, MIDI i OSC działają naprawdę · klawisze i mysz nie wychodzą (symulacja)</span>
+            <span class="pose3d-manual-note" id="pose3dManualNote" hidden><span id="pose3dManualNoteTxt"></span>
+              <button class="btn xs" id="poseVFilter" type="button" title="Przełącz podgląd tak, aby wiernie pokazywał obrót kapsla">Pokaż wiernie</button></span>
+          </div>
+          <button class="pose3d-gear" id="poseGear" type="button" title="Ustawienia orientacji (kliknij, aby przypiąć)" aria-label="Ustawienia orientacji"><span class="bic bic-gear" aria-hidden="true"></span></button>
+          <div class="pose3d-controls" id="pose3dControls">
+            <select id="poseMode" title="Sposób wyświetlania orientacji — kliknij „?” po wyjaśnienie">
+              <option value="filter">Filtr (akcel+żyro)</option>
+              <option value="accel">Akcel (CH3-5)</option>
+              <option value="gyro">Żyro (CH0-2)</option>
+              <option value="mahony">Standardowy (zalecany)</option>
+              <option value="2d">2D — filtr 3D (inklinometr)</option></select>
+            <select id="poseBall" title="Co pokazuje podgląd 3D: kulę z siatką osi albo model kapsla">
+              <option value="kula">Kula</option>
+              <option value="kapsel">Kapsel</option></select>
+            <select id="poseSkin" title="Wygląd kapsla: ta sama grafika w pigułce i w podglądzie 3D" hidden>
+              <option value="1">Strzałki</option><option value="2">Żaba</option><option value="3">Punk</option>
+              <option value="4">Czaszka</option><option value="5">Piorun</option><option value="6">Irokez</option>
+              <option value="7">Czaszka z ćwiekami</option><option value="8">Osie</option><option value="9">Szew</option></select>
+            <button class="btn" id="poseRecenter" title="Wyśrodkuj — wyzeruj obrót i ustaw bieżące położenie jako odniesienie"><span class="bic bic-connect" aria-hidden="true"></span>Wyśrodkuj</button>
+            <label class="fld" title="Wygładzanie podglądu orientacji"><input class="rf-swi sm" type="checkbox" id="poseSmooth" checked> wygładź
+              <input type="range" id="poseSmoothLvl" min="0" max="1" step="0.05" title="Poziom wygładzenia (0 = surowo, 1 = bardzo gładko)" style="width:64px;margin-left:4px"></label>
+          </div>
+          <div class="pose3d-info" id="pose3dInfo">—</div>
+          <div class="pose3d-manual-toggle"><button class="btn xs pose-manual-btn" id="poseManual" type="button" aria-pressed="false" hidden title="Chwyć kapsel myszą — testuj wyzwalacze bez sprzętu"><span class="bic bic-drag" aria-hidden="true"></span><span class="vp-lbl">Steruj ręcznie</span></button></div>
+          <div class="pose3d-axis" id="pose3dAxis">—</div>
+        </div>
+      </div>
+
+      <div class="card" id="statusCard">
+        <div class="head"><h2>Przyciski / status (0x21)</h2><span class="hint" id="stCount">0 pakietów</span></div>
+        <div class="bytes" id="stBytes"></div>
+        <div class="stnote" id="stNote">Pakiet statusu <b>0x21</b> (5 bajtów). Znaczenie bajtów nieudokumentowane — <b>naciśnij / stuknij urządzenie</b> i obserwuj, które bity się zmieniają (podświetlone na żółto). B0 to nagłówek.</div>
+      </div>
+
+      <div class="card" id="feedCard">
+        <div class="head"><h2>Surowy strumień (hex)</h2><span class="hint" id="feedHint">dowód, że dane są prawdziwe</span></div>
+        <div class="raw-last"><span class="lbl">ostatni IMU:</span> <span id="rawLast">—</span></div>
+        <div class="feed" id="feed"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Stopka stoi POZA panelami zakładek, więc jest na każdej z jedenastu naraz — i dlatego mieszka
+     tu przycisk zgłoszenia. Wcześniej jedyną drogą była karta na dole zakładki „Biblioteka”, czyli
+     funkcja najtrudniejsza do znalezienia dla osoby, której aplikacja psuje się gdzie indziej.
+     Etykieta jest statyczna i po polsku, bo tłumaczy ją zwykły spacer i18n (para w RF_DIAG_I18N);
+     robotę podpina initDiagUi (rf-47). -->
+<footer>
+  <span class="foot-cfg"><b>parametry:</b> <span id="cfgLine">ładowanie…</span></span>
+  <button type="button" class="foot-help" id="dgFootBtn">
+    <span class="rfic hd-ic hd-ic-dangerfrog" aria-hidden="true"></span>Zgłoś problem</button>
+</footer>
+<div class="tt" id="tt"></div>
+<!-- #condToast („0/1 warunków") NIE STOI JUŻ TUTAJ. Był `position:fixed` w lewym dolnym rogu, czyli
+     po drugiej stronie ekranu niż edytor, który go wypełnia, nad nawigacją i w tym samym rogu, w
+     którym odzywa się maskotka. Rysuje go teraz renderEditor (rf-12) w nagłówku sekcji „Warunki". -->
+
+<!-- Tip jar — a mug in the bottom-right corner; the note only shows on hover/focus so it never
+     nags. Deliberately NOT Ko-fi's overlay widget (`overlay-widget.js`): that one pulls a script
+     from Ko-fi's CDN on every start — dead offline, blocked by our CSP, and it draws its OWN
+     floating button, which would sit next to this mug as a second, unstyled copy. rf-39e-kofi
+     gives the same result the widget does — the donation panel opens INSIDE the app — by loading
+     Ko-fi's official embed into our own dialog, and only on click. Until someone clicks, the app
+     still makes zero outbound requests. The href stays real so middle-click / "open in new tab"
+     still work, and so the corner degrades to a plain link if the script never runs. No `title`
+     here on purpose — rf-05-tooltip-state would turn it into a second, competing bubble. -->
+<div class="rf-kofi" id="rfKofi">
+  <div class="rf-kofi-card" id="rfKofiCard" role="tooltip">
+    <!-- Scena z kubkiem: ta sama grafika co w pigułce, ale duża i na górze karty — mały kubek przy
+         wezwaniu do działania ginął w tekście, a to on jest tu całą treścią obrazkową. Para leci
+         z trzech pasemek rysowanych CSS-em (bez kolejnego assetu), animacja startuje dopiero, gdy
+         karta się pokaże — schowana karta nic nie liczy. Całość aria-hidden: obok stoi ten sam
+         komunikat słowami, więc czytnik ekranu nie ma tu czego czytać. -->
+    <div class="rf-kofi-hero" aria-hidden="true">
+      <span class="rf-kofi-cup">
+        <span class="rf-kofi-steam"><i></i><i></i><i></i></span>
+        <img class="rf-kofi-hero-ic" src="/web/assets/icons/kofi.png" alt="" width="128" height="128">
+      </span>
+    </div>
+    <b class="rf-kofi-t">Dobrze się bawisz z RibbitFlipem?</b>
+    <span class="rf-kofi-p">Możesz postawić mi kawę albo podrzucić link do apki znajomym. Pomaga też krótki film wrzucony do social mediów, bo to najszybsza droga, żeby inni poznali aplikację. Projekt rozwijam sam, po godzinach. Takie drobne gesty trzymają go przy życiu i sprawiają, że do niego wracam.</span>
+  </div>
+  <a class="rf-kofi-btn" id="rfKofiBtn" href="https://ko-fi.com/mastish" target="_blank" rel="noopener noreferrer"
+     aria-describedby="rfKofiCard" aria-label="Kup mi kawę, okno Ko-fi otworzy się w aplikacji">
+    <!-- alt="" on purpose: the label right next to it already says what this is, and a second
+         reading of the same thing is noise in a screen reader (and one less string to translate). -->
+    <img class="rf-kofi-ic" src="/web/assets/icons/kofi_cup.png" alt="" aria-hidden="true" width="128" height="128">
+    <!-- The label rides along with the mug so the corner says what it is without being pointed at.
+         Its wording is a substring of the aria-label above on purpose (WCAG 2.5.3 label in name),
+         so voice control reacting to what is written on screen hits the same link. -->
+    <span class="rf-kofi-lbl">Kup mi kawę</span>
+  </a>
+</div>
+
+<!-- Script order is load-bearing. These are classic (non-module) scripts, so they all share one
+     global lexical scope and run top to bottom: rf-00-core defines the palette helpers, rf-01-i18n
+     the dictionary, rf-02-state the app state, and each later file uses what earlier ones declared.
+     rf-40-boot must stay last of the rf-NN chain — it wraps render hooks that only exist once every
+     earlier file has run, then boots the app. rf-motion and rf-knob are self-contained IIFEs. -->
+<script src="/web/js/rf-00-core.js"></script>
+<script src="/web/js/rf-00b-modules.js"></script>
+<script src="/web/js/rf-01-i18n.js"></script>
+<script src="/web/js/rf-02-state.js"></script>
+<script src="/web/js/rf-03-asset-caps.js"></script>
+<script src="/web/js/rf-04-asset-cursor.js"></script>
+<script src="/web/js/rf-05-tooltip-state.js"></script>
+<script src="/web/js/rf-06-modals.js"></script>
+<script src="/web/js/rf-07-injected-css.js"></script>
+<script src="/web/js/rf-08-sse-ui.js"></script>
+<script src="/web/js/rf-09-scopes.js"></script>
+<!-- rf-49-kinds — REJESTR RODZAJÓW ZAPISANYCH RZECZY (zestaw · bundle · presety modułów · paczka).
+     Jedno miejsce, z którego ma się wyliczać wszystko, co dotąd stało w PIĘTNASTU tablicach:
+     szuflady Biblioteki, adresy zapisu i wczytania, przedrostki plików, rodzaje w kreatorze posta,
+     gałęzie sniffera. Rozsypanie tej wiedzy dało 2026-08-31 trzy osobne błędy importu (preset
+     usług, preset koła, presety myszy i MIDI) — patrz nagłówek pliku. PIERWSZY z rodziny rf-49,
+     bo czyta go i komponent tożsamości, i sniffer. -->
+<script src="/web/js/rf-49-kinds.js"></script>
+<!-- rf-49 — TOŻSAMOŚĆ KONFIGURACJI NA KAPSLU (komponent współdzielony): „Konfiguracja: X ·
+     zmienione" plus Zapisz zmiany / Zapisz jako… / Przywróć / Skopiuj na… Przed konsumentami,
+     bo to oni go wołają; sam nie ma modułu, do którego by należał. Ładowany ZAWSZE, także tam,
+     gdzie pasek już nie stoi: `rfCfgIdState` i `rfCfgIdCarriers` z tego pliku liczą stan
+     {nazwa, znana, zmieniona} również dla huba (rf-49i), a dwie implementacje tej odpowiedzi
+     rozjechałyby się CICHO — obie zwracają wiarygodnie wyglądający obiekt. -->
+<script src="/web/js/rf-49-cfgid.js"></script>
+<!-- rf-49a — DZIAŁANIA NA NAZWANEJ KONFIGURACJI (zapisz jako, nazwa i opis, usuń, zdejmij nazwę,
+     wczytaj na wskazany kapsel, zapisz zmiany, przywróć). Wyjęte z domknięcia huba (rf-49i), bo od
+     etapu 3 klika się je w TRZECH miejscach: hub, lista presetów modułu (rf-49j) i panel opisu
+     Biblioteki (rf-39i2). Trzy kopie tego samego pytania o zgodę rozjeżdżają się po cichu.
+     PO rf-49 (używa rfCfgIdState / rfCfgIdCarriers), PRZED wszystkimi, którzy je wołają. -->
+<script src="/web/js/rf-49a-cfgacts.js"></script>
+<!-- rf-49k — „CO USTAWIA": jeden opis zawartości presetu dla podglądu w module i dla Biblioteki.
+     Nic nie rysuje, zwraca wiersze klucz-wartość i chipy „warunek → akcja". Reguły wyzwalaczy
+     opisuje funkcjami z rf-10, czyli tymi samymi, którymi moduł rysuje swoją listę. -->
+<script src="/web/js/rf-49k-describe.js"></script>
+<script src="/web/js/rf-10-triggers-model.js"></script>
+<script src="/web/js/rf-11-devices-ui.js"></script>
+<!-- 11b/11c ride on 11: which capsule is which (shake it and its pill answers), the connect/disconnect
+     announcements, and the pairing screen with its "not this one, keep looking" result card. -->
+<script src="/web/js/rf-11b-dev-identity.js"></script>
+<script src="/web/js/rf-11c-pairing.js"></script>
+<!-- 12c is DATA for 12 (the ready-made gestures behind "Wybierz z domyślnych…"), so it has to be
+     parsed first: GESTURE_PRESETS is a top-level const, not a property of window. -->
+<script src="/web/js/rf-12c-gesture-presets.js"></script>
+<script src="/web/js/rf-12-preview-editor.js"></script>
+<script src="/web/js/rf-12b-point.js"></script>
+<!-- Recorded gestures as a trigger source: the recorder and its stream events (12d), then the
+     editor's simple mode and the „Gest" condition card (12e). Both are reached from rf-12 through
+     typeof-guarded hooks, so their order after it is what matters, not their place before rf-13. -->
+<script src="/web/js/rf-12d-gesture-rec.js"></script>
+<script src="/web/js/rf-12e-gesture-editor.js"></script>
+<script src="/web/js/rf-13-power-profiles.js"></script>
+<!-- rf-49b — MAPOWANIE jako nazwana konfiguracja: adapter komponentu rf-49 dla listy wyzwalaczy.
+     Po rf-13, bo współdzieli z nim pobór presetów (loadProfileList wypełnia state.trigPresets),
+     i po rf-10, którego renderRules woła stąd trigCfgSync. -->
+<script src="/web/js/rf-49b-trig-config.js"></script>
+<!-- rf-49i — HUB KONFIGURACJI (komponent współdzielony): kafle biblioteki z opisem, chipy kapsli
+     przeciągane między kaflami, tacka dla kapsli bez nazwy, kafel „+" i zdanie statusowe wykładające
+     model zapisu. Zastępuje w Mapowaniu cienki pasek rf-49 i usunięty rząd „Presety wyzwalaczy".
+     PO rf-49 (używa jego rfCfgIdState / rfCfgIdCarriers) i PO rf-49b, który go montuje. -->
+<script src="/web/js/rf-49i-cfghub.js"></script>
+<script src="/web/js/rf-49j-preset-col.js"></script>
+<!-- rf-49j2 / rf-49j3 — lista i prawa strona kolumny presetów. Podział tematyczny wymuszony
+     limitem 500/800 linii (.github/CONTRIBUTING.md); wszystkie trzy pliki piszą na tę
+     samą prywatną przestrzeń `window._rfpc`, a kolejność między nimi nie ma znaczenia, bo
+     wołane są dopiero z `initPresetCols` (bootstrap). -->
+<script src="/web/js/rf-49j2-rows.js"></script>
+<script src="/web/js/rf-49j3-detail.js"></script>
+<!-- rf-49m — SZKIELET TRZECH ZAKLADEK MODULU (Konfiguracja / Biblioteka / i): pasek przelacznika,
+     panele, rozdanie zawartosci i poradnik zdjety ze skorupy <details>. Ten sam wzorzec i ta sama
+     przestrzen `window._rfpc`; wolany z `build()` w rf-49j, wiec musi byc zaladowany przed
+     `initPresetCols` — czyli tutaj. -->
+<script src="/web/js/rf-49m-modtabs.js"></script>
+<!-- rf-49p — TEN SAM PASEK DLA POZYCJI „RESZTY" (Zestawy / Konfiguracja / Nakladka / Czujnik /
+     Polaczenie), tyle ze o dwoch zakladkach: nazwa ekranu i „i". Korzysta z `guideBox` i `isGuide`
+     wystawionych przez rf-49m, wiec musi byc ZA nim; sam `initRestTabs` wolany jest na samym koncu
+     bootstrapu, bo „Zestawy" dostaja karty jeszcze po `initPresetCols`. -->
+<script src="/web/js/rf-49p-resttabs.js"></script>
+<!-- rf-49q — KROPKA „NIEZAPISANE ZMIANY" przy pozycji w nawigacji i na zakladce „Konfiguracja"
+     modulu. Dopisuje `dirtyMark` do `window._rfpc`, a wola ja `$.paint` w rf-49j, wiec wystarczy,
+     ze stoi przed bootstrapem. -->
+<script src="/web/js/rf-49q-dirtymark.js"></script>
+<script src="/web/js/rf-14-pose3d.js"></script>
+<script src="/web/js/rf-14b-virtualpuck.js"></script>
+<script src="/web/js/rf-14d-kapsel3d.js"></script>
+<script src="/web/js/rf-14c-vpwindow.js"></script>
+<script src="/web/js/rf-15-motionmode.js"></script>
+<script src="/web/js/rf-16-midi.js"></script>
+<!-- Laboratorium zakresu edytora mapowania: pas wejścia, krzywa i pas wyjścia + nauka zakresu.
+     Po rf-16, bo dokłada sekcję do jego formularza i czyta jego tabele (MI_METRICS, profile OSC). -->
+<script src="/web/js/rf-16c-midi-lab.js"></script>
+<script src="/web/js/rf-16b-iolog.js"></script>
+<script src="/web/js/rf-17-pad-model.js"></script>
+<script src="/web/js/rf-18-asset-frog.js"></script>
+<script src="/web/js/rf-19-pad-model2.js"></script>
+<script src="/web/js/rf-20-gate-model.js"></script>
+<!-- rf-20b — SYNTEZATOR PO STRONIE APLIKACJI: stan padów, brzmień i efektów mieszka teraz
+     w Settings/ribbitflip_synth.json, a localStorage jest podręczną kopią (i ratunkiem bez
+     serwera). PO rf-20, bo dokłada się do `padSave`/`padLoad` stamtąd; PRZED rf-23, bo initPad
+     woła `padLoadAsync`. Zapisuje TYLKO zwykły panel — okno nakładki i ściąga w osobnym oknie
+     uruchamiają ten sam kod, a dwa okna piszące naraz to jedno nadpisujące drugie. -->
+<script src="/web/js/rf-20b-synth-store.js"></script>
+<script src="/web/js/rf-21-pad-audio.js"></script>
+<script src="/web/js/rf-22-pad-tick.js"></script>
+<script src="/web/js/rf-23-pad-loop.js"></script>
+<script src="/web/js/rf-24-gate-ui.js"></script>
+<!-- rf-24b: audio-reactive WebGL2 backgrounds under the play pads and effect pads (PAD_PLATES, PadPlate).
+     Only called at draw/render time, so its place just has to be before the first render. -->
+<script src="/web/js/rf-24b-pad-plate.js"></script>
+<script src="/web/js/rf-25-soundlab.js"></script>
+<!-- rf-25c — oscyloskop edytora brzmień (SoundScreens): PO rf-24b, bo rejestruje shader „skop” w PadPlate._fs,
+     i PO rf-25, bo czyta LAB_ID; rf-25 woła go wyłącznie przez `window.SoundScreens`. -->
+<script src="/web/js/rf-25c-sound-screens.js"></script>
+<!-- rf-25d — układ „rack” edytora brzmień (SoundRack): PO rf-25 i rf-25c, bo owija funkcje rf-25; startuje
+     z initSoundEditor (rf-25), więc kolejność wobec rf-25b nie ma znaczenia. -->
+<script src="/web/js/rf-25d-sound-rack.js"></script>
+<!-- rf-25e — płaskie edytory krzywych w kartach modułów (SoundEditors, etap E6): PO rf-25c, bo liczy na jego czystych
+     funkcjach (fala, korektor, obwiednia); startuje z initSoundEditor (rf-25), a rf-25 woła go przez `window.SoundEditors`. -->
+<script src="/web/js/rf-25e-curve-editors.js"></script>
+<!-- probki-audio.js — obróbka próbek (mikrofon, WAV, przycięcie ciszy, wykrycie stroju) WSPÓLNA z grą RibbitBeat
+     (plik mieszka w katalogu gry, bo tylko ten RibbitBeat.exe pakuje; gra ładuje go jako js/probki-audio.js). Nie zna ani PadAudio, ani DOM: AudioContext dostaje
+     argumentem, więc jeden plik obsługuje oba programy i samplowanie brzmi w nich tak samo. Serwer wystawia ten JEDEN plik także
+     bez modułu „gra" (--disable gra, --only …) i w Essential (SHARED_GAME_FILE w ribbitflip_monitor.py; RibbitFlip.spec zostawia go
+     w paczce): to biblioteka panelu, nie trasa gry — bez tego Synth › Próbka nie miał obróbki, a konsola zgłaszała 404 (2026-10-21). -->
+<script src="/web/gry/js/probki-audio.js"></script>
+<!-- rf-25f — karta „Próbka” w edytorze brzmień (PadSampler): PO probki-audio.js i PO rf-25, bo rf-25 woła go
+     przez `window.PadSampler` (readEditorPatch, _setFormFromPatch, _seSyncLabels), a rf-21 pyta o bufor próbki. -->
+<script src="/web/js/rf-25f-sampler.js"></script>
+<script src="/web/js/rf-25b-seq-pads.js"></script>
+<script src="/web/js/rf-26-asset-lilypad.js"></script>
+<script src="/web/js/rf-27-fx-draw.js"></script>
+<script src="/web/js/rf-28-setups.js"></script>
+<script src="/web/js/rf-28b-requires.js"></script>
+<script src="/web/js/rf-28c-ready.js"></script>
+<!-- rf-28c — „co ten zestaw robi": opis autora i instrukcja użytkowania z pliku, rola każdego kapsla
+     i jedno zdanie o sterowaniu ruchem. Bez tego podgląd importu wypisywał same reguły, a zestaw pod
+     grę na padzie to w większości strojenie drążka, nie reguły. -->
+<script src="/web/js/rf-28c-setup-brief.js"></script>
+<!-- rf-28d: piętra widoczności (UX 261120 L1): rfTier dla zwijaków `cardfold` (podsumowanie,
+     „zmienione: N”, „Przywróć domyślne”) i preferencja „Rozwijaj wszystkie ustawienia”. -->
+<script src="/web/js/rf-28d-tiers.js"></script>
+<!-- rf-28e — KASETY ZESTAWÓW: osiem filcowych kaset do wyboru przy zapisie (pole koperty `cassette`),
+     kaseta na liście i w podglądzie zestawu, w oknie importu i animacja wczytania. Po rf-28c (czyta
+     rfRoleHeadHtml i rfSetupAboutHtml); rf-29 i rf-39i* wołają go dopiero przy rysowaniu i kliknięciu. -->
+<script src="/web/js/rf-28e-kasety.js"></script>
+<script src="/web/js/rf-29-undo-import.js"></script>
+<!-- rf-29e — „Wczytaj i od razu aktywuj zestaw": jedno zapamiętane pole (okno importu + Biblioteka),
+     które zaraz po wczytaniu włącza to, czego zestaw potrzebuje, a ten komputer ma wyłączone.
+     Plik nadal niczego nie uzbraja sam — uzbraja człowiek, który to pole zaznaczył. -->
+<script src="/web/js/rf-29e-arm-on-load.js"></script>
+<!-- rf-29f — „co stracisz, jeśli to wczytasz": pytanie PRZED wymianą całej konfiguracji, z trzema
+     wyjściami (zapisz i wczytaj / wczytaj bez zapisywania / anuluj). Lista strat liczona z tej samej
+     kropki „zmienione", którą pokazuje nawigacja (rfCfgIdState). Musi stać PO rf-28 — czyta jego
+     `RF_SETUP_SECTIONS` i `rfBackupStamp`. Wołający (rf-29, rf-29c, rf-39i) sięgają po niego dopiero
+     w chwili kliknięcia, więc ich kolejność względem tego pliku nie ma znaczenia. -->
+<script src="/web/js/rf-29f-setup-guard.js"></script>
+<script src="/web/js/rf-29b-link.js"></script>
+<!-- Role kapsli w zestawie wielokapslowym: autorowanie przy eksporcie + przypisanie przy imporcie. -->
+<script src="/web/js/rf-29c-bundle-roles.js"></script>
+<!-- rf-29d — PRESET MODUŁU OD KOGOŚ: jedne drzwi dla presetu myszy, MIDI/OSC, usług sieciowych
+     i koła. Podgląd („co ten plik niesie", z klasyfikacją klawiszy po stronie serwera) → zapis do
+     biblioteki pod WOLNĄ nazwą → pytanie „wczytać teraz?". Po rf-29 (to jego sniffer tu kieruje)
+     i po rf-49-kinds (czyta rejestr). -->
+<script src="/web/js/rf-29d-preset-import.js"></script>
+<script src="/web/js/rf-30-asset-mouse.js"></script>
+<script src="/web/js/rf-31-mouse-ui.js"></script>
+<script src="/web/js/rf-31b-mouse-area.js"></script>
+<script src="/web/js/rf-31c-mouse-dwell.js"></script>
+<script src="/web/js/rf-31d-mouse-btnclicks.js"></script>
+<script src="/web/js/rf-31e-mouse-ready.js"></script>
+<!-- rf-49c — MYSZ jako nazwany profil: adapter HUBA (rf-49i) dla sterowania ruchem. Po rf-15
+     (MOUSE_KEYS, state.mouse, onMouseCfg) i po rf-31*, bo hub montuje się w karcie Mysz i czyta
+     z niej to, co widać; po rf-49i, którego fabrykę woła przy montowaniu. Cienki pasek rf-49
+     zniknął stąd 2026-08-28 — mechanika została, zmienił się kształt. Profil niesie ZACHOWANIE:
+     przełącznik, przypisanie do pada i obszar kursora zostają przy kapslu (MOUSE_CFG_SKIP). -->
+<script src="/web/js/rf-49c-mouse-config.js"></script>
+<!-- rf-49d — MIDI/OSC jako nazwany zestaw mapowań: adapter HUBA (rf-49i) dla listy mapowań.
+     Po rf-16 (state.midi, onMidiCfg, miFetchState), bo z niego czyta; po rf-49i (fabryka).
+     DWA HUBY nad JEDNYM stanem: MIDI i OSC mają osobne przełączniki i osobne zakładki, ale wspólny
+     config i wspólną listę mapowań, więc preset jest jeden i musi być widoczny z obu stron
+     (osobne `idPrefix`, a przez to osobny klucz zwijania — wspólny stan, osobny widok).
+     Preset niesie MAPOWANIA I SKALĘ — przełączniki, kanał MIDI i prefiks OSC zostają przy kapslu
+     (MIDI_CFG_SKIP). Montowanie czeka na initTabs (karta OSC powstaje dopiero tam) — rf-40-boot. -->
+<script src="/web/js/rf-49d-midi-config.js"></script>
+<!-- rf-49e — URZĄDZENIA OSC: rejestr nazwanych celów (host + port), tworzony przez człowieka.
+     OSC miało jeden adres na całą aplikację; zestaw sterujący lampą na ESP32 i tabletem z TouchOSC
+     naraz potrzebuje dwóch, więc każde mapowanie wybiera urządzenie. Cel domyślny NIE jest pozycją
+     listy i nie da się go usunąć — dzięki temu usunięcie dowolnego urządzenia ma dokąd przenieść
+     mapowania. Po rf-16 (edytor mapowania) i rf-34 (karta OSC powstaje dopiero w initTabs). -->
+<script src="/web/js/rf-49e-osc-targets.js"></script>
+<!-- rf-49f — NAZWANE UKŁADY OKIEN NAKŁADEK („Stream", „Trening"): adapter komponentu rf-49 dla
+     CAŁEGO ekranu, a nie dla kapsla. Pierwszy pasek, którego nazwa nie wisi na kapslu — układ to
+     rozstawienie okien wszystkich kapsli naraz, więc nazwa mieszka na wierzchu pliku nakładek
+     (`layoutName`), a pasek jest jeden, w karcie „Wszystkie urządzenia — ściąga". Układ niesie
+     miejsce, rozmiar, wygląd i zawartość okien — NIE niesie `open` (nic sam nie otwiera) i nie
+     obejmuje okien koła przy kursorze. Montowanie czeka na initTabs — patrz rf-40-boot. -->
+<script src="/web/js/rf-49f-overlay-layouts.js"></script>
+<!-- rf-49g — NAZWANE SCENY SYNTEZATORA („Ambient pad", „Perkusja dwóch kapsli"): adapter
+     komponentu rf-49 dla CAŁEJ zakładki Synth. Drugi pasek, którego nazwa nie wisi na kapslu —
+     syntezator jest jeden na aplikację (te same pady grają ze wszystkich kapsli), więc nazwa
+     mieszka na wierzchu stanu padów (`XPAD.configName`), a pasek jest jeden, pod nagłówkiem karty
+     „Pady grające". Scena niesie pady, brzmienia, efekty i mapy kapsli — NIE niesie przełącznika
+     padów (sama nikomu nie zagra). PO rf-49f (kolejność sekcji) i po rf-20b (lustro stanu). -->
+<script src="/web/js/rf-49g-synth-scenes.js"></script>
+<!-- rf-49h — NAZWANA KONFIGURACJA OSI 3D: adapter komponentu rf-49 dla panelu „Konfiguracja
+     osi 3D" w zakładce Czujnik. Presety osi istniały tu od dawna (Library/AxisPresets), ale kapsel
+     po wczytaniu był bezimienny — teraz nosi nazwę (`configName` w konfiguracji pozy), a pasek
+     mówi, czy osie są jeszcze takie, jak zapisane. Nośnikiem nazwy jest KAPSEL, więc „Skopiuj na…"
+     jest na miejscu. ⚠️ Kalibracja (mapa kanałów) wchodzi do odcisku, bo preset ją niesie i nakłada
+     — patrz komentarz przy odcisku. Ładowany PO rf-49g (kolejność sekcji); z rf-33/rf-33b czyta
+     dopiero w czasie działania, więc może stać przed nimi. Montowanie czeka na initTabs (fold
+     „Konfiguracja osi 3D" powstaje dopiero tam) — patrz rf-40-boot. -->
+<script src="/web/js/rf-49h-pose-config.js"></script>
+<script src="/web/js/rf-32-cmd-timing.js"></script>
+<!-- rf-33b BEFORE rf-33 on purpose: initPose3D runs at load time and reaches into the tuning
+     module (poseAxesAll) while normalising the config, so the dependency has to be in first. -->
+<script src="/web/js/rf-33b-axis-tuning.js"></script>
+<script src="/web/js/rf-33c-axis-plots.js"></script>
+<script src="/web/js/rf-33-posecal.js"></script>
+<script src="/web/js/rf-34-tabs.js"></script>
+<!-- Siatka trzech kolumn, chowanie paneli i „Co wychodzi z tego kapsla". Musi stać PO rf-34
+     (bierze od niego przyciski i panele) i PRZED rf-40 (to ono woła initTabs, które woła
+     rfCols.build). Osobny plik, bo rf-34 trzyma jeszcze cały poradnik Mapowania w treści. -->
+<script src="/web/js/rf-34b-cols.js"></script>
+<!-- Miniatura podglądu na żywo w prawej kolumnie (kula 3D + dwa sparkline'y). Musi stać PRZED
+     rf-40 tak samo jak rf-34b, bo rfCols.build woła rfRcolMini.build. Rysuje się z pętli klatek
+     w rf-09 — sama nie zakłada drugiej. -->
+<script src="/web/js/rf-34c-rcol.js"></script>
+<!-- Wejście miniatury: przyciski akcji + sterowanie kapslem myszą po małej kuli. PO rf-34c (dokłada
+     do tego samego namespace'u `rfRcolMini`, który tamten zakłada) i PO rf-14b (woła
+     jego `vpWireSphere`), a PRZED rf-40 — bo `rfCols.build` sięga po `rfRcolMini.manualBtn`. -->
+<script src="/web/js/rf-34d-mini-input.js"></script>
+<!-- rf-34g — WLASNY PASEK PRZEWIJANIA dwoch kolumn. Kursor nad natywnym paskiem maluje
+     przegladarka i nie da sie go zmienic (ani CSS-em, ani JS-em), a mial byc filcowa lapka. -->
+<script src="/web/js/rf-34g-railscroll.js"></script>
+<!-- Powiększony kafel orientacji w trybie ręcznym (pełna kula rysowana przez `drawPose3D` z rf-14).
+     PO rf-34c (jego `_puck` pyta o `rfRcolMini.poseIsBig`) i PO rf-34d (jego `syncManual` woła
+     `poseSync`) — oba sięgają po ten plik dopiero z pętli klatek, więc wystarczy, że stoi przed
+     rf-40. Osobny plik, a nie dopisek: rf-34c ma 460 linii i rośnie przy każdym klik-through. -->
+<script src="/web/js/rf-34e-mini-pose.js"></script>
+<!-- Pas naciśnięć przycisku kapsla (kreski zdarzeń + czas trzymania). Wydzielony z rf-34c, gdy ten
+     przekroczył 500 linii. PO rf-34c, bo używa jego `_el` i `_span` (wspólne okno czasu — dwie
+     kopie tej arytmetyki rozjechałyby pas z przebiegami nad nim), i PRZED rf-40. -->
+<script src="/web/js/rf-34f-mini-lane.js"></script>
+<script src="/web/js/rf-35-rest-e2.js"></script>
+<script src="/web/js/rf-36-rest-e3.js"></script>
+<script src="/web/js/rf-37-rest-e4.js"></script>
+<script src="/web/js/rf-38-rest-packs.js"></script>
+<!-- Karta „OBS Studio" — po rf-35 (sejf i RESTAPI) i rf-36 (karty aplikacji), bo wstawia się
+     między nie w gotowym już drzewie zakładki. -->
+<script src="/web/js/rf-38b-obs.js"></script>
+<script src="/web/js/rf-39-rest-e5.js"></script>
+<!-- rf-49n — USLUGI SIECIOWE JAKO NAZWANE PRESETY: adapter komponentu rf-49 dla calej zakladki.
+     Po rf-35 (RESTAPI.cfg, restSave, _raSanCfg) i po rf-49; nosnikiem nazwy jest APLIKACJA, nie
+     kapsel, wiec zachowuje sie jak sceny syntezatora. -->
+<script src="/web/js/rf-49n-rest-config.js"></script>
+<script src="/web/js/rf-39b-guides.js"></script>
+<script src="/web/js/rf-39c-mcp-ui.js"></script>
+<script src="/web/js/rf-39d-sysnotify.js"></script>
+<script src="/web/js/rf-39q-notify-goto.js"></script>
+<script src="/web/js/rf-39j-hotkey.js"></script>
+<script src="/web/js/rf-39e-kofi.js"></script>
+<script src="/web/js/rf-39g-share-post.js"></script>
+<script src="/web/js/rf-39i-library.js"></script>
+<!-- rf-39i3 — LEWA KOLUMNA Biblioteki: pigułki faktów, wiersz listy, sekcje i wybór pozycji.
+     Wydzielone z rf-39i (limit 500/800 linii). Zwykłe skrypty klasyczne, więc dzielą jedną
+     przestrzeń nazw: `_rflData`, `_rflSel`, `_rflPick` zostają tam, gdzie były. -->
+<script src="/web/js/rf-39i3-lib-list.js"></script>
+<!-- rf-39i2 — PANEL OPISU Biblioteki: nagłówek, pasek kontekstu („nosi go: …"), akcje, „Kto to
+     nosi" i „Co ustawia". ZERO pól do wpisywania — Biblioteka opisuje, moduł zmienia. Wydzielone
+     z rf-39i (limit 500/800 linii); czyta jej `_rflData` i woła jej `_rflLoad` / `_rflDownload` /
+     `_rflDelete`, a opis pól bierze z rf-49k. -->
+<script src="/web/js/rf-39i2-lib-detail.js"></script>
+<!-- rf-39i4 — PODGLĄD SKANERA: plansze (zrzut albo schemat) z obrysami sekcji, skrót, różnice i komplet
+     ustawień z tablicy pól (rf-50b2). Woła go opis presetu (rf-49k `_cdScan`) i opis zestawu (rf-39i2). -->
+<script src="/web/js/rf-39i4-scan-preview.js"></script>
+<script src="/web/js/rf-39k-whatis.js"></script>
+<script src="/web/js/rf-39h-discord-preview.js"></script>
+<script src="/web/js/rf-39f-share.js"></script>
+<!-- Po rf-39f: czyta z niego adres forum i zaproszenia oraz woła rfShareOpen z rodzajem pliku. -->
+<script src="/web/js/rf-39l-share-hub.js"></script>
+<!-- „Jak działa dzielenie się" — otwierane z huba i z kreatora, więc po obu. -->
+<script src="/web/js/rf-39m-share-howto.js"></script>
+<script src="/web/js/rf-39f-simnotice.js"></script>
+<!-- „RibbitFlip już działa" — pokazywane, gdy ktoś uruchomił aplikację drugi raz (?second=1). -->
+<script src="/web/js/rf-39n-second.js"></script>
+<!-- „Auto-zestawy wg gry" — okno wyboru, gdy do wykrytej gry pasuje kilka zestawów, oraz karta
+     ustawień w zakładce Biblioteka. Po rf-39i (dokłada się do jej paska narzędzi i odświeża listę)
+     i po rf-29c (pożycza wzorzec okna z wyborem ról). -->
+<script src="/web/js/rf-39o-gameswitch.js"></script>
+<!-- The overlay: in the panel it is one button, in ?overlay=1 it is the whole window. Loaded
+     BEFORE the bootstrap because it wraps fetch (the overlay window is read-only) — a wrapper
+     installed after the first request would be a wrapper around nothing. -->
+<script src="/web/js/rf-41-overlay.js"></script>
+<!-- rf-41b/rf-41c — NAKŁADKI Z PANELU: karta „Nakładki nad grą" na ekranie „Nakładka" (lista
+     okien wraz z okienkami koła + pełny edytor jednego okna). Po rf-41: czytają jego stan
+     (OVL.state), jego kanony (OVL_PARTS, OVL_THEMES, OVL_OUTLINES, OVL_RATIOS) i piszą jego
+     drogą (ovlPost). Montuje je initOvlManage z bootstrapu, PO initTabs — panel „Nakładka"
+     powstaje dopiero tam. W oknie samej nakładki oba pliki milczą (RF_OVL). -->
+<script src="/web/js/rf-41b-overlay-manage.js"></script>
+<script src="/web/js/rf-41c-overlay-editor.js"></script>
+<!-- rf-41d — GALERIA OKIEN I ŻYWA MINIATURA: kafelek na każdą nakładkę (schemat rozmiaru
+     i zawartości) plus podgląd wybranej — tą samą stroną, którą Windows postawi nad grą
+     (?overlay=1&…&preview=1). Znaczniki wstawia rf-41b, więc kolejność między nimi jest
+     dowolna; wszystkie wywołania w obie strony są za `typeof`. -->
+<script src="/web/js/rf-41d-overlay-gallery.js"></script>
+<!-- rf-41e — PRZÓD KAPSLA: kropla w nakładce (drawFrontAll z pętli klatek rf-12) i ustawianie
+     przodu z edytora nakładki (frontCaptureTilt / frontCaptureWheel, zapis POST /front). -->
+<script src="/web/js/rf-41e-overlay-front.js"></script>
+<!-- The virtual controller, lit. Any time before the bootstrap will do: the cheat sheet calls it
+     by name (gpvHtml / gpvFrame / gpvFire / gpvSeq) and every call site guards on typeof. -->
+<script src="/web/js/rf-42-padview.js"></script>
+<!-- The Kontroler tab, in two files split by subject (js-organization):
+     rf-43 — the RIGHT column: the part panel, the pad-button rule lists and the borrowed editor.
+             AFTER rf-12, whose openEditor it wraps so a pad rule opens its editor inside this tab.
+     rf-44 — the LEFT column and the strip: which capsule plays on which pad, the one merged
+             drawing of the viewed pad and its legend. AFTER rf-42 (it paints with the gpv
+             vocabulary) and after rf-43 (padCtlRender calls padPartSync at the end).
+     Both before the bootstrap, which calls initPadCtl (rf-44). -->
+<script src="/web/js/rf-43-controller-ui.js"></script>
+<script src="/web/js/rf-44-pad-hub.js"></script>
+<!-- rf-45 — the „Moduły" matrix in the devices hub. It WRAPS routeEvent (rf-08) and
+     renderDeviceSelector (rf-11) at load time, so it has to come after both, and before the
+     bootstrap, which calls initDevMods. -->
+<script src="/web/js/rf-45-devmods.js"></script>
+<!-- rf-46a — KOŁO WYBORU, KSZTAŁT: geometria wycinka (odstęp, zaokrąglone rogi), paleta rysunku
+     i animacja otwarcia. Czysta matematyka, bez DOM-u. PIERWSZE z rodziny rf-46, bo woła je
+     wszystko poniżej — także nakładka, która karty w ogóle nie ma. -->
+<script src="/web/js/rf-46a-wheel-shape.js"></script>
+<!-- rf-46 — KOŁO WYBORU, RYSUNEK: jedna funkcja rysująca dla ściągi, nakładki, okienka przy
+     kursorze i sceny podglądu w karcie. Po rf-46a. -->
+<script src="/web/js/rf-46-wheel.js"></script>
+<!-- rf-46b — KOŁO WYBORU, KARTA: układ zakładki „Koło wyboru", sekcje ustawień, zapis do /wheel
+     i okienko przy kursorze. MUSI iść po rf-46 (woła jego rysunek i czyta jego stałe) i przed
+     bootstrapem, który buduje zakładki (initTabs woła wheelCardHtml) oraz wywołuje initWheel. -->
+<script src="/web/js/rf-46b-wheel-card.js"></script>
+<!-- rf-46c — KOŁO WYBORU, LISTA WYCINKÓW: drzewo z podmenu, okruszki, wiersze wycinków. Po rf-10
+     (czyta QUICKKEYS do listy szybkiego wyboru akcji) i po rf-46b, którego initWheel ją uruchamia. -->
+<script src="/web/js/rf-46c-wheel-tree.js"></script>
+<!-- rf-46d — KOŁO WYBORU, SCENA: żywy podgląd w karcie (nic z niego nie wychodzi do systemu).
+     Trzy pliki, granice tematyczne: rf-46d liczy skalę sceny i rysuje, rf-46d2 wskazuje i pisze
+     dziennik, rf-46d3 prowadzi cykl życia koła, tryby i komunikaty. Po rf-46c, bo chodzą po tym
+     samym drzewie; d3 na końcu, bo woła obydwa. -->
+<script src="/web/js/rf-46d-wheel-stage.js"></script>
+<script src="/web/js/rf-46d2-wheel-stage-aim.js"></script>
+<script src="/web/js/rf-46d3-wheel-stage-life.js"></script>
+<!-- rf-46e — KOŁO WYBORU, PRESETY I ZAPIS: presety koła (przykładowe i własne), wczytywanie ich
+     na kapsel oraz eksport/import JSON. Po rf-46b (buduje z niego sekcje „Presety" i „Zapis")
+     i przed bootstrapem. -->
+<script src="/web/js/rf-46e-wheel-io.js"></script>
+<!-- rf-46f — KOŁO WYBORU, OKNA I WYMIANA: oprawa okien pytających (rfk-*) oraz kreator posta
+     z presetem na forum #zestawy. Po rf-39g (bierze stamtąd listę tagów forum) i po rf-46e. -->
+<script src="/web/js/rf-46f-wheel-share.js"></script>
+<!-- rf-46g — SPIS WYCINKÓW KOŁA w kolumnie kapsla na ściądze. Po rf-46b (WHEEL_MODES, _wheelT)
+     i po rf-46c (whIsEmptySlice); rf-11 pyta o wheelColumnHtml dopiero przy rysowaniu ściągi. -->
+<script src="/web/js/rf-46g-wheel-list.js"></script>
+<!-- rf-46h — PAS KAPSLI w zakładce „Koło wyboru": pas kafli (jeden na kapsel, w każdym jego koło),
+     lista rozwijana i nagłówek nazywający kapsel, którego ustawienia są pod spodem. Po rf-46g
+     (bierze z niego wheelIdleState do małych kół i _whListMode do nazwy trybu). -->
+<script src="/web/js/rf-46h-wheel-caps.js"></script>
+<!-- rf-46j — TOŻSAMOŚĆ KONFIGURACJI NA KAPSLU: nazwa tego, co kapsel ma na sobie, odpowiedź „czy to
+     jeszcze to samo, co zapisane" i pasek Zapisz zmiany / Zapisz jako… / Przywróć / Skopiuj na…
+     Po rf-46e (bierze z niego dialogi, zapis konfiguracji i _whExportObj) i po rf-46h, którego
+     kafle podpisuje. -->
+<script src="/web/js/rf-46j-wheel-config.js"></script>
+<!-- rf-46k — KOLO WYBORU JAKO POZYCJA RAMKI TRZECH ZAKLADEK: tlumaczenie wlasnej, starszej obslugi
+     nazwanych konfiguracji kola (rf-46e/rf-46j) na kontrakt komponentu rf-49. Po rf-46j, bo czyta
+     jego `whCfgFingerprint` / `whCfgState` / `whCfgOf`. -->
+<script src="/web/js/rf-46k-wheel-adapter.js"></script>
+<!-- rf-50* — SKANER EKRANU: obsługa komputera jednym sygnałem (pasek jedzie, człowiek go
+     zatrzymuje, przecięcie dwóch pasków to punkt kliknięcia). Kolejność jest zależnościowa:
+     model (silnik + katalog akcji + zestawy) → scena → pola ustawień → karta, która to spina;
+     piaskownica, trening i pasek stanu są niezależne, byle przed kartą.
+     Wszystko przed bootstrapem, bo `initTabs` woła `scanCardHtml()` przy budowie zakładek. -->
+<script src="/web/js/rf-50-scan-model.js"></script>
+<script src="/web/js/rf-50b-scan-fields.js"></script>
+<!-- rf-50b2 — OPIS KONFIGURACJI z tablicy pól rf-50b (opisz/roznice/naglowek): z niego mówi
+     o skanerze Biblioteka (rf-39i4, rf-49k). Po rf-50b, bo czyta jego `POLA`/`wartosc`/`formatuj`. -->
+<script src="/web/js/rf-50b2-scan-opis.js"></script>
+<script src="/web/js/rf-50c-scan-scene.js"></script>
+<script src="/web/js/rf-50e-scan-sandbox.js"></script>
+<script src="/web/js/rf-50f-scan-training.js"></script>
+<script src="/web/js/rf-50g-scan-hud.js"></script>
+<script src="/web/js/rf-50i-scan-signals.js"></script>
+<script src="/web/js/rf-50d-scan-card.js"></script>
+<script src="/web/js/rf-50j-scan-config.js"></script>
+<!-- rf-50k — SEKCJE: kilka różnych skanerów w jednej konfiguracji, przełączanych akcją
+     `scan:sekcja=N` (reguła, wycinek koła, makro). Po rf-50d, bo przerysowuje się z jego
+     `scanCfgArrived`. -->
+<script src="/web/js/rf-50k-scan-sections.js"></script>
+<!-- rf-50l — ZRZUT EKRANU GRY pod ramką podglądu (wgrany plik, upuszczenie, wklejenie ze schowka),
+     wyciąganie obszaru myszą po tym zrzucie i przełącznik „podgląd obszaru: w aplikacji / na
+     pulpicie". Po rf-50d, bo wpina się w jego kartę (`scanTloInit`, `scanTloSync`) i korzysta
+     z jego globali (`_SCAN`, `_scanRamka`, `scanSave`). -->
+<script src="/web/js/rf-50l-scan-tlo.js"></script>
+<!-- rf-50n — EKRANY INTERFEJSU: zrzut plus skanery, ktore na nim pracuja (16.09). -->
+<script src="/web/js/rf-50n-scan-zrzuty.js"></script>
+<!-- rf-50o — ZRZUT PLANSZY SKRÓTEM KLAWISZOWYM (Alt+R+1…9, 21.09): ustawienia skrótu w karcie
+     Skaner plus reakcja na zdarzenie `scan_zrzut`. Po rf-50n, bo dokłada sekcję pod jego paskiem
+     plansz i po zrzucie przerysowuje kartę tą samą drogą (`scanCfgArrived`). Sam skrót żyje
+     w serwerze (`ZRZUTKEY`) — strona widzi klawisze tylko wtedy, gdy ma skupienie, a ten skrót
+     naciska się spod gry. -->
+<script src="/web/js/rf-50o-scan-zrzut-skrot.js"></script>
+<!-- rf-50q — „📸 ZRZUT EKRANU ▾" (26.09): lista monitorów przy przycisku w pasku plansz i zdjęcie
+     wybranego prosto na nową planszę. Po rf-50o, bo wynik ogłasza to samo zdarzenie `scan_zrzut`,
+     na które reaguje tamten plik; słownik EN scalany przed `initI18n()`, jak w rf-50o. -->
+<script src="/web/js/rf-50q-scan-zrzut-ekranu.js"></script>
+<!-- rf-47 — „Zgłoś problem": paczka diagnostyczna, karta w zakładce Konfiguracja (tab-ustawienia,
+     pozycja „Ustawienia" paska „Reszty") i przycisk w stopce.
+     Po rf-00 (adres forum pomocy) i przed bootstrapem, który woła initDiagUi. -->
+<script src="/web/js/rf-47-diag.js"></script>
+<!-- rf-47b — OKNO zgłoszenia: przycisk budujący paczkę i dwa miejsca, w których można zgłosić
+     problem (#pomoc albo GitHub Issues). Po rf-00 (adresy) i po rf-47 (paczka).
+     ⚠️ Nie ma już rf-47a: składał gotowy wpis na forum z pięciu pól i tagów, a okno, które o nie
+     pytało, zostało zastąpione tymi dwoma krokami. -->
+<script src="/web/js/rf-47b-diag-wizard.js"></script>
+<!-- rf-48 — „Widoczność": pigułka na prawym końcu paska zakładek, która chowa nieużywane
+     zakładki. Sam pasek buduje rf-34 (initTabs), i to ON stosuje ukrycia już przy pierwszym
+     rysowaniu (czyta wstrzyknięte window.RIBBITFLIP_HIDDEN_TABS) — ten plik dokłada tylko
+     kontrolkę i rozmowę z serwerem. Kolejność w bootstrapie: initTabVis PO initTabs. -->
+<script src="/web/js/rf-48-tabvis.js"></script>
+<!-- rf-48b (UX 261120 L23) — pierwsze pytanie „Do czego chcesz używać RibbitFlipa?”: ustawia
+     widoczność modułów przez rf-48. initFirstAsk PO initTour (wycisza zaproszenie D8 do odpowiedzi). -->
+<script src="/web/js/rf-48b-firstask.js"></script>
+<!-- rf-39p — przewodnik po panelu na życzenie: przycisk w pasku górnym (initTour PO initTabs). -->
+<script src="/web/js/rf-39p-tour.js"></script>
+<!-- rf-34h (UX 261120 L23) — „Pomoc i społeczność”: Strona projektu i Discord w jednym okienku
+     paska górnego. initHelpMenu PO initTour (Przewodnik staje przed Stroną projektu). -->
+<script src="/web/js/rf-34h-help.js"></script>
+<script src="/web/js/rf-40-boot.js"></script>
+<script src="/web/js/rf-motion.js"></script>
+<script src="/web/js/rf-knob.js"></script>
+</body>
+</html>

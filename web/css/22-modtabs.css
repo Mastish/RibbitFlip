@@ -1,0 +1,393 @@
+/* ==================================================================================================
+   MODUŁ = TRZY ZAKŁADKI (rf-49m-modtabs.js): Konfiguracja · Biblioteka · ℹ
+
+   Zastępuje układ z 2026-08-29, w którym lista presetów stała NA STAŁE obok konfiguracji
+   (`.rfpc-split` w 21-presets.css — reguły stamtąd usunięte razem z tą zmianą). Powód: lista
+   zabierała jedną trzecią szerokości przy każdym kręceniu pokrętła, a poradnik siedział zwinięty
+   nad konfiguracją i wyglądał jak kolejna sekcja do przewinięcia.
+
+   Ten arkusz NIE wnosi własnego wyglądu — pasek zakładek to `.seg`, czyli przełącznik segmentowy
+   tej aplikacji (08-felt-components.css / 03-triggers.css), kolory idą z tokenów
+   (01-assets-tokens.css), ruch z 14-motion.css. Nowe jest tu wyłącznie rozmieszczenie.
+
+   Ładowany PO 21-presets.css (nadpisuje jego układ), a PRZED 15-overlay.css — ten musi zostać
+   OSTATNIM arkuszem (tests/test_ui_tabs.py, f13), bo nakładka nad grą zdejmuje panelowi resztę
+   wyglądu.
+   ================================================================================================== */
+
+/* ==================================================================================================
+   NAGŁÓWEK: TYTUŁ EKRANU PO LEWEJ, ZAKŁADKI PO PRAWEJ — PRZYKLEJONY DO GÓRY I OBSZYTY
+
+   Trzy wymagania, jedno po drugim: tam, gdzie ta sekcja występuje, pasek jest zawsze widoczny
+   na górze; góra jest elegancko obszyta i zaokrąglona; jest nieco wyższa, z nazwą aktywnego
+   modułu i ikoną po lewej stronie.
+
+   PRZYKLEJENIE. Środkowa kolumna przewija się razem ze STRONĄ (lewa i prawa mają własne
+   `overflow:auto` — 20-cols.css), więc przyklejenie mierzy się z oknem, a `--topbar-h` to ZMIERZONA
+   wysokość paska aplikacji (ustawia ją `_syncTopbarH` w rf-40, bo pasek zawija się przy wąskim
+   oknie). ⚠️ DRUGI SKŁADNIK, `--rf-strip-h` (2026-09-05): między 901 a 1279 px prawa kolumna
+   („Kapsle i podgląd") przestaje być kolumną i staje się PRZYKLEJONYM POZIOMYM PASEM nad środkową
+   (20-cols.css, `@media (max-width:1279px)`). Ten pas zajmuje górę okna razem z paskiem aplikacji,
+   więc nagłówek liczony od samego `--topbar-h` wjeżdżał POD niego: tytuł modułu i jego zakładki
+   znikały, a przez półprzezroczyste miejsca prześwitywała treść karty. `_syncStripH` (rf-40) mierzy
+   pas i wpisuje jego wysokość w `--rf-strip-h`; przy ≥1280 px i ≤900 px (gdzie pas wraca do kolumny
+   albo idzie w jednokolumnowy stos) zmienna jest `0px` i ten `calc` zwija się do dawnego zachowania. ⚠️ RÓWNO POD PASKIEM, BEZ ODSTĘPU — inaczej niż lewa i prawa kolumna, które stoją 8 px
+   niżej. Tamte są osobnymi kolumnami i w szczelinie nad nimi widać tło strony; ten pasek jest GÓRĄ
+   KARTY, pod którą przejeżdża jej WŁASNA treść, więc ośmiopikselowa szczelina pokazywałaby ucięte
+   w pół liczby i suwaki tej samej karty — wygląda to na usterkę rysowania, a nie na odstęp.
+   ⚠️ Całość działa TYLKO dlatego, że `.rfpc` ma `overflow:clip`, a nie `hidden` — patrz komentarz
+   przy tamtej regule w 21-presets.css.
+
+   OBSZYCIE I ZAOKRĄGLENIE. Kanon tego projektu: „obszyć" znaczy ŚCIEG — kreskowana linia kilka
+   pikseli W ŚRODKU, a nie pogrubiona obwódka na krawędzi (`.card::before{inset:5px}` w
+   07-felt-core.css, ta sama zasada w 14d-buttons.css). Pasek dostaje więc własny ścieg o promieniu
+   mniejszym dokładnie o wcięcie (16 − 5 = 11 px) i to on jest tym „zaokrągleniem": TŁO celowo
+   zostaje pełnej szerokości i bez własnych rogów, bo przyklejony pasek jedzie NAD treścią karty
+   i każdy zaokrąglony róg byłby dziurką, przez którą widać przejeżdżający pod spodem tekst.
+   Górne rogi zaokrągla i tak sama karta (`overflow:clip` na `.rfpc`), gdy pasek stoi na swoim
+   miejscu — czyli wtedy, kiedy te rogi w ogóle widać.
+
+   TŁO jest tu jawne, choć ramka ma takie samo: przyklejony pasek przestaje być „częścią karty"
+   i przejeżdża NAD jej treścią, więc bez własnego, nieprzezroczystego tła prześwitywałaby przez
+   niego konfiguracja. Cień pod nim jest FILCOWY, czyli twardy (`0 3px 0`) i płaski jak wszystkie
+   inne w tej aplikacji — a nie rozmyty. Krawędź pod paskiem należy do NIEGO, nie do panelu pod
+   spodem (dawniej `.rfpc-panes{border-top}`): tamta odjechałaby razem z treścią i przyklejony
+   pasek zostałby zawieszony nad tekstem bez żadnego dołu.                                        */
+.rfpc-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:13px 17px 12px;
+  position:sticky;top:calc(var(--topbar-h,64px) + var(--rf-strip-h,0px));z-index:20;
+  background:var(--panel);background-image:var(--felt-tex-soft);
+  box-shadow:0 3px 0 rgba(120,90,40,.10)}
+.rfpc-head::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+  border-radius:11px;pointer-events:none;z-index:0;opacity:.8}
+/* Dzieci nad ściegiem, tak jak `.card>*` w 07-felt-core.css — inaczej kreskowana linia
+   przechodziłaby przez pigułkę kapsla i przez przyciski zakładek. */
+.rfpc-head>*{position:relative;z-index:1}
+.rfpc-head .rfpc-crumb{padding:0;flex:1 1 auto;min-width:0;gap:9px}
+.rfpc-tabs{flex:0 0 auto;margin-left:auto}
+
+/* ---------- GDZIE SIĘ ZATRZYMUJE PRZYKLEJONA KOLUMNA W ŚRODKU MODUŁU ---------------------------
+   Nad treścią modułu stoją DWA albo TRZY przyklejone paski: pasek aplikacji (`--topbar-h`), przy
+   901–1279 px jeszcze pas kapsli (`--rf-strip-h`, oba mierzy rf-40) i ten pasek modułu. Kolumna,
+   która ma stać w oknie (scena koła, podgląd myszy, mapa kontrolera, podgląd skanera, blok stały
+   ekranu „Wszystkie"), musi zatrzymać się POD nimi wszystkimi.
+
+   Każda z tych kolumn miała tu do 14.09 WŁASNĄ LICZBĘ wziętą z powietrza: `--topbar-h + 46px`
+   w skanerze, `84px` w kontrolerze, `8px` w myszy, a scena koła mierzyła pasek zakładek aplikacji,
+   którego od przebudowy na trzy kolumny (2026-08-29) już nie ma — i zostawała przy samym nagłówku.
+   Zmierzone: pasek modułu ma 75 px (81 px, dopóki rysunek modułu nie zmaleje przy przewijaniu),
+   więc KAŻDA z tych kolumn parkowała pod nim — o 67, 68 i 144 px za wysoko.
+
+   Stąd jedna zmienna zamiast czterech pomysłów: `--rf-modhead-h` to ZMIERZONA wysokość tego paska
+   modułu, który akurat jest na ekranie (pozostałe moduły trzymają swoje w DOM-ie, schowane) —
+   wpisuje ją `rfWatchModHead` w rf-40, tam gdzie mieszkają dwie pozostałe mierzone wysokości.
+   `--rf-sticky-top` dokłada do niej oba paski nad nią i 8 px oddechu, czyli jest gotową odpowiedzią
+   na pytanie „od którego piksela okna zaczyna się wolne miejsce". Kolumna pisze `top:var(--rf-sticky-top)`
+   i nie musi wiedzieć o niczym więcej. Zero na starcie, bo ekran bez paska modułu naprawdę ma tu
+   zero — jedna zła liczba w domyślnej wartości to dokładnie ten błąd, który usuwamy. */
+:root{--rf-modhead-h:0px;
+  --rf-sticky-top:calc(var(--topbar-h,64px) + var(--rf-strip-h,0px) + var(--rf-modhead-h,0px) + 8px)}
+
+/* ---------- WŁĄCZNIK GRUPY: WŁASNY SEGMENT PO LEWEJ OD ZAKŁADEK ----------------------------------
+   Przycisk włącz/wyłącz stoi na górze, na lewo od Konfiguracji, jako wyraźnie
+   wydzielony segment. Przenosi go rf-49m (pole `enable` w spisie modułów), tutaj jest
+   WYŁĄCZNIE jego oprawa.
+
+   „Wyraźnie wysegmentowane" znaczy w tym programie jedno: własna kremowa płytka z twardym cieniem
+   i ściegiem w środku — czyli to samo, co nosi każdy przycisk i każda karta. Nie kreska pionowa
+   i nie sam odstęp: pierwsza byłaby nowym pomysłem na oddzielanie, a drugi po prostu nie widać go
+   w pasku, w którym i tak wszystko dzieli 10 px.
+   Płytka NIE jest przyciskiem — klika się dźwignię w środku — więc nie dostaje ani `:hover`, ani
+   wciśnięcia; podnosi się i zapada sama dźwignia, tak jak wszędzie indziej w aplikacji. */
+.rfpc-pow{position:relative;display:inline-flex;align-items:center;flex:0 0 auto;
+  margin-left:10px;padding:4px 11px;border-radius:12px;
+  background:#faf6ee;background-image:var(--felt-tex-soft);box-shadow:0 3px 0 rgba(120,90,40,.12)}
+.rfpc-pow::after{content:"";position:absolute;inset:3px;pointer-events:none;
+  border:1.5px dashed var(--stitch);border-radius:9px}
+/* Dźwignia w nagłówku karty stała po prawej i sama się tam spychała (`margin-left:auto` w 10).
+   W płytce nie ma czego spychać — płytka mierzy dokładnie tyle, co ona. */
+.rfpc-pow .rf-toggle{margin-left:0}
+/* Nagłówek karty, z którego rf-49m zdjął tytuł powtarzający nazwę modułu: został sam podpis,
+   a ten spychał się na prawo (`.head .hint{margin-left:auto}` w 02-base), bo po lewej stał
+   dotąd tytuł. Bez niego wisiał przy prawej krawędzi karty jak zgubiony. */
+.card>.head.hd-noname .hint,.pad-sec-h.hd-noname .hint{margin-left:0}
+/* Wąskie okno: pasek zawija się, a płytka ma przejechać na początek własnego wiersza, zamiast
+   zostawać przyklejona do prawej krawędzi nad zakładkami. */
+@media (max-width:900px){.rfpc-pow{margin-left:0}}
+
+/* ---------- tytuł ekranu: rysunek + nazwa --------------------------------------------------------
+   Rysunek jest TEN SAM, co na pozycji w nawigacji (klasa `tab-ic-*` czytana z żywego przycisku),
+   więc pasek i miejsce, z którego się w niego weszło, wyglądają na jedno. Nazwa idzie czcionką
+   nagłówkową i o stopień większa od reszty paska: to jest tytuł ekranu, a nie człon ścieżki.    */
+.rfpc-mod{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;min-width:0}
+/* Rozmiar rysunku LICZY rf-49m z przewinięcia strony: 56 px na samej górze, 30 px po zjechaniu
+   (było 24 px na sztywno). Tutaj zostaje tylko wartość zapasowa — gdyby skrypt nie zdążył albo
+   nie wystartował, rysunek stoi w rozmiarze docelowym, a nie znika i nie rozpycha paska.
+   PNG-i mają 128 px i `background-size:contain`, więc 56 px jest ostre, nie rozmyte.
+   Bez `transition`: wartość jedzie co klatkę razem z przewijaniem, a przejście dokładałoby do niej
+   drugie, spóźnione o swój czas — rysunek gubiłby się za paskiem przy szybkim ruchu kółka. */
+.rfpc-mod-ic{width:var(--rfpc-modic,30px);height:var(--rfpc-modic,30px);flex:0 0 auto}
+/* `h1` obok `b`: od 2026-09-05 tytuł modułu jest nagłówkiem strony (rf-49j `$.modTitle`).
+   Wygląd ma zostać co do piksela ten sam, więc h1 dostaje tę samą regułę plus wyzerowany
+   margines, który przeglądarka daje nagłówkom z domyślnego arkusza. */
+.rfpc-mod b,.rfpc-mod h1{font-family:var(--rebel,var(--display));font-weight:400;font-size:17px;line-height:1.1;
+  color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rfpc-mod h1{margin:0}
+
+/* ---------- kapsel w nagłówku: rysunek, imię i kolor ---------------------------------------------
+   Ta sama rzecz, co świecąca pigułka w prawej kolumnie, i celowo tak samo ubrana: tło mieszane
+   z koloru kapsla (`color-mix` na `--dcol`, wzór z 07-felt-core.css) i obwódka w tym kolorze.
+   Odkąd pasek stoi na górze przez cały czas, jest to JEDYNA odpowiedź na pytanie „czyje ustawienia
+   właśnie kręcę", która nie znika przy przewijaniu. Samo imię pisane tą samą czcionką, co nazwa
+   modułu obok, tego nie robiło: dwa człony okruszków wyglądały na dwa człony jednej ścieżki. */
+.rfpc-dev{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+  border-radius:999px;padding:3px 11px 3px 5px;
+  background:color-mix(in srgb,var(--dcol,#8aa0b5) 24%,#fff);
+  border:1.5px solid var(--dcol,#8aa0b5)}
+.rfpc-dev b{font-family:var(--display);font-weight:800;font-size:12.5px;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.rfpc-dev .cap-mini{flex:0 0 auto}
+
+/* ---------- pasek zakładek ------------------------------------------------------------------------
+   ZAKŁADKA JEST PRZYCISKIEM TEGO PROGRAMU (`button.btn.sm` w znacznikach), więc wypełnienie, cień,
+   promień, ŚCIEG (1,5 px kreskowany kilka pikseli W ŚRODKU — 14d-buttons.css) i ruch pod kursorem
+   przychodzą tu z rodziny `.btn` za darmo. Zapalona zakładka ma klasę `on`, czyli to samo różowe
+   wypełnienie i tę samą białą nitkę, co każdy inny wybrany przycisk aplikacji.
+   Zostaje tu WYŁĄCZNIE to, czego rodzina `.btn` nie wie: że to pasek zakładek.                  */
+.rfpc-tabs{display:flex;align-items:center;gap:6px}
+.rfpc-tab{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.rfpc-tab.is-ic{padding-left:12px;padding-right:12px}
+.rfpc-tab-ic{width:16px;height:16px;flex:0 0 auto}
+/* Ikony mają WŁASNE klasy, nie `tab-ic-*` z nawigacji: tamten zestaw jest indeksowany polem `png`
+   z rejestru TABS (rf-34) i dopisanie do niego pozycji, której żadna zakładka nie używa,
+   zakładałoby drugą umowę o tej samej nazwie. */
+/* Suwak (UX 261120, D1): zębatka należy do ekranu „Ustawienia” programu w nawigacji. Pod-zakładka
+   „Konfiguracja” ma INNY rysunek, bo przy ≤1100 px zakładki tracą napisy i zostają same ikony. */
+.rfpc-tab-ic.is-cfg{background-image:url(/web/assets/icons/suwak.png)}
+.rfpc-tab-ic.is-lib{background-image:var(--ic-vault)}
+.rfpc-tab-ic.is-info{background-image:var(--ic-info)}
+.rfpc-tab-ic.is-snd{background-image:var(--ic-megaphone)}
+
+/* ---------- „Informacje" NA NIEBIESKO -------------------------------------------------------------
+   Zakładka do czytania, nie do pracy: kolor odróżnia ją od dwóch pozostałych, zanim człowiek
+   przeczyta napis. Od UX 261120 (D2) ma napis „Informacje”, więc niebieski jest ciemniejszy
+   (`#17708f`, dawny cień tej zakładki): biały tekst na `--c-seek` miał 3,5:1, na nim ma 5,6:1.
+   Selektor z `button.btn`, bo `button.btn.on` (różowy, 07-felt-core) ma (0,2,1) i bez tego
+   wygrywałby, kiedy zakładka jest wybrana. Wybraną poznaje się po CIEMNIEJSZYM niebieskim. */
+button.btn.rfpc-tab.is-ic{background:#17708f;background-image:none;color:#fff;
+  box-shadow:0 3px 0 #0f5670;--rf-stitch:rgba(255,255,255,.46)}
+button.btn.rfpc-tab.is-ic:hover{background:var(--c-seek);background-image:none}
+button.btn.rfpc-tab.is-ic:active{box-shadow:0 1px 0 #0f5670}
+button.btn.rfpc-tab.is-ic.on{background:#0f5670;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+button.btn.rfpc-tab.is-ic.on:hover{background:#0f5670}
+button.btn.rfpc-tab.is-ic.on:active{box-shadow:0 1px 0 rgba(0,0,0,.35)}
+/* Rysunek „i" jest ciemny na przezroczystym — na nasyconym niebieskim ginie tak samo, jak ginął
+   na różowym. To ta sama sztuczka, co wiersz niżej, tylko obowiązuje w OBU stanach. */
+button.btn.rfpc-tab.is-ic .rfpc-tab-ic{filter:invert(1) brightness(1.6)}
+
+/* ---------- ZWIJAK, KTÓRY STAŁ SIĘ ZAKŁADKĄ --------------------------------------------------
+   `#soundEditor` jedzie teraz do własnej zakładki „Brzmienia" (rf-49m, pole `take`). Skorupą jest
+   zakładka, więc druga skorupa — nagłówek „Biblioteka dźwięków" ze strzałką, własne tło, promień
+   i margines — opisywałaby tę samą rzecz drugi raz i zjadała 40 px na górze panelu.
+   `<details>` ZOSTAJE w drzewie (`open` na stałe): to jego treść ma wszystkie nasłuchy rf-30/31,
+   a przepisanie jej na `<div>` znaczyłoby odtworzenie, nie przeniesienie. */
+.rfpc-taken-fold{margin:0;background:none;background-image:none;border:none;box-shadow:none;border-radius:0}
+.rfpc-taken-fold>summary{display:none}
+.rfpc-taken-fold::before,.rfpc-taken-fold::after{display:none}
+/* IKONA NA ZAPALONEJ ZAKŁADCE leży na różowym wypełnieniu z białym napisem
+   (`button.btn.on{background:var(--pink-btn);color:#fff}`), więc musi się od niego odciąć.
+   SPOSÓB ZALEŻY OD TEGO, CZYM RYSUNEK JEST — i do 2026-09-11 stała tu jedna reguła dla obu
+   rodzajów, przez co filcowe obrazki dostawały odwrócenie kolorów po kliknięciu
+   (zamiast tego co najwyżej biały obrys).
+   To nie był wyjątek: ZMIERZONE (udział pikseli nasyconych w widocznej części)
+   — zębatka 100%, sejf 37%, megafon 91%, a ciemną kreską na przezroczystym jest WYŁĄCZNIE „i" (0%).
+   Odwrócenie było więc złe dla trzech ikon z czterech; nie rzucało się w oczy tylko dlatego, że
+   odwrócona stara zębatka nadal czytała się jak zębatka.
+
+   Kanon jest w tym pliku opisany niżej (pasek „Reszty") i w nawigacji (`.rnav-btn.active .rfic`):
+   FILCOWY OBRAZEK dostaje BIAŁĄ OBWÓDKĘ, ciemna kreska — odwrócenie. */
+.rfpc-tab.on .rfpc-tab-ic.is-info{filter:invert(1) brightness(1.6)}
+/* WYBRANA ZAKŁADKA = KREMOWA NASZYWKA Z RÓŻOWYM ŚCIEGIEM (UX 261120, P-G0-03), ta sama co wybrana
+   pozycja nawigacji (20-cols.css). Wypełniony róż zostaje dla akcji. Na kremie rysunek nie
+   potrzebuje białej obwódki, więc zostaje w swoich kolorach. */
+button.btn.rfpc-tab.on:not(.is-ic),button.btn.rfpc-tab.on:not(.is-ic):hover{background:var(--panel);
+  background-image:none;color:var(--ink);font-weight:800;box-shadow:0 3px 0 var(--pink-d);--rf-stitch:var(--pink-btn)}
+button.btn.rfpc-tab.on:not(.is-ic):active{box-shadow:0 1px 0 var(--pink-d)}
+
+/* ---------- panele --------------------------------------------------------------------------------
+   Przełącza `hidden` z JS-a, a nie klasa: ukryta zakładka ma być bez wymiaru (nic w niej nie rysuje
+   się z rozmiaru pojemnika i nie posuwa rAF-a), a `[hidden]` mówi to również czytnikowi ekranu.
+   Reguła jest jawna, bo `.rfpc-pane` ma `display:block` i zwyciężyłaby nad domyślnym `[hidden]`. */
+/* Kreska nad panelami przeniesiona na sam pasek (patrz komentarz wyżej) — tutaj zostaje po niej
+   wyłącznie brak marginesu. */
+.rfpc-pane{padding:12px}
+.rfpc-pane[hidden]{display:none}
+.rfpc-pane>.card,.rfpc-pane>.cardfold{margin:0 0 12px}
+.rfpc-pane>:last-child{margin-bottom:0}
+
+/* ---------- zakładka „Biblioteka": lista + opis --------------------------------------------------
+   Ten sam kształt, co Biblioteka globalna (`.rflib-split`) i co miał moduł przed 08-31: wiersz
+   wybiera, panel obok mówi, co to jest. Lista dostaje tu więcej miejsca niż w starym układzie
+   (330 px zamiast 288 px), bo nie konkuruje już o szerokość z kartą konfiguracji.               */
+.rfpc-libsplit{display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.rfpc-libsplit .rfpc-col{border-right:1px solid var(--line);min-width:0;
+  display:flex;flex-direction:column}
+.rfpc-libsplit .rfpc-prev{min-width:0;padding:12px 14px}
+/* Lista rozciąga się na wysokość sąsiada, więc jej własny limit liczy się od wysokości okna,
+   nie od zawartości opisu — inaczej krótki opis skracałby listę do trzech wierszy. */
+.rfpc-libsplit .rfpc-list{max-height:min(62vh,620px)}
+
+/* ---------- zakładka „ℹ": poradnik bez zwijania ---------------------------------------------------
+   Poradnik przyjeżdża tu jako `<details class="mapwiki">` zdjęty ze skorupy (rf-49m `guideBox`):
+   `<summary>` staje się nagłówkiem, `.mapwiki-body` treścią. Zwijanie w zakładce, która nie ma nic
+   poza poradnikiem, zostawiałoby pustą zakładkę.
+   ⚠️ `.mapwiki-body` ma w 05-macro-tabs.css własny wygląd rozwiniętej treści i to ON tu rządzi;
+   poniżej jest wyłącznie szerokość czytania i nagłówek, który stracił swój `<summary>`.         */
+.rfpc-info{max-width:none}
+.rfpc-info-h{display:flex;align-items:center;gap:0;margin:0 0 10px;
+  font-family:var(--rebel);font-weight:400;font-size:19px;line-height:1.2;color:var(--ink)}
+.rfpc-info-h .rfic{flex:0 0 auto}
+/* Kolumna tekstu ma miarę czytania, a nie szerokość panelu: poradnik na 1100 px to wiersze po
+   180 znaków, w których oko gubi początek następnego. Listy i tabele w środku zostają szerokie. */
+.rfpc-info .mapwiki-body{max-width:86ch}
+.rfpc-info-none{color:var(--dim);font-size:12.5px;font-weight:600;padding:18px 2px}
+
+/* ---------- miara czytania dla PROZY poza poradnikiem ---------------------------------------------
+   Ta sama zasada, co dwie linie wyżej, tylko zastosowana do reszty panelu: poradnik dostał 86ch,
+   a bloki „Jak połączyć…", akapity Usług, notki i podpowiedzi ekranów zostały na pełnej szerokości
+   kolumny i przy 1440-1920 px robiły wiersze po 110-166 znaków. Limit dotyczy WYŁĄCZNIE bloku
+   tekstu — tło `.rfpc-state`, kreska `.setup-note` i paski przycisków nadal idą przez całą kartę.
+   Dwie miary, bo dwa rozmiary pisma: 86ch dla prozy 13 px, 78ch dla notek 12 px (tak jak
+   `.mie-sec-hint` w 06-connect-midi-pads.css). Listy, tabele i wiersze flex zostają szerokie;
+   `.pw-note` ma własne 62ch (03-triggers.css), a `.card>.head .hint` jest krótki i celowo dosunięty
+   do prawej — obu tu nie ma.
+   WHY: prose outside the guides had no measure; a line of 110-166 characters loses the reader
+   between the end of one line and the start of the next. */
+.setup-body p,.setup-body li,.ra-lead{max-width:86ch}
+.setup-note,.ra-note,.mi-grouphint,.rfpc-state-tx,.pcal-hint,.lib-explain{max-width:78ch}
+
+/* ==================================================================================================
+   POZYCJA „RESZTY" = DWIE ZAKŁADKI: <nazwa ekranu> · ℹ   (rf-49p-resttabs.js)
+
+   Ta sama ramka, ten sam pasek, te same panele — różnice są dwie i obie wynikają z tego, że
+   zakładki są dwie, a nie trzy:
+
+   1. NAGŁÓWEK BEZ OKRUSZKÓW. W module okruszki mówią „kapsel › moduł › nazwa konfiguracji"; tutaj
+      nie ma ani kapsla, ani nazwanej konfiguracji, a nazwę ekranu niesie już pierwsza zakładka.
+      Pasek staje więc przy lewej krawędzi zamiast być dopychany do prawej przez pusty człon.
+   2. PIERWSZA ZAKŁADKA MA RYSUNEK Z NAWIGACJI (`tab-ic-*`), a nie glif. To są filcowe obrazki,
+      a nie kreski, więc na różowym wypełnieniu dostają BIAŁĄ OBWÓDKĘ — dokładnie tak, jak wybrana
+      pozycja nawigacji (`.rnav-btn.active .rfic` w 20-cols.css) — a nie odwrócenie kolorów,
+      którym radzi sobie ikona ℹ.
+   ================================================================================================== */
+.rfpc-head-rest .rfpc-tabs{margin-left:0}
+.rfpc-rest .rfpc-tab-ic.is-main{width:19px;height:19px}
+
+/* Zawartość ekranu przyjechała tu z `.tab-panel`, czyli z kolumny flex o własnym odstępie
+   (06-connect-midi-pads.css + 08-felt-components.css). Karty, zwijane sekcje i siatki liczyły na
+   ten odstęp i żadna nie ma własnego marginesu, więc panel go dziedziczy. `:not([hidden])` nie jest
+   ozdobą: bez niego ta reguła zremisowałaby z `.rfpc-pane[hidden]{display:none}` wyżej i wygrała
+   kolejnością, czyli schowana zakładka przestałaby być schowana. */
+.rfpc-rest .rfpc-pane-main:not([hidden]),
+.rfpc-rest .rfpc-pane-sheet:not([hidden]){display:flex;flex-direction:column;gap:16px}
+.rfpc-rest .rfpc-pane-main>.card,.rfpc-rest .rfpc-pane-main>.cardfold,
+.rfpc-rest .rfpc-pane-sheet>.card{margin:0}
+
+/* ---------- BLOK STAŁY NAD ZAKŁADKAMI (`data-rfpc-shared`) ------------------------------------
+   Dziś jeden: galeria nakładek z żywą miniaturą na ekranie „Nakładka" (rf-41d). Stoi między
+   paskiem zakładek a panelem, bo należy do CAŁEGO ustawiania okna, a nie do jednej karty pod
+   spodem — obie („Ustawienia tego okna" i „Wygląd tego okna") patrzą w tę samą miniaturę,
+   inaczej wybór motywu odbywałby się na ślepo.
+
+   ⚠️ CHOWANY, NIGDY PRZENOSZONY. Blok niesie `<iframe>`, a ta przeładowuje się przy każdej zmianie
+   rodzica w DOM. `display:none` jej nie rusza — i to jest cała różnica między podglądem, który
+   trwa, a takim, który gaśnie i wstaje po każdym kliknięciu w zakładkę. */
+.rfpc-shared>.card{margin:0}
+.rfpc-shared.rfpc-shared-off{display:none}
+.rfpc-body{display:block}
+/* Jedna kolumna (jak dotąd): blok stały nad panelem. */
+.rfpc:not(.rfpc-split) .rfpc-shared{padding:12px 12px 0}
+
+/* ---------- EKRAN NA DWIE KOLUMNY (`rfpc-split`, 2026-09-01) ----------------------------------
+   Po lewej to, na co się PATRZY, po prawej to, co się USTAWIA. Pasek zakładek zostaje nad obiema,
+   bo dotyczy całego ekranu.
+
+   ⚠️ LEWA JEST PRZYKLEJONA, bo prawa bywa dłuższa niż ekran — a podgląd, który ucieka w górę
+   razem z listą ustawień, przestaje być podglądem dokładnie wtedy, gdy jest potrzebny.
+   `align-self:start` jest warunkiem `sticky` w siatce: bez niego element rozciąga się na całą
+   wysokość wiersza i nie ma po czym się przyklejać. */
+/* ⚠️ `minmax(0,…)`, NIE `minmax(300px,…)` (2026-09-05). Twarde minima 300 + 430 px plus przerwa
+   i wcięcia dają 766 px, a przy 1280 px środkowa kolumna ma tylko 724 px — siatka nie mogła się
+   zmieścić i wypychała prawą kolumnę ~30 px poza kartę (ucięte „Zamknij okno" i „Pasek okna").
+   Proporcje 0.92 : 1.28 zostają, bo to one dają ten układ, a nie minima. */
+.rfpc-split .rfpc-body{display:grid;gap:12px;padding:12px;align-items:start;
+  grid-template-columns:minmax(0,0.92fr) minmax(0,1.28fr)}
+/* Próg jednej kolumny liczony z szerokości PANELU, nie okna: od przebudowy na trzy kolumny
+   (20-cols.css) środek przy oknie 1280 px jest WĘŻSZY (724 px) niż przy oknie 1180 px z dwiema
+   kolumnami (912 px), więc media query na oknie zwijała układ w złym momencie. */
+.rfpc.rfpc-split{container-type:inline-size}
+.rfpc-split .rfpc-col-r{display:flex;flex-direction:column;gap:12px;min-width:0}
+.rfpc-split .rfpc-shared{padding:0;min-width:0}
+/* Zatrzymuje się POD przyklejonymi paskami — `--rf-sticky-top` wyżej w tym arkuszu, ta sama
+   odpowiedź, co dla sceny koła i podglądu myszy. Do 14.09 liczyło się tu tylko `--topbar-h`
+   i wysokość paska modułu, bez pasa kapsli: przy oknie 1100 px pas ma 368 px, więc blok stały
+   parkował 360 px za wysoko i chował się pod nim w całości (zmierzone).
+   `max-height` + `overflow` na wypadek niskiego okna: przyklejona karta wyższa od ekranu nie
+   dałaby się doczytać do końca. */
+.rfpc-split .rfpc-shared-l{position:sticky;align-self:start;
+  top:var(--rf-sticky-top);
+  max-height:calc(100vh - var(--rf-sticky-top) - 8px);
+  overflow:auto;scrollbar-width:thin}
+.rfpc-split .rfpc-panes{padding:0}
+.rfpc-split .rfpc-pane{padding:0}
+/* Bez bloków stałych („Ściąga", poradnik) panel dostaje CAŁĄ szerokość — ściskanie go do jednej
+   kolumny obok pustego miejsca byłoby układem dla treści, której tam nie ma. */
+.rfpc-split .rfpc-body.rfpc-body-solo{grid-template-columns:1fr}
+
+/* Wąskie okno: dwie kolumny obok siebie przestają się mieścić, więc podgląd wraca NAD ustawienia —
+   nadal pierwszy, nadal widoczny, tylko nie obok. Przyklejenie zdejmujemy: przyklejony podgląd
+   zjadałby pół ekranu wysokości. */
+@container (width < 766px){
+  .rfpc-split .rfpc-body{grid-template-columns:1fr}
+  .rfpc-split .rfpc-shared-l{position:static}
+}
+/* Bloki do czytania, które NIE zdjęły skorupy `<details>` (dziś jeden: „Zestaw, preset,
+   konfiguracja: co jest czym" — ma własne przerysowanie trzymające się `<summary>`). Stoją pod
+   rozłożonym poradnikiem, więc potrzebują odstępu od niego. */
+.rfpc-pane-info>.mapwiki{margin-top:14px}
+.rfpc-pane-info>.mapwiki:first-child{margin-top:0}
+
+/* ---------- węższe okna --------------------------------------------------------------------------- */
+@media (max-width:1439px){
+  .rfpc-libsplit{grid-template-columns:minmax(0,290px) minmax(0,1fr)}
+}
+@media (max-width:1100px){
+  /* Napisy schodzą z zakładek, zostają ikony z podpowiedzią. Nazwa dostępna zostaje na miejscu —
+     jest w `aria-label`, nie w napisie, więc chowanie napisu jej nie dotyka. */
+  .rfpc-tab>span:not(.rfpc-tab-ic){display:none}
+  .rfpc-tab{padding-left:9px;padding-right:9px}
+  /* Ekrany narzędzi nie mają osobnego tytułu: nazwę ekranu niesie pierwsza zakładka. Bez napisu
+     ekran tracił nazwę (UX 261120, P-G5-01), więc jej napis zostaje przy każdej szerokości. */
+  .rfpc-rest .rfpc-tab[data-pane="main"]>span:not(.rfpc-tab-ic){display:inline}
+  .rfpc-rest .rfpc-tab[data-pane="main"]{padding-left:12px;padding-right:12px}
+}
+@media (max-width:900px){
+  .rfpc-libsplit{grid-template-columns:minmax(0,1fr)}
+  .rfpc-libsplit .rfpc-col{border-right:none;border-bottom:1px solid var(--line)}
+  .rfpc-libsplit .rfpc-list{max-height:38vh}
+}
+/* Ruch pod kursorem obsługuje 14-motion.css dla całej rodziny `.btn`, razem z wyjątkiem dla
+   `prefers-reduced-motion` — własna reguła byłaby tu drugą umową o tym samym. */
+
+/* ===== UX 261120 SCALENIE ===== */
+/* 1101–1365 px: nagłówek modułu mieści się w jednym wierszu (nazwa, kapsel, Wył./Wł. i trzy
+   zakładki). Zawinięty zabierał wiersz, przez co rysunek pada w Kontrolerze przy 1280×720
+   schodził poniżej 420 px. Mniej powietrza, te same napisy i cele. */
+@media (max-width:1365px) and (min-width:1101px){
+  .rfpc-head{column-gap:8px}
+  .rfpc-pow{margin-left:0;padding-left:8px;padding-right:8px}
+  .rfpc-tabs{gap:4px}
+  button.btn.sm.rfpc-tab,button.btn.sm.rfpc-tab.is-ic{padding-left:9px;padding-right:9px;gap:4px}
+  .rfpc-mod-ic{width:min(var(--rfpc-modic,30px),44px);height:min(var(--rfpc-modic,30px),44px)}
+}
+/* (koniec sekcji SCALENIE) */

@@ -1,0 +1,233 @@
+/* ============================================================
+   RibbitFlip motion layer — snappy anticipation and overshoot.
+   Every new keyframe/class is prefixed rf- so nothing collides with
+   the existing pulse / pmpulse / devOnline / pmring animations.
+   Additive only: the status animations and .rule .led.fired survive.
+   Loads LAST, so its press/hover rules win the cascade on source order.
+   ============================================================ */
+:root{
+  --rf-ez-overshoot:cubic-bezier(0.34,1.56,0.64,1);
+  --rf-ez-anticipate:cubic-bezier(0.36,0,0.66,-0.56);
+  --rf-ez-snap:cubic-bezier(0.2,0.7,0.2,1);
+  --rf-ez-spring-soft:cubic-bezier(0.2,0.9,0.25,1.15);
+  --rf-ez-spring-stiff:cubic-bezier(0.2,0.9,0.25,1.2);
+  --rf-d-press:95ms;
+  --rf-d-release:260ms;
+  --rf-d-enter:320ms;
+  --rf-d-pop:220ms;
+  --rf-stagger:45ms;
+}
+
+/* ---- PRESS: anticipation (fast snap down) + overshoot spring-back ---- */
+/* Base btn already has transition:.15s (all). Layer a transform-specific
+   spring so release overshoots. Idle/release = slow overshoot ease. */
+/* STRAIGHT DOWN, NEVER SIDEWAYS. The press used to be `scale(.94) translateY(2px)`, and a scale
+   is the one thing a stitched button cannot survive. A .btn is roughly four times wider than it
+   is tall, so scale(.94) walks its left and right edges ~5px inwards and the top only ~1px — and
+   then the overshoot spring on release throws those edges back out past where they started. On
+   the fill alone that reads as "pressed". But 14d sews a dashed thread 4px inside that same edge,
+   and a LINE doing this reads as what it is: a horizontal bounce, sideways, twice, every click.
+   Nothing about pressing a key moves sideways. (Owner, 2026-09-08.)
+   What is left is the press this skin already had before the motion layer existed: the button
+   drops onto its own shadow, `0 4px 0` flattening to `0 1px 0` in 07. That is exactly how a.btn
+   and .rfm-btn have always pressed — they never scaled, and they never looked dead.
+   The hover scale goes for the same reason: with the pointer down, hover and active fire together,
+   so a hover at 1.02 would still hand the press a 2% sideways jump to animate.
+   Small square icon chips keep their squeeze (further down): no stitch to distort, and at 24px
+   there is no shadow gap under them to fall into. */
+button.btn{transition:transform var(--rf-d-release) var(--rf-ez-overshoot),
+           background .15s,border-color .15s,color .15s,box-shadow .18s var(--rf-ez-snap)}
+button.btn:hover{transform:translateY(-1px);
+           box-shadow:0 6px 0 rgba(120,90,40,.14)}
+button.btn:active{transform:translateY(2px);
+           transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+button.btn.primary:active{transform:translateY(3px);
+           transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+/* ---- PRESS: same snap-down impact on EVERY other button-like (tabs, mode cards, device pills, toggles, bare <button>, role=button/tab/switch) ---- */
+button, .rf-toggle, [role=button], [role=tab], [role=switch]{
+           transition:transform var(--rf-d-release) var(--rf-ez-overshoot),box-shadow .18s var(--rf-ez-snap)}
+button:active, .rf-toggle:active{
+           transform:translateY(2px);
+           transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+/* The role-carrying ones are often CONTAINERS (a pad tile, a device pill) with buttons and
+   selects inside — and :active lights up on every ANCESTOR of the pressed element, so an
+   unguarded rule here scaled the whole panel down the moment a button INSIDE it was pressed.
+   The button then slid out from under the pointer between mousedown and mouseup, and the click
+   never fired. The :has() guard limits the snap to presses that start on the container's own
+   body. Kept as a separate rule from the leaves above: if a browser ever chokes on :has(),
+   only this list dies, not the press feedback of every plain <button>.
+
+   ⚠️ `:not(.gpv span)` — THE CONTROLLER DRAWING IS NOT A KEYBOARD, and this rule is what made it
+   act like one. Every part of the pad picture is given `role="button"` so a keyboard and a screen
+   reader can reach it (rf-44 `_padPartsA11y`), but a part is a HOTSPOT PAINTED ON ARTWORK, not a
+   key: it is placed absolutely, and two of them are placed BY A TRANSFORM — `.gpv .gt.r` and
+   `.gpv .gb.r` are the left trigger and the left bumper mirrored, `transform:rotateY(180deg)`
+   (14b), and the same trick puts Start on the DualShock body.
+   This selector scores (0,4,0) against their (0,3,0), so pressing RB or RT threw the mirror away
+   and put `translateY(2px)` in its place — and since the list two rules up hands every
+   `[role=button]` a 260 ms transform transition, the browser INTERPOLATED rotateY 180deg -> 0deg.
+   The part, and the dashed "mapped" seam drawn around it, turned over horizontally on mousedown
+   and turned back on release. That is the "odbicie w poziomie, jakby skala wchodziła w -1" the
+   owner reported (2026-09-08); it was a mirrored rotation, never a scale, which is why taking
+   scale() off the press did not touch it.
+   Excluded rather than patched part by part: a hotspot on a drawing has no business pressing at
+   all. It already answers a click by opening its panel and putting on the selection glow (14c),
+   and any future part placed by a transform is safe by construction. */
+[role=button]:active:not(.gpv span):not(:has(:is(button,select,input,a,label,summary,[role],[draggable="true"]):active)),
+[role=tab]:active:not(:has(:is(button,select,input,a,label,summary,[role],[draggable="true"]):active)),
+[role=switch]:active:not(:has(:is(button,select,input,a,label,summary,[role],[draggable="true"]):active)){
+           transform:translateY(2px);
+           transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+@media(prefers-reduced-motion:reduce){
+  button, .rf-toggle, [role=button], [role=tab], [role=switch]{transition:none !important}}
+
+/* ---- PRESS: snap-down on the main TABS and DEVICE PILLS ----
+   Two gaps the universal button:active above didn't cover, so these read as "dead" on press:
+   (1) tabs ARE <button>s, but `.tabbar button:hover` (specificity 0,2,1) out-ranks
+       `button:active` (0,1,1). On a mouse press hover+active fire together, so the hover-lift
+       kept winning and translateY(-2px) stuck — the snap never showed.
+   (2) device pills are <div>s (createElement("div")), which `button:active` never matched at all.
+   Each :active below MATCHES its element's hover specificity and sits LATER in source, so the
+   snap wins the cascade without !important. Pills get a transition so the release eases too. */
+.tabbar .tab-btn, .tabbar button, .devpill{
+  transition:transform .1s var(--rf-ez-snap),box-shadow .1s,background .12s,border-color .12s,color .1s}
+.tabbar .tab-btn:active, .tabbar button:active{
+  transform:translateY(2px);
+  transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+/* Press only the zone actually under the pointer: the whole pill snaps ONLY when no action
+   button inside it is being pressed (:has), otherwise the action button gets its own lighter press. */
+.devices-panel .devpill:active:not(:has(.dp-act:active)),
+#deviceSel .devpill:active:not(:has(.dp-act:active)),
+.devpill:active:not(:has(.dp-act:active)){
+  transform:translateY(2px);
+  transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+/* The action icons INSIDE a pill keep the squeeze: no stitch of their own (14d), and they are
+   small squares, where a scale is the only press that shows at all. */
+.devpill .dp-act:active{transform:scale(.9);
+  transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+@media(prefers-reduced-motion:reduce){
+  .tabbar .tab-btn:active, .tabbar button:active,
+  .devpill:active:not(:has(.dp-act:active)), .devpill .dp-act:active{transform:none}}
+
+/* ---- HOVER: seqchip lift + border glow (snappy, no overshoot) ---- */
+.seqchip{transition:transform 120ms var(--rf-ez-snap),
+           background .12s,border-color .12s,color .12s,box-shadow 120ms var(--rf-ez-snap)}
+.seqchip:hover,.seqchip:focus{transform:translateY(-1px);
+           box-shadow:0 6px 0 rgba(120,90,40,.14);border-color:var(--pink)}
+
+/* ---- HOVER: gear rotate (snappy) — rotation moved to .bic (in-place spin), button only lifts shadow ---- */
+.pose3d-gear{transition:box-shadow 150ms var(--rf-ez-snap)}
+.pose3d-gear:hover{box-shadow:0 6px 0 rgba(120,90,40,.14)}
+
+/* ---- HOVER: add device pill lift + glow ---- */
+/* Lift, not grow — the add pill wears the stitch too (`#deviceSel .devpill.add::after`, 14d), and
+   its press is `translateY(2px)` in 10, so a hover at 1.05 handed every click a 5% sideways snap
+   of the dashed ring. The green glow is what says "this one adds something", not the size. */
+.devpill.add{transition:transform 140ms var(--rf-ez-snap),box-shadow 140ms var(--rf-ez-snap),
+           background .14s,border-color .14s}
+.devpill.add:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(108,179,63,.20)}
+/* "Add the first capsule": the one button that matters on an empty hub breathes until it is used. */
+@keyframes rf-first-breathe{0%,100%{box-shadow:0 3px 0 rgba(0,0,0,.28)}50%{box-shadow:0 3px 0 rgba(0,0,0,.28),0 0 0 6px rgba(232,74,138,.22)}}
+.devpill.add.first{animation:rf-first-breathe 1.8s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.devpill.add.first{animation:none}}
+
+/* ---- ENTRANCE: cards slide-up + scale-in with overshoot + stagger ---- */
+@keyframes rf-enter{
+  from{opacity:0;transform:translateY(10px) scale(.96)}
+  60%{opacity:1}
+  to{opacity:1;transform:none}
+}
+.card.rf-in,.phb-card.rf-in,.ed-cond-card.rf-in,
+.rf-in-now{
+  animation:rf-enter var(--rf-d-enter) var(--rf-ez-overshoot) both;
+  animation-delay:calc(var(--rf-i,0) * var(--rf-stagger));
+}
+/* ONE entrance language: rfStagger() (tab switch + freshly added list item) adds
+   .rf-in-now to top-level cards/pads/folds; keyframes shared with the initial-load stagger. */
+/* JS adds will-change only for the duration of the entrance and clears it on
+   animationend, so nothing stays permanently promoted to its own layer. */
+.rf-anim{will-change:transform,opacity}
+
+/* ---- POP-IN: chips / toggles on state change ---- */
+/* TWO POPS, because the two things that pop are not the same shape.
+   `rf-pop` (a squeeze) stays for what it was drawn for: 18-px checkboxes and radios
+   (`input.rf-checkpop`, 10). A square that small has nothing else to do — it cannot hop far
+   enough to be seen, and it carries no stitch to distort.
+   `rf-pop-hop` is for the CONTROLS rf-motion.js pops on click: #armBtn, #mEnable, .grp-enable,
+   #recToggle, .rf-toggle, .seqchip. Those are wide, and four of them are stitched `button.btn`s.
+   Squeezing one from .8 to 1.06 swung the ends of a 110-px button through ~11px and back, and
+   the dashed thread 4px inside the edge rode along — a horizontal rubber-band on every single
+   click, which is what the owner saw and asked to be rid of (2026-09-08).
+   A hop says the same thing in the axis this skin already presses in: it comes up off the
+   shadow, overshoots, settles. Width never changes, so the stitch stays a stitch. */
+@keyframes rf-pop{
+  0%{transform:scale(.8)}
+  60%{transform:scale(1.06)}
+  100%{transform:scale(1)}
+}
+@keyframes rf-pop-hop{
+  0%{transform:translateY(3px)}
+  55%{transform:translateY(-3px)}
+  100%{transform:none}
+}
+.rf-pop{animation:rf-pop-hop var(--rf-d-pop) var(--rf-ez-overshoot) both}
+
+/* ---- MODAL EXIT: shared closing (fade backdrop + settle card) for #devEdit/#pairModal/#rfInc/#rfSafe ---- */
+@keyframes rfm-out{from{opacity:1}to{opacity:0}}
+@keyframes rfm-card-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.96)}}
+.rfm-closing{animation:rfm-out var(--rf-d-press) var(--rf-ez-snap) both !important}
+.rfm-closing .de-box,.rfm-closing .pm-box,.rfm-closing .ic-box,.rfm-closing .ts-box{
+  animation:rfm-card-out var(--rf-d-press) var(--rf-ez-snap) both !important}
+
+/* ---- MODAL ENTRANCE: reuse global rfm-pop/rfm-fade keyframes on the injected dialogs ---- */
+#devEdit,#pairModal,#rfInc,#rfSafe{animation:rfm-fade var(--rf-d-press) ease both}
+#devEdit .de-box,#pairModal .pm-box,#rfInc .ic-box,#rfSafe .ts-box{
+  animation:rfm-pop var(--rf-d-pop) var(--rf-ez-overshoot) both}
+
+/* ---- SUMMARY + icon-btn press/release (were missing from the universal press) ----
+   A nudge, not a scale: fold summaries run the full card width, and scale(.99) on a
+   1200-px bar pulled both ends in by ~6 px — the whole panel visibly shrank. The same
+   reasoning that later took scale() off every stitched button at the top of this file.
+   .icon-btn is the exception it names: 24-26 px, square, unstitched (14d), and with no
+   shadow gap under it to drop into, so the squeeze is the only press it can show. */
+summary{transition:transform var(--rf-d-release) var(--rf-ez-overshoot)}
+summary:active{transform:translateY(1px)}
+.icon-btn{transition:background .12s,border-color .12s,color .12s,transform var(--rf-d-release) var(--rf-ez-overshoot)}
+.icon-btn:active{transform:scale(.92);transition:transform var(--rf-d-press) var(--rf-ez-snap)}
+.pad-chip:hover{transform:translateY(-1px)}   /* hover lift */
+.pad-chip:active{transform:translateY(1px)}   /* press must out-rank hover (later source) */
+
+/* ---- REDUCED MOTION: fully respect user preference for ALL new rules ---- */
+@media (prefers-reduced-motion:reduce){
+  button.btn,button.btn:hover,button.btn:active,button.btn.primary:active,
+  .seqchip,.seqchip:hover,.seqchip:focus,
+  .pose3d-gear,.pose3d-gear:hover,.pose3d-gear .bic,.pose3d-gear:hover .bic,
+  .pose3d-controls.pinned ~ .pose3d-gear .bic,#pose3dCard .pose3d-gear.on .bic,
+  .devpill.add,.devpill.add:hover,
+  summary,summary:active,.icon-btn,.icon-btn:active,.pad-chip:hover{
+    animation:none !important;transition:none !important;transform:none !important;
+  }
+  .card.rf-in,.phb-card.rf-in,.ed-cond-card.rf-in,.rf-in-now,.rf-pop,
+  .rfm-closing,.rfm-closing .de-box,.rfm-closing .pm-box,.rfm-closing .ic-box,.rfm-closing .ts-box,
+  #devEdit,#pairModal,#rfInc,#rfSafe,
+  #devEdit .de-box,#pairModal .pm-box,#rfInc .ic-box,#rfSafe .ts-box{
+    animation:none !important;transition:none !important;transform:none !important;
+  }
+  /* status pulses -> static, clearly-visible ring instead of blinking opacity */
+  .badge.live .led,.badge.scan .led,
+  #recToggle.on,header #recToggle.on,
+  .ed-cond-card [data-cf=learn].on,
+  .ov-rule.active .ov-led,.rule.active .led,
+  #armBtn.live,#mEnable.live,.grp-enable.live,#seqRec.rec,
+  .rf-toggle.live .rf-tg-lbl.on{animation:none !important}
+  .badge.live .led{box-shadow:0 0 0 3px var(--ok) !important}
+  .badge.scan .led{box-shadow:0 0 0 3px var(--warn) !important}
+  #recToggle.on,header #recToggle.on{box-shadow:0 0 0 3px var(--bad),0 4px 0 #8f2036 !important}
+  .ov-rule.active .ov-led{box-shadow:0 0 0 3px var(--dcol) !important}
+  .rule.active .led{box-shadow:0 0 0 3px var(--rcol) !important}
+  .ed-cond-card [data-cf=learn].on{box-shadow:0 0 0 2px var(--amber) !important}
+  /* loading skull: no spin/scale — gentle opacity breathe only */
+  .rf-skull-spin,.rfm-restart .rfm-spin{animation:rfSkullFade 1.6s ease-in-out infinite !important}
+  /* toasts: fade only, no slide */
+}
+@keyframes rfSkullFade{0%,100%{opacity:.5}50%{opacity:1}}

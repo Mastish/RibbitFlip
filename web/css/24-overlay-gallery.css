@@ -1,0 +1,168 @@
+/* 24 — GALERIA NAKŁADEK I ŻYWA MINIATURA (rf-41d)
+
+   Górna, stała część ekranu „Nakładka": po lewej podgląd wybranego okna, po prawej kafelki
+   wszystkich okien pogrupowane kapslami. Stoi NAD zakładkami („Nakładka" / „Wygląd"), więc jest
+   jedyną rzeczą na tym ekranie, która się nie przełącza — i dlatego widać na żywo, co robi każdy
+   suwak z zakładki obok.
+
+   Prefiks `ovg-` (overlay gallery) — trzeci obok `ovl-` (ciemna szuflada nad grą) i `ovm-`
+   (jasna karta zarządzania), z tego samego powodu, co tamten podział: żeby reguła jednej
+   powierzchni nigdy nie trafiła w drugą. Kontrolki wspólne z kartą (`.ovm-pill`, `.ovm-pills`)
+   są celowo pożyczone — to te same przyciski, w tej samej karcie, dwa centymetry dalej. */
+
+.ovg{display:grid;grid-template-columns:minmax(280px,1.1fr) minmax(260px,1fr);
+  gap:14px 22px;align-items:start}
+/* Wąskie okno: podgląd nad kafelkami, bo to on odpowiada na pytanie, po które się tu przyszło. */
+@media (max-width:1040px){.ovg{grid-template-columns:1fr}}
+
+/* ---- LEWA STRONA: PODGLĄD -------------------------------------------------------------------- */
+.ovg-prev{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ovg-prev-hd{display:flex;align-items:baseline;gap:10px}
+.ovg-prev-lbl{font-size:12px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase}
+.ovg-scale{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+
+/* Pudełko, w którym stoi ramka. Wysokość STAŁA i podana w pikselach, a nie z proporcji okna:
+   inaczej wybranie paska 900×160 zwijałoby całą górę ekranu do trzech centymetrów, a wybranie
+   słupka 300×900 spychałoby zakładki poniżej ekranu — czyli sam wybór kafelka przestawiałby
+   układ strony. Ramka pomniejsza się wewnątrz i to ona ma oddawać kształt okna. */
+.ovg-stage{position:relative;height:320px;border:1px solid var(--line);border-radius:13px;
+  overflow:hidden;background:var(--bg2);
+  /* Krata pod ramką — widać ją tylko dookoła miniatury i mówi „to jest podgląd, nie okno". */
+  background-image:
+    repeating-linear-gradient(0deg,color-mix(in srgb,var(--line) 55%,transparent) 0 1px,transparent 1px 12px),
+    repeating-linear-gradient(90deg,color-mix(in srgb,var(--line) 55%,transparent) 0 1px,transparent 1px 12px)}
+.ovg-frame{position:absolute;left:0;top:0;border:0;display:block;transform-origin:0 0;
+  background:transparent;
+  /* Cień pod miniaturą oddziela ją od kraty tak, jak okno odcina się od gry — bez niego przy
+     wyglądzie „Sama treść" nie widać, gdzie kończy się okno. */
+  box-shadow:0 2px 14px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.22)}
+.ovg-none{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:20px;font-size:13px;color:var(--dim)}
+
+.ovg-meta{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
+.ovg-meta-nm{font-size:13.5px;color:var(--ink)}
+.ovg-meta-dim{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.ovg-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.ovg-bg-lbl{flex:0 0 auto}
+.ovg-hint{font-size:12px;color:var(--dim);line-height:1.5;max-width:70ch}
+/* „Podgląd w prawdziwym oknie" (UX 261120 B5b, D20): wspólny wiersz `rf-swrow` z dźwignią. */
+.ovg-live-sw{margin-top:4px}
+
+/* ---- PRAWA STRONA: KAFELKI ------------------------------------------------------------------- */
+.ovg-pick{display:flex;flex-direction:column;gap:9px;min-width:0}
+.ovg-groups{display:flex;flex-direction:column;gap:12px;min-width:0}
+.ovg-grp{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ovg-cap{font-size:12px;font-weight:600;color:var(--muted);padding-left:9px;
+  border-left:2px solid color-mix(in srgb,var(--dcol,#8aa0b5) 70%,transparent)}
+
+/* RZĄD KONTROLERA (2026-09-11). Ta sama forma co rząd kapsla, bo to ta sama rzecz — pas okien pod
+   nagłówkiem — tylko nagłówek odpowiada na inne pytanie. Kreska po lewej jest tu SZARA i
+   kreskowana: rząd kapsla nosi kolor JEDNEGO kapsla, a ten należy do kilku naraz i pojedynczy
+   kolor kłamałby o tym, czyj jest. Kto na nim gra, mówią chipy obok nazwy — każdy swoim. */
+.ovg-grp-ctl>.ovg-cap{border-left-style:dashed;border-left-color:var(--line);
+  display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;color:var(--ink)}
+.ovg-capchip{display:inline-flex;align-items:center;gap:4px;font-weight:400;color:var(--muted)}
+.ovg-capchip>i{width:8px;height:8px;border-radius:50%;background:var(--dcol,#8a8375);flex:0 0 auto}
+/* ＋ rzędu kontrolera jest jedynym kafelkiem pustego rzędu, więc nie może wyglądać jak resztka po
+   czymś: dostaje pełną szerokość zwykłego kafelka i ten sam kolor co jego nazwa. */
+.ovg-new-ctl{width:110px}
+/* `relative` NIE jest ozdobą: menu szablonów (＋) jest tu dzieckiem i liczy swoje miejsce od tego
+   pudełka. Bez tego liczyło je od pierwszego pozycjonowanego przodka wyżej i otwierało się
+   300 px obok przycisku, na cudzych kafelkach. */
+.ovg-tiles{position:relative;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;min-width:0}
+
+.ovg-tile{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:3px;
+  width:var(--tw,120px);padding:5px 5px 6px;font:inherit;cursor:pointer;text-align:left;
+  color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:10px}
+.ovg-tile:hover{border-color:color-mix(in srgb,var(--dcol,var(--az)) 60%,var(--line));color:var(--ink)}
+.ovg-tile:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+.ovg-tile.on{color:var(--ink);border-color:var(--dcol,var(--az));
+  background:color-mix(in srgb,var(--dcol,var(--az)) 12%,var(--bg));
+  box-shadow:0 0 0 1px var(--dcol,var(--az))}
+/* Okno koła jest INNEGO RODZAJU — nie stawia się go i nie ma miejsca na ekranie — więc kafelek
+   mówi to kreską, zanim ktokolwiek kliknie i zobaczy krótszy zestaw ustawień. */
+.ovg-tile.is-wheel{border-style:dashed}
+.ovg-tile-nm{font-size:11.5px;font-weight:600;line-height:1.25;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.ovg-tile-dim{font-family:var(--mono);font-size:10.5px;color:var(--dim);line-height:1.2}
+/* Kropka „stoi na ekranie" — ta sama informacja, co słowo na przycisku w pasku wyżej, ale tu musi
+   zmieścić się w kafelku, więc jest kropką, nie napisem. */
+.ovg-tile-on{position:absolute;right:6px;top:6px;width:7px;height:7px;border-radius:50%;
+  background:var(--ok,#3f9a54);box-shadow:0 0 0 2px color-mix(in srgb,var(--ok,#3f9a54) 25%,transparent)}
+
+/* ---- SCHEMAT W KAFELKU -----------------------------------------------------------------------
+   To jest DIAGRAM, nie zdjęcie: prostokąt w proporcji okna z klockami włączonych elementów.
+   Zdjęcie stoi obok, po lewej, i jest jedno — bo kosztuje tyle, co cała strona (patrz nagłówek
+   rf-41d). Barwy są uproszczeniem motywów z 15-overlay.css (--ovl-card w sekcji „theme"): mają
+   dawać poznać wygląd z odległości, a nie odtwarzać go. Prawda jest zawsze o jedno kliknięcie
+   dalej, więc rozjazd tych pięciu par nikogo nie wprowadzi w błąd na dłużej niż sekundę. */
+.ovg-box{display:flex;flex-direction:column;gap:2px;width:100%;padding:3px;border-radius:5px;
+  overflow:hidden;background:var(--ovg-card,#f3ecd9);color:var(--ovg-ink,#3a352a);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 16%,transparent)}
+.ovg-box[data-theme="felt"] {--ovg-card:#f3ecd9;--ovg-ink:#3a352a}
+.ovg-box[data-theme="dark"] {--ovg-card:#171a20;--ovg-ink:#e6e2d6}
+/* „Sama treść" nie ma karty — nad grą zostaje wyłącznie to, co narysowane. Kafelek pokazuje to
+   przezroczystym tłem: pod spodem widać kratę pudełka, tak jak nad grą widać grę. */
+.ovg-box[data-theme="bare"] {--ovg-card:transparent;--ovg-ink:#8d8672}
+.ovg-box[data-theme="neon"] {--ovg-card:#0c1018;--ovg-ink:#8fd8ff}
+.ovg-box[data-theme="glass"]{--ovg-card:#f4f8fd;--ovg-ink:#1b2330}
+/* Przyciemnione tło pod treścią to jedyne ustawienie wyglądu, które zmienia OKNO, a nie kartę —
+   więc w kafelku ciemnieje całe pudełko, nie klocki. */
+.ovg-box.has-bg{background:#0b0d10;--ovg-ink:#cfd4dd}
+
+.ovg-blk{position:relative;display:block;min-height:3px;border-radius:2px;overflow:hidden;
+  background:color-mix(in srgb,currentColor 22%,transparent)}
+.ovg-blk i{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-size:7.5px;line-height:1;letter-spacing:.02em;
+  color:color-mix(in srgb,currentColor 78%,transparent);
+  white-space:nowrap;overflow:hidden}
+/* Klocek niższy niż napis pokazywałby ucięty w pół wyraz — wtedy lepiej sam pasek. */
+.ovg-blk[style*="flex:12"] i,.ovg-blk i{padding:0 2px}
+/* KOŁO MA BYĆ KOŁEM, a nie jajkiem (poprawka: nakładka koła
+   była jajowata, a nie okrągła w podglądzie nakładki po prawej).
+   Było: `flex:1` + `aspect-ratio:1` + `max-width:82%`. Trzy reguły, z których każda po kolei ma
+   sens, a razem dają owal: `flex:1` (czyli `flex-basis:0`) rozciąga pierścień na CAŁĄ wysokość
+   pudełka, proporcja chce dać mu tę samą szerokość, a `max-width` zaraz ją przycina do 82% —
+   i wysokość już się za tym nie cofa, bo jest wyznaczona przez flexa, a nie przez proporcję.
+   Mierzalny wynik: 82% szerokości × 100% wysokości.
+   Jest: kwadrat liczony z KRÓTSZEGO boku pudełka (`cqmin`), więc pierścień jest kołem przy każdym
+   kształcie i każdej wielkości kafelka, a `margin:auto` środkuje go w obu osiach. Pierwsza para
+   `width`/`height` to droga awaryjna dla przeglądarki bez zapytań kontenerowych — tam zostaje
+   dawne 82% szerokości, ale już z proporcją liczoną OD NIEJ, czyli też kołem. */
+.ovg-box.has-wheel{container-type:size}
+.ovg-blk-wheel{flex:0 0 auto;margin:auto;border-radius:50%;
+  aspect-ratio:1;width:82%;height:auto;
+  width:82cqmin;height:82cqmin;
+  background:radial-gradient(circle at 50% 50%,
+    transparent 0 26%,color-mix(in srgb,currentColor 26%,transparent) 27% 100%)}
+.ovg-blk-none{flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;
+  color:color-mix(in srgb,currentColor 55%,transparent)}
+
+/* ---- ＋ NOWA NAKŁADKA I SZABLONY -------------------------------------------------------------- */
+.ovg-new{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  /* Wysokość WŁASNA, nie rozciągnięta na grupę: kafelki bywają wysokie (słupek 9:16), a przycisk
+     rozciągnięty do ich wysokości czytał się jak szósta nakładka, tyle że pusta. */
+  gap:3px;width:74px;min-height:88px;align-self:flex-end;font:inherit;font-size:10.5px;cursor:pointer;
+  color:var(--dim);background:transparent;border:1px dashed var(--line);border-radius:10px;padding:6px}
+.ovg-new:hover{color:var(--ink);border-color:var(--az)}
+.ovg-new:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+.ovg-new-plus{font-size:17px;line-height:1}
+.ovg-new-lbl{text-align:center;line-height:1.15}
+
+.ovg-menu{position:absolute;z-index:40;min-width:214px;margin-top:4px;padding:5px;
+  background:var(--bg);border:1px solid var(--line);border-radius:11px;
+  box-shadow:0 10px 26px rgba(0,0,0,.22)}
+.ovg-menu-it{display:flex;flex-direction:column;gap:1px;width:100%;padding:6px 9px;font:inherit;
+  text-align:left;cursor:pointer;color:var(--muted);background:transparent;border:0;border-radius:8px}
+.ovg-menu-it:hover{background:var(--bg2);color:var(--ink)}
+.ovg-menu-it:focus-visible{outline:2px solid var(--az);outline-offset:-2px}
+.ovg-menu-it b{font-size:12.5px;font-weight:600}
+.ovg-menu-it i{font-style:normal;font-size:11px;color:var(--dim)}
+
+/* ---- KARTY EDYTORA (zakładki „Nakładka" i „Wygląd") ------------------------------------------
+   Rozmiary elementów dostały wiersz bez oka, bo oko jest w zakładce obok — patrz nagłówek rf-41c. */
+.ovm-el-scale{grid-template-columns:none}
+.ovm-el-scale .ovm-el-lbl{min-width:96px}
+/* Odczyt wielkości okna. `.ovm-val` jest wąską, wyrównaną do prawej liczbą przy suwaku; tutaj stoi
+   zdanie („400 × 712 px · 4:3"), więc rośnie w lewo od etykiety, a nie do sufitu 52 px. */
+.ovm-val-wide{min-width:0;text-align:left;flex:0 1 auto}

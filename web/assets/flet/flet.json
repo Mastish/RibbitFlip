@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Woodwinds/Flute/susNV"
+ },
+ "probki": [
+  {
+   "plik": "flet-1.wav",
+   "nazwa": "LDFlute_susNV_A3_v3_1.wav",
+   "nuta": 69,
+   "root": 68.998,
+   "petla": [
+    0.5934,
+    1.066
+   ]
+  },
+  {
+   "plik": "flet-2.wav",
+   "nazwa": "LDFlute_susNV_E4_v3_1.wav",
+   "nuta": 76,
+   "root": 76.002,
+   "petla": [
+    0.3759,
+    0.8248
+   ]
+  },
+  {
+   "plik": "flet-3.wav",
+   "nazwa": "LDFlute_susNV_C5_v2_1.wav",
+   "nuta": 84,
+   "root": 84.0,
+   "petla": [
+    1.3956,
+    1.8283
+   ]
+  }
+ ]
+}

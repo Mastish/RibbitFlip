@@ -1,0 +1,708 @@
+{
+ "pack_id": "basic_classics",
+ "rejected": 117,
+ "songs": [
+  {
+   "id": "WIMA.4390-FurElise-WoO59.mid",
+   "title": "Für Elise, WoO 59",
+   "composer": "Beethoven, Ludwig van",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.6f19-Grieg01.mid",
+   "title": "Peer Gynt, Op.23",
+   "composer": "Grieg, Edvard",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial 3.0)"
+  },
+  {
+   "id": "WIMA.58f8-donau.mid",
+   "title": "An der schönen blauen Donau, Op.314",
+   "composer": "Strauss Jr., Johann",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.3363-ELGAR,MilitaryMarch-1.mid",
+   "title": "Pomp and Circumstance March No.1, Op.39 No.1",
+   "composer": "Elgar, Edward",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "PMLP02799-Träumerei.mid",
+   "title": "Kinderszenen, Op.15",
+   "composer": "Schumann, Robert",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)"
+  },
+  {
+   "id": "PMLP22223-Wiegenlied.mid",
+   "title": "5 Lieder, Op.49",
+   "composer": "Brahms, Johannes",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution-NonCommercial-NoDerivs 3.0)"
+  },
+  {
+   "id": "WIMA.4084-DVORAK_humor.mid",
+   "title": "8 Humoresques, Op.101",
+   "composer": "Dvořák, Antonín",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "PMLP126435-4SeasonsWinterLargo12.mid",
+   "title": "Violin Concerto in F minor, RV 297",
+   "composer": "Vivaldi, Antonio",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)"
+  },
+  {
+   "id": "WIMA.8b56-Tchaikovsky_The-witch.mid",
+   "title": "Children's Album, Op.39",
+   "composer": "Tchaikovsky, Pyotr",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.972a-satie-menuet.mid",
+   "title": "Premier menuet",
+   "composer": "Satie, Erik",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial 3.0)"
+  },
+  {
+   "id": "WIMA.98b0-erlkonig.mid",
+   "title": "Erlkönig, D.328",
+   "composer": "Schubert, Franz",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.e06b-gadagio.mid",
+   "title": "Piano Sonata No.8, Op.13",
+   "composer": "Beethoven, Ludwig van",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.6602-invention01vla.mid",
+   "title": "Invention in C major, BWV 772",
+   "composer": "Bach, Johann Sebastian",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.2965-Bach_Inv13_BWV784(AA).mid",
+   "title": "Invention in A minor, BWV 784",
+   "composer": "Bach, Johann Sebastian",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.672c-Wassermusik.mid",
+   "title": "Water Music Suite No.2, HWV 349",
+   "composer": "Handel, George Frideric",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "PMLP160185-clementi-op42-les48-bach-minuet.mid",
+   "title": "Introduction to the Art of Playing the Pianoforte, Op.42",
+   "composer": "Clementi, Muzio",
+   "powod": "reguła 5: pakiet Podstawowe klasyki wymaga autora pliku MIDI"
+  },
+  {
+   "id": "WIMA.5a2d-volksweise.mid",
+   "title": "Lyric Pieces, Op.12",
+   "composer": "Grieg, Edvard",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.e28f-Grieg-Vaaren.mid",
+   "title": "2 Elegiac Melodies, Op.34",
+   "composer": "Grieg, Edvard",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "PMLP149049-Fruhlingsstimmen31.mid",
+   "title": "Frühlingsstimmen, Op.410",
+   "composer": "Strauss Jr., Johann",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)"
+  },
+  {
+   "id": "WIMA.6a76-StIIPerMSco.mid",
+   "title": "Perpetuum mobile, Op.257",
+   "composer": "Strauss Jr., Johann",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "PMLP03585-St_Antoni_Choral.mid",
+   "title": "Variations on a Theme by Haydn, Op.56",
+   "composer": "Brahms, Johannes",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)"
+  },
+  {
+   "id": "WIMA.eb1f-Opus_62_nr_4.mid",
+   "title": "Lieder ohne Worte, Op.62",
+   "composer": "Mendelssohn, Felix",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.8c4a-op88.mid",
+   "title": "An die Musik, D.547",
+   "composer": "Schubert, Franz",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.80ad-Schubert_Deut.Tanz-D.420.12.mid",
+   "title": "12 German Dances, D.420",
+   "composer": "Schubert, Franz",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.03cb-W.A.Moz.Adagio_KV540.mid",
+   "title": "Adagio in B minor, K.540",
+   "composer": "Mozart, Wolfgang Amadeus",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.04be-Adagio_K361.mid",
+   "title": "Serenade in B-flat major, K.361/370a",
+   "composer": "Mozart, Wolfgang Amadeus",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.84c7-Andante-of-SymphonyNr.1_Beethoven.mid",
+   "title": "Symphony No.1, Op.21",
+   "composer": "Beethoven, Ludwig van",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.767c-Air_Haendel.mid",
+   "title": "Air in D major",
+   "composer": "Handel, George Frideric",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.b0f2-herkules_play4_march.mid",
+   "title": "Hercules, HWV 60",
+   "composer": "Handel, George Frideric",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "PMLP29257-Domine_Deus.mid",
+   "title": "Gloria in D major, RV 589",
+   "composer": "Vivaldi, Antonio",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution-NonCommercial-ShareAlike 3.0)"
+  },
+  {
+   "id": "WIMA.66d8-Grieg_Piano-Concerto-in-A-minor_Op.16_string-ensemble-arrangement--5Brequires-adjusting-5D.mid",
+   "title": "Piano Concerto, Op.16",
+   "composer": "Grieg, Edvard",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.82c1-bwv1087_14.mid",
+   "title": "14 Canons, BWV 1087",
+   "composer": "Bach, Johann Sebastian",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.5c41-Mozart_Menuett-KV65a.mid",
+   "title": "7 Minuets, K.61b",
+   "composer": "Mozart, Wolfgang Amadeus",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.dab6-GRIEG_halling72-4.mid",
+   "title": "Norwegian Peasant Dances, Op.72",
+   "composer": "Grieg, Edvard",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.5ecc-Schubert_Deut.Tanz-D.972.2.mid",
+   "title": "3 German Dances, D.972",
+   "composer": "Schubert, Franz",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.43e2-6hexar_m.mid",
+   "title": "Aria and 8 Variations in F minor, P.198",
+   "composer": "Pachelbel, Johann",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.c148-MENDELSSOHN,Andante,D-dur.mid",
+   "title": "Andante in D major, MWV W 6",
+   "composer": "Mendelssohn, Felix",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.aa17-cl366b.mid",
+   "title": "6 Piano Sonatinas, Op.36",
+   "composer": "Clementi, Muzio",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.eff8-Tel_Grace.mid",
+   "title": "12 Marches héroiques 'Heldenmusik', TWV 50:31-42",
+   "composer": "Telemann, Georg Philipp",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.0ded-Paganini_Perigoldino.mid",
+   "title": "Perigoldino, MS 104",
+   "composer": "Paganini, Niccolò",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.cc96-weber-abend.mid",
+   "title": "8 Volkslieder, Op.64",
+   "composer": "Weber, Carl Maria von",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial No Derivatives 3.0)"
+  },
+  {
+   "id": "WIMA.a444-onzevakol.mid",
+   "title": "Liturgy of St. John Chrysostom, Op.22",
+   "composer": "Rimsky-Korsakov, Nikolay",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "WIMA.9a83-Scriabin-5-preludes.mid",
+   "title": "24 Preludes, Op.11",
+   "composer": "Scriabin, Aleksandr",
+   "powod": "reguła 4b: IMSLP podaje licencję z NC albo ND (Creative Commons Attribution Non-commercial Share Alike 3.0)"
+  },
+  {
+   "id": "PMLP116955-Allegro_Wolfgang_Amadeus_Mozart_1762.mid",
+   "title": "Allegro in B-flat major, K.3",
+   "composer": "Mozart, Wolfgang Amadeus",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.90e3-marmotte.mid",
+   "title": "8 Lieder, Op.52",
+   "composer": "Beethoven, Ludwig van",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP289553-Cello_Sonata_in_A_Minor_RV_43_Movement_Four_of_Four_Antonio_Vivaldi_1740.mid",
+   "title": "Cello Sonata in A minor, RV 43",
+   "composer": "Vivaldi, Antonio",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP481335-Handel_468_Air_JoshuaBH.mid",
+   "title": "Air in A major, HWV 468",
+   "composer": "Handel, George Frideric",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.5dd9-grieg_elegie47_7.mid",
+   "title": "Lyric Pieces, Op.47",
+   "composer": "Grieg, Edvard",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.6fe7-arpviola.mid",
+   "title": "Arpeggione Sonata, D.821",
+   "composer": "Schubert, Franz",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP52928-Brahms_Fugue_la_min.mid",
+   "title": "Fugue, WoO 8",
+   "composer": "Brahms, Johannes",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP81899-Haydn_Flotenuhr_Hob_19_11.mid",
+   "title": "Flötenuhr in C major, Hob.XIX:11",
+   "composer": "Haydn, Joseph",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP299342-Pachelbel_P.139_Fuge_A.mid",
+   "title": "Fugue in A major, P.139",
+   "composer": "Pachelbel, Johann",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP02678-Mendelssohn_Faith_Op.102_6.mid",
+   "title": "Lieder ohne Worte, Op.102",
+   "composer": "Mendelssohn, Felix",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP02707-Schumann_Op.68_41.Choral_figuré.mid",
+   "title": "Album für die Jugend, Op.68",
+   "composer": "Schumann, Robert",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP641562-son2.mid",
+   "title": "Sonata in E-flat major, Z.803",
+   "composer": "Purcell, Henry",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.58dc-Al99(III)Sco.mid",
+   "title": "Concerto for 2 Oboes in C major, Op.9 No.9",
+   "composer": "Albinoni, Tomaso",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP118009-Elgar_In_the_Dawn_orch.mid",
+   "title": "2 Songs, Op.41",
+   "composer": "Elgar, Edward",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.eb9a-Telemann_Sonata-Nr.1.4.F-Dur.mid",
+   "title": "6 Sonatas, TWV 40:101-106",
+   "composer": "Telemann, Georg Philipp",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP816060-corop4no3.mid",
+   "title": "Trio Sonata in A major, Op.4 No.3",
+   "composer": "Corelli, Arcangelo",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP577056-Scarlatti_Cary703_g.mid",
+   "title": "Keyboard Sonata in A major, Cary 703",
+   "composer": "Scarlatti, Domenico",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP200271-Couperin_25_5_Ombres.mid",
+   "title": "Pièces de clavecin, Livre 4",
+   "composer": "Couperin, François",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP19132-Rameau_4.7_Gavotte.mid",
+   "title": "Suite in A minor, RCT 5",
+   "composer": "Rameau, Jean-Philippe",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP198715-Scale_Study.mid",
+   "title": "Scala per pianoforte",
+   "composer": "Paganini, Niccolò",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.e976-Jaegerchoer_Weber.mid",
+   "title": "Der Freischütz, Op.77",
+   "composer": "Weber, Carl Maria von",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP351508-Beautiful_Child_of_Song.mid",
+   "title": "Beautiful Child of Song",
+   "composer": "Foster, Stephen",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP8797-III_Romance.mid",
+   "title": "Suite No.2, Op.17",
+   "composer": "Rachmaninoff, Sergei",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP7337-8score.mid",
+   "title": "Iberia",
+   "composer": "Albéniz, Isaac",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP09471-Bach_419_Choral.mid",
+   "title": "Chorale Harmonisations, BWV 1-438",
+   "composer": "Bach, Johann Sebastian",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP120045-Allegro_K1C_Wolfgang_Amadeus_Mozart_1761.mid",
+   "title": "Allegro in F major, K.1c",
+   "composer": "Mozart, Wolfgang Amadeus",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP121650-WoO_95.mid",
+   "title": "Chorus for the Allied Princes, WoO 95",
+   "composer": "Beethoven, Ludwig van",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.5232-vivaldi-sonata-RV44-Midi.mid",
+   "title": "Cello Sonata in A minor, RV 44",
+   "composer": "Vivaldi, Antonio",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP480790-Handel_Air_HWV471.mid",
+   "title": "Air in B-flat major, HWV 471",
+   "composer": "Handel, George Frideric",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP01784-trabalho_2_grieg.mid",
+   "title": "Lyric Pieces, Op.68",
+   "composer": "Grieg, Edvard",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.23a6-Schubert_D795.20-Baches-Wiegenlied_Part.mid",
+   "title": "Die schöne Müllerin, D.795",
+   "composer": "Schubert, Franz",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP6495-set_2.mid",
+   "title": "Variations on a Theme by Paganini, Op.35",
+   "composer": "Brahms, Johannes",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP81899-Haydn_Flotenuhr_Hob_19_12.mid",
+   "title": "Flötenuhr in C major, Hob.XIX:12",
+   "composer": "Haydn, Joseph",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP207865-Pachelbel_P.141_Fuge_hmoll.mid",
+   "title": "Fugue in B minor, P.141",
+   "composer": "Pachelbel, Johann",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP02676-Mendelssohn_Fileuse_Op.67No4.mid",
+   "title": "Lieder ohne Worte, Op.67",
+   "composer": "Mendelssohn, Felix",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.436d-Als-das-Christkind_R.Schumann.mid",
+   "title": "Liederalbum für die Jugend, Op.79",
+   "composer": "Schumann, Robert",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP85784-Purcell_4Parts_Sonata_No6.mid",
+   "title": "Sonata in G minor, Z.807",
+   "composer": "Purcell, Henry",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.5f8b-Al96(III)Sco.mid",
+   "title": "Concerto for 2 Oboes in G major, Op.9 No.6",
+   "composer": "Albinoni, Tomaso",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP896019-Elgar_The_Torch_orch_G_Morrison_sound.mid",
+   "title": "2 Songs, Op.60",
+   "composer": "Elgar, Edward",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP398170-Tel43g3Sco.mid",
+   "title": "Concerto di Camera, TWV 43:g3",
+   "composer": "Telemann, Georg Philipp",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP1150001-corop1no4.mid",
+   "title": "Trio Sonata in A minor, Op.1 No.4",
+   "composer": "Corelli, Arcangelo",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP335267-Scarlatti_Sonate_K.101.mid",
+   "title": "Keyboard Sonata in A major, K.101",
+   "composer": "Scarlatti, Domenico",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP71132-F.Couperin_Apotheose_Apollon_persuade.mid",
+   "title": "L'apothéose de Lully",
+   "composer": "Couperin, François",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP18912-Rameau_La_Dauphine.mid",
+   "title": "La Dauphine, RCT 12",
+   "composer": "Rameau, Jean-Philippe",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP343105-Fairy_Belle.mid",
+   "title": "Fairy-Belle",
+   "composer": "Foster, Stephen",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.251f-BWV_1030.mid",
+   "title": "Flute Sonata in B minor, BWV 1030",
+   "composer": "Bach, Johann Sebastian",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP119983-Andante_In_C_Major_Wolfgang_Amadeus_Mozart_1761.mid",
+   "title": "Andante in C major, K.1a",
+   "composer": "Mozart, Wolfgang Amadeus",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP110002-Beethoven_Fugue.mid",
+   "title": "Fugue for Organ, WoO 31",
+   "composer": "Beethoven, Ludwig van",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP283340-Cello_Sonata_In_B_Flat_Major_RV_47_Movement_Four_of_Four_Antonio_Vivaldi_1740.mid",
+   "title": "Cello Sonata in B-flat major, RV 47",
+   "composer": "Vivaldi, Antonio",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP480901-Handel_465_Air_doubles.mid",
+   "title": "Air in F major, HWV 465",
+   "composer": "Handel, George Frideric",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.7356-Schubert_Menuetto-emoll-D600.mid",
+   "title": "Minuet in C-sharp minor, D.600",
+   "composer": "Schubert, Franz",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP52813-Brahms_Op74_2_O_Heiland,_reiss_die_Himmel_auf_Brass_Quintet_Adams.mid",
+   "title": "2 Motets, Op.74",
+   "composer": "Brahms, Johannes",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP81899-Haydn_Flotenuhr_Hob_19_13.mid",
+   "title": "Flötenuhr in C major, Hob.XIX:13",
+   "composer": "Haydn, Joseph",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP733717-Pachelbel_P.143_Fugue_C.mid",
+   "title": "Fugue in C major, P.143",
+   "composer": "Pachelbel, Johann",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP27285-Z731.mid",
+   "title": "3 Parts upon a Ground, Z.731",
+   "composer": "Purcell, Henry",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.749b-A(III)Sco.mid",
+   "title": "Concerto in D major, R.II.E.4.1.2",
+   "composer": "Albinoni, Tomaso",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP896261-Elgar_Oh_Soft_was_the_Song_D_orch_Morrison_sound.mid",
+   "title": "3 Songs, Op.59",
+   "composer": "Elgar, Edward",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP258188-Telemann_Concerto2Clv_III.mid",
+   "title": "Concerto for Flute, Harpsichord and Continuo, TWV 42:D6",
+   "composer": "Telemann, Georg Philipp",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP815847-corop3no10.mid",
+   "title": "Trio Sonata in A minor, Op.3 No.10",
+   "composer": "Corelli, Arcangelo",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP335451-Scarlatti_Sonate_K.114.mid",
+   "title": "Keyboard Sonata in A major, K.114",
+   "composer": "Scarlatti, Domenico",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP111977-Rameau_Pigmalion_Contredanse.mid",
+   "title": "Pigmalion, RCT 52",
+   "composer": "Rameau, Jean-Philippe",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP365569-Id_Be_a_Fairy.mid",
+   "title": "I'd Be a Fairy",
+   "composer": "Foster, Stephen",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP05771-gigue.mid",
+   "title": "French Suite No.5 in G major, BWV 816",
+   "composer": "Bach, Johann Sebastian",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.4f10-CanMozart3Leck.mid",
+   "title": "Canon for 3 Voices in B-flat major, K.233/382d",
+   "composer": "Mozart, Wolfgang Amadeus",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP294184-Cello_Sonata_in_E_Minor_RV_40_Movement_Four_of_Four_Antonio_Vivaldi_1740.mid",
+   "title": "Cello Sonata in E minor, RV 40",
+   "composer": "Vivaldi, Antonio",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP480814-Handel_466_Concertino.mid",
+   "title": "Air in G minor, HWV 466",
+   "composer": "Handel, George Frideric",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.4ddd-ValSenSco.mid",
+   "title": "Valses sentimentales, D.779",
+   "composer": "Schubert, Franz",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP52573-Brahms_Regina_coeli.mid",
+   "title": "3 Sacred Choruses, Op.37",
+   "composer": "Brahms, Johannes",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP81899-Haydn_Flotenuhr_Hob_19_14.mid",
+   "title": "Flötenuhr in C major, Hob.XIX:14",
+   "composer": "Haydn, Joseph",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.0355-Fugue-in-d.mid",
+   "title": "Fugue in D minor, P.154",
+   "composer": "Pachelbel, Johann",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP592640-z655.mid",
+   "title": "A New Scotch Tune, Z.655",
+   "composer": "Purcell, Henry",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "WIMA.5880-Alb95Sco.mid",
+   "title": "Oboe Concerto in C major, Op.9 No.5",
+   "composer": "Albinoni, Tomaso",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP897238-Elgar_Rondel_orch_Morrison_sound.mid",
+   "title": "7 Lieder",
+   "composer": "Elgar, Edward",
+   "powod": "poza limitem 60 utworów pakietu"
+  },
+  {
+   "id": "PMLP80536-TWV52F2.mid",
+   "title": "Concerto for Oboe and Violin, TWV 52:F2",
+   "composer": "Telemann, Georg Philipp",
+   "powod": "poza limitem 60 utworów pakietu"
+  }
+ ]
+}

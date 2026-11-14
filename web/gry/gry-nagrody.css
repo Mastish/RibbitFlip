@@ -1,0 +1,583 @@
+/* RibbitBeat: animacja postępu po piosence (js/nagrody.js, 10-16). Nakładka z kartą-naszywką: filc, ścieg, twardy cień,
+   bez poświat poza reflektorem nagrody. Ruch krótki, ucięty; ograniczony ruch wyłącza promienie, iskry i skoki. */
+#nagrody{position:fixed;inset:0;z-index:68;display:flex;align-items:center;justify-content:center;background:rgba(33,31,29,.62)}
+.ng-karta{position:relative;width:min(520px,94vw);max-height:92vh;overflow:auto;padding:22px 26px 18px;display:flex;flex-direction:column;gap:12px;
+  box-shadow:0 14px 0 rgba(33,31,29,.25),inset 0 0 0 2px var(--ink);animation:ngWjazd .4s cubic-bezier(.2,1.4,.4,1) both}
+.ng-kropki{display:flex;justify-content:center;gap:7px;min-height:10px}
+.ng-k{display:block;width:9px;height:9px;border-radius:50%;background:var(--line);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.ng-k.byla{background:var(--green)}
+.ng-k.akt{background:var(--amber);transform:scale(1.35)}
+.ng-scena{min-height:300px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;animation:ngScena .32s ease-out both}
+.ng-glowa{display:flex;align-items:center;gap:10px}
+.ng-kapsel{width:42px;height:42px;border-radius:50%;box-shadow:0 0 0 3px var(--kolor,var(--amber))}
+.ng-kto{font:800 20px/1.1 var(--display);color:var(--ink)}
+.ng-licznik{display:flex;flex-direction:column;align-items:center;margin-top:6px}
+.ng-liczba{font:400 64px/1 var(--rebel);color:var(--pink);text-shadow:0 4px 0 rgba(33,31,29,.18);font-variant-numeric:tabular-nums}
+.ng-liczba-et{font:800 13px/1 var(--display);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.ng-chipy{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:6px}
+.ng-chip{font:800 12px/1 var(--display);padding:4px 9px;border-radius:999px;background:var(--amber);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.ng-poziom{width:100%;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;margin-top:6px}
+.ng-poziom-et{font:400 22px/1 var(--rebel);color:var(--ink)}
+.ng-pasek{display:block;height:20px;border-radius:999px;background:var(--panel2);box-shadow:inset 0 0 0 2px var(--ink);overflow:hidden;position:relative}
+.ng-pasek-w{display:block;height:100%;width:0;background:var(--green);border-radius:inherit;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.ng-poziom .ng-pasek-w{transition:none}
+.ng-pasek-opis{grid-column:2;font:700 12px/1 var(--sans);color:var(--muted);text-align:right}
+.ng-poziom.bijacy .ng-pasek{animation:ngBlysk .6s ease-out}
+.ng-pop{min-height:34px;font:400 30px/1 var(--rebel);color:var(--green-d);opacity:0}
+.ng-pop.pokaz{animation:ngPop 1.1s cubic-bezier(.2,1.5,.4,1) both}
+/* reflektor nagrody */
+.ng-naklejka{font:400 19px/1 var(--rebel);color:var(--ink);background:var(--amber);padding:7px 14px;border-radius:10px;transform:rotate(-2.5deg);
+  box-shadow:0 4px 0 rgba(33,31,29,.25),inset 0 0 0 2px var(--ink);animation:ngPop .7s cubic-bezier(.2,1.6,.4,1) both}
+.ng-naklejka-nast{background:var(--lime)}
+.ng-reflektor{position:relative;width:200px;height:200px;display:grid;place-items:center}
+.ng-promienie{position:absolute;inset:-40px;border-radius:50%;opacity:.9;
+  background:repeating-conic-gradient(from 0deg,var(--kolor,#eaa32b) 0 9deg,transparent 9deg 24deg);
+  -webkit-mask:radial-gradient(circle,#000 18%,transparent 70%);mask:radial-gradient(circle,#000 18%,transparent 70%);
+  animation:ngObrot 14s linear infinite}
+.ng-ikona{position:relative;z-index:1;width:150px;height:150px;display:grid;place-items:center;animation:ngNagroda .8s cubic-bezier(.2,1.6,.4,1) both}
+.ng-ikona .ng-ikona-obraz,.ng-ikona img{max-width:100%;max-height:100%;filter:drop-shadow(0 6px 0 rgba(33,31,29,.25))}
+.ng-iskry{position:absolute;inset:0;pointer-events:none}
+.ng-iskra{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5px;border-radius:2px;opacity:0;
+  clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:ngIskra .9s ease-out var(--d,0s) both}
+.ng-nazwa{margin:0;font:800 30px/1.05 var(--display);color:var(--ink)}
+.ng-opis{margin:0;font:600 14px/1.4 var(--sans);color:var(--ink);max-width:40ch}
+.ng-dla{font:800 12px/1 var(--display);color:var(--muted)}
+/* następna nagroda */
+.ng-nast{width:100%;display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;text-align:left;padding:10px 12px;border-radius:12px;
+  background:var(--panel2);box-shadow:inset 0 0 0 2px var(--ink),0 3px 0 rgba(120,90,40,.15)}
+.ng-nast-ikona{width:64px;height:64px;display:grid;place-items:center;opacity:.9}
+.ng-nast-ikona img{max-width:100%;max-height:100%}
+.ng-nast-tekst{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ng-nast-kto{font:800 13px/1 var(--display);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.ng-nast-nazwa{font:800 18px/1.1 var(--display);color:var(--ink)}
+.ng-nast-ile{font:700 12.5px/1 var(--sans);color:var(--green-d)}
+.ng-nast .ng-pasek{height:14px}
+.ng-nast .ng-pasek-w{background:var(--amber);transition:width 1.1s cubic-bezier(.2,.8,.2,1) .15s}
+.ng-akcje{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px}
+.ng-dalej{min-width:130px}
+@keyframes ngWjazd{from{transform:translateY(34px) rotate(-3deg) scale(.86);opacity:0}to{transform:none;opacity:1}}
+@keyframes ngScena{from{transform:translateX(26px);opacity:0}to{transform:none;opacity:1}}
+@keyframes ngPop{0%{transform:scale(.3) rotate(-8deg);opacity:0}60%{transform:scale(1.15) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(-2deg);opacity:1}}
+@keyframes ngNagroda{0%{transform:scale(.1) rotate(-30deg);opacity:0}60%{transform:scale(1.18) rotate(6deg);opacity:1}100%{transform:none;opacity:1}}
+@keyframes ngObrot{to{transform:rotate(360deg)}}
+@keyframes ngBlysk{0%{box-shadow:inset 0 0 0 2px var(--ink),0 0 0 0 rgba(234,163,43,.9)}100%{box-shadow:inset 0 0 0 2px var(--ink),0 0 0 14px rgba(234,163,43,0)}}
+@keyframes ngIskra{0%{transform:translate(0,0) scale(.3) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.1) rotate(180deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ng-karta,.ng-scena,.ng-naklejka,.ng-ikona,.ng-promienie,.ng-pop.pokaz,.ng-poziom.bijacy .ng-pasek{animation:none}
+  .ng-pop{opacity:1}.ng-pasek-w,.ng-nast .ng-pasek-w{transition:none}}
+/* obszycie: przerywany ścieg tuż w głąb krawędzi karty, jak na naszywkach w reszcie gry */
+.ng-karta::after,.st-karta::after{content:"";position:absolute;inset:6px;border:2px dashed var(--stitch);border-radius:12px;pointer-events:none}
+.ng-karta>*,.st-karta>*{position:relative;z-index:1}
+
+/* ---- koło nagród (js/kolo.js, js/nagrody.js) ---- runda 9 (wcześniej kształty były połamane, tekst się wylewał, a lampki stały
+   nierówno): JEDNA SZAFKA z czarnego filcu o stałych wymiarach projektowych (548 px), skalowana transformem do okna
+   (--skala z nagrody.js), w środku prostokątne ciemne okna o jednym promieniu (16 px) i jednym odstępie (12 px), lampki w dwóch równych rzędach
+   tylko na krawędziach korpusu, napisy w stałych polach (nowrap + ellipsis). Ruch tylko transform/opacity; poświaty jako stałe pseudoelementy. */
+#nagrody[data-scena="kolo"] .ng-karta{width:min(600px,96vw);padding-top:18px;padding-bottom:18px}
+#nagrody[data-scena="kolo"] .ng-scena{flex:none;gap:10px}
+.kolo-status{min-height:36px;display:flex;align-items:center;justify-content:center;text-align:center;font:800 15px/1.2 var(--display);color:var(--ink)}   /* zawsze miejsce na dwie linie: wysokość karty nie skacze między etapami */
+#nagrody[data-scena="kolo"] .ng-akcje{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:12px;min-height:76px;margin-top:2px}   /* miejsce na „Losuj dalej” zarezerwowane od początku */
+.ng-chip-los{background:var(--lime)}
+.ng-pasek-duzy{height:26px;width:100%}
+.ng-nast-los{grid-template-columns:1fr;justify-items:stretch;text-align:center;gap:8px;padding:14px 16px}
+.droga-poz.rz-rzadki{border-color:#3d8fd6}.droga-poz.rz-epicki{border-color:#8c5bd6}.droga-poz.rz-legendarny{border-color:#eaa32b;background:#fff4c8}.droga-poz.rz-sekretny{border-color:#9ad6ff;background:#1a1a1a;color:#fff}
+.droga-wolne{font-weight:800;color:var(--green-d)}
+
+/* ---- korpus szafki i skala ---- */
+.kolo-maszyna-w{position:relative;width:548px;max-width:100%;margin:2px auto 0}
+.kolo-maszyna-w[hidden]{display:none}
+.kolo-maszyna{--okno:#2e2a26;--obw:#4a443d;position:absolute;left:50%;top:0;width:548px;box-sizing:border-box;transform:translateX(-50%) scale(var(--skala,1));transform-origin:50% 0;
+  padding:32px 16px 18px;border-radius:24px;background:#211f1d;background-image:linear-gradient(rgba(33,31,29,.88),rgba(33,31,29,.88)),var(--felt);
+  box-shadow:0 7px 0 rgba(33,20,10,.35),inset 0 0 0 3px #3a352f}
+.kolo-maszyna::after{content:"";position:absolute;inset:6px;border:2px dashed rgba(243,233,210,.22);border-radius:19px;pointer-events:none}
+.kolo-cialo{position:relative;display:flex;flex-direction:column;gap:12px;transition:opacity .5s}
+.kolo-maszyna.wynik .kolo-cialo{opacity:.2}
+.kolo-lampki{position:absolute;left:26px;right:26px;display:flex;justify-content:space-between;pointer-events:none;z-index:3}
+.kolo-lampki.g{top:9px}.kolo-lampki.d{bottom:6px}
+/* Lampki (10-17, pomiar w prawdziwym Chrome 240 Hz: animowane tło i box-shadow 44 lampek przemalowywały je w każdej klatce
+   monitora, przy trzymaniu dźwigni 131 → 161 kl./s i 586 → 240 zgubionych klatek po wyłączeniu): lampka stoi, a świeci jej
+   warstwa ::after (żółta z poświatą) i ::before (różowa przy wygranej), animowana samą przezroczystością (tylko kompozytor). */
+.kolo-lampki i{position:relative;display:block;width:8px;height:8px;border-radius:50%;background:#5a5247;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+.kolo-lampki i::before,.kolo-lampki i::after{content:"";position:absolute;inset:0;border-radius:50%;opacity:0;will-change:opacity}
+.kolo-lampki i::after{background:#ffd84a;box-shadow:0 0 9px 2px #ffd84a}
+.kolo-lampki i::before{background:#ec1a83;box-shadow:0 0 12px 3px #ec1a83}
+.kolo-maszyna[data-stan="idle"] .kolo-lampki i::after{animation:zarIdle .8s steps(1) infinite}
+.kolo-maszyna[data-stan="idle"] .kolo-lampki i:nth-child(odd)::after{animation-delay:.4s}
+.kolo-maszyna[data-stan="laduje"] .kolo-lampki i::after{animation:zarBieg .3s linear infinite;animation-delay:calc(var(--k)*.3s/-11)}
+.kolo-maszyna[data-stan="krec"] .kolo-lampki i::after{animation:zarBieg .16s linear infinite;animation-delay:calc(var(--k)*.16s/-11)}
+.kolo-maszyna[data-stan="wygrana"] .kolo-lampki i::after{animation:zarWygranaA .22s steps(1) 8}
+.kolo-maszyna[data-stan="wygrana"] .kolo-lampki i::before{animation:zarWygranaB .22s steps(1) 8}
+.kolo-maszyna[data-stan="wygrana"][data-rz="legendarny"] .kolo-lampki i::after{animation:zarWygranaA .12s steps(1) 18}
+.kolo-maszyna[data-stan="wygrana"][data-rz="legendarny"] .kolo-lampki i::before{animation:zarWygranaB .12s steps(1) 18}
+@keyframes zarIdle{0%{opacity:1}50%{opacity:0}}
+@keyframes zarBieg{0%{opacity:1}30%{opacity:.55}60%,100%{opacity:0}}
+@keyframes zarWygranaA{0%{opacity:1}50%{opacity:0}}
+@keyframes zarWygranaB{0%{opacity:0}50%{opacity:1}}
+.kolo-sekcja{position:relative;box-sizing:border-box}
+/* tabliczka „Kategoria” tej samej wysokości co dźwignia ①: okno odczytu leży dokładnie między nimi, więc jego środek (złote linie) = środek koła */
+.kolo-tyt{box-sizing:border-box;height:50px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:var(--okno);box-shadow:inset 0 0 0 2px var(--obw);
+  font:400 17px/1 var(--rebel);color:#f3e9d2;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 0 8px rgba(255,216,74,.5)}
+
+/* ---- taca: kapsle (losowania) i szczelina ---- */
+.kolo-taca{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0 4px}
+.kolo-kapsle{position:relative;z-index:4;display:flex;flex-wrap:nowrap;gap:6px;align-items:center;justify-content:center;width:100%;min-height:54px}
+.kolo-kapsel{position:relative;width:48px;height:48px;padding:0;border:0;background:none;cursor:pointer;border-radius:50%;transform:scale(.84);transition:transform .2s cubic-bezier(.2,1.4,.4,1),opacity .2s}
+.kolo-kapsel img{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 0 rgba(0,0,0,.45));pointer-events:none}
+.kolo-kapsel:not(.akt){opacity:.75}
+.kolo-kapsel.akt{transform:none;animation:kapselSkacze 1.1s ease-in-out infinite}
+.kolo-kapsel.akt::before{content:"";position:absolute;inset:-5px;border-radius:50%;box-shadow:0 0 0 3px var(--amber),0 0 16px 4px rgba(255,216,74,.6);animation:kapselPuls 1.1s ease-in-out infinite}
+.kolo-kapsel:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.kolo-kapsel.leci{animation:kapselLeci .62s cubic-bezier(.5,0,.75,.6) forwards;pointer-events:none;z-index:5}
+.kolo-kapsel.leci::before{content:none}
+.kolo-kapsel.zuzyty{visibility:hidden}
+.kolo-kapsle-wiecej{font:400 14px/1 var(--rebel);color:var(--ink);background:var(--amber);padding:6px 9px;border-radius:999px;box-shadow:inset 0 0 0 2px var(--ink)}
+.kolo-kapsle-et{flex:0 0 100%;display:none}
+/* 10-17: wspólna pula, tabliczka „Wszyscy losujecie razem” zamiast rzędu kapsli (na żółtym tylko grafit) */
+.kolo-razem-info{display:inline-flex;align-items:baseline;gap:10px;font:400 16px/1 var(--rebel);color:var(--ink);background:var(--amber);padding:9px 16px;border-radius:999px;box-shadow:inset 0 0 0 2px var(--ink),0 3px 0 rgba(0,0,0,.4)}
+.kolo-razem-info span{font-size:13px;opacity:.8}
+.kolo-slot{position:relative;width:88px;height:12px;border-radius:6px;background:var(--amber);box-shadow:inset 0 0 0 2px var(--ink),0 2px 0 rgba(0,0,0,.4)}
+.kolo-slot::after{content:"";position:absolute;left:16px;right:16px;top:4px;height:4px;border-radius:2px;background:var(--ink)}
+@keyframes kapselSkacze{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
+@keyframes kapselPuls{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+@keyframes kapselLeci{0%{transform:translateY(0) rotateY(0) scale(1);opacity:1}70%{opacity:1}100%{transform:translateY(52px) rotateY(720deg) scale(.35);opacity:0}}
+
+/* ---- sekcja KATEGORIA: koło | tytuł, okno odczytu, dźwignia ① ---- */
+.kolo-sekcja.kat{display:grid;grid-template-columns:222px 1fr;gap:12px;height:216px;align-items:stretch}
+.kolo-mod-kat{display:flex;align-items:center;justify-content:center}
+.kolo-o{position:relative;display:block;line-height:0}
+.kolo-o::before{content:"";position:absolute;left:-2px;top:-2px;width:204px;height:204px;border-radius:50%;box-shadow:0 0 30px 10px rgba(236,26,131,.6);opacity:var(--moc,0);pointer-events:none;will-change:opacity}
+.kolo-o-plotno{display:block;position:relative;z-index:2;filter:drop-shadow(0 4px 0 rgba(0,0,0,.45))}
+.kolo-o[data-moc="mocno"]{animation:ramaDrganieM .07s linear infinite}
+.kolo-o[data-moc="max"]{animation:ramaDrganie .05s linear infinite}
+.kolo-prawa{display:grid;grid-template-rows:50px 1fr 50px;gap:8px;min-width:0}
+.kolo-mod-lista{position:relative;min-height:0}
+.kolo-o-lista{position:absolute;inset:0;overflow:hidden;border-radius:16px;background:var(--okno);box-shadow:inset 0 0 0 2px var(--obw),inset 0 6px 12px rgba(0,0,0,.45)}
+.kolo-o-lista::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(46,42,38,.92),transparent 28%,transparent 72%,rgba(46,42,38,.92))}   /* sąsiednie wiersze wygaszone, jak w szczelinie automatu */
+.kolo-o-tor{position:absolute;left:0;right:0;top:0;will-change:transform}
+.kolo-o-wiersz{display:flex;align-items:center;padding:0 16px;box-sizing:border-box;background:var(--kolor);background-image:linear-gradient(rgba(0,0,0,.08),rgba(0,0,0,.08)),var(--felt);box-shadow:inset 0 -2px 0 rgba(0,0,0,.25);margin:0;min-width:0}
+.kolo-o-wiersz-et{font:400 24px/1 var(--rebel);color:#faf6ee;text-shadow:0 2px 0 rgba(33,31,29,.5);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kolo-o-linia{position:absolute;left:0;right:0;height:5px;background:linear-gradient(90deg,#eaa32b,#ffd84a);box-shadow:0 0 10px 1px rgba(255,216,74,.8);border-radius:3px;z-index:2;pointer-events:none}
+.kolo-o-linia-g{top:calc(50% - 22px)}.kolo-o-linia-d{top:calc(50% + 17px)}
+
+/* ---- sekcja RZECZ: okno paska, pod nim dźwignia ②, całość za kurtyną ---- */
+.kolo-sekcja.rzecz{display:flex;flex-direction:column;gap:8px}
+.kolo-mod-rzecz{display:flex;flex-direction:column;gap:8px}
+.kolo-h{position:relative;height:166px;border-radius:16px;background:var(--okno);box-shadow:inset 0 0 0 2px var(--obw),inset 0 8px 16px rgba(0,0,0,.5)}
+.kolo-h::before{content:"";position:absolute;inset:-2px;border-radius:18px;box-shadow:0 0 34px 10px rgba(236,26,131,.6);opacity:var(--moc,0);pointer-events:none;will-change:opacity}
+.kolo-h-okno{position:absolute;inset:0;overflow:hidden;border-radius:16px;contain:layout paint;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.kolo-h-tor{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;gap:10px;will-change:transform}
+.kolo-h-swiatlo{position:absolute;left:50%;top:0;bottom:0;width:150px;margin-left:-75px;pointer-events:none;z-index:2;background:linear-gradient(90deg,transparent,rgba(255,216,74,.2) 40%,rgba(255,216,74,.2) 60%,transparent)}
+.kolo-h-karta{--tlo:#efe6cf;--pas:#b8a88a;position:relative;flex:none;width:116px;height:138px;border-radius:13px;background:var(--tlo);background-image:var(--felt-soft);
+  box-shadow:inset 0 0 0 2px rgba(33,31,29,.75),0 3px 0 rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.kolo-h-karta::after{content:"";position:absolute;inset:4px;border:1.5px dashed rgba(33,31,29,.28);border-radius:9px;pointer-events:none}
+.kolo-h-karta.rz-rzadki{--tlo:#cfe3f6;--pas:#3d8fd6}
+.kolo-h-karta.rz-epicki{--tlo:#e3d6f3;--pas:#8c5bd6}
+.kolo-h-karta.rz-legendarny{--tlo:#fff0b8;--pas:#eaa32b}
+/* sekretna karta = czarna holograficzna ze znakiem zapytania; tęczowy połysk przesuwa się po czarnym filcu */
+.kolo-h-karta.rz-sekretny{--tlo:#141414;--pas:#000;background-image:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),var(--felt)}
+.kolo-h-karta.rz-sekretny::before,.kolo-wynik.rz-sekretny .kolo-wynik-tyl::before,.kolo-wynik.rz-sekretny .kolo-wynik-przod::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 20%,rgba(255,80,200,.35) 35%,rgba(120,255,220,.4) 45%,rgba(255,240,120,.35) 55%,rgba(130,160,255,.4) 65%,transparent 80%);background-size:300% 300%;
+  mix-blend-mode:screen;animation:koloHolo 3.2s ease-in-out infinite alternate}   /* 10-18: alternate = holo wraca płynnie, bez skoku na początku pętli */
+.kolo-h-karta.rz-sekretny::after{border-color:rgba(255,255,255,.35)}
+.kolo-h-karta.rz-sekretny .kolo-h-etykieta.pyt{font:400 64px/1 var(--rebel);color:#fff;text-shadow:0 0 12px rgba(160,220,255,.9),0 3px 0 rgba(0,0,0,.6)}
+.rz-sekretny .kolo-h-pasek{background:linear-gradient(100deg,#111,#333 45%,#111)}
+.rz-sekretny .kolo-h-iskra{background:#9ad6ff}
+@keyframes koloHolo{0%{background-position:100% 0}100%{background-position:0 100%}}
+.kolo-h-karta.rz-kat{background-color:var(--kolor,#ec1a83);background-image:linear-gradient(rgba(0,0,0,.08),rgba(0,0,0,.08)),var(--felt)}
+.kolo-h-tresc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px 8px 3px;min-height:0;min-width:0;text-align:center}
+.kolo-h-obraz{max-width:78px;max-height:66px;object-fit:contain;filter:drop-shadow(0 4px 0 rgba(33,31,29,.22))}
+.kolo-h-obraz.tlo{width:92px;height:56px;max-width:none;max-height:none;object-fit:cover;border-radius:7px;box-shadow:0 0 0 2px rgba(33,31,29,.7);filter:none}
+.kolo-h-etykieta{font:800 13px/1.1 var(--display);color:var(--ink);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kolo-h-etykieta.maly{font-size:12px}
+/* 10-18: rodzaj pod nazwą motywu („· skin” / „· scena”), grafit na kremowym filcu karty */
+.kolo-h-rodzaj{margin-top:-3px;font:700 max(11px,var(--fmin,11px))/1 var(--display);color:var(--ink);opacity:.8;white-space:nowrap}
+.kolo-h-pasek{flex:none;height:26px;background:var(--pas);display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:inset 0 2px 0 rgba(33,31,29,.25);position:relative;overflow:hidden}
+.kolo-h-iskra{display:block;width:10px;height:10px;background:#fff6c8;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);filter:drop-shadow(0 1px 0 rgba(33,31,29,.4))}
+.rz-legendarny .kolo-h-pasek{background:linear-gradient(100deg,#eaa32b,#ffd84a 45%,#eaa32b)}
+.rz-legendarny .kolo-h-pasek::after{content:"";position:absolute;top:0;bottom:0;left:0;width:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);animation:koloBlask 1.6s linear infinite}
+.kolo-h-karta.wygrana{z-index:2;transform:scale(1.07);box-shadow:inset 0 0 0 3px #eaa32b,0 0 0 3px #eaa32b,0 0 22px 4px rgba(255,216,74,.8),0 3px 0 rgba(0,0,0,.4);transition:transform .35s cubic-bezier(.2,1.6,.4,1)}
+.kolo-h-karta.zabrana{opacity:.25;transition:opacity .3s}
+.kolo-h-znacznik{position:absolute;left:50%;top:0;bottom:0;width:0;pointer-events:none;z-index:3}
+.kolo-h-grot{position:absolute;left:-17px;top:-2px;width:34px;height:30px;background:#eaa32b;background-image:var(--felt-soft);will-change:transform;transform-origin:50% 0;
+  clip-path:polygon(0 0,100% 0,50% 100%);filter:drop-shadow(0 3px 0 rgba(0,0,0,.45))}
+.kolo-h-grot::after{content:"";position:absolute;inset:5px 9px 12px;background:rgba(255,255,255,.35);clip-path:polygon(0 0,100% 0,50% 100%)}
+.kolo-h-kolek{position:absolute;left:-6px;bottom:2px;width:12px;height:16px;border-radius:5px;background:#eaa32b;box-shadow:inset 0 0 0 2px rgba(33,31,29,.7),0 2px 0 rgba(0,0,0,.45)}
+.kolo-h.wygrana[data-rz="legendarny"]{box-shadow:inset 0 0 0 2px var(--obw),0 0 28px 6px rgba(255,216,74,.65)}
+.kolo-h[data-moc="max"] .kolo-h-grot{filter:drop-shadow(0 0 10px #ffd84a)}
+.kolo-h[data-moc="mocno"]{animation:ramaDrganieM .07s linear infinite}
+.kolo-h[data-moc="max"]{animation:ramaDrganie .05s linear infinite}
+@keyframes koloBlask{from{transform:translateX(-50px)}to{transform:translateX(170px)}}
+@keyframes ramaDrganie{0%{translate:-2px 1px}50%{translate:2px -1px}100%{translate:-1px 2px}}
+@keyframes ramaDrganieM{0%{translate:-1px .5px}50%{translate:1px -.5px}100%{translate:-.5px 1px}}
+.kolo-h.wchodzi .kolo-h-karta:nth-child(-n+9){animation:kartaWlot .7s cubic-bezier(.2,1.2,.3,1) both}
+.kolo-h.wchodzi .kolo-h-karta:nth-child(1){animation-delay:0s}.kolo-h.wchodzi .kolo-h-karta:nth-child(2){animation-delay:.07s}
+.kolo-h.wchodzi .kolo-h-karta:nth-child(3){animation-delay:.14s}.kolo-h.wchodzi .kolo-h-karta:nth-child(4){animation-delay:.21s}
+.kolo-h.wchodzi .kolo-h-karta:nth-child(5){animation-delay:.28s}.kolo-h.wchodzi .kolo-h-karta:nth-child(n+6):nth-child(-n+9){animation-delay:.35s}
+@keyframes kartaWlot{from{transform:translateX(160px) rotate(8deg);opacity:0}to{transform:none;opacity:1}}
+/* kurtyna z różowego filcu ze złotym obszyciem: zasłania całą sekcję RZECZ */
+.kolo-kurtyna{position:absolute;inset:0;z-index:9;overflow:hidden;border-radius:16px;pointer-events:none}
+.kolo-kurt-p{position:absolute;top:0;bottom:0;width:50.6%;transition:transform 1s cubic-bezier(.75,0,.2,1);will-change:transform;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 5px,rgba(255,255,255,.08) 5px 12px,transparent 12px 22px),linear-gradient(180deg,#ec1a83,#a4105c);
+  box-shadow:inset 0 -9px 0 #eaa32b,inset 0 0 0 2px rgba(33,31,29,.7)}
+.kolo-kurt-p::after{content:"";position:absolute;top:0;bottom:0;width:7px;background:linear-gradient(180deg,#ffd84a,#eaa32b);box-shadow:0 0 8px rgba(255,216,74,.7)}
+.kolo-kurt-p.l{left:0;border-radius:16px 0 0 16px}.kolo-kurt-p.l::after{right:0}
+.kolo-kurt-p.r{right:0;border-radius:0 16px 16px 0}.kolo-kurt-p.r::after{left:0}
+.kolo-kurtyna:not(.zamknieta) .kolo-kurt-p.l{transform:translateX(-104%)}
+.kolo-kurtyna:not(.zamknieta) .kolo-kurt-p.r{transform:translateX(104%)}
+.kolo-kurt-et{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;display:grid;gap:4px;text-align:center;color:#fff7e6;text-shadow:0 2px 0 rgba(33,31,29,.6);transition:opacity .35s;white-space:nowrap}
+.kolo-kurt-et b{font:400 22px/1 var(--rebel);letter-spacing:.08em;text-transform:uppercase}
+.kolo-kurt-et span{font:800 12px/1.2 var(--display);opacity:.92}
+.kolo-kurtyna:not(.zamknieta) .kolo-kurt-et{opacity:0}
+
+/* ---- dźwignie: jeden wzór (kremowa naszywka), ① w kolumnie pod oknem odczytu, ② pod paskiem; świeci ta w kolejce ---- */
+.kolo-dzw{position:relative;box-sizing:border-box;display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;min-width:0;border:0;border-radius:14px;cursor:pointer;color:var(--ink);
+  background:var(--panel2);background-image:var(--felt-soft);font:inherit;box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 0 0 2px var(--ink);transition:transform .12s ease-out,box-shadow .12s ease-out,background-color .2s,opacity .2s}
+.kolo-dzw[hidden]{display:none}
+.kolo-dzw::after{content:"";position:absolute;inset:4px;border:1.5px dashed var(--stitch);border-radius:10px;pointer-events:none}
+.kolo-dzw::before{content:"";position:absolute;inset:-3px;border-radius:17px;box-shadow:0 0 22px 6px rgba(236,26,131,.6);opacity:0;pointer-events:none;will-change:opacity}
+.kolo-dzw-nr{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;font:400 16px/1 var(--rebel);font-style:normal;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.kolo-dzw-et{flex:none;font:400 20px/1 var(--rebel);letter-spacing:.02em;white-space:nowrap}
+.kolo-dzw-op{flex:1;min-width:0;text-align:right;font:800 10px/1.1 var(--display);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kolo-mod-rzecz .kolo-dzw{justify-content:center}
+.kolo-mod-rzecz .kolo-dzw-op{flex:none;text-align:left;max-width:200px}
+.kolo-dzw:disabled{opacity:.5;cursor:default;filter:saturate(.4)}
+.kolo-dzw.zrobiona{opacity:1;filter:none;background-color:#d6efb5;cursor:default}
+.kolo-dzw.zrobiona .kolo-dzw-nr{background:var(--green-d)}
+.kolo-dzw.zrobiona .kolo-dzw-op{color:var(--green-d)}
+.kolo-dzw.akt{background-color:#e5684e;background-image:linear-gradient(rgba(229,104,78,.86),rgba(229,104,78,.86)),var(--felt);color:#fff7e6;box-shadow:0 5px 0 #a94632,0 8px 12px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.25)}
+.kolo-dzw.akt::after{border-color:rgba(255,247,230,.8)}
+.kolo-dzw.akt .kolo-dzw-nr{background:var(--amber);color:var(--ink)}
+.kolo-dzw.akt .kolo-dzw-op{color:#fff7e6;opacity:.95}
+.kolo-dzw.akt:hover{transform:translateY(-2px);box-shadow:0 7px 0 #a94632,0 12px 14px rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.3)}
+.kolo-dzw.akt.laduje{transform:translateY(4px);background-color:#ec1a83;background-image:linear-gradient(rgba(236,26,131,.86),rgba(236,26,131,.86)),var(--felt);box-shadow:0 1px 0 #a4105c,inset 0 0 0 2px rgba(255,255,255,.35);animation:dzwWibruje .14s linear infinite}
+.kolo-dzw.akt.laduje::before{opacity:1;animation:mocPuls .3s ease-in-out infinite alternate}
+.kolo-dzw.akt.kreci{transform:translateY(4px);box-shadow:0 1px 0 #a94632,inset 0 0 0 2px rgba(255,255,255,.25);cursor:progress}
+.kolo-dzw:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+/* 10-18 fizyczna dźwignia: wyraźny rant pod czapką, sprężysty powrót po puszczeniu, wgłębienie przy trzymaniu */
+.kolo-dzw.akt{box-shadow:0 7px 0 #a94632,0 12px 16px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.35),inset 0 -3px 0 rgba(0,0,0,.18)}
+@media (prefers-reduced-motion:no-preference){.kolo-dzw.akt{transition:transform .16s cubic-bezier(.3,1.8,.5,1),box-shadow .16s cubic-bezier(.3,1.8,.5,1)}}
+.kolo-dzw.akt.laduje{box-shadow:0 2px 0 #a4105c,0 4px 8px rgba(0,0,0,.3),inset 0 3px 6px rgba(0,0,0,.25)}
+@keyframes dzwWibruje{0%{transform:translate(-2px,4px)}50%{transform:translate(2px,4px)}100%{transform:translate(-2px,4px)}}
+
+/* ---- podstawa: miernik mocy (24 segmenty, fala światła, ogień przy maksimum); „spi”, gdy nic się nie ładuje ---- */
+.kolo-moc{position:relative;display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:44px;padding:0 12px;border-radius:14px;background:var(--okno);
+  box-shadow:inset 0 0 0 2px var(--obw),inset 0 4px 8px rgba(0,0,0,.4);transition:opacity .3s}
+.kolo-moc.spi{opacity:.45}
+.kolo-moc-et{font:400 15px/1 var(--rebel);color:#f3e9d2;letter-spacing:.08em}
+.kolo-moc-pasek{position:relative;flex:1;display:grid;grid-template-columns:repeat(24,1fr);gap:3px;height:22px;transform:skewX(-8deg);overflow:hidden;border-radius:5px}
+.kolo-moc-kom{--b:hsl(calc(112 - var(--i)*4.6) 88% 52%);--j:hsl(calc(112 - var(--i)*4.6) 95% 74%);display:block;border-radius:5px;background:#3b352f;box-shadow:inset 0 2px 3px rgba(0,0,0,.55),inset 0 -1px 0 rgba(255,255,255,.06)}
+.kolo-moc-kom.wl{background:linear-gradient(180deg,var(--j) 0,var(--b) 48%,hsl(calc(112 - var(--i)*4.6) 80% 40%) 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 2px 0 rgba(0,0,0,.35)}
+.kolo-moc-blask{position:absolute;top:0;bottom:0;left:0;width:70px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);transform:translateX(-80px);opacity:0;pointer-events:none;will-change:transform}
+.kolo-moc.goraco .kolo-moc-blask{opacity:1;animation:mocBlask .6s linear infinite}
+.kolo-moc.max .kolo-moc-blask{animation-duration:.3s}
+.kolo-moc-max{min-width:50px;text-align:right;font:400 16px/1 var(--rebel);color:#ffd84a;text-shadow:0 0 8px rgba(255,216,74,.7)}
+.kolo-moc.max{animation:miernikTrzesie .06s linear infinite}
+.kolo-moc.max::after{content:"";position:absolute;inset:-6px;border-radius:18px;box-shadow:0 0 24px 6px rgba(255,100,20,.65);pointer-events:none;will-change:opacity;animation:mocPuls .35s ease-in-out infinite alternate}
+.kolo-moc.max .kolo-moc-max{animation:maxOgien .18s linear infinite alternate}
+.kolo-moc.drga .kolo-moc-pasek{animation:miernikDrga .06s linear infinite}
+.kolo-moc.puszczone .kolo-moc-pasek{animation:miernikWystrzal .42s cubic-bezier(.2,.8,.2,1)}
+.kolo-ogien{position:absolute;left:0;bottom:calc(100% - 6px);pointer-events:none;width:100%;height:90px;z-index:5}
+@keyframes mocBlask{to{transform:translateX(620px)}}
+@keyframes mocPuls{from{opacity:.5}to{opacity:1}}
+@keyframes miernikTrzesie{0%{transform:translate(-1.5px,.5px)}50%{transform:translate(1.5px,-.5px)}100%{transform:translate(-.5px,1.5px)}}
+@keyframes miernikDrga{0%{transform:skewX(-8deg) translateX(-2px)}50%{transform:skewX(-8deg) translateX(2px)}100%{transform:skewX(-8deg) translateX(-1px)}}
+@keyframes miernikWystrzal{0%{transform:skewX(-8deg) translateX(0)}100%{transform:skewX(-8deg) translateX(-120%);opacity:0}}
+@keyframes maxOgien{from{color:#ffd84a;text-shadow:0 0 10px #ff7a1a}to{color:#fff;text-shadow:0 0 18px #ff3a10,0 0 6px #ffd84a}}
+
+/* ---- karta wyniku: nakładka NA szafce; rewers w kolorze rzadkości, obrót 3D, promienie i iskry na wybuch, żabki sceny ---- */
+.kolo-wyniki{position:absolute;inset:0;z-index:12;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:12px;padding:14px;perspective:900px;pointer-events:none}
+.kolo-wyniki>*{pointer-events:auto}
+.kolo-wyniki .kolo-studio{flex:0 0 80%}
+.kolo-wynik{--rz:#c9a97a;position:relative;isolation:isolate;width:450px;max-width:100%;will-change:transform}   /* duża karta: wypełnia szafkę, żeby wylosowana rzecz była dobrze widoczna */
+.kolo-wyniki:has(.kolo-wynik.drugi) .kolo-wynik{width:250px}   /* dubel: dwie karty obok siebie w mniejszym wariancie */
+.kolo-wynik.rz-rzadki{--rz:#3d8fd6}.kolo-wynik.rz-epicki{--rz:#8c5bd6}.kolo-wynik.rz-legendarny{--rz:#eaa32b}.kolo-wynik.rz-sekretny{--rz:#9ad6ff}
+.kolo-wynik.rz-sekretny .kolo-wynik-tyl{background:#141414;background-image:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),var(--felt);color:#fff}
+.kolo-wynik.rz-sekretny .kolo-wynik-przod{background:#1a1a1a;background-image:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)),var(--felt);color:#fff}
+.kolo-wynik.rz-sekretny .ng-nazwa,.kolo-wynik.rz-sekretny .ng-opis{color:#fff}.kolo-wynik.rz-sekretny .kolo-odznaka{color:#111}
+.kolo-wynik-pyt.sekret{display:block;font:400 120px/1 var(--rebel);color:#fff;text-shadow:0 0 18px rgba(160,220,255,.9),0 4px 0 rgba(0,0,0,.6)}
+.kolo-wynik-obrot{position:relative;transform-style:preserve-3d;transition:transform .72s cubic-bezier(.3,1.25,.3,1);will-change:transform}
+.kolo-wynik.otwarta .kolo-wynik-obrot{transform:rotateY(180deg)}
+.kolo-wynik-tyl,.kolo-wynik-przod{backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;box-shadow:inset 0 0 0 3px var(--rz),0 4px 0 rgba(33,31,29,.18)}
+.kolo-wynik-tyl{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:8px;background:var(--rz);background-image:linear-gradient(rgba(0,0,0,.1),rgba(0,0,0,.1)),var(--felt);box-shadow:inset 0 0 0 3px rgba(33,31,29,.7),0 4px 0 rgba(33,31,29,.18)}
+.kolo-wynik-tyl::after{content:"";position:absolute;inset:8px;border:2px dashed rgba(255,247,230,.6);border-radius:9px;pointer-events:none}
+.kolo-wynik-pyt{font:400 130px/1 var(--rebel);color:#fff7e6;text-shadow:0 6px 0 rgba(33,31,29,.35)}
+.kolo-wyniki:has(.drugi) .kolo-wynik-pyt{font-size:80px}
+.kolo-wynik-przod{position:relative;transform:rotateY(180deg);display:grid;justify-items:center;gap:6px;padding:14px 22px 16px;background:var(--panel2);background-image:var(--felt-soft);overflow:hidden}
+.kolo-wyniki:has(.drugi) .kolo-wynik-przod{gap:4px;padding:10px 16px 12px}
+.kolo-wynik.rz-legendarny .kolo-wynik-przod{background:linear-gradient(120deg,#fff4c8,#ffe08a 45%,#fff4c8)}
+.kolo-odznaka{font:400 20px/1 var(--rebel);padding:6px 16px;border-radius:999px;color:#fff;background:var(--rz);box-shadow:inset 0 0 0 2px var(--ink)}
+.kolo-wyniki:has(.drugi) .kolo-odznaka{font-size:15px;padding:5px 12px}
+.rz-zwykly .kolo-odznaka{color:var(--ink)}
+.kolo-wynik-tyl .kolo-odznaka{background:rgba(33,31,29,.55);color:#fff7e6}
+.kolo-ikona{width:190px;height:190px;display:grid;place-items:center}
+.kolo-ikona img{max-width:100%;max-height:100%;filter:drop-shadow(0 6px 0 rgba(33,31,29,.25))}
+.kolo-ikona:has(.kolo-obraz-tlo){width:390px;height:220px;max-width:100%}
+.kolo-wyniki:has(.drugi) .kolo-ikona{width:110px;height:110px}
+.kolo-wyniki:has(.drugi) .kolo-ikona:has(.kolo-obraz-tlo){width:210px;height:118px}
+.kolo-ikona .kolo-obraz-tlo{display:block;width:inherit;height:inherit;max-width:none;max-height:none;object-fit:cover;border-radius:10px;box-shadow:0 0 0 3px var(--ink),0 5px 0 rgba(33,31,29,.25);filter:none}   /* wymiary pola, nie proporcje pliku (3:2): nazwa nie wjeżdża na obraz */
+.kolo-wynik .ng-nazwa{font-size:36px;max-width:400px}
+.kolo-wynik .ng-opis{font-size:16px}
+.kolo-wyniki:has(.drugi) .kolo-wynik .ng-nazwa{font-size:22px;max-width:220px}
+.kolo-wyniki:has(.drugi) .kolo-wynik .ng-opis{font-size:13px}
+.kolo-wynik-przod.scena{padding-bottom:0}
+.kolo-fani{display:flex;justify-content:center;align-items:flex-end;width:calc(100% + 44px);margin:4px -22px 0;height:100px;overflow:hidden}
+.kolo-wyniki:has(.drugi) .kolo-fani{height:68px;width:calc(100% + 32px);margin:2px -16px 0}
+.kolo-fan{width:92px;height:92px;margin:0 -9px;object-fit:contain;transform-origin:50% 100%;transform:translateY(80px);filter:drop-shadow(0 3px 0 rgba(33,31,29,.25));
+  animation:fanWylazi .55s cubic-bezier(.2,1.5,.4,1) calc(.35s + var(--i)*.1s) both,fanBuja 1.3s ease-in-out calc(.95s + var(--i)*.1s) infinite alternate}
+.kolo-fan:nth-child(even){animation-direction:normal,alternate-reverse}
+.kolo-wyniki:has(.drugi) .kolo-fan{width:62px;height:62px;margin:0 -7px}
+@keyframes fanWylazi{from{transform:translateY(80px) scale(.6)}to{transform:translateY(0) scale(1)}}
+@keyframes fanBuja{from{transform:rotate(-6deg) translateY(0)}to{transform:rotate(6deg) translateY(-4px)}}
+.kolo-promienie{position:absolute;left:50%;top:50%;width:640px;height:640px;margin:-320px;border-radius:50%;z-index:-1;opacity:0;pointer-events:none;will-change:transform;
+  background:repeating-conic-gradient(from 0deg,var(--rz) 0 8deg,transparent 8deg 22deg);
+  -webkit-mask:radial-gradient(circle,#000 10%,transparent 66%);mask:radial-gradient(circle,#000 10%,transparent 66%)}
+.kolo-wynik.wybuch .kolo-promienie{animation:ngObrot 12s linear infinite,promienieWejscie .7s ease-out both}
+.kolo-wynik .ng-iskry{position:absolute;inset:0;pointer-events:none;z-index:2}
+.kolo-wynik .ng-iskra{animation:none;opacity:0}
+.kolo-wynik.wybuch .ng-iskra{animation:ngIskra 1s ease-out var(--d,0s) both}
+.kolo-wynik.wybuch{animation:koloOdbicie .5s cubic-bezier(.2,1.6,.4,1)}
+.kolo-wynik.rz-legendarny.wybuch .kolo-wynik-przod{animation:koloBlysk 1.6s ease-in-out .2s 2}
+@keyframes promienieWejscie{from{opacity:0;scale:.3}to{opacity:.85;scale:1}}
+@keyframes koloOdbicie{0%{scale:1}40%{scale:1.1}100%{scale:1}}
+@keyframes koloBlysk{0%,100%{box-shadow:inset 0 0 0 3px var(--rz),0 4px 0 rgba(33,31,29,.18),0 0 0 0 rgba(255,216,74,.9)}50%{box-shadow:inset 0 0 0 3px var(--rz),0 4px 0 rgba(33,31,29,.18),0 0 34px 10px rgba(255,216,74,.85)}}
+#nagrody.blysk::after{content:"";position:fixed;inset:0;background:var(--blysk,#fff6c8);pointer-events:none;animation:ngBlyskEkranu .6s ease-out forwards}   /* 10-17: kolor rzadkości (--blysk z nagrody.js) */
+@keyframes ngBlyskEkranu{from{opacity:.95}to{opacity:0}}
+.kolo-studio{display:grid;gap:3px;padding:10px 16px;border-radius:12px;background:#d6efb5;box-shadow:inset 0 0 0 2px var(--ink);text-align:center;animation:koloObjaw .6s cubic-bezier(.2,1.5,.4,1) both}
+.kolo-studio b{font:400 18px/1.1 var(--rebel);color:var(--green-d)}
+.kolo-studio span{font:700 13px/1.3 var(--sans);color:var(--ink)}
+@keyframes koloObjaw{0%{transform:scale(.2) rotate(-12deg);opacity:0}60%{transform:scale(1.12) rotate(3deg);opacity:1}100%{transform:none;opacity:1}}
+
+/* ---- dziennik i przycisk „Losuj dalej” ---- */
+/* większy odstęp od góry i dołu: dziennik jako filcowy bilet, dwa wiersze z kropkami zamiast szarych
+   pasków w fontcie maszynowym; miejsce zarezerwowane od początku (visibility), żeby karta nie skakała, gdy wpada pierwszy wiersz */
+.kolo-log{width:max-content;max-width:100%;min-height:56px;display:grid;gap:3px;align-content:center;justify-items:start;margin:0 auto;padding:9px 20px 8px 16px;
+  border-radius:14px;text-align:left;background:#fff;background-image:var(--felt-soft);
+  box-shadow:0 3px 0 rgba(33,31,29,.18),inset 0 0 0 2px var(--ink);outline:1.5px dashed rgba(33,31,29,.32);outline-offset:-6px}   /* 10-21: bilet na szerokość treści, na środku, ze szwem; wiersze z kropkami */
+.kolo-log:empty{visibility:hidden}
+.kolo-log-w{position:relative;max-width:100%;font:700 14px/1.35 var(--display);color:var(--muted);padding:1px 4px 1px 22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kolo-log-w b{color:var(--ink)}
+.kolo-log-w::before{content:"";position:absolute;left:4px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--amber);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.kolo-log-w:first-child::before{background:var(--lime)}
+.kolo-log-w b{color:var(--ink)}
+.kolo-log-w.nowy{animation:koloLogWejscie .35s ease-out}
+@keyframes koloLogWejscie{from{transform:translateX(-12px);opacity:0}to{transform:none;opacity:1}}
+.ng-dalej[hidden]{display:none}
+.ng-dalej.ng-losuj{min-width:230px;min-height:58px;padding:10px 34px;border:0;border-radius:999px;cursor:pointer;color:#fff7e6;position:relative;
+  font:400 28px/1 var(--rebel);letter-spacing:.04em;text-shadow:0 3px 0 rgba(120,40,20,.55);
+  background:linear-gradient(180deg,rgba(255,150,120,.55),rgba(229,104,78,.0) 42%,rgba(150,50,30,.35)),linear-gradient(rgba(229,104,78,.86),rgba(229,104,78,.86)),var(--felt);background-color:#e5684e;
+  /* podstawa arkady: ciemny rant wokół czapki, pełna „głębokość” 6 px pod nią */
+  box-shadow:0 0 0 4px #6e2a1c,0 6px 0 4px #4d1d13,0 12px 16px 2px rgba(120,40,20,.3),inset 0 0 0 2px rgba(255,255,255,.25),inset 0 -5px 8px rgba(120,30,15,.35);
+  transition:transform .3s cubic-bezier(.3,1.8,.5,1),box-shadow .3s cubic-bezier(.3,1.8,.5,1)}
+.ng-dalej.ng-losuj::before{content:"";position:absolute;left:14%;right:14%;top:4px;height:34%;border-radius:999px;pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,.42),rgba(255,255,255,0))}   /* blask świeżo oświetlonej góry czapki */
+.ng-dalej.ng-losuj::after{content:"";position:absolute;inset:5px;border:2.5px dashed rgba(255,247,230,.8);border-radius:999px;pointer-events:none}
+.ng-dalej.ng-losuj:hover:not(:disabled):not(.wcisniety){transform:translateY(-2px);box-shadow:0 0 0 4px #6e2a1c,0 8px 0 4px #4d1d13,0 14px 18px 2px rgba(120,40,20,.3),inset 0 0 0 2px rgba(255,255,255,.3),inset 0 -5px 8px rgba(120,30,15,.35)}
+.ng-dalej.ng-losuj:active:not(:disabled),.ng-dalej.ng-losuj.wcisniety{transform:translateY(6px);transition-duration:.06s,.06s;transition-timing-function:ease-out;
+  box-shadow:0 0 0 4px #6e2a1c,0 0 0 4px #4d1d13,0 3px 5px rgba(120,40,20,.3),inset 0 0 0 2px rgba(255,255,255,.2),inset 0 -2px 5px rgba(120,30,15,.45)}
+.ng-dalej.ng-losuj:focus-visible{outline:3px solid #ffd84a;outline-offset:8px}
+@media (prefers-reduced-motion:reduce){.ng-dalej.ng-losuj{transition:none}.ng-dalej.ng-losuj:hover:not(:disabled):not(.wcisniety){transform:none}}
+/* 10-18: moneta lecąca do wrzutni (nagrody.js, licznikLosowan.zuzyj); w body, ponad nakładką (z-index 68) */
+.kolo-moneta{position:fixed;z-index:80;width:34px;height:34px;pointer-events:none}
+.kolo-moneta-y{display:block;width:34px;height:34px;perspective:240px}
+.kolo-moneta-twarz{display:block;width:34px;height:34px;border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#fffbe0 0 7%,rgba(255,245,190,0) 22%),radial-gradient(circle,#f6c244 0 38%,#e0a52b 56%,#b9801a 63%,rgba(0,0,0,0) 64%),
+    repeating-conic-gradient(#8a5b10 0 5deg,#ffe08a 5deg 10deg);   /* rowkowany rant */
+  box-shadow:0 0 0 1.5px #6b470c,0 0 12px 3px rgba(255,216,74,.65)}
+.kolo-iskra-m{position:fixed;z-index:80;width:6px;height:6px;border-radius:50%;pointer-events:none;background:#ffe08a;box-shadow:0 0 6px 2px rgba(255,216,74,.9)}
+.ng-akcje:has(.ng-losuj:not([hidden])){justify-content:center;flex-direction:column-reverse;gap:10px}
+#nagrody[data-scena="kolo"] .ng-akcje:has(.ng-dalej[hidden]){justify-content:center}
+@media (prefers-reduced-motion:reduce){
+  .kolo-kapsel.akt,.kolo-kapsel.akt::before,.kolo-kapsel.leci,.kolo-lampki i,.kolo-lampki i::before,.kolo-lampki i::after,.kolo-h[data-moc],.kolo-o[data-moc],.kolo-h.wchodzi .kolo-h-karta,
+  .rz-legendarny .kolo-h-pasek::after,.kolo-moc.max,.kolo-moc.max::after,.kolo-moc.goraco .kolo-moc-blask,.kolo-moc.drga .kolo-moc-pasek,.kolo-moc.puszczone .kolo-moc-pasek,
+  .kolo-moc.max .kolo-moc-max,.kolo-dzw.akt.laduje,.kolo-dzw.akt.laduje::before,.kolo-fan,.kolo-wynik.wybuch .kolo-promienie,.kolo-wynik.wybuch .ng-iskra,.kolo-wynik.wybuch,
+  .kolo-wynik.rz-legendarny.wybuch .kolo-wynik-przod,.kolo-studio,.kolo-log-w.nowy,#nagrody.blysk::after,.kolo-h-karta.rz-sekretny::before,.kolo-wynik.rz-sekretny .kolo-wynik-tyl::before,.kolo-wynik.rz-sekretny .kolo-wynik-przod::before{animation:none!important}
+  .kolo-kapsel.leci{opacity:0}.kolo-fan{transform:none}.kolo-wynik.wybuch .kolo-promienie{opacity:.7}
+  .kolo-wynik-obrot,.kolo-kurt-p,.kolo-cialo{transition:none}
+}
+
+/* ---- 10-17: bez pasków przewijania przy losowaniu (promienie 640 px i iskry wylatywały poza kartę, karta dostawała przewijanie
+   w pionie i poziomie); szafka i tak mieści się dzięki skaluj(). Pozostałe sceny przewijają się cienkim paskiem w barwach gry ---- */
+#nagrody[data-scena="kolo"] .ng-karta{overflow:hidden}
+.ng-karta{scrollbar-width:thin;scrollbar-color:rgba(33,31,29,.45) transparent}
+.ng-karta::-webkit-scrollbar{width:8px;height:8px}
+.ng-karta::-webkit-scrollbar-thumb{background:rgba(33,31,29,.45);border-radius:999px}
+.ng-karta::-webkit-scrollbar-track{background:transparent}
+
+/* ---- 10-17: wspólne losowanie: każdy gracz przytrzymuje swój przycisk ---- */
+.kolo-razem{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 8px;width:100%}
+.kolo-razem-et{flex:0 0 100%;font:400 15px/1 var(--rebel);color:var(--ink);letter-spacing:.03em}
+.kolo-razem-gracz{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:7px;align-items:center;padding:5px 11px 5px 5px;border-radius:999px;
+  background:var(--panel2);box-shadow:inset 0 0 0 2px var(--ink);opacity:.82;transition:transform .14s ease-out,background-color .14s,opacity .14s}
+.kolo-razem-gracz img{grid-row:1/3;width:30px;height:30px;border-radius:50%;box-shadow:0 0 0 3px var(--kolor)}
+.kolo-razem-gracz b{font:800 13px/1.1 var(--display);color:var(--ink);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kolo-razem-zr{font:700 11px/1.1 var(--sans);color:#4a443c}
+.kolo-razem-gracz.trzyma{opacity:1;background:#d6efb5;transform:translateY(2px);box-shadow:inset 0 0 0 2px var(--ink),0 0 0 3px var(--kolor)}
+.kolo-razem-gracz.trzyma .kolo-razem-zr::after{content:" ✓"}
+.kolo-razem-gracz.nieobecny{opacity:.4}
+
+/* ---- karta Studia instrumentów (sekretna karta): opis i „Gdzie?”; samą ikonę (animowany pulpit) rysuje
+   js/studio-ikona.js ze stylem w gry-studio-ikona.css (10-18) ---- */
+.kolo-studio-opis{max-width:380px;margin:0;font:700 14px/1.35 var(--sans);color:#f4efe6}
+.kolo-studio-gdzie{max-width:380px;margin:2px 0 4px;font:800 14px/1.3 var(--display);color:#111;background:#ffd84a;padding:6px 12px;border-radius:10px;box-shadow:inset 0 0 0 2px #111}
+.kolo-studio .kolo-studio-gdzie{justify-self:center}
+.kolo-wyniki:has(.drugi) .kolo-studio-opis{font-size:12px}
+/* „Zabierz mnie tam” pod żółtą naklejką „Gdzie?” na karcie Studia (nagrody.js przyciskDoStudia); różowy filcowy przycisk jak „Losuj” */
+.kolo-studio-idz{margin:6px 0 2px;padding:10px 24px;font-size:max(18px,var(--fmin));font-weight:800}
+.kolo-studio .kolo-studio-idz{justify-self:center;margin-top:4px}
+.kolo-wyniki:has(.drugi) .kolo-studio-idz{padding:6px 14px;font-size:max(14px,var(--fmin))}
+@media (prefers-reduced-motion:reduce){.kolo-razem-gracz{transition:none}}
+
+/* ---------- „Odbierz nagrody” (10-17): czekające losowania, w menu (naklejka jak inne przyciski menu) i na wynikach.
+   Bursztyn z grafitowym tekstem (na żółtym nigdy biel), różowy licznik; w menu delikatny oddech, żeby nie umknęło. */
+.menu-przycisk.menu-nagrody{--skos:-3deg;display:inline-flex;align-items:center;gap:14px;background-color:var(--bursztyn,#eaa32b);color:var(--ink);
+  background-image:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.1)),var(--felt);font-size:clamp(20px,3.4vh,32px);margin-left:clamp(8px,1.2vw,22px)}
+.menu-przycisk.menu-nagrody::after{border-color:rgba(33,31,29,.35)}
+.menu-nagrody .nagrody-ikona{width:clamp(30px,4.6vh,44px);height:auto;flex:none;margin:-6px 0}
+.nagrody-licznik{display:inline-grid;place-items:center;min-width:1.6em;height:1.6em;padding:0 .35em;border-radius:999px;background:#ec1a83;color:#fff;
+  font:400 .72em/1 var(--rebel);box-shadow:0 0 0 3px #fff,0 3px 0 3px rgba(120,90,40,.25);margin-left:auto}
+@media (prefers-reduced-motion:no-preference){
+  #lobby[data-ekran="menu"] .menu-nagrody:not(:hover):not(:focus-visible){animation:ngOdbierz 1.6s ease-in-out infinite alternate}
+  @keyframes ngOdbierz{from{transform:rotate(var(--skos,-3deg))}to{transform:rotate(var(--skos,-3deg)) translateY(-3px) scale(1.02)}}
+}
+.przycisk.nagrody-odbierz{display:inline-flex;align-items:center;gap:8px;background-color:var(--bursztyn,#eaa32b);background-image:var(--felt);color:var(--ink);
+  box-shadow:0 4px 0 #b87d14}
+.przycisk.nagrody-odbierz::after{border-color:rgba(33,31,29,.35)}
+.przycisk.nagrody-odbierz[hidden]{display:none}
+.nagrody-odbierz .nagrody-ikona{width:24px;height:auto;margin:-4px 0}
+.nagrody-odbierz .nagrody-licznik{font-size:13px;box-shadow:0 0 0 2px #fff}
+.menu-przycisk.menu-nagrody[hidden]{display:none}
+
+/* 10-18 (Z-83): dolny próg czcionki w szafce koła. Szafka skaluje się transformem (--skala z nagrody.js, w 1280×720 ok. 0,6),
+   więc drobne napisy dostają rozmiar projektowy nie mniejszy niż 11 px PO skalowaniu: max(projektowy, 11 px / skala). */
+.kolo-maszyna{--fmin:calc(11px / var(--skala,1))}
+.kolo-razem-info{font-size:max(16px,var(--fmin))}
+.kolo-razem-info span{font-size:max(13px,var(--fmin));opacity:1}
+.kolo-tyt{font-size:max(17px,var(--fmin))}
+.kolo-o-wiersz-et{font-size:max(24px,var(--fmin));
+  text-shadow:-1.5px 0 0 #211f1d,1.5px 0 0 #211f1d,0 -1.5px 0 #211f1d,0 1.5px 0 #211f1d,0 3px 0 rgba(33,31,29,.5)}   /* obrys: napis czytelny także na złotych liniach */
+.kolo-kurt-et b{font-size:max(22px,var(--fmin))}
+.kolo-kurt-et span{font-size:max(12px,var(--fmin));opacity:1}
+.kolo-dzw-nr{font-size:max(16px,var(--fmin))}
+.kolo-dzw-et{font-size:max(20px,var(--fmin))}
+.kolo-dzw-op{font-size:max(10px,var(--fmin));letter-spacing:.02em}
+/* dźwignia ① w wąskiej kolumnie: nazwa nad opisem („Kategoria” / „PRZYTRZYMAJ”), żeby większy opis nie ucinał się wielokropkiem */
+.kolo-prawa .kolo-dzw{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:10px;row-gap:3px;align-content:center}
+.kolo-prawa .kolo-dzw-nr{grid-row:1 / span 2}
+.kolo-prawa .kolo-dzw-et,.kolo-prawa .kolo-dzw-op{grid-column:2;text-align:left;line-height:1}
+.kolo-moc-et{font-size:max(15px,var(--fmin))}
+.kolo-moc-max{font-size:max(16px,var(--fmin))}
+.kolo-h-etykieta,.kolo-h-etykieta.maly{font-size:max(12px,var(--fmin))}
+.kolo-odznaka{font-size:max(20px,var(--fmin))}
+.kolo-wyniki:has(.drugi) .kolo-odznaka{font-size:max(15px,var(--fmin))}
+.kolo-wynik .ng-opis{font-size:max(16px,var(--fmin))}
+.kolo-wyniki:has(.drugi) .kolo-wynik .ng-opis{font-size:max(13px,var(--fmin))}
+.kolo-studio span{font-size:max(13px,var(--fmin))}
+.kolo-studio-opis,.kolo-studio-gdzie{font-size:max(14px,var(--fmin))}
+.kolo-wyniki:has(.drugi) .kolo-studio-opis{font-size:max(12px,var(--fmin))}
+
+/* ---------- 10-18: licznik losowań jak wrzutnia automatu (nagrody.js licznikLosowan). Tabliczka na tacy szafki: napis, bęben
+   z dużą cyfrą, rynienka z filcowymi żetonami i szczelina. Bursztyn z grafitem; „ostatnie” różowe z kremowym; „zero” wyszarzone
+   z grafitem. Drobne napisy z progiem --fmin (11 px po skalowaniu w 1280×720). Animacje skończone, przy ograniczonym ruchu żadnych. */
+.kolo-razem-info.kolo-licz{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 10px;max-width:520px;box-sizing:border-box;
+  padding:7px 10px 7px 16px;border-radius:18px;background-color:var(--amber);background-image:var(--felt);color:var(--ink);
+  box-shadow:inset 0 0 0 2px var(--ink),0 3px 0 rgba(0,0,0,.4);transition:background-color .25s}
+.kolo-licz-razem{flex:0 0 100%;text-align:center;font:400 max(14px,var(--fmin))/1 var(--rebel)}
+.kolo-razem-info .kolo-licz-et{max-width:124px;text-align:right;font:400 max(17px,var(--fmin))/1.05 var(--rebel);opacity:1}
+.kolo-licz-beben{display:grid;place-items:center;min-width:50px;height:58px;padding:0 10px;overflow:hidden;border-radius:10px;
+  background:linear-gradient(#12100e,#2e2a26 32%,#3a352f 50%,#2e2a26 68%,#12100e);box-shadow:inset 0 0 0 2px #4a443d}
+.kolo-licz-cyfra{grid-area:1 / 1;font:400 46px/1 var(--rebel);color:#fff3d6;text-shadow:0 0 10px rgba(255,216,74,.55),0 2px 0 #000}
+.kolo-licz-rynna{display:flex;align-items:center;height:40px;min-width:30px;padding:0 9px;border-radius:999px;background:#2e2a26;
+  box-shadow:inset 0 0 0 2px #4a443d,inset 0 4px 7px rgba(0,0,0,.6)}
+.kolo-licz-zeton{position:relative;flex:0 0 auto;width:28px;height:28px;border-radius:50%;margin-left:-8px;
+  background:radial-gradient(circle at 36% 30%,#ffe9a8 0 12%,#f2b53a 46%,#c98a1c 100%);box-shadow:inset 0 0 0 2px #211f1d,0 2px 0 rgba(0,0,0,.55)}
+.kolo-licz-zeton:first-child{margin-left:0}
+.kolo-licz-zeton::after{content:"";position:absolute;inset:6px;border-radius:50%;border:1.5px dashed rgba(33,31,29,.6)}   /* przeszycie filcu */
+.kolo-licz-zeton.leci{z-index:3}
+.kolo-licz .kolo-licz-wiecej{margin-left:7px;font:400 max(14px,var(--fmin))/1 var(--rebel);color:#ffd84a}
+.kolo-licz-szczel{position:relative;flex:0 0 auto;width:16px;height:46px;border-radius:6px;background:#3a342e;box-shadow:inset 0 0 0 2px #211f1d}
+.kolo-licz-szczel::after{content:"";position:absolute;left:6px;width:4px;top:8px;bottom:8px;border-radius:2px;background:#000}
+.kolo-licz-szczel.wrzut::after{animation:licznikWrzut .45s ease-out 1}
+@keyframes licznikWrzut{0%{background:#ffd84a;box-shadow:0 0 10px 3px #ffd84a}100%{background:#000;box-shadow:none}}
+.kolo-licz .kolo-licz-plus{position:absolute;right:-8px;top:-16px;padding:4px 9px;border-radius:999px;font:400 max(16px,var(--fmin))/1 var(--rebel);
+  background:var(--lime,#6cb33f);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink),0 2px 0 rgba(0,0,0,.4);opacity:0;pointer-events:none}
+.kolo-licz .kolo-licz-plus.pokaz{animation:licznikPlus 1.5s ease-out 1 forwards}
+@keyframes licznikPlus{0%{opacity:0;transform:translateY(8px) scale(.6)}15%{opacity:1;transform:translateY(0) scale(1.15)}25%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+/* ostatnie losowanie: różowa tabliczka, kremowy napis, żeton świeci; trzy uderzenia i spokój */
+.kolo-razem-info.kolo-licz.ostatnie{background-color:#ec1a83;color:#fff7e6;animation:licznikOstatnie .7s ease-in-out 3}
+.kolo-licz.ostatnie .kolo-licz-zeton{box-shadow:inset 0 0 0 2px #211f1d,0 0 0 3px #fff7e6,0 0 14px 4px rgba(255,216,74,.85)}
+@keyframes licznikOstatnie{0%,100%{transform:none}50%{transform:scale(1.05)}}
+/* zero: tabliczka gaśnie, pusta rynienka */
+.kolo-razem-info.kolo-licz.zero{background-color:#b3a894}
+.kolo-licz.zero .kolo-licz-cyfra{color:#e6dcc8;text-shadow:none}
+/* chip „+N losowań” w scenie postępu: ten sam żeton */
+.ng-chip-los::before{content:"";display:inline-block;width:1em;height:1em;margin:-3px 5px -3px 0;vertical-align:-2px;border-radius:50%;
+  background:radial-gradient(circle at 36% 30%,#ffe9a8 0 12%,#f2b53a 46%,#c98a1c 100%);box-shadow:inset 0 0 0 1.5px #211f1d}
+@media (prefers-reduced-motion:reduce){.kolo-razem-info.kolo-licz,.kolo-razem-info.kolo-licz.ostatnie,.kolo-licz .kolo-licz-szczel.wrzut::after,.kolo-licz .kolo-licz-plus.pokaz{animation:none;transition:none}}
+
+/* ---------- 10-18: podgląd zdobycia (nagrody.js podgladZdobycia; tier lista i adres ?zdobycie=): sama karta z koła na ciemnym tle,
+   bez szafki. Karta ma stały rozmiar projektowy 450 px, a nakładka skaluje się właściwością `scale` (--sk z nagrody.js), żeby
+   mieściła się w niskim oknie (ramka tier listy, 720p). Menu gry pod spodem jest schowane. Na ciemnym tle krem, na bursztynie grafit. ---------- */
+html.podglad-zdobycia body>:not(#nagrody){visibility:hidden}
+#nagrody[data-scena="podglad"]{background:rgba(24,22,20,.94)}
+#nagrody[data-scena="podglad"] .ng-karta{width:min(478px,96vw);max-height:none;overflow:visible;padding:0;gap:6px;background:none;box-shadow:none;border-radius:0;scale:var(--sk,1)}
+#nagrody[data-scena="podglad"] .ng-karta::before,#nagrody[data-scena="podglad"] .ng-karta::after{display:none}
+#nagrody[data-scena="podglad"] .ng-kropki{display:none}
+#nagrody[data-scena="podglad"] .ng-scena{min-height:0;gap:8px;animation:none}
+#nagrody[data-scena="podglad"] .ng-akcje{margin-top:0;gap:8px;padding:0 14px}
+#nagrody.w-ramce[data-scena="podglad"] .ng-pomin{display:none}
+#nagrody.w-ramce[data-scena="podglad"] .ng-akcje{justify-content:center;gap:14px}
+.ng-podglad-scena{position:relative;width:100%;height:340px}   /* wysokość dopasowuje nagrody.js do karty (instrument niższy niż scena z żabkami) */
+.ng-podglad-scena .kolo-wyniki{padding:0 14px}
+.ng-podglad-info{margin:0;padding:6px 16px;border-radius:999px;background:var(--amber);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink);font:400 16px/1.1 var(--rebel)}
+.ng-podglad-info[hidden],.ng-podglad-przel[hidden]{display:none}
+.ng-podglad-przel{display:flex;gap:4px;padding:3px;border-radius:12px;background:rgba(255,255,255,.14)}
+.ng-podglad-kat{min-width:68px;padding:8px 14px;border:none;border-radius:9px;cursor:pointer;color:#fff7e6;background:transparent;font:400 16px/1 var(--rebel)}
+.ng-podglad-kat[aria-pressed="true"]{background:var(--amber);color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.ng-podglad-kat:focus-visible{outline:3px solid var(--pink,#ec1a83);outline-offset:2px}
+
+/* 10-18 impakt zdobycia: fala uderzeniowa po wybuchu karty i wstrząs karty (epicki i wyższy) */
+.kolo-fala{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:4px solid var(--blysk,#ffd84a);box-shadow:0 0 24px 6px var(--blysk,#ffd84a);pointer-events:none;z-index:3;animation:koloFala .7s ease-out forwards}
+@keyframes koloFala{from{transform:scale(.3);opacity:.95}to{transform:scale(7);opacity:0}}
+.ng-karta.wstrzas{animation:ngWstrzas .5s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes ngWstrzas{10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(4px,-2px)}30%,50%,70%{transform:translate(-7px,3px)}40%,60%{transform:translate(7px,-3px)}}
+@media (prefers-reduced-motion:reduce){.kolo-fala,.ng-karta.wstrzas{animation:none}}
+
+/* 10-18 wskakiwanie na miejsce: karta w pasku uderza w środek okna (przeregulowanie, odbicie), szczelina wrzutni ściska się przy wejściu monety */
+.kolo-h-karta.wskok{animation:koloWskok .6s ease-out both}
+@keyframes koloWskok{0%{transform:scale(1.12)}30%{transform:scale(.97)}55%{transform:scale(1.03)}78%{transform:scale(.995)}100%{transform:scale(1.07)}}
+.kolo-licz-szczel.wrzut{animation:szczelWskok .46s cubic-bezier(.3,1.7,.5,1) both}
+@keyframes szczelWskok{0%{transform:scale(1,1)}30%{transform:scale(1.7,.7);box-shadow:inset 0 0 0 2px #211f1d,0 0 16px 4px rgba(255,216,74,.9)}70%{transform:scale(.85,1.15)}100%{transform:scale(1,1)}}
+@media (prefers-reduced-motion:reduce){.kolo-h-karta.wskok,.kolo-licz-szczel.wrzut,.ng-karta.odbij{animation:none}}
+/* sekretna karta po wybuchu: miękkie odbicie w górę i opadnięcie, bez drgania */
+.ng-karta.odbij{animation:ngOdbij .6s ease-out both}
+@keyframes ngOdbij{0%{transform:translateY(0)}25%{transform:translateY(-12px)}50%{transform:translateY(0)}70%{transform:translateY(-4px)}85%,100%{transform:translateY(0)}}
+/* 10-18: w trakcie losowania „Pomiń” jest zablokowane (nagrody.js losowanieTrwa) */
+#nagrody:has(.kolo-dzw.laduje) .ng-pomin,#nagrody:has(.kolo-dzw.kreci) .ng-pomin{opacity:.45;pointer-events:none;filter:saturate(.4)}
+
+/* ---- nagłówek, imię, status i przyciski koła ---- */
+.kolo-naglowek{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 14px}
+#nagrody[data-scena="kolo"] .kolo-kto{display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;border-radius:999px;font:800 15px/1 var(--display);letter-spacing:.01em;color:var(--ink);
+  background:#fff;background-image:var(--felt-soft);box-shadow:0 3px 0 rgba(33,31,29,.2),inset 0 0 0 2px var(--ink)}
+#nagrody[data-scena="kolo"] .kolo-kto::before{content:"";flex:none;width:13px;height:13px;border-radius:50%;background:var(--kolor,var(--amber));box-shadow:inset 0 0 0 2px var(--ink)}
+/* awatar w kolorze gracza: zamiast kropki awatar konta w kółku wypełnionym kolorem gracza, z obwódką atramentu */
+#nagrody[data-scena="kolo"] .kolo-kto.z-awatarem{padding:4px 14px 4px 5px;gap:9px}
+#nagrody[data-scena="kolo"] .kolo-kto.z-awatarem::before{display:none}
+.kolo-kto-znak{flex:none;display:block;width:28px;height:28px;border-radius:50%;overflow:hidden;background:var(--kolor,var(--amber));box-shadow:inset 0 0 0 2px var(--ink),0 1px 0 rgba(33,31,29,.25)}
+.kolo-kto-znak .kolo-kto-awatar{display:block;width:100%;height:100%;box-sizing:border-box;padding:2px;object-fit:contain}   /* .awatar z gry-profile.css ma contain; tu pełna żaba na kolorowym krążku */
+/* status: nazwa kategorii średnim fontem; słowo rzadkości dużym Titan One w kolorze rzadkości (te same kolory co ramki kart i koło),
+   sekretny jako czarne holo z przesuwającym się tęczowym połyskiem (jak karta sekretna). Klasę .rzadkosc nadaje ustawStatus w nagrody.js. */
+.kolo-status[data-rz="kat"]{font:800 19px/1.1 var(--display);color:var(--ink)}
+.kolo-status.rzadkosc{font:400 30px/1 var(--rebel);letter-spacing:.03em;color:var(--rz-kolor,var(--ink));text-shadow:0 3px 0 rgba(33,31,29,.16);animation:koloStatusPop .55s cubic-bezier(.2,1.6,.4,1) both}
+.kolo-status[data-rz="zwykly"]{--rz-kolor:var(--muted)}
+.kolo-status[data-rz="rzadki"]{--rz-kolor:#3d8fd6}
+.kolo-status[data-rz="epicki"]{--rz-kolor:#8c5bd6}
+.kolo-status[data-rz="legendarny"]{--rz-kolor:#eaa32b;text-shadow:0 3px 0 rgba(33,31,29,.16),0 0 18px rgba(255,216,74,.6)}
+.kolo-status[data-rz="sekretny"]{color:transparent;text-shadow:none;background:linear-gradient(110deg,#111 0%,#9ad6ff 28%,#ff9ad6 48%,#ffe08a 66%,#111 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;
+  animation:koloStatusPop .55s cubic-bezier(.2,1.6,.4,1) both,koloHoloTekst 2.6s linear .55s infinite}
+@keyframes koloStatusPop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:none;opacity:1}}
+@keyframes koloHoloTekst{from{background-position:0% 50%}to{background-position:300% 50%}}
+/* przyciski: siatka 1fr auto 1fr, „Pomiń" mały w lewym rogu, „Losuj dalej" / „Dalej" na środku (kolumna 2 zostaje pusta w czasie losowania) */
+#nagrody[data-scena="kolo"] .ng-akcje .ng-pomin{grid-column:1;justify-self:start;min-width:0;min-height:38px;padding:6px 12px 6px 14px;font-size:13px;gap:6px}
+#nagrody[data-scena="kolo"] .ng-akcje .ng-pomin .pomin-ikona{width:15px;height:15px}
+#nagrody[data-scena="kolo"] .ng-akcje .ng-dalej{grid-column:2;justify-self:center}
+@media (prefers-reduced-motion:reduce){.kolo-status.rzadkosc,.kolo-status[data-rz="sekretny"]{animation:none}}

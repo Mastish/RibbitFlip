@@ -1,0 +1,12 @@
+# RibbitFlip runtime dependencies (Windows).
+# Install:  pip install -r requirements.txt
+bleak==3.0.2      # Bluetooth LE communication with the puck (MIT)
+pynput==1.8.2     # keyboard/mouse input simulation (LGPL-3.0)
+vgamepad==0.1.0   # virtual Xbox gamepad via ViGEmBus (MIT) — optional, only for gamepad output
+pystray==0.19.5   # system-tray icon near the Windows clock (LGPL-3.0) — pinned: LGPL relinking
+                  #   compliance in third_party_licenses/README.md points at this exact version
+Pillow>=10        # renders the tray icon image, pulled in by pystray (MIT-CMU / HPND-style license)
+
+# PyInstaller is a BUILD-TIME-ONLY tool (packaging the .exe), not a runtime
+# dependency. Install it separately when you want to build the executable:
+#     pip install pyinstaller

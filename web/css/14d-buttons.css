@@ -1,0 +1,161 @@
+/* ONE STITCH FOR EVERY BUTTON.
+   The felt skin sews an edge onto almost everything except the thing you actually click. A card
+   carries `inset:5px; border:1.5px dashed var(--stitch)` (07), so do the folds and the wiki panels;
+   the skull's speech patch does the same in 11; the tip jar draws it in white over its pink fill
+   (13). The .btn family had nothing at all — a white button on a cream card was held together by
+   its drop shadow alone, and on the Library tab the non-clickable "v1" chip read as more of a
+   button than "Pobierz" standing next to it.
+
+   What goes on a button is the STITCH, not an outline: a dashed line a few pixels INSIDE the edge,
+   the way a patch is sewn onto fabric. A solid ring hugging the border reads as a box someone drew
+   around the label, which is the opposite of this skin.
+
+   Drawn as a pseudo-element, deliberately not as a border and not as a box-shadow:
+     · a `border` sits ON the edge, which is the wrong place for a stitch, and would grow every
+       button by 3px in both axes — .btn padding is re-tuned in some twenty-five places,
+     · a `box-shadow` cannot be inset by a few pixels at all, and gets WIPED by the rules that own
+       that property: `button.btn:hover{box-shadow:0 6px 0 …}` (14), `:active` (07),
+       `.grp-enable.on` (08), `.playpad-btns .btn.on` (09), `.rail-ctrls .btn` (10).
+   The inset and the radius are variables, because the stitch has to follow the corner it runs
+   along: a line 4px inside a 12px corner curves at 8px, not at 12.
+
+   NOT stitched, on purpose:
+     · 24-26px icon chips (.icon-btn, .se-row-acts button, .seq-cell, .pose3d-gear) — at that size
+       a dashed line has room for about four dashes and reads as noise; they keep the thin solid
+       1px edge they already wear,
+     · the LIVE/Symulacja switch — its sliding thumb already sits 4px in, exactly where the stitch
+       would run,
+     · segment children (.seg button, .lib-kind, .paxsegb), .dp-act inside a device pill, .ph-tool
+       on a controller tile — the container around them is sewn already (the SELECTED segment is
+       the exception: it carries its own cream stitch on black felt, 08 `.seg button.on`, D5),
+     · dashed "add" slots (.ph-add-tile, .rules-empty) — a different idiom: something is missing
+       here, rather than something you press,
+     · .rf-toggle / .paxsw — a switch is a shape you read, not an edge you press,
+     · fold summaries and .xh-howto, a sentence styled as a link. */
+
+/* ---- the stitch ---- */
+button.btn, a.btn,
+.rfm-btn,
+.tabbar .tab-btn, .tabbar .tabbtn,
+#deviceSel .devpill.add,
+.devices-panel .devpill:not(.add){position:relative}
+
+button.btn::after, a.btn::after,
+.rfm-btn::after,
+.tabbar .tab-btn::after, .tabbar .tabbtn::after,
+#deviceSel .devpill.add::after,
+.devices-panel .devpill:not(.add)::after{
+  content:"";position:absolute;inset:var(--rf-stitch-in,4px);pointer-events:none;
+  border:1.5px dashed var(--rf-stitch,var(--stitch));
+  border-radius:var(--rf-stitch-r,8px);
+  transition:border-color .12s ease}
+
+/* ---- geometry: inset + the radius the stitch curves at (parent radius minus the inset) ---- */
+header .btn, header a.btn{--rf-stitch-r:7px}                                   /* 11px corner */
+button.btn.sm, a.btn.sm{--rf-stitch-in:3px;--rf-stitch-r:6px}                  /*  9px corner */
+button.btn.xs, a.btn.xs{--rf-stitch-in:2.5px;--rf-stitch-r:5px}                /*  8px corner */
+.tabbar .tab-btn, .tabbar .tabbtn{--rf-stitch-r:9px}                           /* 13px corner */
+#deviceSel .devpill.add{--rf-stitch-r:999px}                                   /* a pill stays a pill */
+/* Pigułka kapsla: pełna pigułka w szerokim układzie, zaokrąglony wiersz w wąskiej kolumnie
+   (`.rf-devcompact` nadpisuje promień na 7 px, `body.rp-collapsed` na 9 px — tam kafel jest
+   kwadratem o promieniu 13 px). Nić bierze kolor kapsla, kiedy to jego się właśnie edytuje. */
+.devices-panel .devpill:not(.add){--rf-stitch-r:999px}
+/* WYJĄTEK, ta sama zasada co przy 24-26-pikselowych chipach na górze pliku: w ZWINIĘTEJ prawej
+   kolumnie kafel kapsla ma 25 px, a na tyle ściegu wchodzą cztery kreski i czyta się je jako
+   szum. Tam kapsel wraca do pełnej kreski — w kwadraciku ma być widoczny JEGO KOLOR, a nie
+   sposób szycia. */
+body.rp-collapsed .rf-rcol .devpill:not(.add)::after{display:none}
+body.rp-collapsed .rf-rcol .devpill:not(.add){border:2px solid var(--stitch)}
+body.rp-collapsed .rf-rcol .devpill.active{border-color:var(--dcol)}
+
+/* ---- colour: the stitch has to be visible ON the fill it is sewn into ---- */
+/* Saturated fills with white type get white thread, at the alpha the tip jar already uses (13). */
+button.btn.primary, button.btn.on, a.btn.primary,
+.rfm-btn.primary, .rfm-btn.danger,
+#recToggle.on, header #langToggle.on,
+button.grp-enable.on, #mEnable.on, #armBtn.on, #edCap.on,
+.playpad-btns .btn.on, .playpad-fx .btn.on,
+.tabbar .tab-btn[aria-selected=true], .tabbar button.on{--rf-stitch:rgba(255,255,255,.46)}
+/* Amber and yellow are LIGHT fills carrying dark type — white thread would vanish into them. */
+button.grp-enable.live, #mEnable.live, #armBtn.live,
+.btn.sm.cmd-preset.warn, .se-actions .btn.yellow{--rf-stitch:rgba(0,0,0,.24)}
+/* The modal's quiet button sits on #faf5ea, half a shade off the page — its thread has to be a
+   touch darker than --stitch or it disappears into the card. */
+.rfm-btn.ghost{--rf-stitch:#c9b99c}
+
+/* ---- states ---- */
+/* Hover: the thread pulls tight for the same reason the shadow lifts — the button is answering.
+   Filled variants keep their white thread (they are already loud), which is what the
+   `:where(:not(…))` does: it drops them from the match without adding specificity, so this rule
+   stays at (0,2,1) and cannot start out-ranking a colour declared above. */
+button.btn:hover:where(:not(.primary,.on,.live,.yellow,.warn)),
+a.btn:hover:where(:not(.primary)),
+.tabbar .tab-btn:hover:where(:not([aria-selected=true])),
+.tabbar .tabbtn:hover:where(:not(.on)),
+#deviceSel .devpill.add:hover{--rf-stitch:#bcab8d}
+
+/* "Kill stuck audio" turns red on hover; that used to be written as `border-color:var(--bad)` on a
+   button with no border (07), i.e. dead code. Now it has something to colour. */
+.pad-sec-h .pad-kill:hover{--rf-stitch:var(--bad)}
+
+/* Focus stays with the existing 3px outline (10), which sits OUTSIDE the box and therefore never
+   collides with the thread inside it. */
+
+/* ===== UX 261120 A1: przycisk nieczynny i przycisk niebezpieczny ===== */
+/* NIEBEZPIECZNY (wzór M13: „Wyłącz wszystko teraz"). Ta sama bryła co `.rfm-btn.danger` (07):
+   czerwone wypełnienie, biały napis, biała nić, twardy ciemnoczerwony cień. Zawsze z „Cofnij"
+   (`rfUndo`) albo pytaniem; nigdy jako zwykłe „Usuń" w rzędzie. */
+button.btn.danger, a.btn.danger{background:var(--bad);background-image:none;color:#fff;
+  box-shadow:0 4px 0 #8f2036;--rf-stitch:rgba(255,255,255,.46)}
+button.btn.danger:hover, a.btn.danger:hover{background:var(--bad);color:#fff;filter:brightness(1.06)}
+button.btn.danger:active, a.btn.danger:active{box-shadow:0 1px 0 #8f2036}
+button.btn.sm.danger, button.btn.xs.danger{box-shadow:0 3px 0 #8f2036}
+/* CICHY NIEBEZPIECZNY: „Usuń" przy pozycji listy (wzór z 21-presets). Kremowy przycisk jak
+   sąsiedzi, czerwony tylko napis i cień, bo w rzędzie trzech działań to nie jest główna akcja.
+   Stare selektory Biblioteki zostają w grupie, żeby ich „Usuń" nie zrobiło się czerwone. */
+button.btn.danger.quiet, .rfpc-acts button.btn.danger, .rfpc-state-acts button.btn.danger, .lib-dacts button.btn.danger{
+  background:#fff;background-image:var(--felt-tex-soft);color:var(--bad-ink);--rf-stitch:var(--stitch);filter:none;
+  box-shadow:0 3px 0 color-mix(in srgb,var(--bad) 42%,transparent)}
+button.btn.danger.quiet:active, .rfpc-acts button.btn.danger:active, .rfpc-state-acts button.btn.danger:active,
+.lib-dacts button.btn.danger:active{box-shadow:0 1px 0 color-mix(in srgb,var(--bad) 42%,transparent)}
+/* NIECZYNNY (synteza 3.7, K17). Sama `opacity:.45` (10-icons-controls) gasiła przycisk razem
+   z napisem do ok. 2:1, a różowy nieczynny dalej wyglądał jak akcja główna. Teraz każdy nieczynny
+   `.btn` jest płaskim kremem bez cienia, z ściegiem w kolorze linii i napisem ok. 4:1 na tle, bez
+   względu na to, czy był różowy, czerwony czy zwykły. Powód stoi obok przycisku (`.rfpc-f-why`)
+   albo w `title`. Stoi PO wariantach kolorowych, żeby wygrać z nimi kolejnością. Lokalne `opacity` na `.btn[disabled]` w arkuszach modułów są już zbędne. */
+button.btn:disabled, button.btn:disabled:hover, button.btn[disabled], a.btn[aria-disabled="true"],
+button.btn.danger:disabled, .rfpc-acts button.btn:disabled, .rfpc-state-acts button.btn:disabled,
+.lib-dacts button.btn:disabled{
+  opacity:1;background:var(--bg2);background-image:none;box-shadow:none;cursor:not-allowed;
+  color:color-mix(in srgb,var(--ink) 62%,var(--bg2));--rf-stitch:var(--line);filter:none}
+
+/* (koniec sekcji A1) */
+
+@media (prefers-reduced-motion:reduce){
+  button.btn::after, a.btn::after, .rfm-btn::after,
+  .tabbar .tab-btn::after, .tabbar .tabbtn::after,
+  #deviceSel .devpill.add::after{transition:none}
+}
+
+/* ---- pozycja nawigacji: ścieg tylko na WYBRANEJ -------------------------------------------------
+   Aktywny przycisk po lewej ma mieć obszycie jak prawdziwy przycisk, a nie tylko wyróżnienie.
+   Wybrana pozycja dostawała różowe wypełnienie i twardy cień — czyli
+   wszystko, co ma przycisk tej aplikacji, POZA jedyną rzeczą, która w niej znaczy „to jest
+   przycisk": ściegiem. Wyglądała przez to jak podświetlony wiersz listy, a nie jak wciśnięty
+   klawisz.
+
+   TYLKO NA WYBRANEJ, i to nie jest oszczędność. Nawigacja ma trzynaście pozycji jedna pod drugą;
+   trzynaście kreskowanych ramek naraz to nie „obszycie", tylko krata. Nieaktywne pozycje są
+   przezroczystymi wierszami — nie mają wypełnienia, w które można by wszyć nitkę — a wybrana ma
+   różowe i to na niej ścieg ma co robić. Ta sama zasada, co przy zakładkach modułu: `.rfpc-tab`
+   nosi ścieg zawsze, ale ona JEST przyciskiem `.btn` z widocznym tłem w obu stanach.
+
+   Nitka BIAŁA, bo róż jest nasycony i niesie biały napis — dokładnie jak `button.btn.on` wyżej.
+   Promień mniejszy o wcięcie: narożnik 11 px, wcięcie 4 px, łuk 7 px. */
+.rnav-btn{position:relative}
+.rnav-btn.active::after{
+  content:"";position:absolute;inset:4px;pointer-events:none;
+  border:1.5px dashed rgba(255,255,255,.46);border-radius:7px}
+/* Zwinięty pasek: pozycja kurczy się do kwadratu z samym rysunkiem, a wcięcie 4 px zostawiłoby
+   ścieg na jego krawędzi. Trochę ciaśniej i promień z powrotem o tyle samo mniejszy. */
+body.lp-collapsed .rf-rail .rnav-btn.active::after{inset:3px;border-radius:8px}

@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="pl">
+
+<head>
+  <meta charset="utf-8">
+  <title>Skaner</title>
+  <!-- SKANER EKRANU — okno stawiane NAD PULPITEM.
+
+       To nie jest panel: strona jest celowo pusta. Windows wycina z okna każdy piksel w kolorze
+       klucza (#010203), więc wszystko, czego tu nie namalujemy, przestaje istnieć — widać wtedy
+       prawdziwy pulpit, a kliknięcia lecą do niego, nie do nas (WS_EX_TRANSPARENT).
+       Rysują się tylko paski skanera i mały pasek stanu na dole.
+
+       Ładujemy DOKŁADNIE tyle, ile trzeba: model (silnik), scenę i pasek stanu. Panel, piaskownica
+       i trening zostają w karcie — nakładka ma być lekka, bo stoi nad grą albo nad czyjąś pracą. -->
+  <link rel="stylesheet" href="/web/css/01-assets-tokens.css">
+  <link rel="stylesheet" href="/web/css/26-scan.css">
+  <style>
+    html, body {
+      margin: 0; height: 100%; overflow: hidden; background: #010203;
+      font-family: "Nunito", system-ui, sans-serif; cursor: none;
+    }
+    /* Warstwa sceny zajmuje całe okno, czyli cały pulpit. */
+    #scena { position: fixed; inset: 0; pointer-events: none; }
+    /* ------------------------------------------------ SCENA NAD CUDZĄ PRACĄ (22.09)
+       Objaw: same nakładki (np. ćwiartki) zasłaniały, radar nie pokazywał kropki, a kontrasty
+       były niskie. Reguły niżej dotyczą WYŁĄCZNIE okna nad pulpitem (klasa `sc-nad`
+       zakładana przez `Scena.nadPulpitem`) i robią jedno: każdy jasny znak dostaje CIEMNĄ OBWÓDKĘ,
+       a każde tło wpisane półprzezroczystą bielą — pełny kolor. Nad białym oknem gry różowa kreska
+       i biała linia po prostu nikną, a cieni (które normalnie dają tę granicę) w tym oknie nie ma.
+       `outline` zamiast `box-shadow`: nie rozmywa się, więc nie zostawia czarnej aureoli. */
+    #scena.sc-nad .sc-kres { background: #eaa32b; outline: 1px solid #0b0f14; }
+    #scena.sc-nad .sc-punkt { outline: 2px solid #0b0f14; }
+    #scena.sc-nad .sc-slad { outline: 2px solid #0b0f14; }
+    #scena.sc-nad .sc-slad-opis { outline: 1px solid #0b0f14; }
+    #scena.sc-nad .sc-etykieta { background: #14161a; }
+    #scena.sc-nad .sc-menu { background: #14161a; }
+    /* Kropka radaru: większa i z ciemną obwódką, bo to JEDYNY znak, którym wybiera się odległość. */
+    #scena.sc-nad .sc-kropka { width: 20px; height: 20px; outline: 2px solid #0b0f14; }
+    #scena.sc-nad .sc-promien { outline: 1px solid #0b0f14; }
+    /* Środek radaru — punkt, wokół którego kręci się promień. Bez niego promień wychodzi znikąd. */
+    .sc-radar-srodek {
+      position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%;
+      display: none;
+    }
+    #scena.sc-nad .sc-radar-srodek { display: block; outline: 2px solid #0b0f14; }
+    /* Numer pola w barwie jego ramki: biel 45% ginie na jasnym oknie gry, a pełny kolor stonowany
+       da się przeczytać i na białym, i na ciemnym. */
+    #scena.sc-nad .sc-blok-nr { color: #4a7f96; font-size: 12px; }
+    #scena.sc-nad .sc-blok.sc-aktywny { outline: 1px solid #0b0f14; }
+    #scena.sc-nad .sc-blok.sc-aktywny .sc-blok-nr { color: #fff; background: #0b0f14; padding: 0 4px; border-radius: 4px; }
+    /* ⚠️ ŻADNYCH POŚWIAT NAD PULPITEM (16.09). Scena, pasek stanu i menu akcji dzielą arkusz
+       26-scan.css z kartą, a tam rozmyte cienie (`box-shadow`) są ozdobą jak każda inna. W TYM
+       oknie są usterką: rozmycie schodzi do koloru bliskiego kluczowi (#010203), ale nigdy
+       dokładnie w niego nie trafia, więc Windows nie ma czego wyciąć i zostaje czarna aureola
+       wokół każdej linii. Selektor przez `#id` zamiast `!important` — wygrywa specyficznością
+       z klasami arkusza i nie blokuje niczego na przyszłość. */
+    #scena *, #hud *, #podglad *, .sk-ed * { box-shadow: none; }
+    /* Pasek stanu: pigułka na dole, nieklikalna. Nad grą ma mówić, co się dzieje, i nie zasłaniać. */
+    /* ⚠️ ŻADNYCH PÓŁPRZEZROCZYSTYCH TŁA I CIENI W TYM OKNIE (16.09). Windows wycina piksele
+       DOKŁADNIE w kolorze klucza (#010203) — piksel półprzezroczysty zlewa się z nim w prawie
+       czarny, ale już nie w sam klucz, więc zostaje na ekranie jako czarna obwódka. Czarna
+       rama wokół i przezroczyste poświaty, które wyglądały na czarne, są niepożądane. Tła są więc pełne, a cieni (`box-shadow`) nie ma wcale. */
+    #hud {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 9;
+      display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-radius: 14px;
+      background: #14161a; color: #efe9dd; border: 1px solid #3a3f48;
+      pointer-events: none; font-size: 12px;
+    }
+    /* PRAWY KONIEC PASKA MÓWI, CZYM TO ZGASIĆ (15.09). W karcie stoi tam „sygnał: przycisk albo
+       kapsel" i nad pulpitem było schowane — a to jedyne miejsce, w którym da się powiedzieć
+       o skrócie awaryjnym komuś, kto patrzy na skaner klikający po ekranie. Treść wstawia rf-50h
+       z `/hotkey`, bo kombinacja jest ustawieniem, nie stałą. */
+    #hud .hud-skroty { font-size: 11px; color: #cdd4dd; }
+    #hud .hud-skroty b { font-family: var(--mono); color: #fff; }
+    #hud .hud-faza { font-weight: 800; font-size: 13px; }
+    #hud .hud-opis { font-size: 11px; color: #9aa2ad; }
+    #hud .hud-kropki { display: flex; gap: 5px; }
+    #hud .hud-kropka { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #4a505a; }
+    #hud .hud-k-zrobiona { background: #6cb33f; border-color: #6cb33f; }
+    /* Kropka „tutaj jestem" bez poświaty — patrz nota o kolorze klucza wyżej. Zamiast obwódki
+       z alfy: wypełnienie, czyli ta sama informacja bez czarnej aureoli na pulpicie. */
+    #hud .hud-k-teraz { border-color: #eaa32b; background: #eaa32b; }
+    #hud .hud-nawrot { font-size: 10.5px; color: #9aa2ad; font-family: var(--mono); }
+    #hud .hud-lampka { width: 12px; height: 12px; border-radius: 50%; background: #333840; }
+    #hud .hud-l-sygnal { background: #eaa32b; }
+    #hud .hud-l-ok { background: #6cb33f; }
+    #hud .hud-l-zle { background: #d83a5c; }
+    #hud .hud-l-cofniecie { background: #1f93c9; }
+    /* TRYB PODGLĄDU (`?podglad=1`) — okno nie skanuje i nie klika, tylko pokazuje na prawdziwym
+       pulpicie prostokąt, który w karcie widać na zrzucie. Pasek stanu jest wtedy pusty (nie ma
+       czego raportować), więc jego miejsce zajmuje jedno zdanie mówiące, co to za okno i czym
+       je zgasić — bez tego nad pulpitem stoi obrys bez wyjaśnienia. */
+    #podglad { display: none; }
+    body.rf-podglad #hud { display: none; }
+    body.rf-podglad #podglad {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 9;
+      display: flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 14px;
+      background: #14161a; color: #efe9dd; border: 1px solid #3a3f48;
+      pointer-events: none; font-size: 12px;
+    }
+    /* USTAWIANIE OBSZARU MYSZĄ (`?edycja=1`, rf-50m) — jedyny tryb tego okna, który bierze mysz.
+       Kursor musi być widoczny (wyżej jest `cursor: none`, bo skaner prowadzi się sygnałem),
+       a pasek podglądu schodzi z drogi: w edycji mówi się o czym innym. */
+    body.rf-edycja { cursor: default; }
+    body.rf-edycja #podglad { display: none; }
+    .sk-ed { position: fixed; inset: 0; z-index: 12; }
+    /* ⚠️ WARSTWA BEZ TŁA. Windows wycina z tego okna piksele koloru klucza (#010203), więc każde
+       tło na całą warstwę zasłoniłoby pulpit — a to po nim człowiek przykłada ramkę. */
+    /* ⚠️ SAMA LINIA, ZERO POŚWIATY. Stało tu `box-shadow: 0 0 0 1px rgba(0,0,0,.55),
+       0 0 18px rgba(255,59,212,.35)` — na pulpicie wyglądało to jak gruba czarna rama dookoła
+       ramki, bo rozmyta poświata nigdzie nie trafia dokładnie w kolor klucza i nic z niej nie
+       zostaje wycięte (patrz nota przy `#hud`). */
+    /* KOLOR USTAWIANEGO SKANERA wchodzi zmienną `--sek` ustawianą na `#edytor` (rf-50m) — ta sama
+       barwa, co jego pigułka w karcie i jego prostokąt w podglądzie. Przy jednym skanerze jest to
+       pierwszy kolor palety, czyli ten sam róż, co zawsze. */
+    .sk-ed-ramka {
+      position: absolute; box-sizing: border-box; border: 2px solid var(--sek, var(--pink-btn, #ff3bd4));
+      border-radius: 4px; cursor: move;
+    }
+    .sk-ed-uchwyt {
+      position: absolute; width: 14px; height: 14px; background: var(--sek, var(--pink-btn, #ff3bd4));
+      border: 2px solid #11131a; border-radius: 3px;
+    }
+    /* POZOSTAŁE SKANERY TEJ KONFIGURACJI (16.09) — obszary, których teraz nie ustawiasz.
+       Cieńszą, przerywaną kreską i BEZ WYPEŁNIENIA: Windows wycina z tego okna jeden kolor, więc
+       półprzezroczysta plama zostałaby na ekranie brudną szybą nad cudzą pracą. */
+    .sk-ed-cienie { position: absolute; inset: 0; pointer-events: none; }
+    .sk-ed-cien {
+      position: absolute; box-sizing: border-box; border-radius: 4px;
+      border: 2px dashed var(--sek, var(--pink-btn, #ff3bd4));
+    }
+    /* Podpis W ŚRODKU prostokąta: obszar przyklejony do górnej krawędzi ekranu miałby podpis poza
+       ekranem, czyli niewidoczny dokładnie wtedy, gdy prostokątów jest kilka. */
+    /* Podpis jest KLIKALNY (przełącza na ten skaner), więc jako jedyny w warstwie cieni bierze
+       mysz — sama warstwa ma `pointer-events:none`, żeby ciągnięcie po ekranie dalej rysowało
+       ramkę tam, gdzie człowiek zaczął. */
+    .sk-ed-cien-lbl {
+      pointer-events: auto; cursor: pointer;
+      position: absolute; left: 0; top: 0; max-width: 100%; box-sizing: border-box;
+      font: 800 11px/1.25 var(--mono, ui-monospace, monospace); padding: 3px 7px 3px 6px;
+      border-radius: 3px 0 6px 0; border-left: 4px solid var(--sek, #ff3bd4);
+      background: #14161a; color: #efe9dd;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sk-ed-kropka {
+      display: inline-block; width: 11px; height: 11px; border-radius: 50%;
+      background: var(--sek, var(--pink-btn, #ff3bd4)); flex: 0 0 auto;
+    }
+    .sk-ed-u-nw { left: -8px; top: -8px; cursor: nwse-resize; }
+    .sk-ed-u-n { left: 50%; top: -8px; margin-left: -7px; cursor: ns-resize; }
+    .sk-ed-u-ne { right: -8px; top: -8px; cursor: nesw-resize; }
+    .sk-ed-u-e { right: -8px; top: 50%; margin-top: -7px; cursor: ew-resize; }
+    .sk-ed-u-se { right: -8px; bottom: -8px; cursor: nwse-resize; }
+    .sk-ed-u-s { left: 50%; bottom: -8px; margin-left: -7px; cursor: ns-resize; }
+    .sk-ed-u-sw { left: -8px; bottom: -8px; cursor: nesw-resize; }
+    .sk-ed-u-w { left: -8px; top: 50%; margin-top: -7px; cursor: ew-resize; }
+    .sk-ed-wymiar {
+      position: absolute; left: 50%; top: -26px; transform: translateX(-50%); white-space: nowrap;
+      font: 700 11.5px/1 var(--mono); color: #fff; background: #14161a;
+      border: 1px solid #3a3f48; border-radius: 8px; padding: 4px 8px;
+    }
+    /* PASEK STOI NA DOLE EKRANU GŁÓWNEGO — `left`/`bottom` wylicza `ustawPasek` w rf-50m, bo okno
+       rozciąga się na CAŁY pulpit i „50% od lewej" trafiałoby przy dwóch monitorach w styk między
+       nimi. Wartości niżej są punktem wyjścia na czas, zanim serwer powie, jak stoją monitory. */
+    .sk-ed-pasek {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 13;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; max-width: 92vw;
+      padding: 10px 16px; border-radius: 14px; background: #14161a; color: #efe9dd;
+      border: 1px solid #3a3f48; font-size: 12.5px;
+    }
+    /* OCZKO „UKRYJ" I STAN SCHOWANY — ramka na dole jest cały czas
+       włączona; oczko „ukryj" ją chowa, ale samo zostaje widoczne, żeby dało się ją znów pokazać.
+
+       Schowany edytor NIE JEST tym samym co zamknięty: obrys obszaru zostaje na ekranie (po to
+       się tu przyszło), znikają tylko uchwyty, wymiar i zawartość paska. Zostaje samo oczko —
+       i to ono jest wtedy JEDYNYM miejscem, które bierze mysz: serwer dostaje jego prostokąt
+       i przez resztę ekranu przepuszcza kliknięcia do pulpitu (`/scan/okno` → `klik`).
+       Dlatego chowamy ZAWARTOŚĆ paska, a nie pasek: prostokąt do zgłoszenia jest jeden i ten
+       sam element, więc nie ma jak się rozjechać z tym, co widać. */
+    .sk-ed-oko {
+      background: #232730; color: #efe9dd; border: 1px solid #3a3f48; border-radius: 999px;
+      width: 30px; height: 30px; line-height: 1; font-size: 15px; cursor: pointer; padding: 0;
+    }
+    .sk-ed-oko:hover { background: #2c313c; }
+    body.sk-ed-ukryty .sk-ed-pasek { padding: 6px; border-radius: 999px; gap: 0; }
+    body.sk-ed-ukryty .sk-ed-pasek > :not(.sk-ed-oko) { display: none; }
+    body.sk-ed-ukryty .sk-ed-uchwyt,
+    body.sk-ed-ukryty .sk-ed-wymiar { display: none; }
+    body.sk-ed-ukryty .sk-ed-ramka { cursor: default; }
+    .sk-ed-tytul { font-size: 13px; }
+    .sk-ed-pole {
+      background: #14161a; color: #efe9dd; border: 1px solid #3a3f48; border-radius: 8px;
+      padding: 5px 8px; font: inherit;
+    }
+    .sk-ed-nazwa { width: 150px; }
+    .sk-ed-btn {
+      background: #232730; color: #efe9dd; border: 1px solid #3a3f48; border-radius: 8px;
+      padding: 6px 12px; font: inherit; cursor: pointer;
+    }
+    .sk-ed-btn:hover { background: #2c313c; }
+    .sk-ed-btn:disabled { opacity: .45; cursor: default; }
+    .sk-ed-btn-ok { background: var(--pink-btn, #ff3bd4); color: #11131a; font-weight: 800; border-color: transparent; }
+    /* PRÓBA W PASKU: bursztyn, nie róż. Różowy przycisk w tym pasku znaczy „Gotowe" — koniec
+       pracy; próba jest czymś, co się robi po drodze, i ma mieć własny kolor (ten sam, co
+       znacznik PRÓBA w okienku wyzwalaczy). */
+    .sk-ed-btn-proba { background: #eaa32b; color: #11131a; font-weight: 800; border-color: transparent; }
+    .sk-ed-btn-proba:hover { background: #f2b44b; }
+    .sk-ed-btn-koniec { display: none; background: #2a2118; color: #f0d9a8; border-color: #eaa32b; }
+    body.rf-proba .sk-ed-btn-koniec { display: inline-block; }
+    .sk-ed-stan { font-size: 11.5px; color: #9aa2ad; min-width: 84px; }
+    /* Chip skali — stoi tylko wtedy, gdy widok okna NIE pokrywa ekranu 1:1 (rf-50m `pokazSkale`).
+       Bursztyn, bo to nie błąd, tylko stan, o którym trzeba wiedzieć. */
+    .sk-ed-skala {
+      font: 800 11px var(--mono); color: #11131a; background: #eaa32b;
+      padding: 3px 7px; border-radius: 999px;
+    }
+    .sk-ed-stan.ok { color: #6cb33f; }
+    .sk-ed-stan.zle { color: #d83a5c; }
+    .sk-ed-hint { flex-basis: 100%; font-size: 11px; color: #9aa2ad; }
+    /* ------------------------------------------------------- OKNO BIERNE (2026-09-26)
+       Przy kilku monitorach okno skanera stoi nad KAŻDYM, a skaner pracuje na jednym (rf-50h,
+       `ustawRole`). Okno na pozostałych jest „bierne": nie pokazuje stanu skanera (to nie jego
+       pasek), a w edycji zostawia z paska tylko to, co ma tu sens — oczko, zdjęcie tego ekranu,
+       „Gotowe" i zdanie, jak przenieść skaner na ten ekran (narysować ramkę). */
+    .sk-ed-bierne { display: none; font-size: 12px; color: #f0d9a8; }
+    body.rf-bierne .sk-ed-bierne { display: inline; }
+    body.rf-bierne #hud, body.rf-bierne #podglad, body.rf-bierne .wy-okno { display: none !important; }
+    body.rf-bierne .sk-ed-pasek > :not(.sk-ed-oko):not(#edZrzutEkranu):not(#edGotowe):not(.sk-ed-bierne):not(.sk-ed-stan) {
+      display: none;
+    }
+    /* W trakcie ciągnięcia kursor nie ma skakać po najechaniu na uchwyt sąsiada. */
+    body.sk-ed-ciagnie, body.sk-ed-ciagnie * { cursor: crosshair !important; user-select: none; }
+
+    /* ------------------------------------------------------- OKIENKO WYZWALACZY I PRÓBY (rf-50p)
+       „Czym sterujesz skanerem" z karty, przeniesione nad pulpit: pływa, przeciąga się za pasek
+       tytułu i zwija do samego paska. Te same dwie zasady, co reszta tego okna — pełne tła i zero
+       rozmytych cieni (Windows wycina stąd JEDEN kolor, patrz nota przy `#hud`), więc barwy są tu
+       wpisane wprost, a nie brane z arkusza karty: tamten opisuje kremowy panel. */
+    .wy-okno {
+      position: fixed; z-index: 14; width: 376px; max-width: 92vw;
+      background: #14161a; color: #efe9dd; border: 1px solid #3a3f48; border-radius: 12px;
+      font-size: 12px; overflow: hidden;
+    }
+    .wy-okno.wy-schowane { display: none; }
+    /* Schowany edytor (oczko 🙈) oddaje kliknięcia pulpitowi wszędzie poza samym oczkiem —
+       widoczny, a nieklikalny panel byłby wtedy kłamstwem. Schodzi razem z uchwytami. */
+    body.sk-ed-ukryty .wy-okno { display: none; }
+    .wy-glowa {
+      display: flex; align-items: center; gap: 6px; padding: 6px 8px; cursor: move;
+      background: #1b1f26; border-bottom: 1px solid #3a3f48;
+    }
+    .wy-glowa .wy-btn { padding: 3px 7px; }
+    .wy-okno.wy-zwiniete .wy-glowa { border-bottom: 0; }
+    .wy-okno.wy-zwiniete .wy-cialo { display: none; }
+    .wy-chwyt { color: #6b7380; font-size: 14px; }
+    .wy-tytul { flex: 1; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wy-znacznik {
+      display: none; font: 800 9.5px/1 var(--mono); letter-spacing: .06em;
+      padding: 3px 6px; border-radius: 999px; background: #eaa32b; color: #11131a;
+    }
+    .wy-okno.wy-proba-wl .wy-znacznik { display: inline-block; }
+    .wy-cialo { padding: 8px; max-height: 68vh; overflow-y: auto; scrollbar-width: thin; }
+    .wy-rzad { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .wy-szeroki { flex: 1 1 auto; }
+    .wy-btn {
+      background: #232730; color: #efe9dd; border: 1px solid #3a3f48; border-radius: 8px;
+      padding: 5px 9px; font: inherit; cursor: pointer;
+    }
+    .wy-btn:hover { background: #2c313c; }
+    .wy-btn:disabled { opacity: .45; cursor: default; }
+    .wy-btn-glowny { background: var(--pink-btn, #ff3bd4); color: #11131a; font-weight: 800; border-color: transparent; }
+    /* JEDEN JĘZYK KOLORU W CAŁYM OKNIE: bursztyn = PRÓBA (nic się nie dzieje na stałe),
+       róż = zmiana, która zostaje (dodaj wyzwalacz, włącz moduł, Gotowe w pasku). Do 22.09
+       przycisk próby był różowy w okienku i bursztynowy w pasku — ta sama rzecz w dwóch barwach. */
+    .wy-btn-proba { background: #eaa32b; color: #11131a; font-weight: 800; border-color: transparent; }
+    .wy-btn-proba:hover { background: #f2b44b; }
+    .wy-btn-ikona { padding: 4px 7px; }
+    .wy-btn-usun { background: #d83a5c; color: #fff; border-color: transparent; font-weight: 700; }
+    .wy-btn-koniec { background: #eaa32b; color: #11131a; font-weight: 800; border-color: transparent; }
+    .wy-proba { padding: 7px; border-radius: 10px; background: #1b1f26; border: 1px solid #3a3f48; margin-bottom: 8px; }
+    .wy-okno.wy-proba-wl .wy-proba { border-color: #eaa32b; }
+    .wy-proba-stan { margin-top: 6px; font-size: 11px; color: #9aa2ad; line-height: 1.45; }
+    .wy-okno.wy-proba-wl .wy-proba-stan { color: #eaa32b; }
+    .wy-proba-wynik { margin-top: 4px; font: 700 11px/1.4 var(--mono); color: #6cb33f; }
+    .wy-brama {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;
+      padding: 7px; border-radius: 10px; background: #2a2118; border: 1px solid #eaa32b;
+      color: #f0d9a8; font-size: 11px; line-height: 1.45;
+    }
+    .wy-rola { border: 1px solid #3a3f48; border-radius: 10px; padding: 7px; margin-bottom: 7px; }
+    .wy-rola-glowa { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+    .wy-rola-ikona { font-size: 13px; }
+    .wy-rola-nazwa { font-size: 12.5px; }
+    .wy-rola-cel { font-size: 10.5px; color: #9aa2ad; }
+    .wy-rola-pusto { font-size: 10.5px; color: #9aa2ad; line-height: 1.45; margin-bottom: 5px; }
+    .wy-rola-dodaj { margin-top: 3px; font-size: 11px; }
+    .wy-wiersz { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+    .wy-wiersz-off { opacity: .55; }
+    .wy-wiersz-tekst { flex: 1; min-width: 0; }
+    .wy-wiersz-nazwa {
+      display: block; font-weight: 700; font-size: 11.5px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .wy-wiersz-jak {
+      display: block; font-size: 10px; color: #9aa2ad;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .wy-pytanie { font-size: 10.5px; color: #f0a5b5; }
+    /* Przełącznik: ten sam kształt, co mały przełącznik w karcie (`.sk-przel-maly`), tylko
+       w barwach tego okna — tamten ma kremowy stan „wyłączony", niewidoczny na ciemnym tle. */
+    .wy-przel {
+      flex: 0 0 auto; width: 34px; height: 19px; border-radius: 10px; background: #3a3f48;
+      border: 0; position: relative; cursor: pointer; padding: 0;
+    }
+    .wy-przel-wl { background: #6cb33f; }
+    .wy-przel-galka {
+      position: absolute; top: 2px; left: 2px; width: 15px; height: 15px;
+      border-radius: 50%; background: #fff; transition: transform .18s;
+    }
+    .wy-przel-wl .wy-przel-galka { transform: translateX(15px); }
+    .wy-dodaj { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #3a3f48; }
+    .wy-wybor {
+      flex: 1 1 auto; min-width: 0; background: #14161a; color: #efe9dd;
+      border: 1px solid #3a3f48; border-radius: 8px; padding: 5px 6px; font: inherit;
+    }
+    .wy-dodaj-opis { margin-top: 5px; font-size: 10.5px; color: #9aa2ad; line-height: 1.45; }
+    /* ⚠️ KONTRAST MIERZONY, NIE OCENIANY NA OKO (22.09, zgłoszenie „niskie kontrasty"). Stało tu
+       `#6b7380`, czyli 3,8:1 na tle okna — poniżej progu 4,5:1 dla małego tekstu. Te same liczby
+       zdecydowały o nazwach zestawów (były CZARNE na ciemnym: 1,4:1 — przeglądarka daje przyciskom
+       własny kolor, którego nie dziedziczą po oknie) i o różu odczytów (3,6:1). */
+    .wy-stopka { margin-top: 8px; font-size: 10.5px; color: #8d97a3; line-height: 1.5; }
+    .wy-stan { display: block; margin-top: 3px; font-size: 10.5px; color: #9aa2ad; }
+    .wy-stan.ok { color: #6cb33f; }
+    .wy-stan.zle { color: #d83a5c; }
+    .wy-pusto { font-size: 11px; color: #9aa2ad; line-height: 1.45; }
+    body.wy-ciagnie, body.wy-ciagnie * { cursor: move !important; user-select: none; }
+    /* Zakładki: „czym prowadzę" i „jak ma jechać" to dwa różne pytania i dwa różne momenty. */
+    .wy-zak { display: flex; gap: 6px; margin-bottom: 8px; }
+    .wy-zakl { flex: 1; background: #1b1f26; color: #9aa2ad; border: 1px solid #3a3f48;
+      border-radius: 9px; padding: 6px 8px; font: inherit; font-weight: 700; cursor: pointer; }
+    .wy-zakl:hover { background: #262b34; color: #efe9dd; }
+    .wy-zakl-wl, .wy-zakl-wl:hover { background: var(--pink-btn, #ff3bd4); color: #11131a; border-color: transparent; }
+    .wy-podpis { font-size: 10.5px; color: #9aa2ad; line-height: 1.45; margin-bottom: 7px; }
+    .wy-zestawy { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+    .wy-zestawy-opis { font-size: 10.5px; color: #8d97a3; line-height: 1.45; margin-bottom: 10px; }
+    /* ------------------------------------------------ POKRĘTŁA KARTY W CIEMNYM OKNIE (rf-50b)
+       Pola buduje ta sama klasa, co w karcie (`RFScan.Panel`), więc niosą klasy z `26-scan.css`
+       — a tamten arkusz opisuje KREMOWY panel. Zamiast przepisywać dwadzieścia reguł podmieniamy
+       pod nimi ZMIENNE: to ta sama warstwa, z której tamte reguły czytają kolory, więc nowe
+       pokrętło dostanie ciemny wygląd samo. Zostają trzy miejsca z kolorem wpisanym na sztywno
+       (hover sekcji, hover segmentu, tła pól) i one mają tu własne reguły. */
+    #wyOkno {
+      --panel: #1b1f26; --panel2: #232730; --stitch: #3a3f48; --line: #3a3f48;
+      --muted: #9aa2ad; --ink: #efe9dd;
+      /* Róż z karty (#ec1a83) daje na ciemnym 3,6:1 — a tym kolorem pisane są WARTOŚCI pokręteł,
+         czyli liczby, po które się tu sięga. Jaśniejszy wariant tej samej barwy: 6,1:1. */
+      --pink: #ff6fb5;
+    }
+    #wyOkno .sk-fold { margin-bottom: 6px; }
+    #wyOkno .sk-fold-body { padding: 8px 10px 2px; }
+    #wyOkno .sk-sekcja:hover { background: #262b34; }
+    #wyOkno .sk-seg:hover { background: #2c313c; }
+    #wyOkno .sk-wiersz { margin-bottom: 10px; }
+    #wyOkno .sk-nazwa { color: #efe9dd; }
+    #wyOkno .sk-wybor, #wyOkno .sk-kolor {
+      background: #14161a; color: #efe9dd; border: 1px solid #3a3f48; border-radius: 8px;
+    }
+    /* ⚠️ POLA DO WPISANIA LICZB WYGLĄDAJĄ JAK W PANELU (23.09, zgłoszenie „w białych polach nie
+       widać liczb"). Pola „od → do" i siatki (`.sk-liczba`) brały z arkusza karty BIAŁE tło
+       i kolor `var(--ink)`, a to okno podmienia `--ink` na jasny krem, więc wychodził jasny
+       tekst na białym: niewidoczny. Panel ma wszędzie „wszytą kieszeń" z `11-felt-forms`
+       (kremowe tło, ciemny atrament, różowy obrys skupienia), więc tu ją odtwarzamy, z kolorami
+       wpisanymi wprost, bo podmienione zmienne okna prowadziłyby znowu w jasny tekst.
+       Ciemne pole liczbowe przy suwaku też przechodzi na ten wygląd: jedno okno, jeden rodzaj
+       pola do pisania. */
+    #wyOkno input[type="number"].sk-odczyt-pole,
+    #wyOkno input[type="number"].sk-liczba,
+    #wyOkno input[type="text"] {
+      background: #fdfaf2; color: #211f1d; caret-color: #211f1d;
+      border: 2px solid #d8cdb8; border-radius: 8px; box-sizing: border-box;
+      box-shadow: inset 0 2px 0 rgba(120,90,40,.10);
+      font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums;
+    }
+    #wyOkno input[type="number"].sk-odczyt-pole { width: 5.6em; padding: 3px 6px; font-size: 12px; }
+    #wyOkno input[type="number"].sk-liczba { padding: 6px 8px; font-size: 13px; }
+    #wyOkno input[type="number"].sk-odczyt-pole:hover,
+    #wyOkno input[type="number"].sk-liczba:hover,
+    #wyOkno input[type="text"]:hover { border-color: #c9b89a; }
+    #wyOkno input[type="number"].sk-odczyt-pole:focus,
+    #wyOkno input[type="number"].sk-liczba:focus,
+    #wyOkno input[type="text"]:focus {
+      outline: none; border-color: #ec1a83;
+      box-shadow: inset 0 2px 0 rgba(120,90,40,.06), 0 0 0 3px rgba(255,111,181,.35);
+    }
+    #wyOkno input::selection { background: #ffc9e2; color: #211f1d; }
+    #wyOkno .sk-przel { width: 40px; height: 22px; background: #3a3f48; }
+    #wyOkno .sk-przel-galka { top: 3px; left: 3px; width: 16px; height: 16px; }
+    #wyOkno .sk-wl .sk-przel-galka { transform: translateX(18px); }
+    /* ⚠️ PRZYCISK NIE DZIEDZICZY KOLORU TEKSTU. Kafle zestawów to `<button>`, więc przeglądarka
+       dała im własny czarny `buttontext` — na ciemnym tle 1,4:1, czyli napis niewidoczny. Reszta
+       arkusza karty tego nie łapie, bo tam tło jest kremowe i czarny napis jest w porządku. */
+    #wyOkno .ui-zestaw { padding: 7px 9px; border-radius: 9px; color: #efe9dd; }
+    #wyOkno .ui-zestaw:hover { background: #2c313c; }
+    #wyOkno .ui-zestaw-nazwa { font-size: 11.5px; color: #efe9dd; }
+    #wyOkno .ui-zestaw-opis { font-size: 10px; color: #9aa2ad; }
+    #wyOkno .ui-zestaw.ui-wybrany { background: #2a1b26; border-color: var(--pink-btn, #ff3bd4); }
+    /* PASEK STANU SKANERA WRACA NA CZAS PRÓBY. W podglądzie jest schowany, bo nie ma czego
+       raportować; w próbie jest jedynym miejscem, które mówi, w którym etapie jest przejazd.
+       Gdzie ma stanąć (góra ekranu głównego, żeby nie wejść na pasek edytora) — ustawia rf-50p. */
+    body.rf-podglad.rf-proba #hud { display: flex; }
+    @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; } }
+  </style>
+</head>
+
+<body>
+  <div id="scena" class="sk-scene-layer"></div>
+  <div id="hud"></div>
+  <!-- PASEK NA DOLE MÓWI JEDNO: CZYM TO ZGASIĆ (informacja
+       o skrócie). Zdanie o przełączniku w karcie zostaje tylko jako zapas — na wypadek
+       wyłączonego skrótu awaryjnego. Treść wstawia rf-50h, bo kombinacja jest ustawieniem. -->
+  <div id="podglad"><b>Podgląd obszaru skanera</b><span id="podgladSkrot" data-noi18n>to okno nic nie klika</span></div>
+
+  <script src="/web/js/rf-50-scan-model.js"></script>
+  <script src="/web/js/rf-50c-scan-scene.js"></script>
+  <script src="/web/js/rf-50g-scan-hud.js"></script>
+  <script src="/web/js/rf-50h-scan-overlay.js"></script>
+  <!-- Edytor obszaru — ożywa TYLKO przy `?edycja=1` (sam się z tego wycofuje). PO rf-50h, bo
+       czyta od niego układ monitorów i prostokąt pulpitu, a POST-y idą przez jego opakowanie
+       `fetch` z tokenem sesji. -->
+  <script src="/web/js/rf-50m-scan-overlay-edit.js"></script>
+  <!-- OKIENKO „CZYM STERUJESZ SKANEREM" I PRÓBA SYGNAŁU (22.09) — też tylko przy `?edycja=1`.
+
+       Dwa pliki wyżej to DANE I CZYSTE FUNKCJE KARTY, wczytane tu po to, żeby katalog gotowych
+       ruchów i kształt nowej reguły były JEDNE dla panelu i dla tego okna. Rf-12c to sama tablica
+       gotowców Mapowania, rf-50i to katalog skanera, trzy role i `_skanNowaRegula`; żaden z nich
+       nie wykonuje niczego przy wczytaniu i żaden nie potrzebuje panelu. Reszta rf-50i (rysowanie
+       sekcji w karcie) po prostu tu nie jest wołana — a kosztem jest parsowanie, nie działanie.
+       Alternatywą było przepisanie katalogu i budowania reguł drugi raz, czyli dwa źródła prawdy
+       o tym, czym jest „Przechylenie w prawo". -->
+  <script src="/web/js/rf-12c-gesture-presets.js"></script>
+  <script src="/web/js/rf-50i-scan-signals.js"></script>
+  <!-- POKRĘTŁA KARTY. `RFScan.Panel` + katalog zestawów: dwadzieścia kilka pól zbudowanych
+       z jednego opisu, razem z regułą, które z nich mają w danym trybie sens. Wczytane tutaj po
+       to, żeby okno nad pulpitem miało PEŁNE ustawienia, a nie ich wycinek — i żeby nowe pokrętło
+       pojawiało się w obu miejscach samo. -->
+  <script src="/web/js/rf-50b-scan-fields.js"></script>
+  <!-- PO rf-50m: pyta go o prostokąt ekranu głównego, żeby stanąć w jego rogu, a nie w rogu
+       całego pulpitu (czyli na drugim monitorze). -->
+  <script src="/web/js/rf-50p-scan-overlay-wyzwalacze.js"></script>
+</body>
+
+</html>

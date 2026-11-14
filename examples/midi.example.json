@@ -1,0 +1,8 @@
+{
+  "enabled": false,
+  "midiChannel": 0,
+  "oscPrefix": "/ribbitflip",
+  "scaleRoot": 0,
+  "scale": "chromatic",
+  "mappings": []
+}

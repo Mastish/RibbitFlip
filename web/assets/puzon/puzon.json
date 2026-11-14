@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Brass/Tenor Trombone/sus"
+ },
+ "probki": [
+  {
+   "plik": "puzon-1.wav",
+   "nazwa": "tenortbn_sus_F2_v2_1.wav",
+   "nuta": 53,
+   "root": 53.011,
+   "petla": [
+    0.7091,
+    1.0813
+   ]
+  },
+  {
+   "plik": "puzon-2.wav",
+   "nazwa": "tenortbn_sus_C3_v2_1.wav",
+   "nuta": 60,
+   "root": 60.0,
+   "petla": [
+    1.0344,
+    1.3859
+   ]
+  },
+  {
+   "plik": "puzon-3.wav",
+   "nazwa": "tenortbn_sus_F3_v2_1.wav",
+   "nuta": 65,
+   "root": 65.002,
+   "petla": [
+    0.9665,
+    1.3272
+   ]
+  }
+ ]
+}

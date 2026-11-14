@@ -1,0 +1,217 @@
+/* Global felt look for text inputs and selects, the device-pill action bar, the animated cap in
+   the device editor, and the "skull speaks" popup. Must load after 10 (icon/skin rules). */
+
+/* ===== UX 261120 A1: jeden krój w kontrolkach (P-G3-17, K16) =====
+   Przeglądarka daje polom, przyciskom i listom własny krój (Arial 13,3 px, a `textarea` nawet
+   o stałej szerokości), więc każda kontrolka bez reguły w swoim module wyglądała jak z innej
+   aplikacji. Jedna reguła dziedziczenia dla wszystkich. `:where` nie dodaje specyficzności: każda
+   klasa modułu (mono dla adresów, plików i hex, jak `.ra-mono`, `#cmdHex`) dalej wygrywa. */
+:where(input,button,select,textarea){font:inherit}
+/* (koniec sekcji A1) */
+
+/* Inputs & selects as "sewn-in pockets" (concave). !important is on the VISUAL properties only
+   (background/border/radius/shadow/arrow): ~30 context rules elsewhere (.mi-f, .cap-fld, #cmdHex,
+   .live-rail #pose3dCard .head …) are more specific and would otherwise beat this global.
+   Layout properties (padding/font/width) stay with those contexts — except the select's
+   padding-right, which reserves room for the dropdown arrow drawn as a background image. */
+input[type=text],input[type=number]:not(.knob-num),input[type=password],input[type=search],input[type=tel],input[type=url],input[type=email],textarea,select{
+  background-color:#fdfaf2!important;color:var(--ink)!important;
+  border:2px solid var(--line)!important;border-radius:9px!important;
+  box-sizing:border-box!important;min-width:0;   /* count the 2px border INTO the width, or fields outgrow their flex/grid slots and overlap */
+  max-width:100%;   /* never let a field exceed its slot — number inputs are intrinsically ~181px and spilled over 150px grid cells */
+  box-shadow:inset 0 2px 0 rgba(120,90,40,.10)!important;
+  transition:border-color .12s ease,box-shadow .12s ease,background-color .12s ease;
+}
+select{
+  appearance:none!important;-webkit-appearance:none!important;-moz-appearance:none!important;cursor:pointer;
+  font-family:var(--body,inherit)!important;  /* selects don't inherit font by default → force Nunito (some context rules set only size/weight) */
+  padding-right:28px!important;
+  background-image:var(--ic-updown)!important;background-repeat:no-repeat!important;
+  background-position:right 8px center!important;background-size:14px auto!important;
+}
+select::-ms-expand{display:none}
+input[type=text]:hover,input[type=number]:not(.knob-num):hover,input[type=password]:hover,input[type=search]:hover,input[type=tel]:hover,input[type=url]:hover,input[type=email]:hover,textarea:hover,select:hover{border-color:var(--stitch,#c9b89a)!important}
+input[type=text]:focus,input[type=number]:not(.knob-num):focus,input[type=password]:focus,input[type=search]:focus,input[type=tel]:focus,input[type=url]:focus,input[type=email]:focus,textarea:focus,select:focus{
+  outline:none!important;border-color:var(--pink)!important;
+  box-shadow:inset 0 2px 0 rgba(120,90,40,.06),0 0 0 3px rgba(236,26,131,.22)!important;
+}
+@media (prefers-reduced-motion:reduce){
+  input[type=text],input[type=number]:not(.knob-num),input[type=password],input[type=search],input[type=tel],input[type=url],input[type=email],textarea,select{transition:none}
+}
+/* Podpowiedź w pustym polu (placeholder) rysowała przeglądarka swoją szarością — na naszym kremie
+   ledwie 4,3:1, a to często JEDYNE, co mówi, co w tym polu ma stanąć. --dim to ten sam atrament,
+   którym panel pisze wszystkie napisy drugiego planu (≈7:1). Nakładka ma własny #ovlLabel — jej
+   arkusz ładuje się później i zostaje po staremu.
+   WHY: the browser's default placeholder grey sits at ~4.3:1 on our paper; --dim is the panel's
+   own secondary ink. */
+input::placeholder,textarea::placeholder{color:var(--dim);opacity:1}
+
+/* mini capsule preview span */
+.cap-mini{display:inline-block;flex:0 0 auto;vertical-align:middle;background-position:center;background-repeat:no-repeat;background-size:contain}
+.cap-mini.cap-mini-dot{border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.18)}
+.fxcap-prevwrap{display:inline-flex;align-items:center}
+
+/* device pill: hover/focus slide-out action bar */
+.devices-panel .devpill:not(.add){position:relative}
+.devices-panel .devpill .dp-main{padding:4px 12px 4px 11px}
+/* The action bar PUSHES the pill wider on hover rather than overlaying it: as an overlay it
+   covered short device names, so clicking the name hit an action button instead. */
+.devices-panel .devpill .dp-actions{
+  position:static;display:flex;align-items:stretch;flex:0 0 auto;
+  max-width:0;opacity:0;overflow:hidden;pointer-events:none;
+  transition:max-width var(--rf-d-pop,220ms) var(--rf-ez-overshoot,cubic-bezier(.34,1.56,.64,1)),
+             opacity var(--rf-d-pop,220ms) ease;
+}
+.devices-panel .devpill:hover .dp-actions,
+.devices-panel .devpill:has(:focus-visible) .dp-actions,
+.devices-panel .devpill:focus-visible .dp-actions{max-width:230px;opacity:1}
+.devices-panel .devpill:hover .dp-actions .dp-act,
+.devices-panel .devpill:has(:focus-visible) .dp-actions .dp-act,
+.devices-panel .devpill:focus-visible .dp-actions .dp-act{pointer-events:auto}
+/* A mouse click gives the pill a plain :focus (it carries tabindex); suppress the outline so the
+   bar does not stay stuck open. It slides out on hover and on real keyboard navigation only. */
+.devices-panel .devpill:focus:not(:focus-visible){outline:none}
+.devices-panel .devpill .dp-act{align-self:stretch;min-width:26px;padding:0 6px;border:none;border-left:1px solid var(--line);
+  background:transparent;color:var(--ink);opacity:.8;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:background .12s,opacity .12s}
+.devices-panel .devpill .dp-actions .dp-act:first-child{border-left:none}
+.devices-panel .devpill .dp-act:hover{opacity:1;background:rgba(0,0,0,.07)}
+.devices-panel .devpill .dp-del .bic-bin{width:16px;height:16px;margin:0;vertical-align:-3px}
+/* "Show this capsule above the game". The felt drawing of two panes (--ic-overlay), a sibling of
+   the other pictures in this bar rather than the one piece of line art among them. The mark it
+   replaced took the capsule's colour, which a picture cannot — so while the window is actually up
+   (the one state worth marking here: that one is on the screen right now) the colour comes from
+   the chip behind the drawing and a glow of the same ink underneath it. */
+.devices-panel .devpill .dp-ovl .ovl-ic{display:block;vertical-align:0}
+.devices-panel .devpill .dp-ovl.is-on{opacity:1;
+  background:color-mix(in srgb,var(--dcol,#c8971a) 20%,transparent)}
+.devices-panel .devpill .dp-ovl.is-on .ovl-ic{
+  filter:drop-shadow(0 0 3px color-mix(in srgb,var(--dcol,#c8971a) 75%,transparent))}
+.devices-panel .devpill .dp-ovl.is-off{opacity:.32;cursor:not-allowed}
+@media (hover:none){
+  .devices-panel .devpill.active .dp-actions{opacity:1;max-width:230px}
+  .devices-panel .devpill.active .dp-actions .dp-act{pointer-events:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  .devices-panel .devpill .dp-actions{transition:none}
+}
+
+/* living cap in the device editor: idle rock, parallax tilt (driven by JS), click animations */
+#devEdit .de-caphead-cap{cursor:pointer;will-change:transform;transform-origin:50% 62%}
+#devEdit .de-caphead-cap.is-idle{animation:capIdleRock 4s ease-in-out infinite}
+@keyframes capIdleRock{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(2deg) translateY(-2px)}}
+.cap-anim-flick{animation:capFlick .9s cubic-bezier(.2,.8,.3,1) both}
+@keyframes capFlick{0%{transform:rotate(0)}12%{transform:rotate(70deg)}32%{transform:rotate(-34deg)}52%{transform:rotate(20deg)}70%{transform:rotate(-11deg)}85%{transform:rotate(5deg)}100%{transform:rotate(0)}}
+.cap-anim-spin{animation:capSpin 1s cubic-bezier(.3,.9,.2,1.2) both}
+@keyframes capSpin{0%{transform:rotate(0)}82%{transform:rotate(392deg)}100%{transform:rotate(360deg)}}
+.cap-anim-wobble{animation:capWobble 1s ease-out both}
+@keyframes capWobble{0%{transform:rotateZ(0) rotateX(0)}20%{transform:rotateZ(16deg) rotateX(18deg)}40%{transform:rotateZ(-12deg) rotateX(-10deg)}60%{transform:rotateZ(8deg) rotateX(8deg)}80%{transform:rotateZ(-4deg) rotateX(-4deg)}100%{transform:rotateZ(0) rotateX(0)}}
+.cap-anim-pop{animation:capPop .58s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes capPop{0%{transform:scale(1)}30%{transform:scale(.85) translateY(4px)}55%{transform:scale(1.12) translateY(-6px)}75%{transform:scale(.97) translateY(1px)}100%{transform:scale(1)}}
+.cap-anim-nod{animation:capNod .8s ease-in-out both}
+@keyframes capNod{0%{transform:rotateX(0)}25%{transform:rotateX(34deg)}50%{transform:rotateX(0)}75%{transform:rotateX(28deg)}100%{transform:rotateX(0)}}
+@media (prefers-reduced-motion:reduce){
+  #devEdit .de-caphead-cap.is-idle,.cap-anim-flick,.cap-anim-spin,.cap-anim-wobble,.cap-anim-pop,.cap-anim-nod{animation:none!important}
+}
+
+/* Two places the skull speaks, sharing one look:
+   #rfSkullSay  — centered, one at a time: an answer to what you just did, and it wants to be in the way.
+   #rfSkullNotes — bottom-left, up to three stacked: news (a capsule connected, a capsule put on hold).
+   News went to the corner because the top-right toasts sat on top of the menu, and a line about a
+   capsule is not worth covering a control you might be reaching for. Bottom-left is the one corner
+   nothing else uses — the tip jar's mug lives bottom-right. */
+#rfSkullSay{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;pointer-events:none}   /* above #devEdit (9999) and the toasts (9200) — the skull must stay visible over the edit modal */
+#rfSkullSay .rss-wrap,#rfSkullNotes .rss-wrap{position:relative;display:flex;align-items:flex-end;pointer-events:none}
+#rfSkullSay .rss-skull,#rfSkullNotes .rss-skull{width:124px;height:124px;flex:0 0 auto;background:var(--ic-punkskull2) center/contain no-repeat;
+  transform-origin:50% 85%;pointer-events:auto;align-self:flex-end;
+  animation:rssSkullIn .34s cubic-bezier(.34,1.56,.64,1) both, rssTalk .8s ease-in-out .34s infinite alternate}
+/* A stitched felt patch: the fabric edge is the rounded background, and the stitching runs INSIDE
+   it, a few pixels in — the way a real patch is sewn. The dashes used to be the element's own
+   border, so they sat exactly on the edge and read as a dotted outline rather than as stitching. */
+#rfSkullSay .rss-bubble,#rfSkullNotes .rss-bubble{position:relative;pointer-events:auto;max-width:min(300px,68vw);
+  background:#faf5ea;color:#211f1d;border-radius:16px;padding:16px 19px;font-family:var(--body,inherit);font-weight:700;font-size:15px;line-height:1.4;
+  box-shadow:0 12px 30px rgba(0,0,0,.30),0 3px 0 rgba(120,90,40,.18);border:none;
+  transform-origin:0% 90%;animation:rssBubbleIn .4s cubic-bezier(.34,1.56,.64,1) 80ms both}
+#rfSkullSay .rss-bubble{margin-left:-8px;margin-bottom:60px}
+#rfSkullSay .rss-bubble::after,#rfSkullNotes .rss-bubble::after{content:"";position:absolute;inset:5px;border-radius:11px;
+  border:2px dashed var(--stitch,#c9b89a);pointer-events:none}
+#rfSkullSay .rss-bubble.danger,#rfSkullNotes .rss-bubble.danger{background:#fbe0dc}
+#rfSkullSay .rss-bubble.danger::after,#rfSkullNotes .rss-bubble.danger::after{border-color:#e7a9a0}
+#rfSkullSay .rss-bubble.ok,#rfSkullNotes .rss-bubble.ok{background:#e9f5e0}
+#rfSkullSay .rss-bubble.ok::after,#rfSkullNotes .rss-bubble.ok::after{border-color:#adcf90}
+/* Action button inside the bubble (the "undo the import" case). There are no toasts any more, so
+   anything that used to carry a button carries it here. */
+#rfSkullSay .rss-act,#rfSkullNotes .rss-act{display:block;margin:9px 0 0;font-size:12px}
+/* A key combination inside a note: real keycaps, on their own line, centred. Same shape as the
+   emergency-stop card's .hk-key — a row of caps reads as "find these on the keyboard", which is
+   the whole job of this note. Slightly larger than in the card, because here it is the point of
+   the sentence rather than a setting being displayed.
+   The colours are LITERAL, not tokens: the felt patch is a fixed cream/pink whatever the theme is,
+   so caps built from --ink / --panel2 would turn dark-on-dark the moment the app goes dark. */
+#rfSkullSay .rss-keys,#rfSkullNotes .rss-keys{display:flex;justify-content:center;align-items:center;
+  gap:6px;flex-wrap:wrap;margin:11px 0 1px}
+#rfSkullSay .rss-keys .hk-key,#rfSkullNotes .rss-keys .hk-key{font-size:13px;padding:6px 10px;min-width:28px;
+  color:#211f1d;background:#fffdf7;border:1.5px solid rgba(60,45,25,.34);border-bottom-width:3px;
+  box-shadow:0 1px 0 rgba(255,255,255,.7) inset}
+#rfSkullSay .rss-keys .hk-plus,#rfSkullNotes .rss-keys .hk-plus{color:rgba(33,31,29,.55);font-size:12px;font-weight:500}
+/* The tail is plain fabric now, no dashes on it. With the stitching moved inside the patch, dashes
+   left on the tail's outer edge would be the only thing still drawn ON the edge. */
+#rfSkullSay .rss-bubble::before,#rfSkullNotes .rss-bubble::before{content:"";position:absolute;left:-9px;bottom:18px;
+  width:18px;height:18px;background:inherit;border:none;transform:rotate(45deg)}
+#rfSkullSay.out .rss-bubble{animation:rssBubbleOut .2s ease both}
+#rfSkullSay.out .rss-skull{animation:rssSkullOut .2s ease both}
+@keyframes rssSkullIn{0%{opacity:0;transform:translateY(40px) scale(.6)}100%{opacity:1;transform:none}}
+@keyframes rssSkullOut{to{opacity:0;transform:translateY(24px)}}
+@keyframes rssBubbleIn{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:none}}
+@keyframes rssBubbleOut{to{opacity:0;transform:scale(.7)}}
+@keyframes rssTalk{0%{transform:rotate(-4deg) translateY(0)}100%{transform:rotate(4deg) translateY(-1px)}}
+@media (prefers-reduced-motion:reduce){
+  #rfSkullSay .rss-skull,#rfSkullSay .rss-bubble,#rfSkullSay.out .rss-skull,#rfSkullSay.out .rss-bubble{animation:none!important}
+}
+/* CORNER NEWS — the same skull, parked bottom-left, with the sentences stacked above it. Smaller,
+   because news should be readable without being the thing you look at. The stack is anchored at the
+   bottom, so a new bubble arriving at the bottom pushes the older ones up on its own; .rss-slot only
+   carries the FLIP transform that makes that push a slide instead of a jump (see rfSkullNote). */
+/* LEWY DOLNY RÓG SKOŃCZYŁ SIĘ RAZEM Z JEDNĄ KOLUMNĄ (2026-09-03). Gdy nawigacja przeniosła się
+   z poziomego paska do lewej szyny, „róg, którego nic nie używa" przestał istnieć: dymki stały
+   przy left:14px, czyli x 100–380 przy oknie 1280, i przez cały czas życia notki (25 s przy
+   „Cofnij") zasłaniały przyciski Zestawy / Konfiguracja / Nakładka. Notka o kapslu nie jest warta
+   przykrycia sterowania — ta sama zasada, która wygnała ją kiedyś z prawego górnego rogu.
+   Stos startuje więc od LEWEJ KRAWĘDZI KOLUMNY ŚRODKOWEJ. Rachunek jest ten sam, którym siatka
+   liczy swoje położenie: `.rf-app` ma max-width:1780px i margin:0 auto wewnątrz `.wrap` z
+   padding-inline:24px, więc jej lewa krawędź to max(24px, 50% − 890px); dalej szerokość szyny
+   i 14 px przerwy siatki. Zwinięta szyna podstawia własne --lpW, bo zmienna jest ustawiana na
+   `.rf-app`, a ten element wisi obok niej na <body>. */
+#rfSkullNotes{position:fixed;left:calc(max(24px, 50% - 890px) + var(--lpW,206px) + 14px);bottom:14px;z-index:10045;pointer-events:none}
+body.lp-collapsed #rfSkullNotes{--lpW:64px}
+#rfSkullNotes .rss-skull{width:84px;height:84px;pointer-events:none}   /* decoration only — each bubble dismisses itself */
+#rfSkullNotes .rss-stack{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:0 0 38px 2px}
+#rfSkullNotes .rss-slot.slide{animation:rssSlide .3s cubic-bezier(.34,1.2,.64,1) both}
+@keyframes rssSlide{from{transform:translateY(var(--rf-slide,0))}to{transform:none}}
+/* Padding has to clear the inset stitching (5 px) with room to spare, or the text crowds the seam. */
+#rfSkullNotes .rss-bubble{max-width:min(280px,60vw);margin:0;padding:14px 17px;font-size:14px;animation-delay:0s}
+/* The tail belongs to whichever sentence the skull is saying RIGHT NOW — the bottom one, the only
+   one still next to its mouth. Pushed up by a newer note it becomes something already said, and
+   lets the tail go on the way (fading, so it is one movement rather than a pop). A bubble on its
+   way out is not talking either, hence :not(.out). */
+#rfSkullNotes .rss-bubble::before{bottom:14px;opacity:0;transition:opacity .2s ease}
+#rfSkullNotes .rss-slot:last-child:not(.out) .rss-bubble::before{opacity:1}
+#rfSkullNotes.out .rss-skull{animation:rssSkullOut .2s ease both}
+#rfSkullNotes .rss-slot.out .rss-bubble{animation:rssBubbleOut .2s ease both}
+@media (prefers-reduced-motion:reduce){
+  #rfSkullNotes .rss-skull,#rfSkullNotes .rss-bubble,#rfSkullNotes.out .rss-skull,
+  #rfSkullNotes .rss-slot.out .rss-bubble,#rfSkullNotes .rss-slot.slide{animation:none!important}
+  #rfSkullNotes .rss-bubble::before{transition:none!important}
+}
+/* Poniżej 900 px siatka układa się w jedną kolumnę (20-cols.css), nawigacja idzie na górę
+   i dolny lewy róg znowu jest wolny — wtedy wracamy do niego, zamiast wcinać stos w treść. */
+@media (max-width:900px){
+  #rfSkullNotes{left:14px}
+}
+/* Narrow windows: the skull + bubbles would run past the right edge, so shrink both. */
+@media (max-width:560px){
+  #rfSkullNotes .rss-skull{width:64px;height:64px}
+  #rfSkullNotes .rss-stack{margin-bottom:26px}
+  #rfSkullNotes .rss-bubble{max-width:min(240px,54vw);font-size:13px}
+}
+

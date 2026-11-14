@@ -1,0 +1,275 @@
+/* 23 — NAKŁADKI NAD GRĄ: KARTA ZARZĄDZANIA W PANELU (rf-41b + rf-41c).
+
+   Osobny arkusz, a nie dopisek do 15-overlay.css, bo to DRUGA POWIERZCHNIA tej samej sprawy:
+   15 ubiera okno stojące nad grą (ciemna chromowana szuflada, wszystko liczone na to, że pod
+   spodem leci gra), a to jest zwykła karta panelu i ma wyglądać jak sąsiednie karty — tokeny
+   panelu, ten sam promień, ten sam ścieg. Wspólne są tylko MINIATURY wyglądów (.ovl-thumb-*),
+   bo miniatura jest obrazkiem tego samego motywu na obu powierzchniach.
+
+   Prefiks `ovm-` (overlay manage) — świadomie inny niż `ovl-`, żeby reguły ciemnej szuflady nigdy
+   nie trafiły w jasną kartę i odwrotnie. */
+
+.ovm-card .head h2{display:flex;align-items:center;gap:8px}
+.ovm-hd-ic{display:inline-flex;width:17px;height:17px;color:var(--dim)}
+.ovm-hd-ic .ovl-ic-filc{width:100%;height:100%}   /* 10-15: filc zamiast SVG */
+/* Górny odstęp NIE JEST ozdobą (2026-09-08, zgłoszenie: „u góry elementy UI dotykają górnej
+   krawędzi"). Do zera pierwsza rzecz w karcie — pole „Nazwa" po lewej, przycisk „Pasek okna"
+   po prawej — stała swoją górną krawędzią DOKŁADNIE na ściegu nagłówka, więc obramowanie pola
+   zlewało się z przerywaną linią i wyglądało na ucięte. 12 px to `--card-y`, czyli ten sam
+   oddech, co pod nagłówkami pozostałych kart w panelu. */
+.ovm-body{display:flex;flex-direction:column;gap:11px;padding:12px 20px 18px}
+
+/* ---- KTÓRE OKNO USTAWIASZ -------------------------------------------------------------------
+   Do 2026-09-01 stał tu rząd jednakowych pigułek („Triki 1 · nakładka", „Triki 1 · koło przy
+   kursorze"…). Zastąpiła go GALERIA KAFELKÓW z podglądem (rf-41d + 24-overlay-gallery.css): ta
+   sama rola — wybór okna do ustawiania — ale kafelek pokazuje też, jak duże to okno jest i co
+   w nim stoi, czyli odpowiada na pytanie, dla którego wcześniej trzeba było nakładkę postawić
+   nad grą. Z dawnego bloku została jedna klasa: etykieta nad wyborem. */
+.ovm-pick-lbl{flex:0 0 auto;font-size:12px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase}
+
+.ovm-note{font-size:12.5px;color:var(--dim);line-height:1.5;max-width:96ch;margin:0}
+.ovm-note.is-bad{color:var(--bad,#c8452f)}
+
+/* ---- EDYTOR JEDNEGO OKNA -------------------------------------------------------------------
+   Do 2026-09-01 edytor był RAMKĄ W KARCIE (własne obramowanie, tło i nagłówek z nazwą okna), bo
+   stał pod galerią w tej samej karcie, co ona. Od rozdzielenia na zakładki „Nakładka" i „Wygląd"
+   każda połowa ma WŁASNĄ kartę, więc ramka w ramce byłaby pudełkiem w pudełku, a nagłówek —
+   powtórzeniem nazwy, która stoi pod podglądem dwa centymetry wyżej. */
+.ovm-edit{border:0;background:none;padding:0}
+/* 310 px, a nie 290 (2026-09-08): to jest najwęższa kolumna, w której MIEŚCI SIĘ wiersz położenia
+   („Położenie X ──── [1922] px"). Ten wiersz nie zawija się z zasady, więc kolumna węższa od niego
+   nie ścieśnia go, tylko wypuszcza w prawo — na sąsiednią kolumnę. Liczba tu i najmniejsze
+   szerokości w bloku „POŁOŻENIE" niżej są jedną decyzją: gdy któraś się zmieni, druga musi też.
+   `min(100%,…)` jak w `.ruleslist` (03-triggers): w oknie węższym niż 310 px kolumna schodzi do
+   szerokości karty, zamiast rozpychać ją poza ekran. */
+.ovm-cols{display:grid;gap:14px 22px;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));
+  align-items:start}
+.ovm-col{display:flex;flex-direction:column;gap:9px;min-width:0}
+.ovm-sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+  display:flex;align-items:center;gap:8px}
+.ovm-sec::after{content:"";flex:1 1 auto;border-top:1px solid var(--line)}
+.ovm-row{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.ovm-fl{flex:0 0 auto;min-width:104px}
+.ovm-fl2{min-width:0}
+.ovm-row input[type=range]{flex:1;width:auto;min-width:96px;accent-color:var(--dcol,var(--az))}
+.ovm-val{flex:0 0 auto;min-width:52px;text-align:right;font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.ovm-unit{font-size:12px;color:var(--dim)}
+.ovm-hint{font-size:12px;color:var(--dim);line-height:1.45;max-width:78ch;margin:-3px 0 0}
+/* Linijka o pełnym ekranie pod paskiem okien (UX 261120 B5b, P-G6-11): ikona „i" i jedno zdanie. */
+.ovm-fsnote{display:flex;align-items:flex-start;gap:2px;margin:2px var(--card-x) 12px;max-width:none;color:var(--muted);font-size:13px}
+.ovm-fsnote .info-ic{flex:0 0 auto}
+.ovm-chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer}
+.ovm-chk input{accent-color:var(--dcol,var(--az))}
+.ovm-empty{font-size:12.5px;color:var(--dim);padding:6px 2px}
+
+/* Pola liczbowe: wielkość i miejsce okna. Wąskie, cyfrowe, bez strzałek przeglądarki — strzałka
+   zmienia liczbę o krok, a każdy taki krok to PRAWDZIWE przesunięcie okna na ekranie. */
+.ovm-num{width:80px;font:inherit;font-size:13px;font-family:var(--mono);color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:4px 7px}
+.ovm-num:focus{outline:2px solid var(--az);outline-offset:1px}
+.ovm-num::-webkit-outer-spin-button,.ovm-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ovm-num{-moz-appearance:textfield;appearance:textfield}
+#ovmLabel{flex:1;min-width:90px;font:inherit;font-size:13px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+#ovmLabel:focus{outline:2px solid var(--az);outline-offset:1px}
+
+/* ---- POŁOŻENIE: SUWAK + POLE, DWA WIERSZE (X, Y) ---------------------------------------------
+   Suwak odpowiada na „gdzie na moich ekranach", pole na „dokładnie tu". Stoją w jednym wierszu,
+   bo to jedna wartość; pole jest wąskie, bo współrzędna to najwyżej pięć znaków, a szerokie
+   zabierałoby miejsce suwakowi, który tu jest kontrolką główną.
+   Drugi wiersz („Y") ma pustą etykietę zamiast żadnej: bez niej suwak Y zaczynałby się o szerokość
+   etykiety w lewo od suwaka X i para przestałaby wyglądać na parę. */
+.ovm-posrow{flex-wrap:nowrap;min-width:0}
+.ovm-ax{min-width:12px;flex:0 0 auto;font-family:var(--mono);font-size:12px;color:var(--dim);
+  text-align:right}
+/* WIERSZ MUSI SIĘ ZMIEŚCIĆ W SWOJEJ KOLUMNIE (2026-09-08, zgłoszenie: „input nachodzi na elementy
+   na prawo od siebie"). `nowrap` powyżej nie ścieśnia niczego sam z siebie — pilnuje tylko, żeby
+   pole nie spadło pod suwak — więc gdy suma najmniejszych szerokości była większa od kolumny,
+   pole z współrzędną wyjeżdżało poza nią i chowało się POD listą „Zawartości", która ma własne
+   tło. Dlatego składniki są policzone: 84 (etykieta) + 12 (oś) + 76 (suwak) + 84 (pole) + 14 (px)
+   + 4×9 (przerwy) = 306 px, czyli mniej niż 310 px z `.ovm-cols` wyżej.
+   Ustępują etykieta i suwak, bo suwak i tak rośnie z kolumną, a etykieta stoi po to, żeby wiersz
+   „X" i wiersz „Y" zaczynały się w tym samym miejscu — 84 px robi to samo, co 104 px.
+   `:not(.ovm-ax)` bierze się stąd, że litera osi też nosi klasę `.ovm-fl`, a ma być wąska. */
+.ovm-geom .ovm-fl:not(.ovm-ax){min-width:84px}
+.ovm-row.ovm-posrow input[type=range]{flex:1 1 76px;min-width:76px}
+/* Pole NIE MOŻE się kurczyć (2026-09-07, zgłoszenie: „nie widać wartości wprowadzonej, tylko
+   pojedyncze cyfry"). W wierszu bez zawijania suwak z `flex:1` odbierał polu szerokość, aż
+   zostawała jedna cyfra z „-1280". Szerokość na pięć cyfr ze znakiem, na sztywno. */
+.ovm-num{flex:0 0 auto}
+.ovm-num-sm{width:84px;min-width:84px;flex:0 0 84px;text-align:right}
+/* MAPKA EKRANÓW pod suwakami położenia: monitory w skali, okno w kolorze kapsla. Niska, żeby nie
+   rozpychać kolumny — to wskaźnik „dokąd idzie okno", nie drugi podgląd. */
+.ovm-map{width:100%;max-width:420px;height:88px;margin:2px 0 4px;border:1px dashed var(--line);
+  border-radius:8px;background:var(--bg2,transparent);box-sizing:border-box;padding:4px}
+.ovm-map[hidden]{display:none}
+.ovm-map svg{width:100%;height:100%;display:block}
+.ovm-map-scr{fill:var(--panel,#fff);stroke:var(--muted);vector-effect:non-scaling-stroke;stroke-width:1px}
+.ovm-map-lbl{fill:var(--dim);font-family:var(--mono);font-weight:700}
+.ovm-map-win{fill:var(--dcol,var(--az));fill-opacity:.55;stroke:var(--dcol,var(--az));
+  vector-effect:non-scaling-stroke;stroke-width:1.5px}
+/* Suwak okna, którego nikt jeszcze nigdzie nie postawił: wygaszony, bo nie ma czym ruszać —
+   miejsce wybierze aplikacja przy pierwszym pokazaniu (zdanie pod spodem mówi to wprost). */
+.ovm-pos:disabled{opacity:.4;cursor:not-allowed}
+
+/* ---- PASEK OKNA: PIERWSZY WIERSZ ZAWARTOŚCI (UX 261120 B5b, D20) -----------------------------
+   (Uchwyt i oko wierszy niżej mają od B5b cel 24×24 px.)
+   Wiersz jak pozostałe w liście (to samo tło i obrys po najechaniu), z dźwignią `rf-swi` z prawej
+   i krótkim opisem tego, co pasek zawiera. Cały wiersz jest `<label>`, więc klik w napis przełącza.
+   Wcięcie nazwy równa się uchwytowi i oku wierszy pod spodem, żeby nazwy stały w jednej kolumnie. */
+.ovm-blocks-bar{margin-bottom:3px}
+.ovm-bar-row{display:flex;align-items:center;gap:10px;min-height:40px;padding:4px 10px 4px 65px;cursor:pointer}
+.ovm-bar-row .ovm-blk-nm{flex:0 0 auto}
+.ovm-bar-sub{flex:1 1 auto;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ovm-bar-row .rf-swi{flex:0 0 auto;margin-left:auto}
+
+/* ---- OTWÓRZ ⇄ ZAMKNIJ WYBRANE OKNO (nagłówek karty „Ustawienia tego okna") --------------------
+   Po prawej stronie nagłówka, czyli tam, gdzie w tej aplikacji stoją czynności karty. Wciśnięty
+   (okno stoi na ekranie) wygląda jak każdy inny wciśnięty przycisk — kanon `button.btn.on`. */
+.ovm-power{margin-left:auto;flex:0 0 auto;white-space:nowrap}
+
+/* ---- pigułki (obrys, proporcje, słowa w wierszu reguły) -------------------------------------- */
+.ovm-pills{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ovm-pill{font:inherit;font-size:12px;cursor:pointer;color:var(--muted);background:var(--bg);
+  border:1px solid var(--line);border-radius:999px;padding:2px 12px;min-height:28px}
+.ovm-pill:hover{border-color:color-mix(in srgb,var(--dcol,var(--az)) 60%,var(--line));color:var(--ink)}
+.ovm-pill:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+.ovm-pill.on{color:var(--ink);border-color:var(--dcol,var(--az));
+  background:color-mix(in srgb,var(--dcol,var(--az)) 16%,transparent)}
+/* Przełączniki dwustanowe (na wierzchu, przepuszczaj kliknięcia) NIE MAJĄ TU WŁASNEGO WYGLĄDU —
+   i to jest decyzja, nie przeoczenie. Wciśnięty przycisk w tej aplikacji jest różowy (`button.btn.on`
+   w 07-felt-core), a własna reguła w kolorze kapsla i tak by przegrała na specyficzności
+   (`button.btn.on` = 0,2,1). Zamiast pisać ją mocniej, zostawiamy kanon: ten sam przycisk wciśnięty
+   wygląda tu tak samo, jak wszędzie indziej w panelu. */
+.ovm-switches{gap:8px;margin-top:2px}
+
+/* ---- wyglądy: miniatura + nazwa (miniatury wspólne z szufladą, patrz 15-overlay.css) --------- */
+.ovm-themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr));gap:7px}
+.ovm-theme{display:flex;flex-direction:column;gap:4px;padding:4px;border-radius:9px;cursor:pointer;
+  border:1px solid var(--line);background:var(--bg);color:var(--muted);font:inherit;font-size:11.5px}
+.ovm-theme:hover{border-color:color-mix(in srgb,var(--dcol,var(--az)) 60%,var(--line));color:var(--ink)}
+.ovm-theme:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+.ovm-theme.on{border-color:var(--dcol,var(--az));color:var(--ink);
+  background:color-mix(in srgb,var(--dcol,var(--az)) 12%,transparent)}
+.ovm-th-lbl{text-align:center}
+
+/* ---- oko: ten sam przełącznik, co w szufladzie okna ------------------------------------------
+   Wiersze „element + suwak" odeszły 2026-09-01 razem z płaską listą — ich miejsce zajęły bloki
+   (na dole tego pliku). Zostało samo oko, bo to ta sama kontrolka w obu układach. */
+.ovm-pscale{flex:1 1 92px;min-width:92px}
+.ovm-blk.off .ovm-pscale{opacity:.32}
+.ovm-eye{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;
+  flex:0 0 auto;border:1px solid transparent;background:transparent;border-radius:6px;
+  color:var(--dim);cursor:pointer}
+.ovm-eye svg{width:15px;height:15px;display:block}
+.ovm-eye.on{color:var(--dcol,var(--az))}
+.ovm-eye:hover{border-color:color-mix(in srgb,var(--dcol,var(--az)) 55%,transparent)}
+.ovm-eye:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+.ovm-eye .ovl-eye-slash{display:none}
+.ovm-eye:not(.on) .ovl-eye-slash{display:block}
+
+/* Wąskie okno: etykiety przestają rezerwować szerokość, bo przy dwóch kolumnach zwiniętych do
+   jednej zostawiały pola liczbowe na drugiej linii z pustym pasem obok. */
+@media (max-width:900px){
+  .ovm-fl{min-width:0}
+  .ovm-geom .ovm-fl:not(.ovm-ax){min-width:0}
+  .ovm-body{padding:10px 14px 14px}
+}
+
+/* ---- ZAWARTOŚĆ: JEDNA LISTA BLOKÓW (rf-41c, 2026-09-01) --------------------------------------
+   Jeden wiersz na rzecz, a wszystko o tej rzeczy w nim: uchwyt (kolejność), oko (czy widać), nazwa,
+   rozmiar i rozwinięcie ze szczegółami. Zwinięta lista ma osiem linijek — tyle, ile się obejmuje
+   wzrokiem. Rozwinięty jest najwyżej jeden wiersz; osiem otwartych to ta sama ściana kontrolek,
+   od której ten układ ucieka. */
+.ovm-blocks{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ovm-blk{border:1px solid transparent;border-radius:9px;background:var(--bg);min-width:0}
+.ovm-blk:hover{border-color:var(--line)}
+.ovm-blk.is-open{border-color:color-mix(in srgb,var(--dcol,var(--az)) 45%,var(--line));
+  background:color-mix(in srgb,var(--dcol,var(--az)) 7%,var(--bg))}
+
+.ovm-blk-row{display:flex;align-items:center;gap:7px;padding:4px 8px 4px 3px;cursor:pointer;
+  border-radius:9px;min-width:0}
+.ovm-blk-nm{flex:1 1 auto;font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+/* Procent w zwiniętym wierszu pojawia się TYLKO wtedy, gdy nie jest domyślny (rf-41c) — „100%"
+   przy każdej z ośmiu pozycji to osiem razy ta sama informacja, czyli tło, a nie treść. */
+.ovm-blk-sz{flex:0 0 auto;font-family:var(--mono);font-size:11px;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+/* Wyłączony blok gaśnie CAŁY — wiersz ma wtedy mówić „tego nie ma w oknie" jednym spojrzeniem,
+   a nie kazać czytać stanu ikonki. Uchwyt zostaje czytelny: kolejność ustawia się także temu,
+   co się dopiero włączy. */
+.ovm-blk.off .ovm-blk-nm{color:var(--dim)}
+.ovm-blk.off .ovm-blk-sz{display:none}
+
+/* Uchwyt. Przygaszony, dopóki nie ma się z nim do czynienia — w spisie ośmiu wierszy osiem
+   wyraźnych uchwytów to osiem kropek za dużo. */
+.ovm-grip{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+  flex:0 0 auto;padding:0;border:0;border-radius:6px;background:transparent;color:var(--line);
+  cursor:grab;touch-action:none}
+.ovm-grip svg{width:15px;height:15px}
+.ovm-blk:hover .ovm-grip{color:var(--dim)}
+.ovm-grip:hover{color:var(--ink);background:var(--bg2)}
+.ovm-grip:focus-visible{outline:2px solid var(--az);outline-offset:1px;color:var(--ink)}
+.ovm-grip:active{cursor:grabbing}
+
+/* Strzałka rozwinięcia. Rysowana, a nie pisana: to nie jest napis, tylko kierunek. */
+.ovm-blk-chev{flex:0 0 auto;width:14px;height:14px;position:relative;color:var(--dim)}
+.ovm-blk-chev::before{content:"";position:absolute;left:4px;top:3px;width:6px;height:6px;
+  border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+  transform:rotate(-45deg);transform-origin:60% 60%;transition:transform .16s ease}
+.ovm-blk.is-open .ovm-blk-chev::before{transform:rotate(45deg)}
+.ovm-blk.is-open .ovm-blk-chev{color:var(--ink)}
+
+.ovm-blk-body{padding:2px 10px 9px 30px;display:flex;flex-direction:column;gap:7px;
+  animation:ovmBlkIn .16s ease}
+/* ⚠️ JAWNIE, bo `display:flex` wyżej BIJE domyślne `[hidden]{display:none}` z arkusza przeglądarki
+   — i wtedy wszystkie osiem rozwinięć stoi otwartych naraz (złapane zrzutem 2026-09-01). Ta sama
+   pułapka, co przy `.rfpc-pane[hidden]` w 22-modtabs.css. */
+.ovm-blk-body[hidden]{display:none}
+@keyframes ovmBlkIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.ovm-blk-body .ovm-fl{min-width:62px}
+.ovm-subs{display:flex;flex-wrap:wrap;gap:4px 16px}
+.ovm-sub-lbl{font-size:12.5px}
+
+/* W RUCHU. Wiersz unosi się i przestaje łapać mysz (inaczej `elementFromPoint` widziałby jego,
+   a nie to, nad czym naprawdę jesteśmy — patrz `_ovmBlocksDrag` w rf-41c). */
+.ovm-blk.is-drag{pointer-events:none;border-color:var(--dcol,var(--az));
+  background:color-mix(in srgb,var(--dcol,var(--az)) 12%,var(--bg));
+  box-shadow:0 6px 16px rgba(0,0,0,.18);cursor:grabbing}
+.ovm-blocks.is-sorting{cursor:grabbing}
+.ovm-blocks.is-sorting .ovm-blk-row{cursor:grabbing}
+@media (prefers-reduced-motion:reduce){
+  .ovm-blk-body{animation:none}
+  .ovm-blk-chev::before{transition:none}
+}
+
+/* Zakładka „Wygląd" ma jedną kolumnę od chwili, gdy rozmiary elementów przeniosły się do ich
+   własnych wierszy. `auto-fit` z dwiema kolumnami rozciągałby pięć kontrolek na całą szerokość. */
+.ovm-cols-one{grid-template-columns:minmax(0,520px)}
+
+/* PUSTY MODUŁ — wygaszony, nie usunięty (2026-09-01). Pozycja zdjęta z listy
+   zabrałaby razem ze sobą odpowiedź na pytanie „a gdzie to było?"; wygaszona zostaje na swoim
+   miejscu, mówi jednym słowem, czego jej brakuje, i zapala się sama, gdy w module coś powstanie.
+   Uchwyt i oko zostają czytelne: kolejność i włączenie ustawia się także temu, co dopiero będzie. */
+.ovm-blk.is-empty:not(.is-open) .ovm-blk-row{cursor:default}
+.ovm-blk.is-empty:not(.is-open) .ovm-blk-chev{visibility:hidden}
+.ovm-blk.is-empty .ovm-blk-nm{color:var(--dim)}
+.ovm-blk.is-empty .ovm-eye{opacity:.5}
+.ovm-blk-empty{flex:0 0 auto;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;
+  color:var(--dim);border:1px dashed var(--line);border-radius:999px;padding:0 6px;line-height:1.5;
+  cursor:help}
+
+/* ===== UX 261120 SCALENIE ===== */
+/* „Trzymaj na wierzchu” i „Przepuszczaj kliknięcia” pokazują stan wybrany, a nie akcję (D5): czarny
+   filc jak `.seg > button.on` (08). Róż zostaje dla akcji głównej („Pokaż nad grą”). */
+button.btn.ovm-tog.on,button.btn.ovm-tog.on:hover{background:var(--felt-ink);background-image:var(--felt-tex-dark);
+  color:var(--panel);box-shadow:0 3px 0 rgba(0,0,0,.35);--rf-stitch:color-mix(in srgb,var(--panel) 50%,transparent)}
+button.btn.ovm-tog.on:active{box-shadow:0 1px 0 rgba(0,0,0,.35)}
+/* (koniec sekcji SCALENIE) */
+
+/* NOTATKA GRACZA (2026-11-21): pole w szczegółach bloku „notatka gracza”. */
+.ovm-note-lbl{font-size:12px;color:var(--muted);font-weight:700}
+.ovm-note{width:100%;min-height:96px;resize:vertical;font:inherit;font-size:13px;line-height:1.45;
+  padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.ovm-note:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+.ovm-note::placeholder{color:var(--dim);opacity:1;font-style:italic}

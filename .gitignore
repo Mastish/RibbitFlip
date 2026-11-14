@@ -1,0 +1,128 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- PyInstaller build output (keep the .spec, ignore what it produces) ---
+build/
+dist/
+*.exe
+
+# --- Local iteration backups (kept out of history; git is the history now) ---
+*.bak
+*.bak-*
+
+# --- Runtime user data (device state, mappings, personal libraries) ---
+#     Only sanitized examples/ are tracked.
+Settings/
+Library/
+# legacy pre-release folder names (auto-migrated into Library/ on startup)
+Profile/
+Profiles/
+Zestawy/
+Setups/
+OsieProfile/
+AxisPresets/
+*_rules.json
+*_midi.json
+*_midi_global.json
+*_mouse.json
+*_pose.json
+*_power.json
+*_devices.json
+!examples/**
+
+# --- "Zglos problem": diagnostic bundles built for a forum post ---
+#     Redacted, but still a copy of somebody's whole configuration. Never in history.
+Zgloszenia/
+
+# --- Recordings / exports produced by the dashboard ---
+ribbitflip_*.csv
+ribbitflip-setup-*.json
+ribbitflip-bundle-*.json
+ribbitflip-wyzwalacze.json
+
+# --- Tooling / editor / OS ---
+.claude/
+.vscode/
+.idea/
+*.sublime-*
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
+# rotated generations of the app log: ribbitflip.log.1, ribbitflip.log.2
+*.log.[0-9]
+*.tmp
+files.zip
+
+# Windows reserved-name artifact from shell redirects
+nul
+
+# Local handoff notes / internal planning docs (not for publication)
+# Everything at the repository root that starts with "_" is working material (_PLAN_*, _HANDOFF_*,
+# _backups/, _promo/ ...): one rule, so a new plan file can never slip into a public commit.
+/_*
+_HANDOFF_GITHUB.md
+_CHANGELOG_DEV.md
+CLAUDE.md
+whats-next.md
+BACKLOG.md
+_PLAN_ITERACJE_UX.md
+_PROJEKT_TRYB_UPROSZCZONY.md
+_PLAN_RIBBITBEAT.md
+_HANDOFF_RIBBITBEAT.md
+tools/.cache/
+docs/discord-server.md
+docs/discord-runbook.md
+docs/song-packs-notes.md
+
+# Shoot plan for the promo video: a storyboard, a take list and title cards, written in Polish
+# for one person with one machine. Working material, not documentation of the app.
+_promo/
+
+# One-off scripts from the August 2026 split of the monolith into web/js/*. They did their job
+# once, against files that no longer exist in that shape.
+tools/decomposition/
+
+# Local workspace (backups, scratch notes, browser-test screenshots) — never part of the repo
+_backups/
+_RibbitFlip-prace/
+.playwright-mcp/
+.pytest_cache/
+
+# Local pre-push review report (generated tree of tracked files)
+_pliki-na-github*.html
+
+# Prywatne wzorce przeglądu przed publikacją (nazwiska, firma) — tylko lokalnie
+tools/przeglad_publikacji.local.txt
+
+_PLAN_TRZY_BUILDY_DZWIEKI_PROGRESJA.md
+
+# --- RibbitBeat audio-to-MIDI converter: comes in 1.0.1, NOT in 1.0.0 (owner's call 2026-10-10) ---
+#     The files stay on disk; delete this whole block when the converter goes public, and put back its
+#     two sections in third_party_licenses/README.md (left out of the 1.0.0 commit on purpose).
+tools/ribbitbeat_konwerter/
+tests/test_ribbitbeat_konwerter.py
+tests/test_ribbitbeat_testownik.py
+tests/test_ribbitbeat_pakiet.py
+tests/ribbitbeat_konwerter_harness.mjs
+third_party_licenses/basic-pitch-LICENSE.txt
+third_party_licenses/basic-pitch-NOTICE.txt
+third_party_licenses/bs-roformer-LICENSE.txt
+third_party_licenses/crepe-LICENSE.txt
+third_party_licenses/librosa-LICENSE.txt
+third_party_licenses/msst-LICENSE.txt
+third_party_licenses/onnxruntime-LICENSE.txt
+third_party_licenses/open-unmix-LICENSE.txt
+third_party_licenses/pytorch-LICENSE.txt
+third_party_licenses/soundfile-LICENSE.txt
+third_party_licenses/torchcrepe-LICENSE.txt

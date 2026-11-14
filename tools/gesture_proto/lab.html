@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gesty kapsla · RibbitFlip (prototyp)</title>
+<style>
+  :root{--bg:#0f1418;--panel:#161d23;--panel2:#1c252d;--line:#26323b;--txt:#e6edf3;--mut:#8b9aa7;--acc:#ffcb05;--ok:#3ddc84;--bad:#ff5a5a;--warn:#f0a030;--blue:#4fb3ff;--mono:ui-monospace,Consolas,"Cascadia Mono",monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+  header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .brand{font-weight:700;font-size:18px}.brand .sub{font-weight:400;color:var(--mut);margin-left:8px;font-size:13px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+  .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:13px;white-space:nowrap}
+  .pill.ok{border-color:var(--ok);color:var(--ok)}.pill.bad{border-color:var(--bad);color:var(--bad)}.pill.warn{border-color:var(--warn);color:var(--warn)}
+  input,select,button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+  input[type=number]{width:84px}input[type=range]{width:100%;padding:0;accent-color:var(--acc)}
+  button{cursor:pointer}button:hover{border-color:var(--acc)}
+  button.primary{background:var(--acc);color:#1a1a1a;border-color:var(--acc);font-weight:700}
+  button.big{font-size:18px;padding:12px 22px;border-radius:12px}
+  button.danger{border-color:#5a2a2a;color:#ff8a8a}button.small{padding:3px 9px;font-size:13px;border-radius:6px}
+  .simple{max-width:1100px;margin:0 auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .rowc{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .card.rec input#recName{flex:1;min-width:220px;font-size:16px}
+  .reclive{margin-top:14px;padding:16px;border-radius:12px;background:#22140a;border:1px solid #6a4210;text-align:center}
+  .reclive .msg{font-size:22px;font-weight:700;color:var(--acc);margin-bottom:8px}
+  .reclive .sub{color:var(--mut);margin-bottom:10px}
+  .dots{display:flex;gap:10px;justify-content:center;margin:10px 0 14px}
+  .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--acc);background:transparent;transition:background .2s}
+  .dot.on{background:var(--ok);border-color:var(--ok)}
+  .pulse{width:16px;height:16px;border-radius:50%;background:var(--bad);display:inline-block;margin-right:8px;animation:pulse 1s infinite;vertical-align:middle}
+  @keyframes pulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+  .recdone{margin-top:12px;padding:12px 14px;border-radius:12px;background:#12301f;border:1px solid #2a6a44;font-size:15px}
+  .recdone.err{background:#3a1a14;border-color:#7a3a2a}
+  .recdone .warn{color:var(--warn)}
+  .accuracy label{display:flex;justify-content:space-between;font-size:16px;margin-bottom:6px}.accuracy label b{color:var(--acc)}
+  .scale{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin-top:2px}
+  .hint{color:var(--mut);font-size:13px}
+  .axeshead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  #axes{height:160px;margin-bottom:10px}
+  .notice{margin-top:10px;padding:10px 12px;border-radius:10px;background:#2a2410;border:1px solid #6a5a18;color:#f3e6b0;font-size:14px}
+  .notice b{color:var(--acc)}
+  .banner{min-height:64px;padding:10px 14px;border-radius:12px;border:1px dashed var(--line);display:flex;align-items:center;gap:14px;font-size:16px;color:var(--mut);transition:background .2s,border-color .2s}
+  .banner.hit{background:#153a26;border-color:var(--ok);color:var(--txt)}
+  .banner .big{font-size:30px;font-weight:800;color:var(--ok)}
+  .banner.miss{background:#2a1f12;border-color:var(--warn)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .gcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;transition:background .2s,border-color .2s,transform .2s}
+  .gcard.hit{background:#153a26;border-color:var(--ok);transform:scale(1.02)}
+  .gcard .gname{font-weight:800;font-size:20px;cursor:pointer}.gcard .gname:hover{color:var(--acc)}
+  .gcard .gmeta{color:var(--mut);font-size:13px;margin:2px 0 10px}
+  .gcard .gmeta .w{color:var(--warn)}
+  .gcard .grow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px}
+  .gcard input.key{width:150px;font-family:var(--mono)}
+  .empty{color:var(--mut);text-align:center;padding:20px;border:1px dashed var(--line);border-radius:14px}
+  details.adv{max-width:1400px;margin:8px auto 30px;padding:0 18px}
+  details.adv>summary{cursor:pointer;color:var(--mut);padding:8px 0;font-size:14px}
+  details.adv>summary:hover{color:var(--txt)}
+  .advwrap{border-top:1px solid var(--line);padding-top:12px}
+  .connrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  main{display:grid;grid-template-columns:320px minmax(420px,1fr) 340px;gap:12px}
+  @media (max-width:1180px){main{grid-template-columns:1fr 1fr}.center{grid-column:1 / -1;order:-1}}
+  @media (max-width:800px){main{grid-template-columns:1fr}}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0;font-size:14px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:14px 0 8px}h2:first-child{margin-top:0}
+  .gest{border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:8px;background:var(--panel2)}
+  .gest .name{font-weight:700;font-size:15px}.gest .meta{color:var(--mut);font-size:12px;margin:2px 0 6px}
+  .gest .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px;font-size:12px}
+  .gest input[type=number]{width:70px}
+  .recbox{margin-top:8px;padding:10px;border-radius:8px;background:#22140a;border:1px solid #5a3a10;text-align:center}
+  .recbox .big{font-size:40px;font-weight:800;line-height:1.1;color:var(--acc)}.recbox .big.go{color:var(--ok)}
+  .recbox .msg{color:var(--mut);margin:4px 0 8px;font-size:13px}
+  .livehead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+  .badge{padding:3px 10px;border-radius:6px;font-weight:600;font-size:12px;background:#243039}
+  .badge.active{background:#1f4d33;color:var(--ok)}.badge.wait{background:#4a3a14;color:var(--warn)}
+  canvas{width:100%;display:block;background:#0b0f13;border:1px solid var(--line);border-radius:8px}
+  #scope{height:170px}#curves{height:150px}
+  .curves .hdr{font-size:12px;color:var(--mut);margin:8px 0 4px}
+  table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
+  th,td{padding:3px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  th{color:var(--mut);font-weight:600}td:first-child,th:first-child,td.l,th.l{text-align:left}
+  tr.det td{color:var(--ok)}tr.rej td{color:var(--mut)}tr.rec td{color:var(--warn)}
+  .logwrap{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .param{margin-bottom:8px}.param label{display:flex;justify-content:space-between;font-size:13px}
+  .param label b{font-family:var(--mono);font-weight:500;color:var(--acc)}
+  .pgroup{margin:12px 0 6px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;border-top:1px solid var(--line);padding-top:8px}
+  .test{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .counts{font-family:var(--mono);font-size:13px}.counts b{color:var(--ok)}.counts i{color:var(--bad);font-style:normal}.counts u{color:var(--warn);text-decoration:none}
+  .check{font-size:12px;margin-top:8px}.check .ok{color:var(--ok)}.check .bad{color:var(--bad)}.check .warn{color:var(--warn)}
+  .stats{font-size:12px;color:var(--mut);margin-top:6px;font-family:var(--mono)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🐸 Gesty kapsla <span class="sub">prototyp: nagraj → powtórz → wyzwalacz</span></div>
+  <div class="pills">
+    <span class="pill" id="pillPuck">kapsel: —</span>
+    <span class="pill" id="pillApp">aplikacja: —</span>
+  </div>
+</header>
+
+<section class="simple">
+  <div class="card rec">
+    <div class="rowc">
+      <input id="recName" placeholder="Nazwa gestu, np. Czar ognia (można zostawić puste)">
+      <select id="recTakes" title="ile razy powtórzyć gest przy nagrywaniu"><option value="1">1 raz</option><option value="3" selected>3 razy</option><option value="5">5 razy</option></select>
+      <button id="btnRec" class="big primary">● Nagraj</button>
+    </div>
+    <div class="hint" style="margin-top:8px">Naciśnij <b>Nagraj</b>, wykonaj gest tyle razy, ile wybrano (z krótką przerwą), a laboratorium samo skończy. Potem wykonaj gest jeszcze raz — jego karta zaświeci się na zielono.</div>
+    <div class="notice">⚠ <b>Położenie startowe ma znaczenie.</b> Kapsel rozpozna gest tylko wtedy, gdy zaczniesz go z podobnego ułożenia co przy nagraniu — ten sam ruch ręki z inaczej trzymanego kapsla trafia w inne osie czujnika. Zapamiętaj, jak trzymasz kapsel na starcie (np. płasko, przyciskiem do góry, logo do siebie) i zaczynaj każdy gest tak samo.</div>
+    <div id="recLive" class="reclive hidden">
+      <div class="msg"><span class="pulse"></span><span id="recMsg">Wykonaj gest…</span></div>
+      <div class="sub" id="recSub"></div>
+      <div class="dots" id="recDots"></div>
+      <div class="rowc" style="justify-content:center"><button id="btnRecStop" class="big">■ Zakończ</button><button id="btnRecCancel" class="small">Anuluj</button></div>
+    </div>
+    <div id="recDone" class="recdone hidden"></div>
+  </div>
+
+  <div class="card accuracy">
+    <label><span>Jak dokładnie trzeba powtórzyć gest?</span><b id="accLabel">normalnie</b></label>
+    <input type="range" id="acc" min="0" max="100" step="5" value="50">
+    <div class="scale"><span>luźno</span><span>normalnie</span><span>dokładnie</span></div>
+    <div class="hint" style="margin-top:6px">Gest łapie się za rzadko → przesuń w lewo. Odpala na byle ruch → w prawo. Po lewej stronie siła i tempo gestu nie mają znaczenia, po prawej muszą być jak w nagraniu.</div>
+  </div>
+
+  <div class="card motion">
+    <div class="axeshead"><span class="hint">Żyroskop na żywo, °/s: <b style="color:#ff5a5a">x</b> <b style="color:#3ddc84">y</b> <b style="color:#4fb3ff">z</b> · zielone tło = laboratorium wycina ruch</span><span class="hint" id="axesNow"></span></div>
+    <canvas id="axes"></canvas>
+    <div id="banner" class="banner"><span>Rusz kapslem — wykres pokazuje obroty w trzech osiach, a tutaj pojawi się rozpoznany gest.</span></div>
+  </div>
+
+  <div id="cards" class="cards"></div>
+</section>
+
+<details class="adv" id="adv">
+  <summary>Zaawansowane — połączenie, wykresy, dziennik ruchów, wszystkie pokrętła, walidacja nagrań</summary>
+  <div class="advwrap">
+    <div class="connrow">
+      <span class="hint">RibbitFlip:</span>
+      <input id="url" size="26" title="adres RibbitFlipa">
+      <select id="dev" title="kapsel"></select>
+      <button id="btnConnect" class="small">Połącz</button>
+      <span class="pill" id="pillHz">— Hz</span>
+      <span class="hint" id="connMsg"></span>
+    </div>
+    <main>
+      <section class="col left">
+        <h2>Gesty — szczegóły</h2>
+        <div id="gestures"></div>
+        <h2>Nagrywanie z odliczaniem</h2>
+        <div class="rowc">
+          <input id="recName2" placeholder="nazwa" size="14">
+          <label class="hint">powt. <input id="recTakes2" type="number" min="1" max="5" value="3" style="width:56px"></label>
+          <label class="hint">s/gest <input id="recSeconds2" type="number" min="2" max="8" step="0.5" value="4" style="width:64px"></label>
+          <button id="btnRec2" class="small">Nagraj</button>
+        </div>
+        <div class="hint" style="margin-top:6px">Odliczanie 3‑2‑1 przed każdym powtórzeniem i stałe okno na gest; próg gestu ustawiany automatycznie ze zgodności nagrań (nadpisuje suwak dla tego gestu).</div>
+        <div id="recBox" class="recbox hidden"><div class="big" id="recBig">…</div><div class="msg" id="recMsg2"></div><button id="btnRecCancel2" class="small">Anuluj</button></div>
+        <div class="stats" id="stats"></div>
+      </section>
+      <section class="col center">
+        <div class="livehead">
+          <span id="stateBadge" class="badge">spoczynek</span>
+          <span id="energyNow" class="hint" style="font-family:var(--mono)">energia — °/s</span>
+          <span class="hint">pomarańczowa = start · niebieska = koniec (podąża za szczytem)</span>
+          <label class="hint" style="margin-left:auto"><input type="checkbox" id="beep"> dźwięk przy rozpoznaniu</label>
+        </div>
+        <canvas id="scope"></canvas>
+        <div class="curves">
+          <div class="hdr" id="curvesHdr">Ostatni ruch (ciągła) vs najbliższy wzorzec (przerywana) · żyroskop °/s · x czerwony · y zielony · z niebieski</div>
+          <canvas id="curves"></canvas>
+        </div>
+        <h2>Sesja testowa</h2>
+        <div class="test">
+          <span class="hint">oczekiwany gest</span>
+          <select id="testExpect"><option value="">(żaden — licz fałszywe odpalenia)</option></select>
+          <button id="btnTest" class="small">Start</button>
+          <span id="testCounts" class="counts"></span>
+        </div>
+        <div class="hint" style="margin-top:4px">Wybierz gest, Start, wykonaj go np. 10 razy — liczy trafienia, pomyłki i pominięcia. Z „żaden” ruszaj kapslem jak na co dzień i licz fałszywe odpalenia.</div>
+        <h2>Dziennik ruchów</h2>
+        <div class="logwrap"><table id="log"><thead><tr><th class="l">czas</th><th>ruch</th><th>szczyt</th><th class="l">najbliższy</th><th>podob.</th><th>próg</th><th>intens.</th><th>tempo</th><th class="l">wynik</th></tr></thead><tbody></tbody></table></div>
+      </section>
+      <section class="col right">
+        <h2>Parametry <span class="hint" style="text-transform:none;letter-spacing:0">(od razu, zapisują się same)</span></h2>
+        <div id="params"></div>
+        <div class="rowc" style="margin-top:8px"><button id="btnDefaults" class="small">Przywróć domyślne</button><span id="paramsSaved" class="hint"></span></div>
+        <h2>Walidacja krzyżowa nagrań</h2>
+        <button id="btnCheck" class="small">Sprawdź nagrania nawzajem</button>
+        <div class="hint" style="margin-top:4px">Każde nagranie rozpoznawane wzorcami z pozostałych, bieżącymi parametrami; pokazuje też kolizje między gestami.</div>
+        <div id="checkResult" class="check"></div>
+      </section>
+    </main>
+  </div>
+</details>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const fmt1 = (v) => (v == null ? "—" : Number(v).toFixed(1));
+const fmt2 = (v) => (v == null ? "—" : Number(v).toFixed(2));
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function post(path, body) {
+  const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body || {})});
+  return r.json();
+}
+let state = {params: {}, defaults: {}, gestures: [], app: {}, accuracy: 50};
+
+// ================================================================ TRYB PROSTY
+function accLabel(v) { return v < 20 ? "byle jak" : v < 40 ? "luźno" : v < 60 ? "normalnie" : v < 80 ? "dokładnie" : "bardzo dokładnie"; }
+let accTimer = null;
+$("acc").addEventListener("input", () => {
+  const v = Number($("acc").value); $("accLabel").textContent = accLabel(v);
+  clearTimeout(accTimer); accTimer = setTimeout(() => post("/api/accuracy", {value: v}), 200);
+});
+function renderAccuracy() { $("acc").value = state.accuracy; $("accLabel").textContent = accLabel(state.accuracy); }
+
+$("btnRec").onclick = async () => {
+  const r = await post("/api/record", {name: $("recName").value, mode: "manual", takes: $("recTakes").value});
+  if (!r.ok) { showDone(r.error || "nie udało się zacząć", true); return; }
+  $("recDone").classList.add("hidden");
+};
+$("btnRecStop").onclick = () => post("/api/record/stop");
+$("btnRecCancel").onclick = () => post("/api/record/cancel");
+function showDone(html, err) { const d = $("recDone"); d.className = "recdone" + (err ? " err" : ""); d.innerHTML = html; }
+function setDots(n, on) { $("recDots").innerHTML = Array.from({length: n}, (_, i) => `<div class="dot${i < on ? " on" : ""}"></div>`).join(""); }
+function onRecSimple(ev) {
+  const live = $("recLive");
+  if (ev.phase === "go") { live.classList.remove("hidden"); $("recMsg").textContent = ev.msg; $("recSub").textContent = "kapsel nagrywa — każdy wyraźny ruch to jedno powtórzenie"; setDots(ev.target || 1, 0); }
+  else if (ev.phase === "take") { setDots(ev.target || 1, ev.take); const left = (ev.target || 1) - ev.take; $("recMsg").textContent = left > 0 ? `✓ ${ev.take}/${ev.target} — jeszcze ${left} ${left === 1 ? "raz" : "razy"}` : "✓ mam wszystko"; $("recSub").textContent = `ruch ${fmt2(ev.duration)} s, szczyt ${ev.peak} °/s`; }
+  else if (ev.phase === "done") {
+    live.classList.add("hidden");
+    const cons = ev.consistency && ev.consistency.length ? Math.min(...ev.consistency) : null;
+    const thr = state.params.threshold;
+    let html = `<b>✓ Zapisano „${esc(ev.name)}”</b> — ${ev.count} ${ev.count === 1 ? "powtórzenie" : ev.count < 5 ? "powtórzenia" : "powtórzeń"}${cons != null ? `, zgodność ${fmt1(cons)} %` : ""}.<br>Teraz wykonaj gest: karta zaświeci się na zielono. Zapamiętaj, jak trzymasz kapsel na starcie — gest zadziała tylko z podobnego ułożenia.`;
+    if (cons != null && cons < 60) html += `<br><span class="warn">⚠ Powtórzenia bardzo się różnią — nagraj jeszcze raz, spokojniej i tak samo.</span>`;
+    else if (cons != null && cons < thr) html += `<br><span class="warn">⚠ Zgodność powtórzeń (${fmt1(cons)} %) jest niższa niż wymagana dokładność (${fmt1(thr)} %) — gest może się nie łapać; przesuń suwak w lewo albo nagraj równiej.</span>`;
+    for (const c of ev.collisions || []) if (c.warn) html += `<br><span class="warn">⚠ Bardzo podobny do „${esc(c.name)}” (${fmt1(c.sim)} %) — te dwa gesty będą się mylić.</span>`;
+    showDone(html, false);
+  }
+  else if (ev.phase === "error") { live.classList.add("hidden"); showDone(ev.msg, true); }
+  else if (ev.phase === "cancel") { live.classList.add("hidden"); showDone("Anulowano.", true); }
+}
+function renderCards() {
+  const gs = state.gestures || [];
+  const box = $("cards");
+  if (!gs.length) { box.innerHTML = `<div class="empty">Brak gestów. Naciśnij <b>Nagraj</b> i wykonaj pierwszy.</div>`; return; }
+  box.innerHTML = gs.map((g) => {
+    const cons = g.consistency == null ? "" : ` · zgodność ${fmt1(g.consistency)} %${g.consistency < 60 ? ` <span class="w">⚠ różne</span>` : ""}`;
+    return `<div class="gcard" data-name="${esc(g.name)}">
+      <div class="gname" title="kliknij, żeby zmienić nazwę">${esc(g.name)}</div>
+      <div class="gmeta">${g.takes} ${g.takes === 1 ? "powtórzenie" : g.takes < 5 ? "powtórzenia" : "powtórzeń"}${cons} · rozpoznano <b>${g.hits}×</b>${g.lastSim != null ? ` · ostatnio ${fmt1(g.lastSim)} %` : ""}</div>
+      <div class="grow"><span class="hint">klawisz:</span><input class="key" placeholder="np. space, ctrl+c" value="${esc(g.testKey)}" title="po rozpoznaniu naciśnie ten klawisz przez aplikację (tylko gdy Uzbrojone)">
+        <button class="small rerec" title="dograj powtórzenia do tego gestu">↻ dograj</button><button class="small danger del" title="usuń">🗑</button></div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".gcard").forEach((el) => {
+    const name = el.dataset.name;
+    el.querySelector(".gname").onclick = () => { const n = prompt("Nowa nazwa gestu:", name); if (n && n !== name) post("/api/gesture/update", {name, newName: n}); };
+    el.querySelector(".key").addEventListener("change", (e) => post("/api/gesture/update", {name, testKey: e.target.value}));
+    el.querySelector(".rerec").onclick = async () => { const r = await post("/api/record", {name, mode: "manual", takes: $("recTakes").value, append: true}); if (!r.ok) showDone(r.error, true); else $("recDone").classList.add("hidden"); };
+    el.querySelector(".del").onclick = () => { if (confirm(`Usunąć gest „${name}”?`)) post("/api/gesture/delete", {name}); };
+  });
+}
+function flashCard(name) {
+  const el = document.querySelector(`.gcard[data-name="${CSS.escape(name)}"]`);
+  if (!el) return;
+  el.classList.add("hit"); setTimeout(() => el.classList.remove("hit"), 1500);
+}
+// Żyroskop na żywo w trybie prostym: trzy osie w °/s z ostatnich kilku sekund, zielone tło tam,
+// gdzie spotter widzi ruch, pionowa kreska i nazwa przy rozpoznaniu. Karmione tymi samymi
+// zdarzeniami „e” co oscyloskop energii w Zaawansowanych.
+const axes = $("axes"), actx = axes.getContext("2d");
+const AX_WINDOW_S = 6;
+function drawAxes() {
+  const W = axes.width = Math.max(10, axes.clientWidth * devicePixelRatio), H = axes.height = 160 * devicePixelRatio;
+  actx.clearRect(0, 0, W, H);
+  if (ebuf.length) {
+    const t1 = lastTs, t0 = t1 - AX_WINDOW_S;
+    const pts = ebuf.filter((q) => q.ts >= t0 && q.g);
+    let m = 60;
+    for (const q of pts) for (const v of q.g) if (Math.abs(v) > m) m = Math.abs(v);
+    m = Math.min(260, m * 1.1);
+    const X = (t) => (t - t0) / AX_WINDOW_S * W;
+    const Y = (v) => H / 2 - v / m * (H / 2 - 8 * devicePixelRatio);
+    const px = Math.max(1, W / (AX_WINDOW_S * 25));
+    actx.fillStyle = "rgba(61,220,132,0.13)";
+    for (const q of pts) if (q.s === 1) actx.fillRect(X(q.ts), 0, px, H);
+    actx.strokeStyle = "#1e2930"; actx.lineWidth = 1;
+    for (const lvl of [-m / 2, 0, m / 2]) { const y = Y(lvl); actx.beginPath(); actx.moveTo(0, y); actx.lineTo(W, y); actx.stroke(); }
+    actx.fillStyle = "#6b7a86"; actx.font = `${11 * devicePixelRatio}px system-ui`;
+    actx.fillText("+" + Math.round(m) + " °/s", 4 * devicePixelRatio, 12 * devicePixelRatio);
+    actx.fillText("−" + Math.round(m) + " °/s", 4 * devicePixelRatio, H - 4 * devicePixelRatio);
+    const cols = ["#ff5a5a", "#3ddc84", "#4fb3ff"];
+    actx.lineWidth = 1.6 * devicePixelRatio;
+    for (let d = 0; d < 3; d++) {
+      actx.strokeStyle = cols[d]; actx.beginPath(); let first = true;
+      for (const q of pts) { const x = X(q.ts), y = Y(q.g[d]); if (first) { actx.moveTo(x, y); first = false; } else actx.lineTo(x, y); }
+      actx.stroke();
+    }
+    actx.lineWidth = 2 * devicePixelRatio;
+    for (const d of dets) { if (d.ts < t0) continue; const x = X(d.ts); actx.strokeStyle = d.name ? "#3ddc84" : "#556"; actx.beginPath(); actx.moveTo(x, 0); actx.lineTo(x, H); actx.stroke(); if (d.name) { actx.fillStyle = "#3ddc84"; actx.fillText(d.name, x + 3, 26 * devicePixelRatio); } }
+  }
+  requestAnimationFrame(drawAxes);
+}
+requestAnimationFrame(drawAxes);
+
+// ================================================================ ZAAWANSOWANE
+const PARAM_SPEC = [
+  {group: "Rozpoznawanie"},
+  {k: "channels", label: "Osie", type: "select", opts: [["gyro", "żyroskop (obrót)"], ["both", "żyroskop + akcelerometr"], ["accel", "akcelerometr"], ["magnitude", "bez kierunku"]], hint: "żyroskop nie zależy od tego, jak kapsel leży; „+ akcelerometr” widzi stuknięcia i położenie"},
+  {k: "threshold", label: "Podobieństwo — próg %", type: "range", min: 0, max: 100, step: 1, hint: "ustawia go też suwak dokładności; gest z własnym progiem ma pierwszeństwo"},
+  {k: "intensityTol", label: "Intensywność (×)", type: "number", min: 0, max: 10, step: 0.1, hint: "2 = od ½ do 2× siły nagrania; 0 = bez znaczenia"},
+  {k: "durationTol", label: "Tempo (×)", type: "number", min: 0, max: 10, step: 0.1, hint: "dopuszczalny stosunek czasu trwania; 0 = bez znaczenia"},
+  {k: "shapeOnly", label: "Sam kształt", type: "checkbox", hint: "amplituda nie wchodzi do podobieństwa — o sile decyduje tylko Intensywność"},
+  {k: "band", label: "Pasmo DTW", type: "range", min: 0.02, max: 0.6, step: 0.01, hint: "ile fragment gestu może się przesunąć w czasie względem wzorca"},
+  {k: "resampleN", label: "Punktów na gest", type: "number", min: 8, max: 200, step: 1},
+  {k: "smooth", label: "Wygładzanie (próbek)", type: "number", min: 1, max: 9, step: 2},
+  {k: "accelWeight", label: "Waga akcelerometru", type: "number", min: 0, max: 3, step: 0.1, hint: "tylko w trybie „żyroskop + akcelerometr”"},
+  {k: "accelMode", label: "Akcelerometr liczy", type: "select", opts: [["delta", "zmianę od spoczynku"], ["absolute", "wartość z grawitacją"]]},
+  {k: "simRef", label: "Skala podobieństwa", type: "number", min: 0.5, max: 5, step: 0.1, hint: "dystans DTW, przy którym podobieństwo = 0 %; mniejsza = surowsze liczby"},
+  {group: "Segmentacja (°/s)"},
+  {k: "startEnergy", label: "Start gestu", type: "number", min: 2, max: 200, step: 1, hint: "energia > tyle przez 2 próbki"},
+  {k: "endEnergy", label: "Koniec gestu", type: "number", min: 1, max: 200, step: 1},
+  {k: "endFrac", label: "Koniec względem szczytu", type: "number", min: 0, max: 0.9, step: 0.01, hint: "koniec = max(Koniec, ten ułamek × szczyt gestu)"},
+  {k: "endHoldMs", label: "Przerwa kończąca (ms)", type: "number", min: 40, max: 2000, step: 10, hint: "dwuklik z dłuższą przerwą → podnieś; niżej = szybsza decyzja"},
+  {k: "minMs", label: "Min. czas gestu (ms)", type: "number", min: 40, max: 2000, step: 10},
+  {k: "maxMs", label: "Max. czas gestu (ms)", type: "number", min: 300, max: 10000, step: 100},
+  {k: "preRollMs", label: "Rozbieg przed startem (ms)", type: "number", min: 0, max: 500, step: 10},
+  {k: "cooldownMs", label: "Cisza po odpaleniu (ms)", type: "number", min: 0, max: 5000, step: 50},
+];
+let paramTimer = null;
+function renderParams() {
+  const box = $("params");
+  box.innerHTML = "";
+  for (const s of PARAM_SPEC) {
+    if (s.group) { const g = document.createElement("div"); g.className = "pgroup"; g.textContent = s.group; box.appendChild(g); continue; }
+    const v = state.params[s.k];
+    const d = document.createElement("div"); d.className = "param";
+    let ctl = "";
+    if (s.type === "select") ctl = `<select data-k="${s.k}">${s.opts.map(([val, lab]) => `<option value="${val}"${val === v ? " selected" : ""}>${lab}</option>`).join("")}</select>`;
+    else if (s.type === "checkbox") ctl = `<input type="checkbox" data-k="${s.k}"${v ? " checked" : ""}>`;
+    else if (s.type === "range") ctl = `<input type="range" data-k="${s.k}" min="${s.min}" max="${s.max}" step="${s.step}" value="${v}">`;
+    else ctl = `<input type="number" data-k="${s.k}" min="${s.min}" max="${s.max}" step="${s.step}" value="${v}">`;
+    const shown = (s.type === "checkbox") ? (v ? "tak" : "nie") : (s.type === "select" ? "" : v);
+    d.innerHTML = `<label><span>${s.label}</span><b data-v="${s.k}">${shown}</b></label>${ctl}${s.hint ? `<div class="hint">${s.hint}</div>` : ""}`;
+    box.appendChild(d);
+  }
+  box.querySelectorAll("[data-k]").forEach((el) => {
+    el.addEventListener("input", () => onParamInput(el, true));
+    el.addEventListener("change", () => onParamInput(el, false));
+  });
+}
+function onParamInput(el, live) {
+  const k = el.dataset.k;
+  const v = el.type === "checkbox" ? el.checked : el.value;
+  const lab = document.querySelector(`[data-v="${k}"]`);
+  if (lab) lab.textContent = el.type === "checkbox" ? (v ? "tak" : "nie") : (el.tagName === "SELECT" ? "" : v);
+  clearTimeout(paramTimer);
+  paramTimer = setTimeout(async () => {
+    const res = await post("/api/params", {[k]: v});
+    if (res.ok) { state.params = res.params; $("paramsSaved").textContent = "zapisano ✓"; setTimeout(() => $("paramsSaved").textContent = "", 1500); }
+  }, live ? 250 : 0);
+}
+$("btnDefaults").onclick = async () => { const r = await post("/api/params/reset"); if (r.ok) { state.params = r.params; state.accuracy = r.accuracy; renderParams(); renderAccuracy(); } };
+
+function renderGestures() {
+  const box = $("gestures");
+  const gs = state.gestures || [];
+  const sel = $("testExpect"); const cur = sel.value;
+  sel.innerHTML = `<option value="">(żaden — licz fałszywe odpalenia)</option>` + gs.map((g) => `<option value="${esc(g.name)}">${esc(g.name)}</option>`).join("");
+  sel.value = gs.some((g) => g.name === cur) ? cur : "";
+  if (!gs.length) { box.innerHTML = `<div class="hint">brak nagrań</div>`; return; }
+  box.innerHTML = gs.map((g) => `<div class="gest" data-name="${esc(g.name)}">
+      <div class="name">${esc(g.name)}</div>
+      <div class="meta">${g.takes} nagr. · ${g.durations.map((d) => d.toFixed(2)).join(" / ")} s · ${g.consistency == null ? "1 nagranie" : "zgodność " + fmt1(g.consistency) + " %"}${g.channels && g.channels !== state.params.channels ? ` · nagrane z osiami ${g.channels}` : ""}</div>
+      <div class="row">własny próg <input type="number" class="thr" min="0" max="100" step="1" value="${g.threshold ?? ""}" placeholder="${fmt1(state.params.threshold)}" title="pusty = suwak / parametr wspólny">
+        <span class="hint">działa ${fmt1(g.effective)} %</span>
+        ${g.suggested != null ? `<button class="small auto" title="ze zgodności nagrań">auto ${fmt1(g.suggested)}</button>` : ""}</div>
+    </div>`).join("");
+  box.querySelectorAll(".gest").forEach((el) => {
+    const name = el.dataset.name;
+    el.querySelector(".thr").addEventListener("change", (e) => post("/api/gesture/update", {name, threshold: e.target.value === "" ? null : Number(e.target.value)}));
+    const auto = el.querySelector(".auto"); if (auto) auto.onclick = () => { const g = gs.find((x) => x.name === name); post("/api/gesture/update", {name, threshold: g.suggested}); };
+  });
+}
+// nagrywanie z odliczaniem (zaawansowane)
+$("btnRec2").onclick = async () => {
+  const r = await post("/api/record", {name: $("recName2").value, mode: "countdown", takes: $("recTakes2").value, seconds: $("recSeconds2").value});
+  if (!r.ok) { alert(r.error || "nie udało się zacząć"); return; }
+  $("recBox").classList.remove("hidden");
+};
+$("btnRecCancel2").onclick = () => post("/api/record/cancel");
+function onRecCountdown(ev) {
+  const box = $("recBox"), big = $("recBig"), msg = $("recMsg2");
+  big.classList.remove("go");
+  if (ev.phase === "warmup") { box.classList.remove("hidden"); big.textContent = "…"; msg.textContent = ev.msg; }
+  else if (ev.phase === "countdown") { big.textContent = ev.count; msg.textContent = `nagranie ${ev.take}/${ev.takes} — przygotuj się`; }
+  else if (ev.phase === "go") { big.textContent = "TERAZ"; big.classList.add("go"); msg.textContent = `wykonaj gest „${ev.name}” raz i zatrzymaj kapsel`; }
+  else if (ev.phase === "take") { big.textContent = "✓"; msg.textContent = `nagranie ${ev.take}: ${fmt2(ev.duration)} s, szczyt ${ev.peak} °/s${ev.forced ? " (zamknięte na siłę — za długi ruch?)" : ""}`; }
+  else if (ev.phase === "retry") { big.textContent = "↻"; msg.textContent = ev.msg; }
+  else if (ev.phase === "done") { box.classList.add("hidden"); msg.textContent = ""; showDone(`<b>✓ Zapisano „${esc(ev.name)}”</b> — ${ev.count} nagr.${ev.consistency && ev.consistency.length ? `, zgodność ${fmt1(Math.min(...ev.consistency))} %, własny próg ${fmt1(ev.threshold)} %` : ""}`, false); }
+  else if (ev.phase === "cancel" || ev.phase === "error") { box.classList.add("hidden"); showDone(ev.msg || "anulowano", true); }
+}
+
+// oscyloskop energii
+const scope = $("scope"), sctx = scope.getContext("2d");
+const WINDOW_S = 12;
+let ebuf = [], dets = [], lastTs = 0;
+function drawScope() {
+  if ($("adv").open) {
+    const W = scope.width = Math.max(10, scope.clientWidth * devicePixelRatio), H = scope.height = 170 * devicePixelRatio;
+    sctx.clearRect(0, 0, W, H);
+    if (ebuf.length) {
+      const t1 = lastTs, t0 = t1 - WINDOW_S;
+      const p = state.params;
+      let emax = 60; for (const q of ebuf) if (q.e > emax) emax = q.e; emax = Math.min(400, emax * 1.15);
+      const X = (t) => (t - t0) / WINDOW_S * W;
+      const Y = (e) => H - 6 * devicePixelRatio - Math.sqrt(Math.max(0, e) / emax) * (H - 16 * devicePixelRatio);
+      const px = Math.max(1, W / (WINDOW_S * 25));
+      sctx.fillStyle = "rgba(61,220,132,0.10)"; for (const q of ebuf) if (q.s === 1) sctx.fillRect(X(q.ts), 0, px, H);
+      sctx.fillStyle = "rgba(240,160,48,0.10)"; for (const q of ebuf) if (q.s === 2) sctx.fillRect(X(q.ts), 0, px, H);
+      sctx.strokeStyle = "#1e2930"; sctx.lineWidth = 1; sctx.font = `${11 * devicePixelRatio}px system-ui`; sctx.fillStyle = "#6b7a86";
+      for (const lvl of [10, 20, 50, 100, 200, 300]) { if (lvl > emax) break; const y = Y(lvl); sctx.beginPath(); sctx.moveTo(0, y); sctx.lineTo(W, y); sctx.stroke(); sctx.fillText(lvl + "", 4 * devicePixelRatio, y - 2); }
+      sctx.setLineDash([6, 4]);
+      sctx.strokeStyle = "#f0a030"; sctx.beginPath(); sctx.moveTo(0, Y(p.startEnergy)); sctx.lineTo(W, Y(p.startEnergy)); sctx.stroke();
+      sctx.strokeStyle = "#4fb3ff"; sctx.beginPath(); let first = true;
+      for (const q of ebuf) { const x = X(q.ts), y = Y(q.end); if (first) { sctx.moveTo(x, y); first = false; } else sctx.lineTo(x, y); }
+      sctx.stroke(); sctx.setLineDash([]);
+      sctx.strokeStyle = "#e6edf3"; sctx.lineWidth = 1.5 * devicePixelRatio; sctx.beginPath(); first = true;
+      for (const q of ebuf) { const x = X(q.ts), y = Y(q.e); if (first) { sctx.moveTo(x, y); first = false; } else sctx.lineTo(x, y); }
+      sctx.stroke();
+      sctx.lineWidth = 2 * devicePixelRatio;
+      for (const d of dets) { const x = X(d.ts); sctx.strokeStyle = d.name ? "#3ddc84" : "#556"; sctx.beginPath(); sctx.moveTo(x, 0); sctx.lineTo(x, H); sctx.stroke(); if (d.name) { sctx.fillStyle = "#3ddc84"; sctx.fillText(d.name, x + 3, 14 * devicePixelRatio); } }
+    }
+  }
+  requestAnimationFrame(drawScope);
+}
+requestAnimationFrame(drawScope);
+
+const cv = $("curves"), cctx = cv.getContext("2d");
+function drawCurves(seg, tpl) {
+  const W = cv.width = Math.max(10, cv.clientWidth * devicePixelRatio), H = cv.height = 150 * devicePixelRatio;
+  cctx.clearRect(0, 0, W, H);
+  const useAcc = state.params.channels === "accel";
+  const a = useAcc ? seg.a : seg.g, b = tpl ? (useAcc ? tpl.a : tpl.g) : null;
+  let m = useAcc ? 0.3 : 50;
+  for (const rows of [a, b]) if (rows) for (const r of rows) for (const v of r) if (Math.abs(v) > m) m = Math.abs(v);
+  const cols = ["#ff5a5a", "#3ddc84", "#4fb3ff"];
+  const Y = (v) => H / 2 - v / m * (H / 2 - 6 * devicePixelRatio);
+  cctx.strokeStyle = "#1e2930"; cctx.beginPath(); cctx.moveTo(0, H / 2); cctx.lineTo(W, H / 2); cctx.stroke();
+  cctx.fillStyle = "#6b7a86"; cctx.font = `${11 * devicePixelRatio}px system-ui`; cctx.fillText((useAcc ? "±" + m.toFixed(2) + " g" : "±" + Math.round(m) + " °/s"), 4 * devicePixelRatio, 12 * devicePixelRatio);
+  const plot = (rows, dash) => {
+    if (!rows) return;
+    cctx.setLineDash(dash); cctx.lineWidth = (dash.length ? 1.2 : 2) * devicePixelRatio;
+    for (let d = 0; d < 3; d++) { cctx.strokeStyle = cols[d]; cctx.beginPath(); rows.forEach((r, i) => { const x = i / (rows.length - 1) * W, y = Y(r[d]); i ? cctx.lineTo(x, y) : cctx.moveTo(x, y); }); cctx.stroke(); }
+    cctx.setLineDash([]);
+  };
+  plot(b, [5, 4]); plot(a, []);
+  $("curvesHdr").textContent = `Ostatni ruch (ciągła) vs ${tpl ? `wzorzec „${tpl.name}” nagr. ${tpl.take + 1}` : "—"} (przerywana) · ${useAcc ? "akcelerometr g" : "żyroskop °/s"} · x czerwony · y zielony · z niebieski`;
+}
+
+const logBody = $("log").querySelector("tbody");
+function nowStr() { return new Date().toLocaleTimeString("pl-PL"); }
+function addLog(row) {
+  const tr = document.createElement("tr");
+  if (row.rec) { tr.className = "rec"; tr.innerHTML = `<td class="l">${nowStr()}</td><td colspan="8" class="l">${esc(row.text)}</td>`; }
+  else {
+    const b = row.cands && row.cands[0];
+    tr.className = row.detected ? "det" : "rej";
+    const posNote = (row.startDiff != null && row.startDiff > 20) ? ` · inne ułożenie startowe (≈${row.startDiff}°)` : "";
+    const why = (b ? (row.detected ? "GEST" : (row.recording ? "nagrywanie" : (b.sim < b.threshold ? "poniżej progu" : (!b.okIntensity ? "siła poza tolerancją" : (!b.okDuration ? "tempo poza tolerancją" : "cisza po odpaleniu"))))) : "brak wzorców") + (row.detected ? "" : posNote);
+    tr.innerHTML = `<td class="l">${nowStr()}</td><td>${fmt2(row.dur)} s</td><td>${row.peak}°/s</td><td class="l">${b ? esc(b.name) : "—"}</td><td>${b ? fmt1(b.sim) + " %" : ""}</td><td>${b ? fmt1(b.threshold) : ""}</td><td>${b ? fmt2(b.intensity) + "×" + (b.okIntensity ? "" : " ✗") : ""}</td><td>${b ? fmt2(b.durRatio) + "×" + (b.okDuration ? "" : " ✗") : ""}</td><td class="l">${row.detected ? "▶ " + esc(row.detected) : why}${row.forced ? " · na siłę" : ""}</td>`;
+    tr.title = (row.cands || []).map((c) => `${c.name}: ${fmt1(c.sim)} % (próg ${fmt1(c.threshold)}), siła ${fmt2(c.intensity)}×, tempo ${fmt2(c.durRatio)}×`).join("\n");
+  }
+  logBody.prepend(tr);
+  while (logBody.children.length > 150) logBody.lastChild.remove();
+}
+let bannerTimer = null;
+function showBanner(html, cls) {
+  const b = $("banner"); b.className = "banner " + cls; b.innerHTML = html;
+  clearTimeout(bannerTimer); bannerTimer = setTimeout(() => { b.className = "banner"; }, 2500);
+}
+let audio = null;
+function beep(ok) {
+  if (!$("beep").checked) return;
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = ok ? 880 : 220; g.gain.value = 0.08; o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.12); } catch (e) {}
+}
+let test = null;
+$("btnTest").onclick = () => {
+  if (test) { test = null; $("btnTest").textContent = "Start"; return; }
+  test = {expect: $("testExpect").value, hit: 0, wrong: 0, miss: 0, fp: 0, okrej: 0};
+  $("btnTest").textContent = "Stop"; renderTest();
+};
+function renderTest() {
+  if (!test) return;
+  const t = test;
+  if (t.expect) { const n = t.hit + t.wrong + t.miss; $("testCounts").innerHTML = `„${esc(t.expect)}” × ${n}: <b>trafione ${t.hit}</b> · <i>pomylone ${t.wrong}</i> · <u>pominięte ${t.miss}</u> · skuteczność ${n ? Math.round(100 * t.hit / n) : 0} %`; }
+  else $("testCounts").innerHTML = `ruchów ${t.fp + t.okrej}: <i>fałszywe odpalenia ${t.fp}</i> · <b>słusznie zignorowane ${t.okrej}</b>`;
+}
+function onSegment(ev) {
+  addLog(ev);
+  if (ev.curves) drawCurves(ev.curves, ev.tpl);
+  dets.push({ts: ev.ts, name: ev.detected});
+  if (ev.detected) { showBanner(`<span class="big">▶ ${esc(ev.detected)}</span><span>${fmt1(ev.cands[0].sim)} % podobieństwa · ${fmt2(ev.dur)} s · siła ${fmt2(ev.cands[0].intensity)}×</span>`, "hit"); beep(true); flashCard(ev.detected); }
+  else if (ev.recording) { /* w trakcie nagrywania nic nie oceniamy */ }
+  else if (ev.cands && ev.cands.length) {
+    const b = ev.cands[0];
+    const why = b.sim >= b.threshold ? (b.okIntensity ? " · za inne tempo" : " · za inna siła") : " (za mało)";
+    // Duży kąt między spoczynkiem przed tym ruchem a spoczynkiem sprzed nagrania = kapsel trzymany
+    // inaczej niż wtedy; to najczęstszy powód „ten sam gest, a nie łapie”.
+    const pos = (ev.startDiff != null && ev.startDiff > 20) ? `<span style="color:var(--warn)">⚠ kapsel trzymany inaczej niż przy nagraniu (różnica ≈${ev.startDiff}°) — zacznij z tego samego ułożenia</span>` : "";
+    showBanner(`<span>ruch ${fmt2(ev.dur)} s — najbliżej „${esc(b.name)}” ${fmt1(b.sim)} %${why}</span>${pos}`, "miss");
+  }
+  else showBanner(`<span>ruch ${fmt2(ev.dur)} s — nie ma jeszcze żadnego nagranego gestu</span>`, "");
+  if (test && !ev.recording) {
+    if (test.expect) { if (ev.detected === test.expect) test.hit++; else if (ev.detected) test.wrong++; else test.miss++; }
+    else { if (ev.detected) test.fp++; else test.okrej++; }
+    renderTest();
+  }
+  if (ev.stats) renderStats(ev.stats);
+}
+function renderStats(s) {
+  const d = Object.entries(s.detections || {}).map(([k, v]) => `${esc(k)} ${v}`).join(", ");
+  $("stats").textContent = `od startu: ruchów ${s.segments}, rozpoznań ${d || 0}, bez rozpoznania ${s.rejected}`;
+}
+$("btnCheck").onclick = async () => {
+  $("checkResult").textContent = "liczę…";
+  const r = await fetch("/api/check").then((x) => x.json());
+  if (!r.ok) { $("checkResult").textContent = r.error; return; }
+  const marks = {ok: "✓", confused: "✗", rejected: "–"};
+  const cls = {ok: "ok", confused: "bad", rejected: "warn"};
+  let html = r.rows.map((row) => row.note ? `<div>${esc(row.name)} ${row.take}: ${esc(row.note)}</div>` : `<div class="${cls[row.result]}">${marks[row.result]} ${esc(row.name)} ${row.take}: własny ${fmt1(row.own)} % (próg ${fmt1(row.threshold)})${row.other ? ` · najbliższy inny ${esc(row.other)} ${fmt1(row.otherSim)} %` : ""}${row.okIntensity ? "" : " · siła ✗"}${row.okDuration ? "" : " · tempo ✗"}</div>`).join("");
+  html += `<div style="margin-top:6px"><b>${r.pass ? "PASS" : "FAIL"}</b> — ${r.total} nagrań: trafione ${r.ok}, pomylone ${r.confused}, odrzucone ${r.rejected}</div>`;
+  if (r.collisions.length) html += `<div style="margin-top:6px">kolizje: ${r.collisions.map((c) => `${esc(c.a)} ↔ ${esc(c.b)} ${fmt1(c.sim)} %${c.warn ? " ⚠" : ""}`).join(" · ")}</div>`;
+  $("checkResult").innerHTML = html;
+};
+
+// status aplikacji i połączenie
+function renderStatus(a) {
+  state.app = a;
+  const pa = $("pillApp"), pp = $("pillPuck"), ph = $("pillHz");
+  pa.textContent = `aplikacja: ${a.connected ? "połączona" : "brak"}${a.mode && a.mode !== "?" ? " · " + a.mode : ""}`;
+  pa.className = "pill " + (a.connected ? "ok" : "bad"); pa.title = `${a.url} · ${a.msg || ""}`;
+  const conn = {connected: "połączony ✓", scanning: "szukam…", pairing: "parowanie", parked: "uśpiony", disconnected: "rozłączony", idle: "niesparowany", sim: "symulacja"}[a.conn] || (a.connected ? (a.dev === "auto" ? "czekam, aż któryś wyśle dane" : a.conn) : "—");
+  const extra = [a.name, a.battery != null ? a.battery + " %" : null].filter(Boolean).join(" · ");
+  const who = a.dev && a.dev !== "auto" ? a.dev + (a.want === "auto" ? " (auto)" : "") : "";
+  pp.textContent = `kapsel${who ? " " + who : ""}: ${conn}${extra ? " · " + extra : ""}`;
+  pp.className = "pill " + ((a.conn === "connected" || a.conn === "sim") ? "ok" : (a.conn === "scanning" || a.conn === "pairing" ? "warn" : "bad"));
+  pp.title = a.msg || "";
+  ph.textContent = a.hz ? `${a.hz} Hz` : "— Hz"; ph.className = "pill " + (a.hz > 30 ? "ok" : (a.hz > 0 ? "warn" : ""));
+  $("connMsg").textContent = a.connected ? "" : "Uruchom RibbitFlipa i połącz kapsel; laboratorium łączy się samo co 3 s.";
+}
+async function loadDevices() {
+  const url = $("url").value.trim();
+  const r = await fetch("/api/devices?url=" + encodeURIComponent(url)).then((x) => x.json()).catch(() => ({devices: []}));
+  const sel = $("dev"); const cur = state.app.want || "auto";
+  const devs = r.devices && r.devices.length ? r.devices : [];
+  sel.innerHTML = `<option value="auto"${cur === "auto" ? " selected" : ""}>auto — ten, który wysyła</option>` +
+    devs.map((d) => `<option value="${esc(d.dev)}"${d.dev === cur ? " selected" : ""}>${esc(d.dev)}${d.name ? " · " + esc(d.name) : ""}${d.bound === false ? " (niesparowany)" : ""}</option>`).join("");
+}
+$("btnConnect").onclick = async () => { await post("/api/connect", {url: $("url").value.trim(), dev: $("dev").value}); loadDevices(); };
+$("url").addEventListener("change", loadDevices);
+
+// SSE
+function applyState(s) {
+  state.params = s.params; state.defaults = s.defaults; state.gestures = s.gestures; state.accuracy = s.accuracy;
+  $("url").value = s.app.url; renderStatus(s.app); renderParams(); renderAccuracy(); renderGestures(); renderCards(); renderStats(s.stats || {});
+  if (s.recording) { if (s.recording.mode === "manual") $("recLive").classList.remove("hidden"); else $("recBox").classList.remove("hidden"); }
+}
+function connectEvents() {
+  const es = new EventSource("/api/events");
+  es.onmessage = (m) => {
+    const ev = JSON.parse(m.data);
+    switch (ev.t) {
+      case "hello": applyState(ev); loadDevices(); break;
+      case "e": ebuf.push(ev); lastTs = ev.ts; if (ebuf.length > 25 * (WINDOW_S + 2)) ebuf.splice(0, ebuf.length - 25 * (WINDOW_S + 2)); dets = dets.filter((d) => d.ts >= lastTs - WINDOW_S - 1); $("axesNow").textContent = ev.s === 1 ? "RUCH" : (ev.s === 2 ? "czekam na spokój" : `spoczynek · ${fmt1(ev.e)} °/s`); $("energyNow").textContent = `energia ${fmt1(ev.e)} °/s`; { const b = $("stateBadge"); b.textContent = ev.s === 1 ? "RUCH" : (ev.s === 2 ? "czekam na spokój" : "spoczynek"); b.className = "badge " + (ev.s === 1 ? "active" : (ev.s === 2 ? "wait" : "")); } break;
+      case "seg": onSegment(ev); break;
+      case "det": break;
+      case "st": renderStatus(ev.app); break;
+      case "rec": if (ev.mode === "manual") onRecSimple(ev); else onRecCountdown(ev); break;
+      case "gest": state.gestures = ev.gestures; renderGestures(); renderCards(); break;
+      case "params": state.params = ev.params; if (ev.accuracy != null) state.accuracy = ev.accuracy; renderParams(); renderAccuracy(); break;
+      case "key": addLog({rec: true, text: `klawisz ${ev.spec}: ${ev.sent ? "wysłany" : "NIE wysłany" + (ev.error ? " — " + ev.error : " (aplikacja Wstrzymana albo --no-keys)")}`}); break;
+    }
+  };
+  es.onerror = () => { $("pillApp").textContent = "laboratorium: brak połączenia (serwer lab.py wyłączony?)"; $("pillApp").className = "pill bad"; };
+}
+connectEvents();
+</script>
+</body>
+</html>

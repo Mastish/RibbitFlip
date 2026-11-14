@@ -1,0 +1,47 @@
+/* PASEK TOŻSAMOŚCI KONFIGURACJI (rf-49-cfgid.js) — wspólny dla każdego modułu, który pozwala
+   kapslowi nosić NAZWANĄ konfigurację. Stoi tuż pod nagłówkiem karty, bo odpowiada na pytanie
+   zadane w nagłówku: skoro to jest konfiguracja tego kapsla, to jak się nazywa i czy jest jeszcze
+   taka, jak zapisana.
+
+   Wygląd celowo taki sam, jak paska koła wyboru (.wh-cfgbar w 17-wheel.css): dwa paski
+   odpowiadające na to samo pytanie mają wyglądać jak jedna rzecz aplikacji. Klasy są jednak
+   osobne — koło zostaje przy swojej implementacji do ręcznego przeklikania, a wspólny
+   komponent nie może zależeć od arkusza jednego modułu. */
+  .rf-cfgbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg2)}
+  .rf-cfgbar-l{font-size:12px;color:var(--dim);font-weight:600}
+  .rf-cfgpick{font:inherit;font-size:12px;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;padding:4px 8px;max-width:min(40vw,260px)}
+  .rf-cfgpick:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+  /* Stan mówi JEDNO słowo i tylko wtedy, gdy ma co powiedzieć: „zmienione" znaczy, że jest co
+     zapisać, więc obok od razu stoją przyciski, które to robią. */
+  .rf-cfgbar-state{font-size:11px;color:var(--dim);padding:1px 8px;border-radius:999px;
+    border:1px dashed transparent}
+  .rf-cfgbar-state.is-dirty{color:var(--warn,#b8860b);border-color:var(--warn,#b8860b)}
+  .rf-cfgbar-state.is-gone{color:var(--bad,#d4433f);border-color:var(--bad,#d4433f)}
+  .rf-cfgbar .btn{margin:0}
+
+/* ---------- KROPKA „NIEZAPISANE ZMIANY" (rf-49q-dirtymark.js) --------------------------------------
+   Ten sam stan, co słowo „zmienione" na pasku wyżej, tylko widoczny SPOZA modułu: przy pozycji
+   w nawigacji i na zakładce „Konfiguracja". Te same dwa kolory, co blok stanu w module
+   (`.rfpc-state.is-dirty` / `.is-gone` w 21-presets.css) — bo to jest ta sama odpowiedź.
+
+   `<i>`, a nie `<span>`: napisu pozycji nawigacji szuka w czterech miejscach zapytanie
+   `span:not(.rfic):not(.tab-dot):not(.tab-emoji)`, a arkusz nadaje takiemu `<span>` szerokość
+   etykiety (20-cols.css). Znacznik innego rodzaju nie wymaga dopisywania wyjątku nigdzie. */
+  .rf-dirty{display:inline-block;width:9px;height:9px;flex:0 0 auto;border-radius:50%;
+    background:var(--warn,#c8971a);box-shadow:0 0 0 2px rgba(200,151,26,.22)}
+  /* „Zniknęła z listy" jest PIERŚCIENIEM, nie kropką — i to nie estetyka. Kropka w kolorze `--bad`
+     stanęłaby obok kropki „moduł wyłączony", która jest dokładnie taka sama i dokładnie tam samo;
+     dwa czerwone punkty w jednym wierszu znaczyłyby dwie różne rzeczy bez żadnej różnicy w rysunku.
+     Puste w środku kółko czyta się jako „czegoś tu brakuje", czyli jako to, czym ten stan jest. */
+  .rf-dirty.is-gone{background:none;border:2.5px solid var(--bad,#d83a5c);
+    box-shadow:0 0 0 2px rgba(216,58,92,.18)}
+  /* Na wypełnionym tle (wybrana pozycja nawigacji, wybrana zakładka modułu) bursztyn na różu ma za
+     mały kontrast, żeby czytać się jako ostrzeżenie — obwódka robi to samo, co biała nitka ściegu
+     na tych samych przyciskach: oddziela znacznik od tła, nie zmieniając jego znaczenia. */
+  .rnav-btn.active .rf-dirty,.rfpc-tab.on .rf-dirty{box-shadow:0 0 0 2px rgba(255,255,255,.8)}
+  /* Zwinięty pasek nawigacji: napis znika, więc kropka nie ma się czego trzymać w wierszu. Idzie
+     w dolny róg — górny prawy zajmuje kropka „moduł włączony" (20-cols.css). */
+  body.lp-collapsed .rf-rail .rnav-btn .rf-dirty{position:absolute;right:4px;bottom:4px;
+    width:8px;height:8px}

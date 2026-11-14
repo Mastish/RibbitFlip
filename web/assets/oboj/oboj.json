@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Woodwinds/Oboe/Sus"
+ },
+ "probki": [
+  {
+   "plik": "oboj-1.wav",
+   "nazwa": "Oboe_Sus_D3_v3_Main.wav",
+   "nuta": 62,
+   "root": 62.031,
+   "petla": [
+    0.8049,
+    1.4984
+   ]
+  },
+  {
+   "plik": "oboj-2.wav",
+   "nazwa": "Oboe_Sus_A#3_v3_Main.wav",
+   "nuta": 70,
+   "root": 70.027,
+   "petla": [
+    0.8648,
+    1.2481
+   ]
+  },
+  {
+   "plik": "oboj-3.wav",
+   "nazwa": "Oboe_Sus_F4_v3_Main.wav",
+   "nuta": 77,
+   "root": 77.016,
+   "petla": [
+    1.2958,
+    1.6703
+   ]
+  }
+ ]
+}

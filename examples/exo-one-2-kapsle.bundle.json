@@ -1,0 +1,194 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "Exo One (2 kapsle)",
+ "description": "Dwa kapsle jako jeden pad Xbox. Lewa ręka prowadzi lewym drążkiem, a jej przycisk trzyma grawitację (nurkowanie, RT). Prawa ręka kręci kamerą z przyciętym pionem (0,60×), jej przycisk trzyma szybowanie (forma dysku, LT), a szybki obrót nadgarstkiem to skok (A). Przyciski odczytane z plików gry, nie zgadnięte.",
+ "cassette": 7,
+ "howto": [
+  "Lewy kapsel: przechył prowadzi, przycisk trzymany to grawitacja i nurkowanie.",
+  "Prawy kapsel: przechył kręci kamerą, przycisk trzymany to szybowanie, szybki obrót nadgarstkiem to skok.",
+  "Przycisków nie musisz sprawdzać: są odczytane z domyślnej mapy pada w plikach gry."
+ ],
+ "forApp": "Exo One (Steam)",
+ "author": "RibbitFlip",
+ "rev": 2,
+ "exe": [
+  "exo one.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Lot",
+   "role": {
+    "name": "Lot i nurkowanie (lewa ręka)",
+    "note": "Przechył prowadzi obiekt. Przycisk trzymany to nurkowanie i rozpędzanie."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "exo-drop",
+      "label": "Grawitacja i nurkowanie (trzymaj przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 150
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:rt",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "own",
+     "stickBackend": "gamepad",
+     "stickWhich": "left",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 40,
+     "stickExpo": 1.6,
+     "stickInner": 0.1,
+     "stickOuter": 0.02,
+     "stickAccel": 0.6,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 1.0
+    }
+   }
+  },
+  {
+   "slot": "d1",
+   "name": "Kamera",
+   "role": {
+    "name": "Kamera (prawa ręka)",
+    "note": "Przechył obraca kamerę, pion przycięty do 0,60×. Przycisk trzyma szybowanie, obrót nadgarstkiem to skok."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "exo-disc",
+      "label": "Szybowanie (trzymaj przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 150
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:lt",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "exo-jump",
+      "label": "Skok (szybki obrót nadgarstkiem)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": true,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:a",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "d0",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 50,
+     "stickExpo": 1.8,
+     "stickInner": 0.14,
+     "stickOuter": 0.0,
+     "stickAccel": 0.55,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 0.6
+    }
+   }
+  }
+ ]
+}

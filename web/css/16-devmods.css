@@ -1,0 +1,255 @@
+/* ===== "Moduły" — the capsule × module matrix (rf-45-devmods.js) =====================
+   Lives inside .devices-panel, under the capsule pills. Everything is drawn from the felt
+   tokens (--panel / --ink / --dim / --line / --stitch), so it follows the theme without
+   knowing anything about it. */
+
+/* Two header icons the matrix needs that no card had asked for yet. The artwork already
+   exists as a token; only the .hd-ic binding was missing. */
+.hd-ic-map{background-image:var(--ic-map)}
+.hd-ic-donttouch{background-image:var(--ic-donttouch)}
+
+/* ===== THE SLIDE — shared by both folds this file draws ================================
+   „Moduły" (here) and „Widoczność" (further down) are the same gesture in two places, which is
+   the reason they live in one file; the animation is written once for the same reason. Both used
+   to fold out with `dmIn` and then simply VANISH on close — half a gesture, copied twice.
+   Three states, because `display` cannot be animated:
+     • no class   — `display:none`. Not just invisible: both wraps sit in flex/grid parents that
+       would keep their gap around an element of zero height (a permanent 28px of empty paper
+       under the tab bar, in „Widoczność"'s case),
+     • `.on`      — laid out, row collapsed to 0fr,
+     • `.on.open` — row at 1fr, i.e. exactly as tall as the box inside it.
+   `grid-template-rows: 0fr → 1fr` rather than a `max-height` guess: the row measures its own
+   content, so a fold cannot animate to a made-up height and then jump to the real one — and the
+   real one changes with the language, the number of capsules and the width of the window.
+   Timing is `rfFoldSetOpen` in rf-00-core.js; `min-height:0` is what lets a grid item shrink
+   below its content at all, and without it nothing would move. */
+.dm-wrap,.tv-wrap{display:none;overflow:hidden}
+.dm-wrap.on,.tv-wrap.on{display:grid;grid-template-rows:0fr;opacity:0;
+  transition:grid-template-rows var(--rf-d-pop,220ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1)),
+             opacity calc(var(--rf-d-pop,220ms) * .6) linear}
+.dm-wrap.on.open,.tv-wrap.on.open{grid-template-rows:1fr;opacity:1}
+.dm-box,.tv-box{min-height:0}
+
+/* --- the fold ------------------------------------------------------------------------- */
+.dm-btn{margin-left:8px;flex:0 0 auto;display:inline-flex;align-items:center;gap:6px}
+.dm-chev{width:0;height:0;flex:0 0 auto;border-left:5px solid transparent;border-right:5px solid transparent;
+  border-top:6px solid currentColor;transition:transform .2s var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+.dm-btn[aria-expanded="true"] .dm-chev{transform:rotate(180deg)}
+.dm-wrap{margin:11px 0 13px}   /* bottom gap: the pills must not sit glued to the table */
+/* narrow screens: the matrix scrolls sideways, never squashes. `overflow-y:hidden` is not idle —
+   one axis set to `auto` drags the other out of `visible`, and an `auto` Y would make the box
+   grow a scrollbar mid-slide instead of being cut off by the fold above it. */
+.dm-box{overflow-x:auto;overflow-y:hidden;padding:2px 2px 4px}
+
+/* --- the table ------------------------------------------------------------------------ */
+.dm-tab{border-collapse:collapse;width:auto;min-width:100%;font-size:13px}
+.dm-tab th,.dm-tab td{padding:5px 8px;text-align:center;vertical-align:middle}
+.dm-tab thead th{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.4px;
+  color:var(--dim);text-transform:uppercase;white-space:nowrap;
+  border-bottom:1.5px dashed var(--stitch);padding-bottom:7px}
+.dm-tab thead th .hd-ic{width:22px;height:22px;display:block;margin:0 auto 3px;vertical-align:baseline}
+.dm-hlbl{display:block;line-height:1.15}
+/* The app-wide marker in a column header („Usługi"). Inline INSIDE the caption on purpose: as its
+   own line it would add a row of height to every header, and as an absolutely positioned badge it
+   would land on the neighbouring column on a narrow window. `text-transform:none` because the
+   header is uppercased and an emoji has no case to lose - the rule is there so a future text
+   marker in this slot does not silently become shouting. */
+.dm-hglob{font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;cursor:help}
+.dm-tab th.dm-hcap,.dm-tab th.dm-cap{text-align:left}
+.dm-tab tbody tr+tr{border-top:1px dashed color-mix(in srgb,var(--stitch) 55%,transparent)}
+
+/* --- the capsule chip in the first column ---------------------------------------------- */
+.dm-cap{white-space:nowrap;padding-right:16px!important;font-weight:400}
+.dm-capimg{display:inline-block;width:22px;height:22px;vertical-align:-6px;margin-right:7px;
+  background-repeat:no-repeat;background-position:center;background-size:contain}
+.dm-capdot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:0;
+  margin-right:8px;background:var(--dcol,#8aa0b5);border:1.5px solid var(--stitch)}
+/* WHY the capsule colour is mixed into the ink instead of used raw: the raw device colours are
+   picked to shine on a dark overlay, and on the paper panel the light ones die - #ffcb05 on
+   --panel is 1.41:1, unreadable at 800 weight. 40% is the largest share of the capsule colour at
+   which EVERY colour in DEV_COLORS still clears AA on paper (5.3-8.0:1); at 55% #ffcb05 drops to
+   3.62 and #7be39a to 3.73. The colour has to stay in the name, because a capsule with a picture
+   draws .dm-capimg instead of the coloured .dm-capdot (rf-45-devmods.js) - the name is then the
+   only place the row says which capsule it is.
+   DLACZEGO kolor kapsla jest wmieszany w atrament, a nie użyty wprost: surowe kolory kapsli są
+   dobrane pod ciemną nakładkę, na papierze te jasne znikają (#ffcb05 = 1,41:1). 40% to najwyższy
+   udział, przy którym każdy kolor z DEV_COLORS przechodzi AA; kolor musi zostać w nazwie, bo przy
+   kapslu z obrazkiem kropka .dm-capdot nie jest rysowana. */
+.dm-capname{font-weight:800;color:color-mix(in srgb,var(--dcol,var(--ink)) 40%,var(--ink))}
+.dm-state{margin-left:8px;font-size:11px;font-weight:700;color:var(--dim);font-family:var(--display)}
+.dm-state:empty{display:none}
+.dm-allrow{background:color-mix(in srgb,var(--stitch) 12%,transparent)}
+.dm-allname{font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.4px;
+  text-transform:uppercase;color:var(--dim)}
+
+/* --- the switches ---------------------------------------------------------------------- */
+/* A cell switch is the shared .rf-toggle, minus the Off/On words: in a six-column grid they
+   would be thirty-six pieces of text saying what the drawing already says, and the state is
+   carried for assistive tech by aria-checked. Smaller than the card-header original for the
+   same reason — a grid of full-size knobs reads as a wall, not as a table. */
+.dm-tg{margin:0 auto!important;padding:1px 2px}
+.dm-tg .rf-tg-knob{width:40px;height:30px}
+.dm-tg .rf-tg-knob::before,.dm-tg .rf-tg-knob::after{background-size:40px 40px}
+/* A lit cell is tinted as well as drawn: at this size the two knob pictures differ, but not
+   enough to scan a whole column at a glance. Painted as a gradient inset by 3px top and bottom
+   rather than as a plain background, so a column of lit cells reads as separate switches instead
+   of fusing into one green bar down the table. */
+.dm-tab td:has(>.dm-tg.on){
+  background:linear-gradient(color-mix(in srgb,var(--green,#6cb33f) 15%,transparent),
+                             color-mix(in srgb,var(--green,#6cb33f) 15%,transparent))
+             center/100% calc(100% - 6px) no-repeat;
+  border-radius:9px}
+.dm-tg.unknown{opacity:.5}
+.dm-tg.unknown .rf-tg-knob{filter:grayscale(1)}
+
+/* Third state, master only: neither on nor off. role=checkbox + aria-checked="mixed" carry it
+   for assistive tech (ARIA has no mixed for role=switch, which is why the masters are
+   checkboxes and the cells are switches); this is the same fact for the eye. */
+.dm-master{position:relative}
+.dm-master.mixed .rf-tg-knob::before{opacity:.4}
+.dm-master.mixed::after{content:"";position:absolute;left:50%;top:50%;width:15px;height:3px;
+  margin:-1.5px 0 0 -7px;border-radius:2px;background:var(--ink);opacity:.8;pointer-events:none}
+
+.dm-tg:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:12px}
+
+/* --- legenda trzech stanów -------------------------------------------------------------- */
+/* Trzeci stan („sprawdzam…") jest rysunkiem, którego nie ma nigdzie indziej w aplikacji, więc
+   nie da się go skądś znać. Próbki to TE SAME dwa obrazki, co w komórkach — legenda, która maluje
+   własne kwadraciki, rozjeżdża się z tabelą przy pierwszej zmianie rysunku. */
+.dm-legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;
+  margin:8px 2px 0;font-size:11.5px;font-weight:600;color:var(--dim)}
+.dm-lg{display:inline-flex;align-items:center;gap:6px}
+.dm-lg-sw{width:26px;height:20px;flex:0 0 auto;background:var(--ic-toggleoff) center/26px 26px no-repeat;
+  filter:var(--ic-off-tint)}
+.dm-lg-sw.on{background-image:var(--ic-toggleon);filter:none}
+.dm-lg-sw.unknown{opacity:.5;filter:var(--ic-off-tint) grayscale(1)}
+
+/* --- narrow screens --------------------------------------------------------------------- */
+@media(max-width:820px){
+  .dm-tab{font-size:12px}
+  .dm-tab th,.dm-tab td{padding:4px 5px}
+  .dm-tg .rf-tg-knob{width:34px;height:26px}
+  .dm-tg .rf-tg-knob::before,.dm-tg .rf-tg-knob::after{background-size:34px 34px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .dm-wrap.open{animation:none}
+  .dm-chev{transition:none}
+}
+
+/* ===== „Widoczność" — chowanie zakładek na pasku (rf-48-tabvis.js) ====================
+   Deliberately in THIS file and not a new one: it is the same drawing as „Moduły" above
+   (pill + chevron folds out icon + name + rf-toggle), and keeping the two next to each
+   other is what stops them drifting apart. The load order stays as it was — 16 before
+   15-overlay.css, which must remain last. */
+
+/* --- the pill, at the right-hand end of the tab bar ------------------------------------ */
+/* `.tabbar button` makes everything inside the bar a TAB: a 40px icon over a caption, in a
+   column. This is not a tab — it is the bar's own control — so the column layout, the tab
+   padding and the tab hover-lift are all put back to a plain small pill. */
+.tabbar .tv-btn{flex:0 0 auto;align-self:center;margin-left:6px;
+  display:inline-flex;flex-direction:row;align-items:center;gap:6px;
+  font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.3px;
+  padding:7px 12px;line-height:1.1;border-radius:12px;color:var(--muted)}
+.tabbar .tv-btn:hover{transform:none;color:var(--ink)}
+.tv-chev{width:0;height:0;flex:0 0 auto;border-left:5px solid transparent;border-right:5px solid transparent;
+  border-top:6px solid currentColor;transition:transform .2s var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+.tv-btn[aria-expanded="true"] .tv-chev{transform:rotate(180deg)}
+/* LIT while anything is folded away. Without this the bar just looks shorter than it is, and
+   „gdzie się podział MIDI?" has no answer anywhere on screen. */
+.tabbar .tv-btn.on{color:var(--ink);
+  box-shadow:var(--felt-shadow-sm),inset 0 0 0 2px var(--pink)}
+.tv-cnt{display:none;min-width:17px;height:17px;padding:0 4px;border-radius:999px;
+  background:var(--pink);color:#fff;font-family:var(--display);font-weight:800;font-size:11px;
+  line-height:17px;text-align:center}
+.tabbar .tv-btn.on .tv-cnt{display:inline-block}
+
+/* --- the fold -------------------------------------------------------------------------- */
+/* STICKY, not merely „the next element after the bar". The tab bar is itself sticky, so once the
+   page is scrolled its document position is far above the window while the bar is at the top of
+   it — and the fold, left in normal flow, opened up THERE. The button did something invisible.
+   `--tv-top` is written by rf-48 (_tvSyncTop) from the bar's own sticky offset plus its measured
+   height: the bar wraps to a second row on a narrow window, so the number cannot be hard-coded.
+   Same question, same answer, as `--rf-sticky-top` in 22-modtabs.css — except that the fold hangs
+   from the tab bar, which is ABOVE the module bar, so it stops one bar earlier.
+   Stuck, the fold sits FLUSH under the bar rather than keeping the 26 px it has in flow — that gap
+   is transparent (flex gap + the bar's margin), so honouring it would let the page scroll through
+   a stripe between the menu and its own dropdown. z-index one below the bar's 30: over the page,
+   under the thing it hangs from. */
+/* The slide itself is the shared block at the top of this file. What is local to this fold: it is
+   STICKY (see above), and its felt shadow belongs to the WRAP rather than to the box inside it —
+   `overflow:hidden`, the thing doing the sliding, clips a CHILD's shadow but never the element's
+   own. Same rectangle, same radius, so nothing looks different; it is just drawn from outside. */
+.tv-wrap{margin:0 0 12px;position:sticky;top:var(--tv-top,0px);z-index:29;
+  border-radius:16px;box-shadow:var(--felt-shadow-sm)}
+.tv-box{background:var(--panel);background-image:var(--felt-tex-soft);border-radius:16px;
+  padding:11px 13px 10px;overflow:hidden;
+  /* A short window (or a bar that has wrapped to two rows) must not push the fold off the BOTTOM
+     of the screen instead of the top. The box stops growing; the ROW inside it scrolls, so the
+     note underneath stays put instead of scrolling away with the switches. */
+  display:flex;flex-direction:column;max-height:calc(100vh - var(--tv-top,0px) - 24px)}
+
+/* --- the row --------------------------------------------------------------------------- */
+/* ONE row, one column per tab. It wraps rather than scrolls (unlike the „Moduły" matrix):
+   the cells are independent of one another, so a second line loses nothing — while a matrix
+   row cut in half loses the capsule it belongs to. */
+.tv-row{display:flex;flex-wrap:wrap;gap:4px 2px;align-items:flex-start;
+  min-height:0;overflow:auto}   /* the part that gives way when the window is too short */
+/* Nagłówek grupy — te same dwa słowa i ta sama typografia, co sekcje nawigacji („Moduł",
+   „Reszta" — `.rnav-sect` w 20-cols.css). Wiersz steruje TĄ listą, więc musi być ułożony
+   i podpisany tak samo, inaczej szuka się w nim pozycji dwa razy. */
+.tv-grp{font-family:var(--display);font-weight:800;font-size:10.5px;letter-spacing:.5px;
+  word-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:7px 2px 3px}
+.tv-grp:first-child{margin-top:1px}
+.tv-cell{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:5px 8px 3px;border-radius:12px;min-width:74px}
+.tv-cell+.tv-cell{border-left:1.5px dashed color-mix(in srgb,var(--stitch) 55%,transparent)}
+.tv-ic{width:30px;height:30px}
+.tv-ic-txt{font-size:22px;line-height:30px;text-align:center}
+.tv-name{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.3px;
+  text-transform:uppercase;color:var(--dim);white-space:nowrap;text-align:center}
+/* A folded-away tab is drawn faded, so the row itself says which ones are gone — the same
+   fact as the count on the pill, in the place where you act on it. */
+.tv-cell.tv-off .tv-ic{filter:grayscale(1);opacity:.42}
+.tv-cell.tv-off .tv-name{opacity:.55;text-decoration:line-through}
+
+/* --- the switches ---------------------------------------------------------------------- */
+/* Same shared .rf-toggle as everywhere else, minus the Off/On words: eleven of them in one
+   row would be twenty-two pieces of text saying what the drawing already says, and the state
+   is carried for assistive tech by aria-checked. */
+.tv-tg{margin:0 auto!important;padding:1px 2px}
+.tv-tg .rf-tg-knob{width:38px;height:29px}
+.tv-tg .rf-tg-knob::before,.tv-tg .rf-tg-knob::after{background-size:38px 38px}
+.tv-tg:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:12px}
+/* The anchor (Mapowanie). Not removed from the row — its absence would read as a bug — but
+   visibly not yours to flip, with the reason on hover (title). The greying out comes from the
+   shared `.rf-toggle.dis`, so this locked switch looks like every other locked switch. */
+.tv-tg-lock{cursor:default}
+.tv-cell.tv-lock .tv-name{color:var(--dim)}
+
+/* --- the sentence ---------------------------------------------------------------------- */
+/* Printed in full rather than hidden in a tooltip: „ukryte" and „wyłączone" are the two words
+   this control could be confused between, and the difference costs somebody an evening. */
+.tv-note{margin-top:8px;padding-top:7px;font-size:11.5px;line-height:1.35;color:var(--dim);
+  border-top:1.5px dashed var(--stitch)}
+
+@media(max-width:820px){
+  .tv-cell{min-width:64px;padding:4px 5px 3px}
+  .tv-ic{width:26px;height:26px}
+  .tv-tg .rf-tg-knob{width:34px;height:26px}
+  .tv-tg .rf-tg-knob::before,.tv-tg .rf-tg-knob::after{background-size:34px 34px}
+}
+
+/* Icon-only pill: the eye replaces the text label. The slash rides the same .on class that
+   drives the glow, so "something is hidden" reads twice — colour AND the crossed-out eye. */
+.tv-eye{display:inline-flex;align-items:center}
+.tv-eye svg{width:15px;height:15px;display:block}
+.tv-eye-slash{display:none}
+.tabbar .tv-btn.on .tv-eye-slash{display:block}
+
+@media(prefers-reduced-motion:reduce){
+  /* No slide — but the three states stay, so neither fold needs a branch of its own: each simply
+     arrives at 1fr in one step, and the beat between `.on` and `.open` costs nothing. */
+  .dm-wrap.on,.tv-wrap.on{transition:none}
+  .dm-chev,.tv-chev{transition:none}
+}

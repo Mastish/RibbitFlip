@@ -1,0 +1,305 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "Portal 2 (2 kapsle)",
+ "description": "Portal 2 na klawiaturze i myszy, bez wirtualnego pada. Lewy kapsel: przechył to chodzenie (W, S, A, D), przycisk strzela pomarańczowym portalem (prawy przycisk myszy), szybki obrót w lewo to skok, w prawo podnoszenie i używanie (E), potrząśnięcie włącza i wyłącza kucanie. Prawy kapsel: celujesz ruchem dłoni jak myszą powietrzną, przycisk strzela niebieskim portalem (lewy przycisk myszy). Klawisze z pliku config.cfg gry.",
+ "cassette": 4,
+ "howto": [
+  "Prawy kapsel: celujesz ruchem dłoni, przycisk to niebieski portal.",
+  "Lewy kapsel: przechył to chodzenie, przycisk to pomarańczowy portal, obrót w lewo skacze, obrót w prawo podnosi i używa, potrząśnięcie włącza i wyłącza kucanie.",
+  "Celowanie za szybkie albo za wolne? Zmień czułość myszy prawego kapsla."
+ ],
+ "forApp": "Portal 2 (Steam)",
+ "author": "RibbitFlip",
+ "rev": 1,
+ "exe": [
+  "portal2.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Chodzenie",
+   "role": {
+    "name": "Chodzenie i pomarańczowy portal (lewa ręka)",
+    "note": "Przechył to W, S, A, D. Przycisk to pomarańczowy portal, obroty to skok i użycie, potrząśnięcie kucanie."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "p2-orange",
+      "label": "Pomarańczowy portal (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 120
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "mouse:right",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "p2-jump",
+      "label": "Skok (szybki obrót w lewo)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "space",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "p2-use",
+      "label": "Podnieś i użyj (szybki obrót w prawo)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": false,
+      "cmp": "<",
+      "threshold": -200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "e",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "p2-duck-sw",
+      "label": "Przełącznik kucania (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 18000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "latch",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      },
+      "noAction": true
+     },
+     {
+      "id": "p2-duck",
+      "label": "Kucanie (trzyma Ctrl, gdy przełącznik włączony)",
+      "enabled": true,
+      "source": {
+       "kind": "trigger",
+       "ref": "p2-duck-sw"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "ctrl",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "own",
+     "stickBackend": "wsad",
+     "stickWhich": "left",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 40,
+     "stickExpo": 1.6,
+     "stickInner": 0.1,
+     "stickOuter": 0.02,
+     "stickAccel": 0.6,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 1.0,
+     "stickWsadThr": 0.4,
+     "stickUp": "w",
+     "stickDown": "s",
+     "stickLeft": "a",
+     "stickRight": "d"
+    }
+   }
+  },
+  {
+   "slot": "d1",
+   "name": "Celowanie",
+   "role": {
+    "name": "Celowanie i niebieski portal (prawa ręka)",
+    "note": "Ruch dłoni celuje jak mysz. Przycisk to niebieski portal."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "p2-blue",
+      "label": "Niebieski portal (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 120
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "mouse:left",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "mouse",
+     "padShare": "own",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 50,
+     "stickExpo": 1.8,
+     "stickInner": 0.14,
+     "stickOuter": 0.0,
+     "stickAccel": 0.55,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 0.6,
+     "mouseSource": "axis",
+     "mouseAbsolute": false,
+     "smooth": 0.5
+    }
+   }
+  }
+ ]
+}

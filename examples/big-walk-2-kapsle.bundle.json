@@ -1,0 +1,338 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "Big Walk (2 kapsle)",
+ "description": "Big Walk na klawiaturze i myszy, bez wirtualnego pada. Lewy kapsel to chodzenie (przechył naciska W, S, A, D), mocny przechył do przodu to bieg, przycisk to skok, szybki obrót nadgarstkiem macha lewą albo prawą ręką, potrząśnięcie siada. Prawy kapsel to rozglądanie się ruchem dłoni jak myszą powietrzną, przycisk podnosi i używa, potrząśnięcie odkłada. Klawisze z pliku ustawień gry.",
+ "cassette": 5,
+ "howto": [
+  "Lewy kapsel: przechył to chodzenie, mocny przechył do przodu to bieg, przycisk to skok, obrót nadgarstkiem w lewo albo w prawo to machanie ręką, potrząśnięcie to siadanie.",
+  "Prawy kapsel: obracasz dłonią, kamera idzie za nią. Przycisk podnosi i używa, potrząśnięcie odkłada.",
+  "Kucanie (Ctrl), wyciszenie (V) i czat (Enter) zostają na klawiaturze."
+ ],
+ "forApp": "Big Walk (Steam)",
+ "author": "RibbitFlip",
+ "rev": 1,
+ "exe": [
+  "big walk.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Chodzenie",
+   "role": {
+    "name": "Chodzenie (lewa ręka)",
+    "note": "Przechył to W, S, A, D, mocno do przodu to bieg. Przycisk skacze, obrót macha ręką."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "bw-jump",
+      "label": "Skok (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 120
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "space",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "bw-sprint",
+      "label": "Bieg (mocny przechył do przodu)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "pitch"
+      },
+      "abs": false,
+      "cmp": "<",
+      "threshold": -32,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "shift",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "bw-wave-l",
+      "label": "Machanie lewą ręką (obrót w lewo)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "q",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "bw-wave-r",
+      "label": "Machanie prawą ręką (obrót w prawo)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": false,
+      "cmp": "<",
+      "threshold": -200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "e",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "bw-sit",
+      "label": "Siadanie (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 18000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "z",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "own",
+     "stickBackend": "wsad",
+     "stickWhich": "left",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 40,
+     "stickExpo": 1.6,
+     "stickInner": 0.1,
+     "stickOuter": 0.02,
+     "stickAccel": 0.6,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 1.0,
+     "stickWsadThr": 0.4,
+     "stickUp": "w",
+     "stickDown": "s",
+     "stickLeft": "a",
+     "stickRight": "d"
+    }
+   }
+  },
+  {
+   "slot": "d1",
+   "name": "Rozglądanie",
+   "role": {
+    "name": "Rozglądanie (prawa ręka)",
+    "note": "Ruch dłoni obraca kamerę jak mysz. Przycisk podnosi i używa, potrząśnięcie odkłada."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "bw-use",
+      "label": "Podnieś i użyj (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 120
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "mouse:left",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "bw-drop",
+      "label": "Odłóż (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 12000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "mouse:right",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "mouse",
+     "padShare": "own",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 50,
+     "stickExpo": 1.8,
+     "stickInner": 0.14,
+     "stickOuter": 0.0,
+     "stickAccel": 0.55,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 0.6,
+     "mouseSource": "axis",
+     "mouseAbsolute": false,
+     "smooth": 0.5
+    }
+   }
+  }
+ ]
+}

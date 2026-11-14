@@ -1,0 +1,240 @@
+/* EDYTOR BRZMIEŃ JAKO „RACK” (rf-25d, etap E4a, 2026-10-02). Układ: u góry pasek brzmienia (emoji, nazwa, rodzaj,
+   „niezapisane zmiany”, pokrętło głośności, akcje z „Nowe brzmienie” i „⧉ Duplikuj”), niżej dwie kolumny: lista
+   brzmień z lewej (szukanie, chipy rodzaju, ▶ szybki odsłuch w wierszu), instrument z prawej (lampa oscyloskopu nad rackiem kart
+   modułów, pod nimi zwinięta pętla testowa). Karty stoją jedna pod drugą na całą szerokość instrumentu, bo etap E6
+   wstawi pod pokrętła Oscylatorów, Filtra i Obwiedni płaskie edytory krzywych (`.se-sec-editor`).
+   PO 09 i 29: nadpisuje ich reguły zamiast je edytować. Klimat: filc, ścieg, grafit, róż, limonka; cienie twarde
+   jak w reszcie panelu, bez gradientów i poświat; na żółtym tylko grafit. */
+
+/* `.sound-editor{overflow:hidden}` (09) robi z edytora pojemnik przewijania, a przyklejony pasek i lista trzymałyby się
+   jego, czyli elementu, który nigdy się nie przewija. `clip` przycina tak samo, ale pojemnika nie zakłada, więc
+   przyklejenie mierzy się z oknem (ta sama zasada co `.rfpc` w 21-presets.css). */
+#soundEditor{overflow:clip}
+#soundEditor .se-body{display:flex;flex-direction:column;gap:12px}
+
+/* ---------- pasek brzmienia: przyklejony tuż pod paskiem modułu (`--rf-sticky-top` z 22-modtabs.css to dół paska
+   modułu plus 8 px oddechu, tu bez oddechu, żeby treść nie prześwitywała nad paskiem). Wysokość paska mierzy rf-25d
+   (`--se-bar-h`), bo pod nim parkuje lista brzmień. ---------- */
+/* Dwa rzędy w siatce (P-G4-01, 137 → ok. 105 px, więcej miejsca na listę brzmień): emoji, nazwa z plakietką nad polem
+   i głośność w pierwszym, akcje brzmienia w drugim. Głośność zostaje na górze po prawej i zajmuje oba rzędy. */
+.se-bar{position:sticky;top:calc(var(--rf-sticky-top,8px) - 8px);z-index:12;display:grid;
+  grid-template-columns:58px minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;
+  gap:6px 14px;padding:8px 16px;border-radius:14px;border:1px solid var(--line);background:#fff;
+  background-image:var(--felt-tex-soft);box-shadow:var(--felt-shadow-sm);outline:1px dashed var(--stitch);outline-offset:-5px}
+.se-bar.dirty{outline:1.5px dashed var(--amber)}
+/* `.se-fld input[type=text]` (09) ustala rozmiar pól, więc tu ten sam selektor z przedrostkiem paska */
+.se-bar .se-emoji-fld{grid-column:1;grid-row:1}
+.se-bar .se-emoji-fld input[type=text]{width:58px;height:36px;font-size:22px;line-height:1;text-align:center;padding:2px}
+.se-bar-id{grid-column:2;grid-row:1;position:relative;min-width:0;display:flex;flex-direction:column;gap:6px}
+.se-bar .se-name-fld input[type=text]{font-size:15px;font-weight:700}
+/* plakietka, kropka i komunikat stoją w wierszu podpisu „Nazwa”, przy prawej krawędzi pola */
+.se-bar-state{position:absolute;right:0;top:-2px;max-width:calc(100% - 64px);display:flex;align-items:center;justify-content:flex-end;
+  gap:8px;min-width:0}
+/* plakietka rodzaju: barwy plakietek wierszy listy (09), „nowe” w limonce; zieleń „własnych” o ton ciemniejsza niż
+   w 09 (#2c8a5b miała tu 3,7:1, ta ma 5,6:1) */
+.se-kind{flex:0 0 auto;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;
+  border-radius:999px;background:#eee7d6;color:var(--muted)}
+.se-kind[data-kind="new"]{background:rgba(166,216,97,.30);color:var(--green-d)}
+.se-kind[data-kind="over"]{background:rgba(236,26,131,.14);color:var(--pink-d)}
+.se-kind[data-kind="custom"]{background:rgba(60,180,120,.16);color:#1f6b45}
+.se-dirty{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--warn-ink)}
+.se-dirty[hidden]{display:none}
+.se-dirty-dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 2px rgba(234,163,43,.25)}
+/* komunikaty w jednej linii obok plakietki: pasek nie zmienia wysokości, kiedy pojawia się i znika napis */
+.se-bar .se-msg{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* głośność: pokrętło ze skórką „master” (stoi poza modułami), podpis z lewej, żeby pasek był niski */
+.se-bar .se-lvl-fld{grid-column:3;grid-row:1 / span 2;justify-self:end;flex-direction:row;align-items:center;gap:6px}
+.se-bar .se-lvl-fld .knob{margin:0}
+.se-bar-acts{grid-column:1 / span 2;grid-row:2;display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;min-width:0}
+.se-bar-acts .btn{white-space:nowrap}
+/* niskie okno: głośność mniejsza i tylko w pierwszym rzędzie, akcje na całą szerokość */
+@media (max-height:800px){
+  .se-bar .se-lvl-fld{grid-row:1}
+  .se-bar .se-lvl-fld .knob{zoom:.74}
+  .se-bar-acts{grid-column:1 / -1}}
+.se-bar .btn.yellow{background:var(--yellow,#FFE236);border-color:#e6c92f;color:#353534;font-weight:800;--rf-stitch:rgba(0,0,0,.24)}
+
+/* ---------- dwie kolumny: lampa z listą brzmień i rack. `align-items:start`, bo rozciągnięta kolumna nie miałaby
+   gdzie się przyklejać. Od 2026-10-03 lewa kolumna `.se-side` to lampa oscyloskopu NAD listą, obie
+   przyklejone pod paskiem brzmienia: lampa jest tylko obrazem dźwięku, więc ma być widoczna, kiedy się edytuje
+   w kartach po prawej. Od 2026-10-03 po południu (lampa cały czas widoczna, kolumna bez przewijania, kosztem
+   mniejszych przycisków) kolumna ma wysokość okna i NIGDY się nie przewija: tarczę wymiarowuje rf-25c `_fit`
+   (`--sk-size` = wysokość kolumny minus pulpit i stałe wiersze listy), pulpit jest kompaktowy, a lista dostaje resztę
+   i przewija się sama w środku. ---------- */
+.se-main{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);gap:16px;align-items:start}
+.se-main:has(.sk-scope.big){grid-template-columns:minmax(300px,560px) minmax(0,1fr)}
+.se-side{position:sticky;top:calc(var(--rf-sticky-top,8px) - 8px + var(--se-bar-h,0px) + 12px);
+  height:calc(100vh - var(--rf-sticky-top,8px) - var(--se-bar-h,0px) - 16px - var(--se-rest,0px));min-height:0;min-width:0;
+  display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.se-side .sk-scope{flex:0 0 auto;grid-template-columns:minmax(0,1fr);gap:8px;padding:8px}
+/* tarcza: `--sk-size` liczy rf-25c `_fit`; zanim policzy (i bez JS) przybliżenie z wysokości okna */
+.se-side .sk-glass{width:var(--sk-size,min(100%,max(160px,calc(100vh - var(--rf-sticky-top,8px) - var(--se-bar-h,0px) - 400px))));justify-self:center}
+.se-side .sk-scope.big .sk-glass{width:var(--sk-size,100%)}
+.se-side .sk-panel{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:4px 16px}
+.se-side .sk-cap{display:none}
+/* pulpit kompaktowy: klawisze podglądu jako przyciski z napisem w jednym rzędzie (zamiast kół z podpisami 8,5 px
+   pod spodem), diody 6×10, legenda i „Powiększ” mniejsze. Stan „trwa” (Przytrzymaj, Podgląd ciągły) to klawisz
+   wciśnięty w filc z 29, bez diody. */
+.se-side .sk-sec{gap:4px}
+.se-side .sk-legend{font-size:9px;gap:12px}
+.se-side .sk-prev{gap:6px;padding-bottom:0;flex-wrap:wrap}
+.se-side .sk-scope .sk-prev .btn.sm{width:auto;height:28px;padding:0 10px;border-radius:9px;display:inline-flex;gap:5px;
+  font-size:12px;--rf-stitch-in:3px;--rf-stitch-r:6px}
+.se-side .sk-scope .sk-prev .btn.sm::before{display:none}
+.se-side .sk-pi{margin:0}
+.se-side .sk-pl{position:static;width:auto;margin:0;font-size:12px;letter-spacing:0;text-transform:none;white-space:nowrap;color:inherit}
+.se-side .sk-row{gap:8px}
+.se-side .sk-vu{padding:3px 5px;gap:2px;box-shadow:0 1px 0 #151413}
+.se-side .sk-led{width:6px;height:10px}
+.se-side .sk-tb{font-size:10px;padding:3px 8px}
+/* niskie okno (rf-25c `_fit`, klasa .low): lista ma pierwszeństwo, tarcza chowa się pod „Pokaż ekran”, a ten sam
+   klawisz zamienia ją z listą w tej samej kolumnie. Napisy klawisza stoją w HTML, widać jeden. */
+.sk-big .sk-b2,.sk-big .sk-b3,.sk-scope.low .sk-big .sk-b0,.sk-scope.low .sk-big .sk-b1{display:none}
+.sk-scope.low .sk-big:not([aria-pressed="true"]) .sk-b3,.sk-scope.low .sk-big[aria-pressed="true"] .sk-b2{display:inline}
+.se-side .sk-scope.low:not(.big) .sk-glass,.se-side .sk-scope.low:not(.big) .sk-legend{display:none}   /* legenda opisuje tarczę */
+.se-side:has(.sk-scope.low.big) .se-lib{display:none}
+.se-lib{flex:1 1 auto;min-height:0;overflow:hidden;
+  display:flex;flex-direction:column;padding:10px;border-radius:14px;border:1px solid var(--line);background:#fbf7ee;
+  background-image:var(--felt-tex-soft);box-shadow:var(--felt-shadow-sm);outline:1px dashed var(--stitch);outline-offset:-5px}
+.se-lib-body{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1 1 auto}
+.se-lib-toggle{display:none}
+/* wygląd pola (filcowa kieszeń, róż przy fokusie) daje globalna reguła z 11; tu tylko układ */
+.se-search{width:100%;font:inherit;font-size:13px;padding:6px 10px}
+.se-chips{display:flex;flex-wrap:wrap;gap:5px}
+/* chip z licznikiem 0 („Własne 0”, „Zmienione 0”) chowa rf-25d: nie ma czego filtrować, a chipy mieszczą się w rzędzie */
+.se-chip[hidden]{display:none}
+.se-chip{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:10.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.3px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 9px;
+  cursor:pointer;box-shadow:0 2px 0 rgba(120,90,40,.14);
+  transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+.se-chip:not(.on):hover{border-color:var(--pink);color:var(--pink-d)}
+.se-chip.on{background:#353534;border-color:#353534;color:#efe9dd;transform:translateY(1px);box-shadow:0 1px 0 rgba(120,90,40,.14)}
+.se-chip:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.se-chip-n{font-family:var(--mono);font-size:10.5px;font-weight:600}
+.se-lib .se-list{margin-top:0;max-height:none;flex:1 1 auto;min-height:60px}
+.se-lib-empty{font-size:12px;color:var(--dim);text-align:center;padding:6px 4px}
+.se-lib-empty[hidden],.se-row[hidden]{display:none}
+/* wiersz w wąskiej kolumnie (szeroki ekran): plakietka rodzaju jako kropka (słowo zostaje dla czytnika ekranu),
+   ▶ zawsze widoczny, pozostałe akcje pod kursorem, przy fokusie i na wierszu edytowanym (na dotyku zawsze) */
+@media (min-width:821px){
+  .se-lib .se-row{gap:7px;padding:6px 8px}
+  .se-lib .se-row-badge{width:8px;height:8px;padding:0;overflow:hidden;font-size:0;line-height:0;color:transparent}
+  .se-lib .se-b-base{background:#c9bfa8}
+  .se-lib .se-b-over{background:var(--pink)}
+  .se-lib .se-b-custom{background:#3cb478}
+  .se-lib .se-row-acts button:not(.se-play){display:none}
+  .se-lib .se-row:hover .se-row-acts button,.se-lib .se-row:focus-within .se-row-acts button,
+  .se-lib .se-row.kb-focus .se-row-acts button,.se-lib .se-row.editing .se-row-acts button{display:inline-block}}
+@media (min-width:821px) and (hover:none){.se-lib .se-row-acts button:not(.se-play){display:inline-block}}
+/* szybki odsłuch: wiersz, który gra, dostaje zieloną ramkę, a ▶ zielone wypełnienie jak klawisze podglądu (09) */
+.se-row-acts .se-play{color:var(--green-d);font-size:12px}
+.se-row.playing{border-color:var(--green);background:rgba(108,179,63,.08)}
+.se-row.playing .se-play,.se-row.playing .se-play:hover{background:var(--green);color:#123006}
+
+/* ---------- instrument: rack kart modułów (lampa przeszła 2026-10-03 do lewej kolumny `.se-side`) ---------- */
+.se-inst{min-width:0;display:flex;flex-direction:column;gap:12px}
+.se-rack{display:flex;flex-direction:column;gap:12px}
+/* karta modułu: nagłówek z nazwą i kostką „🎲” (losuje tylko ten moduł); ścieg jak na lampie i liście */
+.se-rack .se-sec{outline:1px dashed var(--stitch);outline-offset:-5px}
+.se-rack .se-sec>summary{flex-wrap:wrap}
+/* przewinięcie do karty (klawiatura, linia gotowości) zatrzymuje nagłówek pod przyklejonym paskiem brzmienia */
+.se-rack .se-sec{scroll-margin-top:calc(var(--rf-sticky-top,8px) + var(--se-bar-h,0px) + 8px)}
+.se-sec-t{flex:1 1 auto;min-width:0}
+.se-sec-tools{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;margin-left:auto}
+.se-st{display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:13px;line-height:1.2;color:var(--ink);
+  background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 7px;cursor:pointer;box-shadow:0 2px 0 rgba(120,90,40,.14);
+  transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+.se-st:hover{border-color:var(--pink)}
+.se-st:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(120,90,40,.14)}
+.se-st:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+/* miejsce na płaski edytor krzywej (etap E6); do czasu montażu ukryte */
+.se-sec-editor{padding:0 11px 11px}
+.se-sec-editor[hidden]{display:none}
+/* pętla testowa: zwinięta karta pod rackiem */
+.se-seq-sec>.se-seq{margin:0;padding:2px 11px 11px;border-top:none}
+
+/* ---------- karta „Próbka" (rf-25f, 2026-10-19): własne nagranie zamiast fal ----------
+   Przebieg rysuje kanwa, więc kolory idą do niej zmiennymi (--smp-*): skrypt czyta je z getComputedStyle i rysuje
+   nimi, zamiast mieć własną paletę, która rozjechałaby się z motywem panelu przy pierwszej zmianie. */
+.se-smp{display:flex;flex-direction:column;gap:9px;padding:2px 11px 11px;min-width:0}
+.se-smp .hint{margin:0}
+.se-smp-acts,.se-smp-tools{display:flex;flex-wrap:wrap;gap:7px}
+.se-smp-acts[hidden],.se-smp-tools[hidden],.se-smp-empty[hidden],.se-smp-info[hidden],.se-smp-note[hidden]{display:none}
+/* Siatka pokręteł próbki musi UMIEĆ się schować: `.se-grid{display:grid}` (09-felt-pads-synth) wygrywa
+   z przeglądarkową regułą dla atrybutu `hidden`, więc bez tego brzmienie BEZ próbki pokazywało komplet
+   pokręteł wycinka i poziomu pod napisem „Nie ma jeszcze próbki”. */
+.se-smp .se-grid[hidden]{display:none}
+/* Przełączniki na całą szerokość siatki: są o połowę niższe od tarcz, więc wmieszane między pokrętła
+   rozbijały wiersze i karta wyglądała na poskładaną z resztek. */
+.se-smp-chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin:1px 0 2px}
+.se-smp-chips .se-fld{margin:0}
+.se-smp-rec{background:var(--pink);color:#fff;border-color:var(--pink-d)}
+.se-smp-rec:hover{background:var(--pink-d)}
+.se-smp-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:8px 11px;border-radius:12px;
+  background:color-mix(in srgb,var(--pink) 14%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pink) 45%,transparent)}
+.se-smp-bar[hidden]{display:none}
+.se-smp-dot{flex:none;width:11px;height:11px;border-radius:50%;background:var(--pink);animation:se-smp-puls 1s ease-in-out infinite}
+@keyframes se-smp-puls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.78)}}
+@media (prefers-reduced-motion:reduce){.se-smp-dot{animation:none}}
+.se-smp-time{font-size:12px;font-weight:700;color:var(--ink);min-width:12ch}
+.se-smp-vu{flex:1 1 90px;max-width:220px;height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.se-smp-vu>i{display:block;height:100%;width:0;background:var(--ok);transition:width .06s linear}
+.se-smp-empty{padding:12px;border-radius:10px;border:1px dashed var(--line);text-align:center}
+/* Przebieg jest teraz CHWYTNY (2026-10-20): cztery znaczniki przeciąga się myszą, więc kanwa dostaje wyższy
+   wzrost (znaczniki i ich uchwyty potrzebują miejsca), kursor wskazujący, że tu się ciągnie, i `touch-action:none`
+   — bez tego pierwszy ruch palcem po tablecie przewija stronę zamiast przesunąć znacznik. */
+.se-smp-wave{--smp-bg:#1d1f24;--smp-fg:var(--pink);--smp-loop:#e8b23a;
+  display:block;width:100%;height:104px;border-radius:10px;border:1px solid var(--line);background:var(--smp-bg);
+  touch-action:none;-webkit-user-select:none;user-select:none}
+.se-smp-wave[hidden]{display:none}
+.se-smp-wave.drag{cursor:ew-resize;border-color:var(--pink)}
+.se-smp-info{font-size:11px;font-weight:600;color:var(--dim);min-height:1.2em}
+.se-smp-note{font-size:11px}
+/* Wybór mikrofonu i dwa przełączniki nagrywania stoją w tym samym wierszu, co „Nagraj": to jedna decyzja
+   („czym i jak nagrać"), a nie osobna sekcja. Wysokość równa przyciskom, żeby wiersz nie był schodkowy. */
+.se-smp-dev{flex:0 1 190px;min-width:0;height:28px;padding:0 8px;border-radius:8px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);font:600 12px/1 inherit}
+.se-smp-dev[hidden]{display:none}
+.se-smp-opt{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 9px;border-radius:999px;
+  background:var(--chip,color-mix(in srgb,var(--ink) 7%,transparent));font-size:11px;font-weight:700;color:var(--dim);
+  cursor:pointer;white-space:nowrap}
+.se-smp-opt:hover{color:var(--ink)}
+.se-smp-opt>input{margin:0;flex:none}
+.se-smp-opt>span{line-height:1}
+#seSmpMon.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+.se-sec[data-module="smp"].drop{outline:2px dashed var(--pink);outline-offset:-4px}
+#soundEditor.se-is-noise .se-seq-sec,#soundEditor.se-is-smp .se-seq-sec{opacity:1;filter:none}
+
+/* niski ekran: przyklejony pasek zjadałby za dużo miejsca, więc jedzie z treścią, a lista parkuje pod paskiem modułu */
+@media (max-height:640px){
+  .se-bar{position:static}
+  .se-side{top:var(--rf-sticky-top,8px);height:calc(100vh - var(--rf-sticky-top,8px) - 8px)}}
+/* wąski ekran: jedna kolumna, pasek bez przyklejenia, lista nad instrumentem jako zwijana sekcja „Lista brzmień (N)” */
+@media (max-width:820px){
+  .se-bar{position:static}
+  .se-bar-acts{grid-column:1 / -1;justify-content:flex-start}
+  .se-main,.se-main:has(.sk-scope.big){grid-template-columns:minmax(0,1fr)}
+  .se-side{position:static;height:auto;overflow:visible}
+  .se-side .sk-glass{width:min(100%,440px)}
+  .se-lib{min-height:0;overflow:visible}
+  .se-lib-toggle{display:flex;align-items:center;gap:8px;width:100%;font:inherit;font-size:12px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.4px;color:var(--ink);background:none;border:none;padding:2px;cursor:pointer;text-align:left}
+  .se-lib-toggle::before{content:"▸";color:var(--muted);font-weight:800;
+    transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  .se-lib.open .se-lib-toggle{margin-bottom:8px}
+  .se-lib.open .se-lib-toggle::before{transform:rotate(90deg)}
+  .se-lib-toggle:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+  .se-lib:not(.open) .se-lib-body{display:none}
+  .se-lib .se-list{max-height:min(50vh,320px)}}
+
+@media (prefers-reduced-motion:reduce){
+  .se-chip,.se-st,.se-lib-toggle::before{transition:none}
+  .se-chip.on,.se-st:active{transform:none}}
+
+/* ===== UX 261120 L4a: Brzmienia na piętrach (rf-25d `_tiers`) ===== */
+/* Piętro 2: rack oscylatorów, filtra i obwiedni w zwijaku „Kształt brzmienia” (kremowa wstawka). */
+.se-shape>.cardfold-body{padding-top:4px}
+.se-shape>summary{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+/* Piętro 3: próbka, charakter i pętla testowa w jednym „Zaawansowane” na dole edytora. */
+.se-adv>.cardfold-body{display:flex;flex-direction:column;gap:12px}
+/* (koniec sekcji L4a) */

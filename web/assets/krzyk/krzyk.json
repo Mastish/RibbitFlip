@@ -1,0 +1,77 @@
+{
+ "sr": 32000,
+ "probki": [
+  {
+   "plik": "krzyk-1.wav",
+   "nazwa": "aargh0",
+   "root": 61.396,
+   "petla": [
+    0.385,
+    0.553
+   ]
+  },
+  {
+   "plik": "krzyk-8.wav",
+   "nazwa": "aargh7",
+   "root": 64.108,
+   "petla": [
+    0.3312,
+    0.5364
+   ]
+  },
+  {
+   "plik": "krzyk-3.wav",
+   "nazwa": "aargh2",
+   "root": 64.536,
+   "petla": [
+    0.245,
+    0.5038
+   ]
+  },
+  {
+   "plik": "krzyk-7.wav",
+   "nazwa": "aargh6",
+   "root": 64.908,
+   "petla": [
+    0.7975,
+    0.9798
+   ]
+  },
+  {
+   "plik": "krzyk-6.wav",
+   "nazwa": "aargh5",
+   "root": 65.038,
+   "petla": [
+    0.3337,
+    0.4956
+   ]
+  },
+  {
+   "plik": "krzyk-5.wav",
+   "nazwa": "aargh4",
+   "root": 65.75,
+   "petla": [
+    0.22,
+    0.3885
+   ]
+  },
+  {
+   "plik": "krzyk-4.wav",
+   "nazwa": "aargh3",
+   "root": 65.817,
+   "petla": [
+    0.3689,
+    0.5558
+   ]
+  },
+  {
+   "plik": "krzyk-2.wav",
+   "nazwa": "aargh1",
+   "root": 67.459,
+   "petla": [
+    0.4225,
+    0.5842
+   ]
+  }
+ ]
+}

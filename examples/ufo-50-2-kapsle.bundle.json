@@ -1,0 +1,192 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "UFO 50 (2 kapsle)",
+ "description": "Konsola LX rozdzielona na dwie ręce, jeden pad Xbox. Lewa: przechył to krzyżak (osiem kierunków), przycisk to pierwszy przycisk gry (A). Prawa: przycisk to drugi przycisk gry (X), TRZYMANY tak długo, jak trzymasz, więc bieg i ładowanie strzału działają. Potrząśnięcie tym kapslem daje Start. Prawy kapsel nie prowadzi nic przechyłem, więc gest nie koliduje z chodzeniem.",
+ "cassette": 8,
+ "howto": [
+  "Wczytaj zestaw i rozdaj kapsle do ról: „Krzyżak i przycisk 1 (lewa ręka)” oraz „Przycisk 2 i Start (prawa ręka)”.",
+  "Zaznacz „Wczytaj i od razu aktywuj zestaw”. Bez tego konfiguracja wejdzie, ale wyjścia zostaną wyłączone i do gry nie pojedzie nic.",
+  "W grze: lewy kapsel to krzyżak i pierwszy przycisk. Prawy trzyma drugi przycisk, a potrząśnięcie nim daje Start.",
+  "Przycisków nie musisz sprawdzać: są odczytane z pliku ustawień gry (ufo50/config.json), nie zgadnięte."
+ ],
+ "forApp": "UFO 50 (Steam), wariant na dwa kapsle",
+ "author": "RibbitFlip",
+ "rev": 2,
+ "exe": [
+  "ufo50.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Krzyżak i przycisk 1",
+   "role": {
+    "name": "Krzyżak i przycisk 1 (lewa ręka)",
+    "note": "Przechylasz kapsel, postać idzie w tę stronę. Przycisk to pierwszy przycisk gry."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "ufo2-a",
+      "label": "Przycisk 1 (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 100
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:a",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "dpad",
+     "padShare": "own",
+     "dpadBackend": "gamepad",
+     "dpadDiagonal": true,
+     "dpadSource": "filter",
+     "dpadMetricX": "roll",
+     "dpadMetricY": "pitch",
+     "dpadFilterScale": 35,
+     "dpadFilterDead": 12,
+     "dpadInner": 0.3,
+     "dpadRange": 10000.0,
+     "dpadInvertX": false,
+     "dpadInvertY": false
+    }
+   }
+  },
+  {
+   "slot": "d1",
+   "name": "Przycisk 2 i Start",
+   "role": {
+    "name": "Przycisk 2 i Start (prawa ręka)",
+    "note": "Przycisk to drugi przycisk gry, trzymany dopóki trzymasz. Potrząśnięcie = Start."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "ufo2-x",
+      "label": "Przycisk 2 (trzymaj przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 100
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:x",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "ufo2-start",
+      "label": "Start (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 12000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:start",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "d0",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 45,
+     "stickExpo": 1.6,
+     "stickInner": 0.9,
+     "stickOuter": 0.0,
+     "stickAccel": 0.7,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 0.1,
+     "stickSensY": 0.1
+    }
+   }
+  }
+ ]
+}

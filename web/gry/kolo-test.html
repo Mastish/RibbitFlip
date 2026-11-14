@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>RibbitBeat: test koła nagród</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="../assets/icons/ribbitbeat-32.png">
+<link rel="stylesheet" href="gry.css">
+<link rel="stylesheet" href="gry-nagrody.css">
+<link rel="stylesheet" href="gry-studio-ikona.css">
+<link rel="stylesheet" href="gry-oprawa.css">
+<style>
+/* strona testowa: ciemne tło, panel sterowania po lewej, log po prawej; wszystko poza grą */
+html,body{background:#1b1917;color:#f3e9d2;min-height:100%;overflow:auto!important;height:auto!important}
+body{font:600 14px/1.4 Nunito,system-ui,sans-serif;padding:16px;display:block!important}
+h1{font:400 26px/1 'Titan One','Baloo 2',sans-serif;color:#ec1a83;margin:0 0 4px}
+.sub{color:#b9ae98;margin:0 0 14px}
+.uklad{display:grid;grid-template-columns:minmax(320px,430px) minmax(0,1fr);gap:16px;align-items:start}
+.karta-t{background:#2a2521;border-radius:14px;padding:12px 14px;box-shadow:inset 0 0 0 2px #3a352f;margin-bottom:12px}
+.karta-t h2{margin:0 0 8px;font:800 14px/1 'Baloo 2',sans-serif;color:#ffd84a;text-transform:uppercase;letter-spacing:.08em}
+.rzad{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+.rzad>span{min-width:84px;color:#b9ae98;font-size:12px}
+button.t,select.t,input.t{font:700 13px/1 Nunito,sans-serif;padding:7px 11px;border-radius:9px;border:0;background:#faf6ee;color:#211f1d;cursor:pointer;box-shadow:0 2px 0 #8c8473}
+button.t:hover{background:#fff}button.t:active{transform:translateY(2px);box-shadow:none}
+button.glowny{background:#ec1a83;color:#fff;box-shadow:0 2px 0 #a4105c}
+button.zolty{background:#ffd84a;color:#211f1d}
+pre{margin:0;white-space:pre-wrap;font:600 12px/1.45 'JetBrains Mono',Consolas,monospace;color:#d9ceb6}
+#log{max-height:340px;overflow:auto}
+.wiersz-log{padding:3px 0;border-bottom:1px dashed #3a352f}
+.rz-zwykly{color:#d8cdb8}.rz-rzadki{color:#6db4ff}.rz-epicki{color:#b997ff}.rz-legendarny{color:#ffd84a;font-weight:800}
+table{border-collapse:collapse;width:100%}td,th{padding:3px 8px;text-align:right;border-bottom:1px solid #3a352f;font:600 12px 'JetBrains Mono',monospace}th:first-child,td:first-child{text-align:left}
+.dymek{background:#46403a;border-radius:8px;padding:6px 10px;margin-top:6px;color:#b9ae98;font-size:12px}
+</style>
+</head>
+<body>
+<h1>Koło nagród: strona testowa</h1>
+<p class="sub">Prawdziwe pliki gry (<code>postepy.js</code>, <code>kolo.js</code>, <code>nagrody.js</code>, <code>glos.js</code>), ale zapis tylko w pamięci strony: odświeżenie czyści wszystko, a prawdziwych postępów w grze ta strona nie rusza. Dźwięk włącza się po pierwszym kliknięciu.</p>
+<div class="uklad">
+<div>
+  <div class="karta-t"><h2>Profil testowy</h2>
+    <div class="rzad"><span>Nazwa</span><input class="t" id="nazwa" value="Tester" size="12" maxlength="18"><button class="t" id="btnUtworz">Użyj</button></div>
+    <div class="rzad"><span>Losowania</span><button class="t" data-dodaj="1">+1</button><button class="t" data-dodaj="5">+5</button><button class="t" data-dodaj="20">+20</button><button class="t" id="btnZeruj">Zeruj (+10)</button></div>
+    <div class="rzad"><span>Scenariusze</span><button class="t" id="btnDubel">Dwie ostatnie</button><button class="t" id="btnStudio">Przed Studiem</button></div>
+  </div>
+  <div class="karta-t"><h2>Otwórz</h2>
+    <div class="rzad"><button class="t glowny" id="btnKolo">Koło (losowanie)</button><button class="t" id="btnPostep150">Postęp +150</button><button class="t" id="btnPostep800">Postęp +800</button></div>
+    <div class="rzad"><span>Wymuś</span><select class="t" id="selKat"><option value="">kategoria: losowa</option><option value="instrument">Instrument</option><option value="efekt">Skin</option><option value="plansza">Scena</option></select>
+      <select class="t" id="selRz"><option value="">rzadkość: losowa</option><option value="zwykly">Zwykły</option><option value="rzadki">Rzadki</option><option value="epicki">Epicki</option><option value="legendarny">Legendarny</option><option value="sekretny">Sekretny</option></select></div>
+    <div class="dymek">Na kole: u góry kapsle (jeden = jedno losowanie), w maszynie koło kategorii i pasek nagród za kurtyną, dźwignie ① Kategoria i ② Nagroda, u dołu miernik mocy. Przytrzymaj świecącą dźwignię, skaczący kapsel, Spacja albo Enter, żeby nabrać mocy, i puść. Po zatrzasku karta wylatuje z paska i otwiera się (przy scenie wyłażą żabki motywu). Esc zamyka, a nieodebrane losowania zostają.</div>
+  </div>
+  <div class="karta-t"><h2>Symulacja</h2>
+    <div class="rzad"><button class="t zolty" id="btnSym">Przejdź całą drogę (bez animacji)</button><button class="t" id="btnSym1000">1000 losowań: rozkład</button></div>
+    <div id="sym"></div>
+  </div>
+  <div class="karta-t"><h2>Soundboard</h2>
+    <div class="rzad"><span>Rzadkość</span><button class="t" data-rz="zwykly">Zwykły</button><button class="t" data-rz="rzadki">Rzadki</button><button class="t" data-rz="epicki">Epicki</button><button class="t" data-rz="sekretny">Sekretny</button><button class="t" data-rz="legendarny">Legendarny</button></div>
+    <div class="rzad"><span>Moc</span><button class="t" id="btnMocTest">Przytrzymaj: dźwięk mocy</button></div>
+    <div class="rzad" id="jingle"><span>Jingle</span></div>
+  </div>
+</div>
+<div>
+  <div class="karta-t"><h2>Stan</h2><pre id="stan"></pre></div>
+  <div class="karta-t"><h2>Dziennik losowań</h2><div id="log"></div></div>
+</div>
+</div>
+<div class="karta-t" id="kartaKrzywa"><h2>Ile sławy (XP) na który poziom</h2>
+  <div class="rzad"><span>Krzywa</span><select class="t" id="krzywaTryb">
+    <option value="255,0.00003,3,120">Obecna w grze: 255 → 284 (płaska, solo 5 h)</option>
+    <option value="330,0.00007,3,120">Łagodna: 330 → 390</option>
+    <option value="275,1.465,1,120">Pośrednia: 276 → 414</option>
+    <option value="206,1.1,1,120">Pośrednia × 0,75 (pod grę bez osiągnięć): 207 → 313</option>
+    <option value="220,2.6,1,120">Liniowa: 220 → 467 (ta sama suma)</option>
+    <option value="180,3.4,1,120">Stroma: 180 → 503 (ta sama suma)</option>
+    <option value="87,0.00137,3,0">Stara, do 10-18: 87 → 1300</option>
+  </select><button class="t zolty" id="btnKrzywaSym">Symuluj</button></div>
+  <div class="dymek">Wybierz krzywą i kliknij „Symuluj”: przelicza ten wykres i „Progresję w czasie” niżej (z jej ustawieniami). Krzywa działa tylko na tej stronie, gra ma swoją. Słupek = ile sławy od poprzedniego poziomu (jeden poziom = jedno losowanie = jedna rzecz). Linia = suma. Przerywana = krzywa w grze (przy innej wybranej) albo stara krzywa. Najedź na słupek, żeby zobaczyć liczby.</div>
+  <div id="krzywaWykres"></div>
+</div>
+<div class="karta-t" id="kartaProgresja"><h2>Progresja w czasie</h2>
+  <div class="rzad"><span>Piosenki</span>od <input class="t" id="pgOd" type="number" value="60" min="10" max="600" style="width:70px"> do <input class="t" id="pgDo" type="number" value="120" min="10" max="600" style="width:70px"> s
+    <span style="min-width:0;margin-left:12px">Dziennie</span>od <input class="t" id="pgDzienOd" type="number" value="1" min="0.25" max="12" step="0.25" style="width:60px"> do <input class="t" id="pgDzienDo" type="number" value="5" min="0.25" max="12" step="0.25" style="width:60px"> h
+    <span style="min-width:0;margin-left:12px">Razem</span><input class="t" id="pgRazem" type="number" min="0.25" max="200" step="0.25" placeholder="do kompletu" style="width:96px"> h
+    <span style="min-width:0;margin-left:12px">Gracze</span><select class="t" id="pgGracze"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+    <span style="min-width:0;margin-left:12px">Gra</span><select class="t" id="pgPoziom"><option value=".55">przeciętnie (55 %)</option><option value=".72">dobrze (72 %)</option><option value=".4">słabo (40 %)</option></select>
+    <span style="min-width:0;margin-left:12px">Oś</span><select class="t" id="pgOs"><option value="h">godziny gry</option><option value="dni">dni</option></select>
+    <button class="t zolty" id="btnProgresja">Symuluj</button><button class="t" id="btnProgresjaInna">Inny los</button></div>
+  <div class="dymek">Prawdziwy <code>postepy.js</code> na czystym zapisie w pamięci (stan profilu testowego wraca po symulacji). Gracz gra piosenkę za piosenką (45 s przerwy), każdego dnia losowo tyle godzin, ile w polu „Dziennie” (pierwsza piosenka dnia ×2), celność rośnie z czasem, a każde losowanie odbiera od razu (12 s). Punkt = jedna odblokowana rzecz (z koła albo z osiągnięcia); najedź, żeby zobaczyć co i kiedy. Pod wykresem: ten sam los przy stałych 1–5 h dziennie.</div>
+  <div id="pgWykres"></div>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+"use strict";
+// Zapis tylko w pamięci: strona nie dotyka prawdziwego localStorage gry. Musi stać PRZED postepy.js.
+(function(){const m={};const sklep={getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v);},removeItem:k=>{delete m[k];},clear:()=>{for(const k in m)delete m[k];},key:i=>Object.keys(m)[i]||null,get length(){return Object.keys(m).length;}};
+Object.defineProperty(window,"localStorage",{value:sklep,configurable:true});})();
+</script>
+<script src="js/jezyk.js"></script>
+<script src="js/jezyk-en.js"></script>
+<script src="js/glos.js"></script>
+<script src="js/dzwieki-ui.js"></script>
+<script src="js/gl-fx.js"></script>
+<script src="js/efekty.js"></script>
+<script src="js/efekty-widownia.js"></script>
+<script src="js/efekty-streak.js"></script>
+<script src="js/efekty-tlo.js"></script>
+<script src="js/efekty-klawisze.js"></script>
+<script src="js/efekty-nuty.js"></script>
+<script src="js/motywy.js"></script>
+<script src="js/motywy/filc.js"></script>
+<script src="js/motywy/8bit.js"></script>
+<script src="js/motywy/halloween.js"></script>
+<script src="js/motywy/komiks.js"></script>
+<script src="js/motywy/podwodny.js"></script>
+<script src="js/motywy/koncert.js"></script>
+<script src="js/motywy/synthwave.js"></script>
+<script src="js/motywy/szkicownik.js"></script>
+<script src="js/motywy/kosmos.js"></script>
+<script src="js/motywy/staw.js"></script>
+<script src="js/motywy/skatepark.js"></script>
+<script src="js/motywy/garaz.js"></script>
+<script src="js/motywy/wycinanka.js"></script>
+<script src="js/motywy/sweter.js"></script>
+<script src="js/motywy/sashiko.js"></script>
+<script src="js/motywy/piraci.js"></script>
+<script src="js/motywy/western.js"></script>
+<script src="js/motywy/disco.js"></script>
+<script src="js/motywy/cyrk.js"></script>
+<script src="js/motywy/tiki.js"></script>
+<script src="js/motywy/kuchnia.js"></script>
+<script src="js/motywy/szachy.js"></script>
+<script src="js/motywy/voodoo.js"></script>
+<script src="js/motywy/gielda.js"></script>
+<script src="js/motywy/muchomor.js"></script>
+<script src="js/motywy/zloto.js"></script>
+<script src="js/motywy/olimp.js"></script>
+<script src="js/motywy/kredki.js"></script>
+<script src="js/motywy/prawdziwy.js"></script>
+<script src="js/motywy/einstein.js"></script>
+<script src="js/motywy/kukielki.js"></script>
+<script src="js/postepy.js"></script>
+<script src="js/awatary.js"></script>
+<script src="js/jingle.js"></script>
+<script>
+"use strict";
+// Atrapy tego, czego nagrody.js i kolo.js oczekują od zabi-chor.js (S, T, pomocnicze funkcje).
+const ZC_IKONY_GRY="../assets/icons/gry/";
+const S={gracze:[],ust:{animacjaPostepu:true},ekran:"lobby"};
+const T={
+  instrumentyGracza:{trabka:"Trąbka",ribbit:"Ribbit",chor:"Chór",smyczki:"Smyczki",flet:"Flet",organy:"Organy",
+    syntezator:"Syntezator",theremin:"Theremin",piano:"Pianino",epiano:"Pianino elektryczne",guitar:"Gitara",
+    bas:"Gitara basowa",hawajska:"Gitara hawajska",
+    kazoo:"Kazoo",przester:"Gitara z przesterem",harmonijka:"Harmonijka",kwak:"Kwak wah-wah",kot:"Kot miau",okaryna:"Okaryna",impuls:"Impuls",puzon:"Puzon",szept:"Szept",trance:"Trance",klarnet:"Klarnet",erhu:"Erhu",wiolonczela:"Wiolonczela",chiptune:"Chiptune",wiatr:"Gwiżdżący wiatr",gwizdek:"Gwizdek",duduk:"Duduk",tuba:"Tuba",oboj:"Obój",didgeridoo:"Didgeridoo",dudy:"Dudy",sub:"Sub",opera:"Śpiew operowy",wobble:"Wobble",hammond:"Organy Hammonda",robot:"Robot",wokal:"Wokal „ooo”",krzyk:"Krzyk"},
+  scenaPlansza:"Plansza",slawaDzien:"×{x} pierwsza gra dnia",slawaSeria:"×{x} seria {n} dni",gosc:"Gość"};
+const tt=(s,o)=>String(s).replace(/\{(\w+)\}/g,(m,k)=>o&&k in o?o[k]:m);
+Postepy.ustawProgSekretow(0);   // strona testowa koła: sekrety bez blokady do 35. rzeczy
+const pokazProfil=n=>n===Postepy.GOSC?T.gosc:n;
+const fmtSlawa=n=>String(Math.max(0,Math.round(+n||0))).replace(/\B(?=(\d{3})+(?!\d))/g,"\u00a0");
+const fmtMnoznik=x=>String(Math.round((+x||0)*100)/100).replace(".",",");
+const ruchOgraniczony=()=>false;
+const odmiana=(n,a,b,c)=>{n=Math.abs(n);return n===1?a:(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?b:c;};
+const sredniaSlawy=(nazwa,zaGre)=>Math.max(60,zaGre||0);
+const drabinka=tor=>Postepy.drabinka(tor);
+function ikonaFilc(plik,klasa){return '<img class="'+(klasa||"")+'" src="'+ZC_IKONY_GRY+plik+'.webp" alt="" aria-hidden="true">';}
+const Studio={dostepne:()=>Postepy.instrumentyWszystkie(NAZWA()),odswiez(){}};
+</script>
+<script src="js/kolo.js"></script>
+<script src="js/przycisk-pomin.js"></script>
+<script src="js/nagrody.js"></script>
+<script src="js/studio-ikona.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const NAZWA=()=>($("nazwa").value||"Tester").trim().slice(0,18)||"Tester";
+const RZ={zwykly:"Zwykły",rzadki:"Rzadki",epicki:"Epicki",legendarny:"Legendarny"};
+const nazwaInstr=id=>T.instrumentyGracza[id]||id;
+function stan(){
+  const nm=NAZWA(),pu=Postepy.pulaLosowania(nm),rz=Postepy.liczbaWgRzadkosci(nm),poz=Postepy.poziomGracza(nm),p=Postepy.profil(nm);
+  $("stan").textContent=
+    "Profil: "+nm+"  ·  poziom "+poz.poziom+"/"+poz.maks+"  ·  sława "+Postepy.slawaRazem(p.slawa)+"\n"+
+    "Wolne losowania: "+Postepy.losowania(nm)+"\n"+
+    "Do wylosowania: "+pu.instrument.length+" instrumentów, "+pu.efekt.length+" efektów, "+pu.plansza.length+" scen\n"+
+    "Wg rzadkości: zwykłe "+rz.zwykly+", rzadkie "+rz.rzadki+", epickie "+rz.epicki+", legendarne "+rz.legendarny+"\n"+
+    "Gwarancje: epicka po "+Postepy.GWARANCJA_EPICKIEJ+" bez, legendarna po "+Postepy.GWARANCJA_LEGENDARNEJ+" bez; licznik bez epickiej "+((p.los&&p.los.bezE)||0)+", bez legendarnej "+((p.los&&p.los.bezL)||0)+"\n"+
+    "Studio dźwięków: "+(Postepy.instrumentyWszystkie(nm)?"odblokowane":"zamknięte")+"\n"+
+    "Instrumenty gracza ("+Postepy.instrumenty(nm).length+"): "+Postepy.instrumenty(nm).map(nazwaInstr).join(", ");
+}
+function dopisz(txt,rz){const d=document.createElement("div");d.className="wiersz-log"+(rz?" rz-"+rz:"");d.textContent=txt;$("log").prepend(d);}
+// każde prawdziwe losowanie z nakładki trafia do dziennika (opakowanie Postepy.losuj)
+const losujOrg=Postepy.losuj;Postepy.losuj=function(nm,o){
+  const r=losujOrg.call(Postepy,nm,o);
+  if(r){dopisz("["+new Date().toLocaleTimeString("pl-PL")+"] "+({instrument:"Instrument",efekt:"Efekt",plansza:"Scena"})[r.kat]+": "+(r.kat==="instrument"?nazwaInstr(r.id):r.nazwa)+" ("+RZ[r.r]+")"+(r.dubel?" + DUBEL: "+(r.dubel.kat==="instrument"?nazwaInstr(r.dubel.id):r.dubel.nazwa):"")+(r.bonus?" · scena, losowanie nie zużyte":"")+" · wolnych "+r.wolne,r.r);stan();}
+  return r;
+};
+function opcje(){Nagrody.opcje({kat:$("selKat").value,rzadkosc:$("selRz").value});}
+$("selKat").onchange=$("selRz").onchange=opcje;
+function otworz(zysk,tylkoKolo){
+  opcje();
+  if(tylkoKolo&&!Postepy.losowania(NAZWA())){Postepy.devKolo(NAZWA(),"dodaj",5);dopisz("Brak wolnych losowań: dodałem 5, żeby koło mogło ruszyć.");stan();}
+  Nagrody.pokazDev(NAZWA(),zysk,tylkoKolo);
+}
+$("btnKolo").onclick=()=>otworz(0,true);
+$("btnPostep150").onclick=()=>otworz(150,false);
+$("btnPostep800").onclick=()=>otworz(800,false);
+document.querySelectorAll("[data-dodaj]").forEach(b=>b.onclick=()=>{Postepy.devKolo(NAZWA(),"dodaj",+b.dataset.dodaj);dopisz("+"+b.dataset.dodaj+" losowań");stan();});
+$("btnZeruj").onclick=()=>{Postepy.devKolo(NAZWA(),"wyzeruj");Postepy.devKolo(NAZWA(),"dodaj",10);dopisz("Koło wyzerowane, +10 losowań");stan();};
+$("btnDubel").onclick=()=>{Postepy.devKolo(NAZWA(),"dubel");dopisz("Zostały dwie rzeczy i dwa losowania (każda osobno, bez dubla)");stan();};
+$("btnStudio").onclick=()=>{Postepy.devKolo(NAZWA(),"studio");$("selKat").value="instrument";opcje();dopisz("Został jeden instrument (wymuszona kategoria Instrument): Studio odblokuje się samo");stan();};
+$("btnUtworz").onclick=stan;$("nazwa").onchange=stan;
+// symulacje bez animacji: kolejne losowania na świeżym profilu
+function symuluj(ile,cala){
+  const nm="__sym"+Math.random().toString(36).slice(2,6);
+  Postepy.devKolo(nm,"wyzeruj");
+  const kat={instrument:0,efekt:0,plansza:0},rz={zwykly:0,rzadki:0,epicki:0,legendarny:0};let spin=0,dubel=0,tlo=0,wygrane=0;
+  const limit=cala?400:ile;
+  for(let i=0;i<limit;i++){
+    if(!Postepy.losowania(nm)){
+      if(!cala&&Postepy.pulaLosowania(nm).instrument.length+Postepy.pulaLosowania(nm).efekt.length===0){Postepy.devKolo(nm,"wyzeruj");}
+      Postepy.devKolo(nm,"dodaj",1);
+    }
+    const r=losujOrg.call(Postepy,nm);if(!r){if(cala)break;Postepy.devKolo(nm,"wyzeruj");continue;}
+    spin++;kat[r.kat]++;rz[r.r]++;wygrane++;if(r.dubel){dubel++;rz[r.dubel.r]++;wygrane++;}if(r.bonus)tlo++;
+    if(cala&&!Postepy.pulaLosowania(nm).instrument.length&&!Postepy.pulaLosowania(nm).efekt.length&&!Postepy.pulaLosowania(nm).plansza.length)break;
+  }
+  return {spin,kat,rz,dubel,tlo,wygrane};
+}
+function tabela(w,tytul){
+  const s=w.rz.zwykly+w.rz.rzadki+w.rz.epicki+w.rz.legendarny||1,p=x=>(100*x/s).toFixed(1)+"%";
+  return "<table><tr><th>"+tytul+"</th><th>sztuk</th><th>udział</th></tr>"+
+   Object.keys(RZ).map(k=>"<tr class='rz-"+k+"'><td>"+RZ[k]+"</td><td>"+w.rz[k]+"</td><td>"+p(w.rz[k])+"</td></tr>").join("")+
+   "<tr><td>Instrument / efekt / scena</td><td colspan=2>"+w.kat.instrument+" / "+w.kat.efekt+" / "+w.kat.plansza+"</td></tr>"+
+   "<tr><td>Losowań (zużytych)</td><td colspan=2>"+(w.spin-w.tlo)+" · sceny bez zużycia: "+w.tlo+" · dubli: "+w.dubel+"</td></tr></table>";
+}
+$("btnSym").onclick=()=>{const w=symuluj(0,true);$("sym").innerHTML=tabela(w,"Cała droga do końca puli");};
+$("btnSym1000").onclick=()=>{
+  // 1000 losowań w kilku seriach po całej puli: rozkład rzadkości i kategorii
+  const sum={spin:0,kat:{instrument:0,efekt:0,plansza:0},rz:{zwykly:0,rzadki:0,epicki:0,legendarny:0},dubel:0,tlo:0,wygrane:0};
+  while(sum.spin<1000){const w=symuluj(0,true);if(!w.spin)break;sum.spin+=w.spin;sum.dubel+=w.dubel;sum.tlo+=w.tlo;for(const k in w.kat)sum.kat[k]+=w.kat[k];for(const k in w.rz)sum.rz[k]+=w.rz[k];}
+  $("sym").innerHTML=tabela(sum,"Rozkład z ~1000 losowań (wiele pełnych dróg)");
+};
+// ---- progresja w czasie (symulacja: piosenki 1–2 min, gra 1–5 h dziennie, na wykresie kiedy co się odblokuje) ----
+// Ten sam model gracza co skrypt kalibracji krzywej (poza repozytorium), ale długość piosenek i godziny dziennie z pól.
+// Rzeczy liczą się z puli koła (Postepy.pulaLosowania): z losowań i ze skrótów osiągnięć po piosence. Zapis strony
+// (localStorage w pamięci) jest odkładany i przywracany, więc profil testowy zostaje.
+let pgZiarno=11;
+const PG_KAT={instrument:["Instrumenty","Instrument","#ffd84a"],efekt:["Skiny","Skin","#6db4ff"],plansza:["Sceny","Scena","#5bb86b"]};
+const PG_KOL={zwykly:"#d8cdb8",rzadki:"#6db4ff",epicki:"#b997ff",legendarny:"#ffd84a",sekretny:"#ff5fa2"};
+const pgHm=h=>{const m=Math.round(h*60);return Math.floor(m/60)+":"+String(m%60).padStart(2,"0");};
+function progresja(o){
+  const ls=window.localStorage,kopia={};for(let i=0;i<ls.length;i++){const k=ls.key(i);kopia[k]=ls.getItem(k);}
+  ls.clear();Postepy.przeladuj();
+  const P=Postepy;let seed=o.ziarno;const los=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const instr=["trabka","ribbit","chor","smyczki","flet","organy","syntezator","theremin"],gracze=["Ala","Bob","Cyp","Dor"].slice(0,o.gracze);
+  const NARZUT=45,LOS_SEK=12;
+  const pula=()=>{const pu=P.pulaLosowania(null),s=new Set();for(const k in PG_KAT){for(const id of pu[k])s.add(k+":"+id);if(pu.sekret&&pu.sekret[k])s.add(k+":"+pu.sekret[k]);}return s;};   // z sekretami
+  const nazwa=(k,id)=>k==="instrument"?nazwaInstr(id):((P.drabinka(k==="plansza"?P.TOR_PLANSZY:P.TOR_GRACZA).find(w=>w&&w.id===id)||{}).nazwa||id);
+  const start=pula().size,zdarzenia=[];   // pula z sekretami (Studio, Prawdziwy staw)
+  let sek=0,dzien=1,wDniu=0,budzet=0,n=0;const t0=new Date(2026,9,1,17,0).getTime();
+  const dniH=[];const nowyDzien=()=>{budzet=(o.dzienOd+los()*(o.dzienDo-o.dzienOd))*3600;wDniu=0;dniH.push(budzet/3600);};
+  nowyDzien();
+  const dodaj=(z)=>zdarzenia.push(Object.assign({h:sek/3600,d:dzien-1+Math.min(1,wDniu/Math.max(1,budzet)),dzien,n},z));
+  try{
+    const zostalo=()=>pula().size;
+    while(dzien<=400&&n<4000&&zostalo()>0&&!(o.razem&&sek>=o.razem*3600)){
+      if(wDniu>=budzet){dzien++;nowyDzien();}
+      n++;
+      const pakiet=los()<.35,dl=Math.round(o.od+los()*(o.do-o.od)),tr=1.6+los()*3.1,postep=Math.min(1,sek/(3*3600));
+      const sklad=gracze.map((g,i)=>({id:"g"+i,nazwa:g,nazwaWlasna:true,zrodlo:"ws",instrument:instr[(n+i)%instr.length]}));
+      const wiersze=sklad.map(g=>{
+        const prec=Math.max(20,Math.min(98,100*(o.baza+.25*postep)-tr*2+(los()-.5)*12)),nut=Math.round(dl*(pakiet?1.6:1.4));
+        const traf=Math.round(nut*prec/100),czysto=Math.round(traf*(.1+.4*postep)),gw=prec>92?5:prec>82?4:prec>68?3:prec>52?2:1;
+        return {id:g.id,punkty:traf*300,nut,precyzja:prec,gwiazdki:gw,maxKombo:Math.round(traf*(.25+.4*postep)),
+          oceny:{czysto,dobrze:traf-czysto,prawie:Math.round((nut-traf)*.7),falsz:Math.round((nut-traf)*.2),pudlo:Math.round((nut-traf)*.1)},
+          kliki:{idealnie:Math.round(nut*.2*postep),dobrze:Math.round(nut*.2)},trudnosc:tr,premiaChoru:o.gracze>1?50:0,wibrata:2};
+      });
+      const przed=pula();
+      P.poGrze(sklad,wiersze,{piosenka:pakiet?"pak"+Math.floor(los()*400):"wb"+Math.floor(los()*20),dlugoscSek:dl,tryb:"plynny",czasNaRuch:100,liczbaGraczy:o.gracze,pakiet,pakietId:pakiet?"x":null,data:t0+(dzien-1)*86400000+wDniu*1000});
+      sek+=dl+NARZUT;wDniu+=dl+NARZUT;
+      const po=pula();for(const x of przed)if(!po.has(x)){const [k,id]=x.split(":");dodaj({kat:k,r:P.rzadkosc(k,id),nazwa:nazwa(k,id),skad:"osiągnięcie"});}
+      let r,przedL=pula();while((r=P.losuj(null,{rng:los}))){
+        sek+=LOS_SEK;wDniu+=LOS_SEK;
+        dodaj({kat:r.kat,r:r.r,nazwa:r.kat==="instrument"?nazwaInstr(r.id):(r.nazwa||r.id),skad:"koło"});
+        // 10-19: wszystko, co zniknęło z puli poza wylosowaną rzeczą, też trafia na listę (nic nie odblokowuje się po cichu)
+        const poL=pula();for(const x of przedL)if(!poL.has(x)&&x!==r.kat+":"+r.id){const [k,id]=x.split(":");dodaj({kat:k,r:P.rzadkosc(k,id),nazwa:nazwa(k,id),skad:"bez losowania (!)"});}
+        przedL=poL;
+      }
+    }
+  }finally{ls.clear();for(const k in kopia)ls.setItem(k,kopia[k]);Postepy.przeladuj();}
+  return {zdarzenia,start,h:sek/3600,n,dni:dzien,dniH,komplet:zdarzenia.length>=start,razem:o.razem||0};
+}
+const pgKamien=(w,f)=>w.zdarzenia[Math.ceil(w.start*f)-1]||null;
+function rysujProgresje(w,o,tabelaDni){
+  const naDni=$("pgOs").value==="dni",X=z=>naDni?z.d:z.h,maxX=naDni?Math.max(1,w.razem?w.dni:(w.zdarzenia.length?w.zdarzenia[w.zdarzenia.length-1].d:1)):w.h;
+  const W=1100,H=380,L=52,R=16,G=22,D=44,x=v=>L+(W-L-R)*v/Math.max(.01,maxX),y=v=>G+(H-G-D)*(1-v/Math.max(1,w.start));
+  const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:'+W+'px;display:block;font:600 11px Nunito,sans-serif">';
+  const krok=naDni?(maxX>40?10:maxX>16?5:maxX>6?2:1):(maxX>8?2:maxX>3?1:.5);
+  for(let v=0;v<=maxX+1e-9;v+=krok)svg+='<line x1="'+x(v)+'" x2="'+x(v)+'" y1="'+G+'" y2="'+(H-D)+'" stroke="#3a352f"/><text x="'+x(v)+'" y="'+(H-D+16)+'" fill="#b9ae98" text-anchor="middle">'+(naDni?"dzień "+(v+1):v+" h")+'</text>';
+  for(const f of [0,.25,.5,.75,1]){const v=Math.round(w.start*f);svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#3a352f" stroke-dasharray="3 4"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" fill="#b9ae98" text-anchor="end">'+v+'</text>';}
+  if(naDni&&w.dniH)w.dniH.forEach((hd,i)=>{if(i<maxX)svg+='<rect x="'+x(i)+'" y="'+G+'" width="'+Math.max(0,x(Math.min(i+1,maxX))-x(i))+'" height="'+(H-G-D)+'" fill="'+(i%2?"#ffffff08":"#00000000")+'"/><text x="'+(x(i)+(x(Math.min(i+1,maxX))-x(i))/2)+'" y="'+(H-D-6)+'" fill="#ffd84a" text-anchor="middle">'+pgHm(hd)+' h gry</text>';});
+  svg+='<text x="'+((L+W-R)/2)+'" y="'+(H-6)+'" fill="#b9ae98" text-anchor="middle">'+(naDni?"dni grania (każdy dzień ma inną długość gry, podpisaną na żółto; tempo widać na osi godzin)":"czas grania (godziny, z przerwami i losowaniami)")+'</text>';
+  svg+='<text transform="translate(14 '+((G+H-D)/2)+') rotate(-90)" fill="#b9ae98" text-anchor="middle">odblokowane rzeczy</text>';
+  for(const f of [.25,.5,.8,1]){const z=pgKamien(w,f);if(!z)continue;const xx=x(X(z));
+    svg+='<line x1="'+xx+'" x2="'+xx+'" y1="'+G+'" y2="'+(H-D)+'" stroke="#ec1a83" stroke-dasharray="2 3" opacity=".7"/><text x="'+(xx-4)+'" y="'+(H-D-6)+'" fill="#ec1a83" transform="rotate(-90 '+(xx-4)+' '+(H-D-6)+')">'+Math.round(f*100)+' % · dzień '+z.dzien+' · '+pgHm(z.h)+' h gry</text>';}
+  const schodki=(lista,kolor,gr)=>{let d="M"+x(0)+" "+y(0),v=0;for(const z of lista){d+=" H"+x(X(z))+" V"+y(++v);}d+=" H"+x(maxX);return '<path d="'+d+'" fill="none" stroke="'+kolor+'" stroke-width="'+gr+'"/>';};
+  for(const k in PG_KAT)svg+=schodki(w.zdarzenia.filter(z=>z.kat===k),PG_KAT[k][2],1.6);
+  svg+=schodki(w.zdarzenia,"#faf6ee",2.4);
+  w.zdarzenia.forEach((z,i)=>{const leg=z.r==="legendarny"||z.r==="sekretny";
+    svg+='<circle cx="'+x(X(z))+'" cy="'+y(i+1)+'" r="'+(leg?5.5:3.4)+'" fill="'+(PG_KOL[z.r]||"#fff")+'" stroke="'+(z.skad==="osiągnięcie"?"#ec1a83":"#1b1917")+'" stroke-width="'+(z.skad==="osiągnięcie"?2:1)+'"><title>'+esc("dzień "+z.dzien+" · "+pgHm(z.h)+" h gry · piosenka "+z.n+" · "+PG_KAT[z.kat][1]+": "+z.nazwa+" ("+(RZ[z.r]||z.r)+", "+z.skad+")")+'</title></circle>';});
+  let lx=L+8;const leg=(t,c,kolko)=>{svg+=(kolko?'<circle cx="'+(lx+5)+'" cy="'+(G-10)+'" r="5" fill="'+c+'"/>':'<line x1="'+lx+'" x2="'+(lx+16)+'" y1="'+(G-10)+'" y2="'+(G-10)+'" stroke="'+c+'" stroke-width="3"/>')+'<text x="'+(lx+(kolko?14:22))+'" y="'+(G-6)+'" fill="#f3e9d2">'+t+'</text>';lx+=t.length*6.2+(kolko?26:34);};
+  leg("Razem","#faf6ee");for(const k in PG_KAT)leg(PG_KAT[k][0],PG_KAT[k][2]);for(const r of ["zwykly","rzadki","epicki","legendarny"])leg(RZ[r],PG_KOL[r],true);leg("różowa obwódka = z osiągnięcia","#ec1a83",true);
+  svg+='</svg>';
+  // Na początku ma się odblokowywać więcej niż później: tempo = rzeczy w każdej godzinie gry
+  const naGodz=[];for(const z of w.zdarzenia){const g=Math.floor(z.h);naGodz[g]=(naGodz[g]||0)+1;}
+  for(let g=0;g<naGodz.length;g++)naGodz[g]=naGodz[g]||0;
+  const mx=Math.max(1,...naGodz),HB=120,bwg=Math.min(80,(W-L-R)/Math.max(1,naGodz.length));
+  let tempo='<svg viewBox="0 0 '+W+' '+HB+'" width="100%" style="max-width:'+W+'px;display:block;font:600 11px Nunito,sans-serif">';
+  tempo+='<text x="'+L+'" y="12" fill="#f3e9d2">Tempo: ile rzeczy w każdej godzinie gry (powinno maleć: każdy poziom jest droższy)</text>';
+  naGodz.forEach((v,g)=>{const hh=(HB-40)*v/mx,xx=L+g*bwg;tempo+='<rect x="'+(xx+4)+'" y="'+(HB-22-hh)+'" width="'+(bwg-8)+'" height="'+hh+'" fill="#ec1a83" opacity=".85"><title>'+g+'–'+(g+1)+' h gry: '+v+' rzeczy</title></rect><text x="'+(xx+bwg/2)+'" y="'+(HB-26-hh)+'" fill="#f3e9d2" text-anchor="middle">'+v+'</text><text x="'+(xx+bwg/2)+'" y="'+(HB-8)+'" fill="#b9ae98" text-anchor="middle">'+(g+1)+'. h</text>';});
+  tempo+='</svg>';
+  const kat=k=>w.zdarzenia.filter(z=>z.kat===k).length,ost=w.zdarzenia[w.zdarzenia.length-1]||{dzien:0,h:0};
+  const opis='<p style="margin:8px 0">Krzywa: <b>'+$("krzywaTryb").selectedOptions[0].textContent+'</b>. Piosenki '+o.od+'–'+o.do+' s, '+o.dzienOd+'–'+o.dzienDo+' h dziennie, graczy: '+o.gracze+', gra '+$("pgPoziom").selectedOptions[0].textContent+'. Po 1. piosence: <b>'+w.zdarzenia.filter(z=>z.n===1).length+'</b> rzeczy, po 1. dniu: <b>'+w.zdarzenia.filter(z=>z.dzien===1).length+'</b> · '+(w.komplet?'komplet':'stan końcowy')+' ('+w.zdarzenia.length+' z '+w.start+'): <b>dzień '+ost.dzien+'</b>, '+pgHm(ost.h)+' h gry, '+w.n+' piosenek · instrumenty '+kat("instrument")+', skiny '+kat("efekt")+', sceny '+kat("plansza")+'.'+(o.razem?' <b>Po '+pgHm(o.razem)+' h gry razem: '+w.zdarzenia.length+' z '+w.start+' ('+Math.round(100*w.zdarzenia.length/w.start)+' %), dzień '+w.dni+'.</b>':'')+'</p>';
+  const lista='<details><summary style="cursor:pointer">Lista odblokowań po kolei</summary><table><tr><th>#</th><th>dzień</th><th>czas gry</th><th>piosenka</th><th>co</th><th>rzadkość</th><th>skąd</th></tr>'+
+    w.zdarzenia.map((z,i)=>'<tr class="rz-'+z.r+'"><td>'+(i+1)+'</td><td>'+z.dzien+'</td><td>'+pgHm(z.h)+' h</td><td>'+z.n+'</td><td style="text-align:left">'+esc(PG_KAT[z.kat][1]+": "+z.nazwa)+'</td><td>'+(RZ[z.r]||z.r)+'</td><td>'+z.skad+'</td></tr>').join("")+'</table></details>';
+  $("pgWykres").innerHTML=opis+svg+tempo+(tabelaDni||"")+lista;
+}
+// Tabela: te same ustawienia i ten sam los, ale stała liczba godzin dziennie 1…5.
+function pgTabelaDni(o){
+  let t='<table style="margin:10px 0;max-width:720px"><tr><th>Grając dziennie</th><th>25 %</th><th>50 %</th><th>80 %</th><th>komplet</th><th>'+(o.razem?'po '+pgHm(o.razem)+' h gry':'godzin gry razem')+'</th></tr>';
+  for(let hd=1;hd<=5;hd++){
+    const w=progresja(Object.assign({},o,{dzienOd:hd,dzienDo:hd})),k=f=>{const z=pgKamien(w,f);return z?"dzień "+z.dzien:"—";},ost=w.zdarzenia[w.zdarzenia.length-1];
+    t+='<tr><td>'+hd+' h</td><td>'+k(.25)+'</td><td>'+k(.5)+'</td><td>'+k(.8)+'</td><td>'+(w.komplet?k(1):"—")+'</td><td>'+(o.razem?w.zdarzenia.length+' z '+w.start+', dzień '+w.dni:(ost?pgHm(ost.h):"—"))+'</td></tr>';
+  }
+  return t+'</table>';
+}
+function pgUruchom(){
+  const od=Math.max(10,+$("pgOd").value||60),dO=Math.max(od,+$("pgDo").value||120);
+  const dOd=Math.max(.25,+$("pgDzienOd").value||1),dDo=Math.max(dOd,+$("pgDzienDo").value||5);
+  const o={razem:Math.max(0,+$("pgRazem").value||0),od,do:dO,dzienOd:dOd,dzienDo:dDo,gracze:+$("pgGracze").value||1,baza:+$("pgPoziom").value||.55,ziarno:pgZiarno};
+  $("pgWykres").textContent="Liczę…";
+  setTimeout(()=>{try{const w=progresja(o);rysujProgresje(w,o,pgTabelaDni(o));pgOstatnia=[w,o];}catch(e){$("pgWykres").textContent="Błąd: "+e.message;console.error(e);}stan();},20);
+}
+let pgOstatnia=null;
+$("btnProgresja").onclick=pgUruchom;
+$("btnProgresjaInna").onclick=()=>{pgZiarno=1+Math.floor(Math.random()*2e9);pgUruchom();};
+$("pgOs").onchange=()=>{if(pgOstatnia){const tab=$("pgWykres").querySelector("table:not(details table)");rysujProgresje(pgOstatnia[0],pgOstatnia[1],tab?tab.outerHTML:"");}};
+// ---- krzywa poziomów (ile XP trzeba zdobyć na którym poziomie) ----
+function rysujKrzywa(){
+  const P=Postepy,d=P.droga().map(n=>n.prog),N=d.length,odst=d.map((v,i)=>v-(i?d[i-1]:0));
+  const wGrze=[255,0.00003,3,120],wybrana=P.krzywaLos,inna=wybrana.join()!==wGrze.join(),porown=inna?wGrze:(P.KRZYWE_LOS&&P.KRZYWE_LOS[6]),etPor=inna?"w grze":"do 10-18";
+  const stara=[];{const k=porown;if(k){let s=0;for(let i=1;i<=N;i++){s+=Math.max(k[3]||0,k[0]+k[1]*Math.pow(i,k[2]));stara.push(Math.round(s/5)*5);}}}
+  const W=1100,H=320,L=56,R=60,G=24,D=40,maxO=Math.max(...odst)*1.15,maxS=Math.max(d[N-1],stara.length?stara[N-1]:0)*1.05;
+  const bw=(W-L-R)/N,x=i=>L+bw*i,yO=v=>G+(H-G-D)*(1-v/maxO),yS=v=>G+(H-G-D)*(1-v/maxS);
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:'+W+'px;display:block;font:600 11px Nunito,sans-serif">';
+  for(const f of [0,.25,.5,.75,1]){const v=Math.round(maxO*f/10)*10;svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yO(v)+'" y2="'+yO(v)+'" stroke="#3a352f" stroke-dasharray="3 4"/><text x="'+(L-6)+'" y="'+(yO(v)+4)+'" fill="#ffd84a" text-anchor="end">'+v+'</text>';
+    const vs=Math.round(maxS*f/1000)*1000;svg+='<text x="'+(W-R+6)+'" y="'+(yS(vs)+4)+'" fill="#faf6ee">'+(vs/1000)+' tys.</text>';}
+  odst.forEach((o,i)=>{svg+='<rect x="'+(x(i)+1)+'" y="'+yO(o)+'" width="'+Math.max(1,bw-2)+'" height="'+(H-D-yO(o))+'" fill="#ffd84a" opacity=".85"><title>Poziom '+(i+2)+' (losowanie '+(i+1)+'): '+o+' sławy od poprzedniego, razem '+d[i]+(stara.length?' · '+etPor+' razem '+stara[i]:'')+'</title></rect>';});
+  const linia=(arr,kolor,przer)=>'<path d="'+arr.map((v,i)=>(i?"L":"M")+(x(i)+bw/2)+" "+yS(v)).join(" ")+'" fill="none" stroke="'+kolor+'" stroke-width="2"'+(przer?' stroke-dasharray="5 4" opacity=".6"':"")+'/>';
+  if(stara.length)svg+=linia(stara,"#b9ae98",true);
+  svg+=linia(d,"#faf6ee",false);
+  for(let i=0;i<N;i+=10)svg+='<text x="'+(x(i)+bw/2)+'" y="'+(H-D+16)+'" fill="#b9ae98" text-anchor="middle">'+(i+2)+'</text>';
+  svg+='<text x="'+((L+W-R)/2)+'" y="'+(H-6)+'" fill="#b9ae98" text-anchor="middle">poziom (1 = start; każdy następny = jedno losowanie)</text>';
+  svg+='<text x="'+L+'" y="'+(G-8)+'" fill="#ffd84a">słupki: sławy na poziom (lewa oś)</text><text x="'+(W-R)+'" y="'+(G-8)+'" fill="#faf6ee" text-anchor="end">linia: suma (prawa oś) · przerywana: '+etPor+'</text>';
+  svg+='</svg>';
+  $("krzywaWykres").innerHTML='<p style="margin:6px 0">'+N+' poziomów = '+N+' rzeczy na kole. Pierwszy poziom: <b>'+odst[0]+'</b> sławy, ostatni: <b>'+odst[N-1]+'</b>, wszystkie razem: <b>'+d[N-1].toLocaleString("pl-PL")+'</b>'+(stara.length?' ('+etPor+': '+stara[N-1].toLocaleString("pl-PL")+')':'')+'. Krzywa: <b>'+$("krzywaTryb").selectedOptions[0].textContent+'</b>.</p>'+svg;
+}
+function ustawKrzywa(){Postepy.ustawKrzywaProba($("krzywaTryb").value.split(",").map(Number));}
+$("krzywaTryb").onchange=()=>{ustawKrzywa();rysujKrzywa();};
+$("btnKrzywaSym").onclick=()=>{ustawKrzywa();rysujKrzywa();pgUruchom();$("kartaProgresja").scrollIntoView({behavior:"smooth",block:"start"});};
+rysujKrzywa();
+// soundboard
+document.querySelectorAll("[data-rz]").forEach(b=>b.onclick=()=>{try{Glos.odblokuj();Nagrody.dzwiekRzadkosci(b.dataset.rz);}catch(e){console.error(e);}});
+let mocG=null,mocT=0;
+function mocStart(){Glos.odblokuj();mocG=Glos.glos("sub",Glos.skala(1),0);mocG.ustaw(50,.1,0);mocG.spiewaj(true);const t0=performance.now();
+  const krok=()=>{if(!mocG)return;const f=Math.min(1,(performance.now()-t0)/1900),p=f*f*(3-2*f);mocG.ustaw(50+p*26,.1+.55*p,p*6);mocT=requestAnimationFrame(krok);};krok();}
+function mocStop(){cancelAnimationFrame(mocT);if(!mocG)return;const g=mocG;mocG=null;g.spiewaj(false);setTimeout(()=>g.zniszcz(),700);}
+$("btnMocTest").addEventListener("pointerdown",e=>{e.preventDefault();mocStart();});
+for(const ev of ["pointerup","pointerleave","pointercancel"])$("btnMocTest").addEventListener(ev,mocStop);
+for(const id of Jingle.lista()){const b=document.createElement("button");b.className="t";b.textContent=id;b.onclick=()=>{Glos.odblokuj();setTimeout(()=>{if(!Jingle.graj(id))Glos.fanfara();},120);};$("jingle").append(b);}
+Postepy.devKolo(NAZWA(),"dodaj",5);stan();
+dopisz("Strona gotowa: profil ma 5 losowań, kliknij „Koło (losowanie)”.");
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Brass/Tuba/sus"
+ },
+ "probki": [
+  {
+   "plik": "tuba-1.wav",
+   "nazwa": "Tuba3_sus_A#0_v2_rr1_Mid.wav",
+   "nuta": 34,
+   "root": 33.964,
+   "petla": [
+    0.5295,
+    1.0623
+   ]
+  },
+  {
+   "plik": "tuba-2.wav",
+   "nazwa": "Tuba3_sus_F1_v2_rr1_Mid.wav",
+   "nuta": 41,
+   "root": 41.025,
+   "petla": [
+    1.0404,
+    1.4521
+   ]
+  },
+  {
+   "plik": "tuba-3.wav",
+   "nazwa": "Tuba3_sus_D2_v2_rr1_Mid.wav",
+   "nuta": 50,
+   "root": 49.947,
+   "petla": [
+    1.3058,
+    1.9549
+   ]
+  }
+ ]
+}

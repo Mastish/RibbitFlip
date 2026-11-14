@@ -1,0 +1,600 @@
+/* ============================================================================
+   THE CONTROLLER TAB — the strip of pads, the map on the left, the part panel
+   on the right.
+
+   The tab is pad-centric (rf-44 + rf-43): on top one box per pad the game will
+   see, with the capsules as chips you can re-plug; below it two columns — the
+   LEFT holds the one merged drawing of the viewed pad (the map, sticky, in
+   every capsule's colours), the live stick/d-pad preview and the ViGEmBus
+   status; the RIGHT is whatever input was clicked. Everything the part panel
+   shows is styled by the Mysz card's own plain classes (.mousebar,
+   .mouse-grid) — what is NEW here is the strip, the columns, the legend and
+   the marks that make the drawing legible as a menu.
+
+   Loaded as 14c, after 14b so the map can reuse the pad geometry without
+   restating a single offset of it, and before 15 for the reason 14b is: the
+   overlay skin has to stay last, and nothing here needs to beat it.
+   ============================================================================ */
+
+.padsec{position:relative}
+#padHubSec{padding:10px var(--card-x) 12px}
+
+/* ---- the strip: one box per pad -----------------------------------------
+   Boxes wrap rather than scroll: this is the list of things the GAME sees,
+   and hiding one of them behind a sideways scroll would hide the answer the
+   section exists to give. The viewed box is the pressed one. */
+#padHubList{display:flex;flex-wrap:wrap;gap:10px}
+.ph-box{flex:0 1 auto;min-width:210px;background:var(--bg2);cursor:pointer;
+  border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.ph-box.viewed{border-color:var(--az,var(--line));
+  background:color-mix(in srgb,var(--az) 7%,var(--bg2));
+  box-shadow:0 0 0 1px var(--az,transparent)}
+.ph-box:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+/* Press feedback on the tile, the legend rows and the capsule chips: a 1-px nudge, never a
+   scale. These are wide surfaces full of controls — the generic scale(.95) press (14-motion)
+   moved an edge button ~8 px the moment the mouse went down on it, so the mouseup landed
+   outside and the click died. The :has() guard repeats 14-motion's: press feedback belongs to
+   the thing actually under the pointer, and each of these rules must carry its own guard to
+   OUT-CASCADE the generic one (same specificity, later file). */
+.ph-box:active:not(:has(:is(button,select,input,a,label,summary,[role],[draggable="true"]):active)),
+.pl-row:active:not(:has(:is(button,select,input,a,label,summary,[role],[draggable="true"]):active)){
+  transform:translateY(1px)}
+.ph-chip:active:not(:has(select:active)){transform:translateY(1px)}
+/* wraps because the rename input drops onto its own line inside the head */
+.ph-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.ph-num{font-size:12px;font-weight:600;letter-spacing:.2px}
+.ph-shared{font-size:11px;font-weight:500;color:var(--az);
+  border:1px solid currentColor;border-radius:9px;padding:1px 7px}
+.ph-chips{display:flex;flex-wrap:wrap;gap:6px}
+/* A chip IS a capsule: its colour on the left edge is the same colour the
+   rings on the drawing wear, which is what ties the two pictures together. */
+.ph-chip{display:flex;align-items:center;gap:6px;padding:4px 8px;
+  border:1px solid var(--line);border-left:4px solid var(--dcol,var(--line));
+  border-radius:9px;background:var(--panel);cursor:pointer;min-width:0}
+.ph-chip>b{font-size:12px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:130px}
+.ph-chip.active{outline:2px solid var(--dcol,var(--az));outline-offset:1px}
+.ph-chip .ph-share{max-width:150px;min-width:0;font-size:11px}
+
+/* ---- the controller as a THING: its name, and the two things you do to it ---
+   Rename and remove live in the head, quiet until the tile is hovered or one of
+   them has focus. Quiet, because they act on the CONTROLLER while everything
+   else in the tile acts on the capsules inside it, and a permanently-lit ✕ next
+   to a picker invites the wrong one of those two. Never hidden from the
+   keyboard: :focus-within brings them back at full strength.
+   QUIET, NOT INVISIBLE: at .28 the two glyphs were a pale smudge on the tile head —
+   below any readable contrast, and unfindable for anyone who does not already know
+   they are there. .62 still reads as secondary next to the type picker beside them,
+   and the ✕ that cannot be used (the only controller) is dimmer again on purpose. */
+.ph-name{font-size:12px;font-weight:500;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.ph-tools{margin-left:auto;display:flex;gap:4px;opacity:.62;transition:opacity .12s linear}
+.ph-box:hover .ph-tools,.ph-box:focus-within .ph-tools{opacity:1}
+.ph-tool{font:inherit;font-size:12px;line-height:1;cursor:pointer;color:var(--fg,inherit);
+  background:transparent;border:1px solid transparent;border-radius:7px;padding:2px 5px;
+  min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center}
+.ph-tool .bic{margin:0}
+.ph-tool:hover{background:var(--panel);border-color:var(--line);color:var(--fg,inherit)}
+.ph-tool.danger:hover{color:var(--bad);border-color:var(--bad)}
+.ph-tool:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+/* The ✕ of the LAST controller: present (the guide names it, so it has to be findable)
+   but not pressable, because the server keeps one controller alive on purpose. Its
+   title says the rule and where to unplug a capsule instead. */
+.ph-tool[disabled]{cursor:not-allowed;opacity:.45;color:var(--dim)}
+.ph-tool[disabled]:hover{background:transparent;border-color:transparent;color:var(--dim)}
+.ph-rename{flex:1 1 100%;order:9;margin-top:6px;font:inherit;font-size:12px;
+  padding:3px 7px;border:1px solid var(--az);border-radius:8px;
+  background:var(--panel);color:var(--fg,inherit);min-width:0}
+
+/* WHICH PAD this controller is (Xbox 360 / DualShock 4). It sits in the head, next to the
+   number, because it describes the controller and not the capsules inside it. Always visible
+   rather than tucked in with the hover tools: it answers "what will the game see", which is
+   the question the whole tile exists for. */
+.ph-kind{font:inherit;font-size:12px;font-weight:500;color:var(--muted);
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:1px 5px;max-width:130px;min-width:0;min-height:28px;cursor:pointer}
+.ph-kind:hover{color:var(--fg,inherit);border-color:var(--az)}
+.ph-kind:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+
+/* An empty controller is a normal state here ("make one, then plug capsules in"),
+   so it is drawn as a waiting slot rather than as a warning: dashed, like every
+   other "nothing here yet" surface in the app. */
+.ph-box.empty{border-style:dashed}
+.ph-emptyslot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ph-emptytxt{font-size:11px;color:var(--dim)}
+.ph-share.ph-add{font-size:11px;max-width:170px}
+
+/* Drag a capsule chip onto another controller. The drop target says so with the
+   same accent the viewed tile uses, so "where would this land" needs no legend. */
+.ph-chip.dragging{opacity:.45}
+.ph-box.drop{border-color:var(--az);border-style:solid;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--az) 45%,transparent)}
+
+/* ---- THE TRAY: capsules on no controller ----------------------------------
+   In the section HEAD, not among the boxes, because a capsule waiting for a
+   controller is not one — a fifth box shaped like the other four would say it
+   is. Dashed like every other "nothing here yet" surface in this app, and it
+   stays on screen when empty: an empty drop target you can see is the only
+   thing that makes the gesture findable, and its one sentence is where the
+   interface admits that a capsule may press no pad at all.
+   The ✕ on a chip does the same thing for a mouse that never drags, and the
+   picker on a tray chip does it for a keyboard that cannot drag at all. */
+.ph-free{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;
+  padding:3px 8px;border:1px dashed var(--line);border-radius:10px;
+  transition:border-color .12s linear,box-shadow .12s linear}
+.ph-free-lab{font-size:11px;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0}
+.ph-free.empty .ph-free-lab{font-weight:500;color:var(--dim)}
+.ph-free-hint{font-size:11px;color:var(--dim);text-transform:none}
+.ph-free .ph-chip{padding:2px 6px}
+.ph-free .ph-chip>b{max-width:110px}
+.ph-free.drop{border-color:var(--az);border-style:solid;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--az) 45%,transparent)}
+
+/* UNPLUG, on the chip itself. Quiet until the chip is hovered or focused, for
+   the same reason the controller's own ✕ is: it acts on the wiring while
+   everything else on the chip acts on the capsule, and a permanently-lit ✕
+   invites the wrong one. Never hidden from the keyboard. */
+/* …at .3 it was a smudge nobody found, so "unplug" looked like a drag-only gesture.
+   .6 keeps it quieter than the capsule's own name and still reads as a control. */
+.ph-chip-off{font:inherit;font-size:11px;line-height:1;cursor:pointer;color:var(--muted);
+  background:transparent;border:1px solid transparent;border-radius:6px;padding:1px 4px;
+  min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;
+  opacity:.6;transition:opacity .12s linear}
+.ph-chip:hover .ph-chip-off,.ph-chip:focus-within .ph-chip-off{opacity:1}
+.ph-chip-off:hover{color:var(--bad);border-color:var(--bad)}
+.ph-chip-off:focus-visible{outline:2px solid var(--az);outline-offset:1px;opacity:1}
+@media (prefers-reduced-motion:reduce){
+  .ph-free,.ph-chip-off{transition:none}
+}
+
+/* "+ Kontroler" and the pad it will be (F-G3-03). A small felt button (`btn sm`) at the end
+   of the strip instead of a tile the size of a controller: a second controller is rare, and the
+   big tile pushed the drawing below the fold at 720 px. The type picker stays beside it, so the
+   choice is made before the click; why each type exists is in the picker's tooltip. Disabled at
+   four, with the reason in the tooltip: that ceiling is Windows', not ours. */
+.ph-add-wrap{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ph-add-tile{white-space:nowrap}
+.ph-add-tile .bic{margin-right:.3em}
+.ph-add-kind{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
+.ph-add-kind select{font:inherit;font-size:12px;max-width:150px;min-width:0;min-height:28px;
+  background:var(--panel);color:var(--fg,inherit);
+  border:1px solid var(--line);border-radius:8px;padding:1px 5px;cursor:pointer}
+
+/* ONE CONTROLLER, ONE ROW (F-G3-03). With a single controller and an empty tray the section
+   head repeats what the tile says, so it steps aside (rf-44 sets `.pad-one`) and the tile lays
+   its head and its capsule chips out in one line. A second controller or a capsule on the tray
+   brings the head back. */
+#padCard.pad-one #padHubHead{display:none}
+#padCard.pad-one #padHubSec{padding-top:8px;padding-bottom:4px}
+#padCard.pad-one #padHubList{align-items:center}
+/* the tile keeps its own width (no squeezed chip); in a narrow column or a longer language the
+   "+ Kontroler" group drops to the next line instead */
+#padCard.pad-one .ph-box{flex:1 1 auto;min-width:max-content;display:flex;align-items:center;gap:10px;
+  flex-wrap:nowrap;padding:6px 10px}
+#padCard.pad-one .ph-num{white-space:nowrap}
+#padCard.pad-one .ph-head{margin:0;flex-wrap:nowrap}
+#padCard.pad-one .ph-tools{margin-left:0}
+#padCard.pad-one .ph-chips{flex:1 1 auto;min-width:0;flex-wrap:nowrap}
+#padCard.pad-one .ph-add-wrap{gap:6px}
+#padCard.pad-one .ph-add-kind select,#padCard.pad-one .ph-kind{max-width:108px}
+#padCard.pad-one .ph-tools{gap:2px}
+
+/* The driver box (P-G3-02): only when ViGEmBus is missing, right under the readiness line. */
+#padCtlAvail[hidden]{display:none}
+#padCtlAvail.rf-need{margin:8px var(--card-x) 4px}
+
+/* The second section: the controller's name, and under it the one instruction of the screen
+   (shown until a part of the drawing is picked). */
+#padCfgHead{padding-top:4px;padding-bottom:0}
+#padColsSec{padding-top:4px}
+.pad-cfg-lead{padding:0 var(--card-x);margin:0 0 4px}
+.pad-cfg-lead[hidden]{display:none}
+
+/* THE PRESET BAR WAITS FOR SOMETHING TO NAME (rf-44 _padFreshSync). */
+#tab-kontroler.pad-fresh #rfpcPane-kontroler-cfg>.rfpc-state.is-noname{display:none}
+
+/* ---- the two columns ----------------------------------------------------- */
+.pad-cols{display:grid;grid-template-columns:minmax(280px,340px) minmax(0,1fr);
+  gap:16px;align-items:start;padding:10px var(--card-x) 12px}
+/* The map is the menu; a menu that scrolls away with every click is a menu you
+   can use exactly once. `top` clears the sticky tab bar.
+   The `overflow` line is what makes that true rather than merely declared:
+   `.card{overflow:hidden}` (02-base) makes the card the sticky element's own
+   scrollport, and a scrollport that never scrolls never sticks anything. The
+   felt card draws its edge with an inset ::before rather than by cutting
+   children off, so nothing here needs the clipping. One card, by id. */
+#padCard{overflow:visible}
+/* `top` was 84px — the app bar's height plus a breath, and nothing for the module bar sitting
+   right under it, so 68 px of the map parked behind that bar (measured 14.09). The one number
+   every sticky column in this application uses is `--rf-sticky-top` (22-modtabs.css): the bottom
+   edge of the app bar, the capsule strip and the module bar, all three measured. */
+.pad-left{position:sticky;top:var(--rf-sticky-top,84px)}
+.pad-right{min-width:0}
+
+/* the merged drawing — the same widget the cheat sheet uses (rf-42/14b), only
+   bigger, and with the tile chrome (plate + dashed rule) removed: the column
+   is its frame now. */
+.pad-map{--gpvMax:340px}
+.pad-map .ov-padbox{border-bottom:none;background:none;padding:0}
+.pad-map .ov-pad-cap{white-space:normal;text-align:center;line-height:1.25;
+  min-height:2.5em;align-items:flex-start}
+
+/* ---- the legend: which capsule feeds what -------------------------------
+   One row per capsule plugged into the viewed pad. The coloured bar on the
+   left is the "cable"; the dot says whether its motion is really running.
+   The row is ALSO the switch to editing that capsule, so it looks pressable. */
+#padLegend{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.pl-row{display:flex;align-items:center;gap:7px;padding:5px 8px;cursor:pointer;
+  border:1px solid var(--line);border-left:4px solid var(--dcol,var(--line));
+  border-radius:9px;background:var(--bg2);min-width:0}
+.pl-row.active{outline:2px solid var(--dcol,var(--az));outline-offset:1px}
+.pl-row:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+.pl-row>b{font-size:12px;white-space:nowrap;flex:0 0 auto}
+.pl-what{font-size:11px;color:var(--dim);min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
+/* „TY"/„YOU" i ostrzeżenie Wii to napisy, nie linie — --warn-ink zamiast --az (obrys jedzie
+   currentColor, więc ciemnieje razem z literami; to ta sama plakietka, tylko czytelna).
+   WHY: this badge and the Wii warning are words, so they take the text-grade amber. */
+.pl-you{flex:0 0 auto;font-size:12px;font-weight:600;
+  color:var(--warn-ink);border:1px solid currentColor;border-radius:8px;padding:1px 6px}
+.pl-dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;
+  background:var(--dim);opacity:.5}
+.pl-dot.on{background:var(--ok);opacity:1;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+
+/* the live stick/d-pad preview under the map (same canvas + draggable rings
+   the old panel had — only its home moved to the picture column) */
+.pad-scope{margin-top:10px}
+.pad-scope canvas.mscope{height:auto;aspect-ratio:1/0.92;max-height:min(420px,50vh)}
+#padLeftCol>.mouse-avail{padding-top:8px}
+#padLeftCol>.setup-details{margin-top:8px}
+
+/* ---- the drawing as a menu ------------------------------------------------ */
+.pad-map.editable .gpv span[data-b]{cursor:pointer}
+
+/* KEYBOARD. Every part is role="button" tabindex="0" now (rf-44 _padPartsA11y), so
+   Tab walks the drawing and Enter/Space opens what a click would. It needs a mark
+   of its own: `outline` is the only one of the four properties on these spans that
+   is still free (::after is the mapped/fired ring, box-shadow is the selection,
+   and :hover already borrows outline — this beats it while focused, which is right,
+   because the pointer is not where the attention is). Drawn a touch wider than the
+   hover ring so it survives the drawing being scaled down to the column, and in the
+   accent rather than the capsule's colour: this says WHERE YOU ARE, not whose it is. */
+.pad-map.editable .gpv span[data-b]:focus-visible{
+  outline:6px solid var(--az);outline-offset:6px;border-radius:var(--gpv-ring);z-index:3}
+/* The four d-pad faces touch each other — 6 px out from each would draw a grid over
+   the cross, the same reason their mapped ring is tucked inside (14b). */
+.pad-map.editable .gpv span.gd:focus-visible{outline-width:4px;outline-offset:1px}
+/* The triggers start at the very top of the 750x630 canvas and .ov-pad clips there,
+   so a ring hung outside them comes out sliced; drawn inside instead. */
+.pad-map.editable .gpv span.gt:focus-visible{outline-offset:-4px}
+
+/* HOVER, on a part NOBODY has mapped yet: a green plus. The drawing had been the
+   menu for a while and still looked like a picture — nothing about a button under
+   the pointer said a click would MAKE something. The plus is the same promise the
+   „+ Nowe mapowanie" buttons make, put on the thing the mapping will press.
+
+   It rides ::after, which the state marks in 14b also use — but every one of them
+   (mapped / fired / live / blocked) is excluded here, so the two never own the
+   pseudo element at the same time. That exclusion is the point rather than a
+   detail: a part flashing RED because nothing left the app is the single most
+   important thing this drawing says, and a hover style that painted over it would
+   hide the answer exactly while somebody is pointing at the question.
+
+   Drawn at the artwork's own 750-px scale like everything else in .gpv, so it
+   lands at roughly 15 px once the column scales the drawing down. */
+.pad-map.editable .gpv span[data-b]:not(.mapped):not(.fired):not(.live):not(.blocked):hover::after{
+  content:"+";position:absolute;right:-11px;top:-11px;width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  font:800 30px/1 var(--display,system-ui);color:#fff;
+  background:var(--ok);border-radius:50%;
+  box-shadow:0 0 0 5px color-mix(in srgb,var(--ok) 28%,transparent);
+  pointer-events:none;animation:pctPlusIn .12s ease-out both}
+@keyframes pctPlusIn{from{opacity:0}to{opacity:1}}
+/* The two overrides below repeat the whole :not() chain on purpose. Dropping it would
+   leave them LESS specific than the rule they are correcting — the base selector
+   carries four :not()s and every one of them counts — and they would silently do
+   nothing. Same reason `span` stays in front of the part's own class. */
+/* The Guide part carries the controller number in the middle of its box (.gpv-num,
+   14b). The badge is absolutely positioned, so it cannot push that digit anywhere —
+   but it can sit ON it, so it is nudged clear of the disc instead. */
+.pad-map.editable .gpv span.gg:not(.mapped):not(.fired):not(.live):not(.blocked):hover::after{
+  right:-17px;top:-13px}
+/* The triggers start at the very top of the 750x630 canvas, and .ov-pad clips at its
+   edge — a badge hung above them would come out sliced. Hung below instead. */
+.pad-map.editable .gpv span.gt:not(.mapped):not(.fired):not(.live):not(.blocked):hover::after{
+  top:auto;bottom:8px;right:-8px}
+/* A d-pad arrow's corner is where its NEIGHBOUR starts, so a corner-hung plus sat on the wrong
+   face half the time. Centred on the hovered face instead — the face IS the button. */
+.pad-map.editable .gpv span.gd:not(.mapped):not(.fired):not(.live):not(.blocked):hover::after{
+  right:auto;left:50%;top:50%;margin:-17px 0 0 -17px}
+/* With the cross set to ONE MODULE (.dpm, the toggle on the map), a click opens the d-pad's
+   settings rather than adding anything — so no plus, and the four faces light TOGETHER, because
+   together is what they are. The full :not() chain again, to outweigh the base plus rule. */
+.pad-map.dpm.editable .gpv span.gd:not(.mapped):not(.fired):not(.live):not(.blocked):hover::after{
+  display:none}
+.pad-map.dpm.editable .gpv:has(span.gd:hover) span.gd{
+  outline:3px solid color-mix(in srgb,var(--dcol,var(--az)) 60%,transparent);
+  outline-offset:2px;border-radius:var(--gpv-ring)}
+/* A stick opens its own panel too (tuning + the L3/R3 click), whatever its state — the plus
+   would promise "add" and deliver a settings page. An outline instead, mapped or not. */
+.pad-map.editable .gpv span.gk:not(.mapped):not(.fired):not(.live):not(.blocked):hover::after{
+  display:none}
+.pad-map.editable .gpv span.gk:hover{
+  outline:5px solid color-mix(in srgb,var(--dcol,var(--az)) 60%,transparent);
+  outline-offset:9px;border-radius:var(--gpv-ring)}
+
+/* HOVER, on a part that IS mapped: no plus (there is nothing to add — a click opens
+   what is already there), a brighter ring instead. `outline` rather than a
+   box-shadow or ::after, because those two are taken: ::after is the mapped/fired
+   ring above, and the box-shadow is the SELECTED mark below. Three marks, three
+   properties, no fight.
+
+   Shape comes from --gpv-ring (14b), the one place every mark on this drawing reads
+   its corners from — a circle round the round parts, the bar's own sweep round a
+   bumper, and so on. Written out here as a square radius it used to hand a round
+   Start button a rounded box for as long as the pointer sat on it, and the SELECTED
+   mark below (a box-shadow, which follows border-radius) inherited the same wrong
+   shape. */
+.pad-map.editable .gpv span[data-b].mapped:hover{
+  outline:5px solid color-mix(in srgb,var(--dcol,var(--az)) 60%,transparent);
+  outline-offset:9px;border-radius:var(--gpv-ring)}
+/* The four d-pad faces sit edge to edge — an outline 9 px out from each would draw
+   a grid across the cross, the same reason 14b tucks their mapped ring inside. */
+.pad-map.editable .gpv span.gd.mapped:hover{outline-offset:2px;outline-width:3px}
+
+@media (prefers-reduced-motion:reduce){
+  .pad-map.editable .gpv span[data-b]:not(.mapped):not(.fired):not(.live):not(.blocked):hover::after{
+    animation:none}
+}
+
+/* THE D-PAD'S OWN TOGGLE — one motion module vs four separate buttons (rf-44
+   _padDpadToggleSync). It used to float ON the drawing at 1.5%/76%, where it lay
+   across the pad's left grip and had to be given a second position for the Wii
+   body, which stands up its box instead of lying across it. Two positions, both
+   covering artwork, for a control that is a CAPTION about the drawing rather than
+   a part of it. So it sits in the flow now, under the pad and above the caption —
+   one rule, no body-specific exceptions, and nothing hidden underneath it. */
+.pm-dpm{margin:8px auto 2px;width:fit-content;max-width:min(100%,var(--gpvMax,340px));
+  display:flex;align-items:flex-start;gap:6px;padding:4px 9px;cursor:pointer;
+  background:var(--bg2);border:1px solid var(--line);border-radius:9px}
+.pm-dpm input{margin:1px 0 0;flex:0 0 auto;cursor:pointer}
+.pm-dpm-lbl{font-size:11px;line-height:1.25;font-weight:500;color:var(--muted)}
+.pm-dpm:hover .pm-dpm-lbl{color:var(--fg,inherit)}
+.pm-dpm:focus-within{outline:2px solid var(--az);outline-offset:2px}
+
+/* SELECTED — the part whose settings are open in the right column. The `mapped`
+   ring already owns ::after (14b), so the selection is a box-shadow on the part
+   itself — two marks that never fight over one pseudo element. Drawn at the
+   artwork's 750-px scale like everything else in .gpv.
+
+   NOT TOLD APART BY COLOUR, and that is the whole design of it. This drawing
+   already spends every colour it has: the capsule's own says WHO (and a capsule
+   may be pink, blue, green, AMBER, purple or teal — PAD_CAP_COLORS), amber says
+   NOW, red says it never left the app. Pick any hue for "you are editing this"
+   and some capsule already owns it. So the mark is built out of the two things
+   no other mark on this drawing uses:
+
+     * A GAP. A ring in the panel's own colour, first, so the part reads as
+       lifted out of the artwork. Nothing else here leaves a gap.
+     * A BREATH. 1.7 s in and out, the pace of breathing. An activation is a
+       300 ms snap, the pace of a click, and nothing else on this drawing moves
+       at all. Slow movement is this app saying "this is where you are".
+
+   The glow around the gap is the accent — the colour this app marks a current
+   thing with everywhere else (the viewed controller's tile, every focus ring) —
+   but it is the gap and the rhythm that carry the meaning if the capsule beside
+   it happens to be wearing the same hue.
+
+   AND IT BREATHES, because a static ring on a drawing that also rings things
+   for being mapped, fired, held and blocked was one mark too many to tell apart
+   at a glance. Three things keep the breath from being read as a press:
+
+     * COLOUR — the capsule's own (or the accent). A press is amber and a press
+       that went nowhere is red; neither is ever this colour.
+     * PLACE — a box-shadow AROUND the part. Every activation state is a border
+       on ::after, inside that.
+     * RHYTHM — 1.7 s in and out, the pace of breathing. An activation is a
+       300 ms snap, the pace of a click. Nothing in this app moves slowly
+       except to say "this is where you are", and that is what this says.
+
+   Reduced motion keeps the ring and drops the breath: the mark is the message,
+   the movement only makes it easier to find. */
+@keyframes pctSelBreathe{
+  from{box-shadow:0 0 0 4px var(--panel),
+                  0 0 0 8px color-mix(in srgb,var(--az) 80%,transparent),
+                  0 0 0 14px color-mix(in srgb,var(--az) 24%,transparent)}
+  to{box-shadow:0 0 0 4px var(--panel),
+                0 0 0 10px var(--az),
+                0 0 0 24px color-mix(in srgb,var(--az) 7%,transparent)}
+}
+.pad-map .gpv span.sel{border-radius:var(--gpv-ring);
+  box-shadow:0 0 0 4px var(--panel),
+             0 0 0 9px color-mix(in srgb,var(--az) 88%,transparent),
+             0 0 0 18px color-mix(in srgb,var(--az) 18%,transparent);
+  animation:pctSelBreathe 1.7s ease-in-out infinite alternate}
+@media (prefers-reduced-motion:reduce){
+  .pad-map .gpv span.sel{animation:none}
+}
+
+/* ---- the right column ----------------------------------------------------
+   Everything inside it is either an element Mysz already styles (.mousebar,
+   .mouse-grid) or one of the few things below. rf-43 shows and hides the
+   blocks; this file only says what they look like. */
+.pp-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding:2px 0 8px;border-bottom:2px dashed var(--stitch);margin-bottom:10px}
+.pp-head>b{font-size:14px;font-weight:800}
+.pp-hint{font-size:12px;color:var(--dim)}
+.pp-lead{margin:0 0 8px;font-size:13px;line-height:1.45;color:var(--dim)}
+/* The touchpad's two-sentence warning (#mStickTpNote) is PROSE that happens to live in a
+   `.mouse-grid .fld` — a flex row — so every <b> inside it became a flex item with a line box of
+   its own: „podnosi się" rode half a line above the words either side of it and „powierzchnię"
+   was pushed onto a line by itself. It only ever needed to read like a paragraph. The selector
+   repeats `.fld` to outweigh the flex rule in 04-pose-mouse-cmd.css. */
+.mouse-grid .fld.pp-tp-note{display:block;line-height:1.5}
+
+/* Whether the motion is going into THIS part. One line, and next to it exactly one
+   button: the one that sends the motion HERE when it is going somewhere else, or the
+   one that stops it when it is going here. Never both — the second would always be
+   the button that does nothing. The FOREIGN bar reuses the same shape: one sentence
+   naming the capsule, one button that switches to it. */
+.pp-drive{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:7px 10px;margin-bottom:8px;border:1px solid var(--line);
+  border-radius:10px;background:var(--bg2)}
+.pp-drive-state{font-size:12px;font-weight:600;color:var(--dim);min-width:0}
+.pp-drive-state.on{color:var(--ok)}
+/* Both buttons carry it, and that is safe precisely because padPartSync never shows
+   the two together: `auto` on a hidden element pushes nothing. */
+.pp-drive .btn{margin-left:auto}
+
+/* The mappings that aim at the selected part. Deliberately lighter than a rule
+   row in the spis below: the same rule is in both lists, and two identical rows
+   would read as two rules. */
+#padPartRules{margin-top:10px;border-top:2px dashed var(--stitch);padding-top:10px}
+/* ...unless it is mounted at the TOP of the stick panel (the L3/R3 click, right under the drive
+   line — rf-43 _padRulesMount): there the dashed rule belongs below it, cutting it off from the
+   tuning wall instead of from the line it answers to. */
+#padPartRules.pp-rules-top{margin:0 0 10px;border-top:none;padding-top:0;
+  border-bottom:2px dashed var(--stitch);padding-bottom:10px}
+.pp-rules-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-bottom:7px}
+.pp-rules-head>b{font-size:13px}
+.pp-rules-head .btn{margin-left:auto}
+.pp-rule{display:flex;align-items:center;gap:9px;padding:6px 9px;
+  border:1px solid var(--line);border-radius:9px;background:var(--bg2);
+  margin-bottom:6px}
+.pp-rule.off{opacity:.55}
+.pp-rule-act{display:inline-flex;gap:4px;flex:0 0 auto}
+/* PASEK „DLACZEGO NIC NIE DOCHODZI" pod nagłówkiem konfiguracji (2026-09-08): bursztyn tekstowy,
+   jak plakietka Wii — to zdanie, nie linia; przycisk w tym samym wierszu, bo to on jest odpowiedzią.
+   MARGINES BOCZNY = `--card-x`, jak każda inna sekcja tej karty (`#padHubSec`, `.pad-cols`) i jak
+   nagłówek nad nim (2026-09-11). Bez niego pasek biegł przez CAŁĄ szerokość karty, a ponieważ filcowa
+   karta rysuje ścieg na `inset:5px`, jego własna ramka wychodziła POZA kreskowaną linię — dokładnie ta
+   pułapka, którą opisuje komentarz przy `--card-x` w 01-assets-tokens.css. */
+.pad-offnote{display:flex;flex-direction:column;gap:6px;margin:var(--card-y) var(--card-x) 10px;padding:8px 11px;
+  border:1px solid var(--warn-ink);border-left:5px solid var(--warn-ink);border-radius:8px;
+  background:color-mix(in srgb,var(--warn-ink) 9%,transparent);color:var(--ink);font-size:12.5px;line-height:1.4}
+.pad-offnote[hidden]{display:none}
+.pad-offnote-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pad-offnote-row>span{flex:1 1 260px;min-width:0}
+.pad-offnote-row .btn{flex:0 0 auto}
+/* a rule that belongs to ANOTHER capsule on this pad: its capsule's colour on the
+   edge and its name in front, because "whose is this" is the row's first question */
+.pp-rule.foreign{border-left:4px solid var(--dcol,var(--line))}
+.pp-rule-cap{flex:0 0 auto;font-size:11px;font-weight:600;
+  color:var(--dcol,var(--dim));max-width:90px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.pp-rule-main{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto}
+.pp-rule-main>b{font-size:12px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.pp-rule-sub{font-size:11px;color:var(--dim);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.pp-rule-key{flex:0 0 auto;font-size:11px;font-weight:500;padding:2px 7px;
+  border-radius:9px;border:1px solid var(--line);background:var(--panel);
+  white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+#padPartRules .rules-empty{font-size:12px}
+
+/* ---- pad-button rules ----------------------------------------------------
+   The active capsule's list and the editor are the SAME elements Mapowanie
+   uses (#ruleEditor is moved here, not copied), so they need no styling of
+   their own — only a slot that adds nothing when it is empty. The foreign
+   capsules' section under it is the quiet variant. */
+#padRuleEditorSlot:empty{display:none}
+#padAllRulesSec>#padRulesList{padding-bottom:4px}
+.pfr-head{display:flex;align-items:center;gap:7px;margin:10px 0 6px;
+  padding-top:8px;border-top:2px dashed var(--stitch)}
+.pfr-head>b{font-size:12px;color:var(--dcol,inherit)}
+.pfr-head>span{font-size:11px;color:var(--dim)}
+
+@media (max-width:980px){
+  .pad-cols{grid-template-columns:1fr}
+  .pad-left{position:static}
+  .pad-map{--gpvMax:300px}
+}
+@media (max-width:720px){
+  .ph-box{flex:1 1 100%}
+  .pp-drive .btn,.pp-rules-head .btn{margin-left:0}
+}
+
+/* ---- MOTION TO EMULATORS (cemuhook / DSU) --------------------------------
+   Three controls and a state line. The state line is the point of the card: a
+   server that is up but that nothing has connected to looks exactly like a
+   broken one, so it says which of the two it is in words. */
+.dsu-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:2px 0 6px}
+.dsu-port{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim)}
+.dsu-port input{width:88px;font:inherit;font-size:12px;padding:3px 7px;
+  border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg,inherit)}
+.dsu-port input:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+.dsu-state{font-size:12px;font-weight:500;color:var(--dim)}
+.dsu-state.on{color:var(--ok,var(--az))}
+.dsu-hint{font-size:11px;color:var(--dim);line-height:1.5}
+.dsu-hint b{color:var(--fg,inherit)}
+.dsu-idle{opacity:.65}
+#dsuSetupBody{font-size:12px;line-height:1.55}
+#dsuSetupBody ol{margin:4px 0 10px 18px;padding:0}
+#dsuSetupBody li{margin:3px 0}
+#dsuSetupBody code{font-size:12px;padding:1px 5px;border:1px solid var(--line);
+  border-radius:6px;background:var(--panel)}
+#dsuSetupBody .dsu-note{color:var(--dim);margin-top:8px}
+.rf-toggle.disabled{opacity:.45;pointer-events:none}
+
+/* A MIRROR OF SOMEBODY ELSE'S SWITCH (#padTrigEnable — the Mapowanie group). The
+   Kontroler tab carried two switches of exactly the same size and colour: the card
+   header's, which is this card's own motion output, and this one, which belongs to
+   a different screen entirely. Identical twins with different scopes is the shape of
+   a mistake waiting to happen, so this one is drawn SMALLER — the app's own way of
+   saying "secondary", already used by .dm-tg in the device-modules strip — and the
+   sentence beside it names the group it really belongs to. Same flag, same behaviour;
+   only the weight changes. */
+#padTrigEnable.mirror{margin-left:0}
+#padTrigEnable.mirror .rf-tg-knob{width:38px;height:28px}
+#padTrigEnable.mirror .rf-tg-knob::before,
+#padTrigEnable.mirror .rf-tg-knob::after{background-size:38px 38px}
+/* 11px, nie 10: mniejszy od nagłówkowego (12px) — „drugorzędny” nadal widać — ale już nie
+   poniżej progu czytelności całego panelu.
+   WHY: still smaller than the header's switch, no longer under the 11px floor. */
+#padTrigEnable.mirror .rf-tg-lbl{font-size:11px}
+/* The DualShock's gyroscope, per controller. Sits next to the type it depends on, and only
+   appears on a pad that has one — a greyed-out box on an Xbox pad would be an invitation to
+   click something that cannot work. */
+.ph-motion{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;
+  color:var(--muted);cursor:pointer;user-select:none}
+.ph-motion input{margin:0;cursor:pointer}
+.ph-motion:hover{color:var(--fg,inherit)}
+
+/* ---- the Wii controller's block ------------------------------------------
+   Its warning is the loudest thing in the tile on purpose: this controller does
+   not exist as far as Windows is concerned, and somebody who sets it up
+   expecting a Steam game to react was misled by the interface, not by
+   themselves. Everything below it is the address to type and whether anybody
+   turned up on it. */
+.ph-wii{margin-top:8px;display:flex;flex-direction:column;gap:6px;
+  border-top:1px dashed var(--line);padding-top:7px}
+.ph-wii-warn{font-size:11px;line-height:1.45;color:var(--dim)}
+.ph-wii-warn b{color:var(--warn-ink,var(--fg,inherit))}
+.ph-wii-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ph-wii-addr{font-size:11px;padding:2px 6px;border:1px solid var(--line);
+  border-radius:7px;background:var(--panel);user-select:all}
+.ph-wii-state{font-size:11px;font-weight:500;color:var(--dim)}
+.ph-wii-state.on{color:var(--ok,var(--az))}
+.ph-wii-state.bad{color:var(--bad)}
+.ph-wii-port{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim);margin-left:auto}
+.ph-wii-port input{width:72px;font:inherit;font-size:11px;padding:1px 5px;
+  border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--fg,inherit)}
+.ph-wii-how{font-size:11px}
+.ph-wii-how summary{cursor:pointer;color:var(--muted);font-weight:700}
+.ph-wii-how summary:hover{color:var(--fg,inherit)}
+.ph-wii-how ol{margin:4px 0 8px 16px;padding:0;line-height:1.5}
+.ph-wii-how li{margin:2px 0}
+.ph-wii-how code{font-size:11px;padding:1px 4px;border:1px solid var(--line);
+  border-radius:5px;background:var(--panel)}
+
+
+/* ===== UX 261120 SCALENIE ===== */
+/* Jeden kontroler przy 1280 px: kafel i „+ Kontroler” mieszczą się w jednym wierszu także po
+   angielsku (dłuższe napisy przerzucały grupę dodawania do drugiego wiersza). */
+@media (max-width:1365px){
+  #padCard.pad-one .ph-box{gap:6px;padding:6px 8px}
+  #padCard.pad-one .ph-add-kind select,#padCard.pad-one .ph-kind{max-width:96px}
+}
+/* (koniec sekcji SCALENIE) */

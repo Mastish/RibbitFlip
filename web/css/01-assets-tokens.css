@@ -1,0 +1,235 @@
+/* Design tokens and asset URLs: brand fonts, colour/shadow variables, and the icon/knob
+   custom properties. Loads first — every later stylesheet reads these variables. */
+/* Brand fonts (SIL OFL 1.1) — Baloo 2, Nunito, JetBrains Mono, Titan One. Self-hosted, no CDN:
+   the app must render identically offline and under a strict CSP. */
+@font-face{font-family:'Baloo 2';font-style:normal;font-weight:500 800;font-display:swap;src:url(/web/assets/fonts/baloo2-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Baloo 2';font-style:normal;font-weight:500 800;font-display:swap;src:url(/web/assets/fonts/baloo2-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+/* NUNITO JAKO PIĘĆ STATYCZNYCH WAG, NIE JEDEN FONT ZMIENNY (2026-09-29). Chrome na Windows
+   rasteryzuje instancje fontu zmiennego wyraźnie gorzej niż zwykłe pliki: litery panelu były
+   „poszarpane”. W porównaniu 13 technik wygrała kombinacja M:
+   statyczny krój + obrys 0,2 px (patrz `body` w 02-base.css). Pliki to instancje wyjęte
+   fontTools z oryginalnego pliku zmiennego (hinting zachowany); wagi = te, których CSS używa. */
+@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:swap;src:url(/web/assets/fonts/nunito-400-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:500;font-display:swap;src:url(/web/assets/fonts/nunito-500-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:600;font-display:swap;src:url(/web/assets/fonts/nunito-600-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url(/web/assets/fonts/nunito-700-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:800;font-display:swap;src:url(/web/assets/fonts/nunito-800-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:swap;src:url(/web/assets/fonts/nunito-400-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:500;font-display:swap;src:url(/web/assets/fonts/nunito-500-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:600;font-display:swap;src:url(/web/assets/fonts/nunito-600-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url(/web/assets/fonts/nunito-700-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:800;font-display:swap;src:url(/web/assets/fonts/nunito-800-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url(/web/assets/fonts/jetbrains-mono-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url(/web/assets/fonts/jetbrains-mono-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Titan One';font-style:normal;font-weight:400;font-display:swap;src:url(/web/assets/fonts/titan-one-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Titan One';font-style:normal;font-weight:400;font-display:swap;src:url(/web/assets/fonts/titan-one-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+/* FELT-ICON-FONT:START — ikony filcowe zamiast emoji i symboli (2026-10-15). Font CBDT z tools/ikony_filc_font.py
+   (mapa: tools/ikony_filc_mapa.json) dopięty do rodzin panelu tylko na te znaki: „⏸ Pauza” w przycisku, słowniku i tłumaczeniu
+   zostaje tym samym tekstem, a rysuje się z filcową ikoną. Blok generuje skrypt: nie edytuj ręcznie. */
+@font-face{font-family:'Baloo 2';font-style:normal;font-weight:500 800;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:400;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:500;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:600;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:800;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+@font-face{font-family:'Titan One';font-style:normal;font-weight:400;font-display:block;src:url(/web/assets/fonts/ribbitflip-felt.woff2) format('woff2');unicode-range:U+2139,U+21B6,U+21BA,U+21BB,U+21F1,U+2316,U+2328,U+23EF,U+23F1,U+23F3,U+23F8,U+23F9,U+23FB,U+25A0,U+25B4,U+25B6,U+25B7,U+25B8,U+25BE,U+2699,U+26A0,U+26A1,U+26D4,U+26F6,U+2705,U+2709,U+270E,U+270F,U+2713,U+2714,U+2715,U+2717,U+271B,U+274C,U+2753,U+2754,U+2921,U+2922,U+29C9,U+1F310,U+1F39A,U+1F39B,U+1F3A8,U+1F3AE,U+1F3AF,U+1F3B2,U+1F3B5,U+1F3B6,U+1F3B9,U+1F3BC,U+1F3C6,U+1F438,U+1F441,U+1F464,U+1F465,U+1F4A1,U+1F4BE,U+1F4C1,U+1F4C8,U+1F4CB,U+1F4E1,U+1F4F8,U+1F4FA,U+1F500,U+1F504,U+1F507,U+1F508,U+1F509,U+1F50A,U+1F50B,U+1F50C,U+1F510,U+1F512,U+1F514,U+1F534,U+1F5A5,U+1F5B1,U+1F5C2,U+1F5D1,U+1F6D1,U+1F7E1,U+1F7E2,U+1F9ED,U+1F9F2,U+1FA9F,U+FE0F}
+/* FELT-ICON-FONT:END */
+  /* ============================================================
+     FELT SKIN — the RibbitFlip design system: light "felt / punk /
+     hand-stitched" surfaces. The data palette (axes, LEDs) uses darker,
+     saturated variants of the brand colours so live readouts stay
+     legible on the cream background.
+     ============================================================ */
+  :root{
+    /* felt surfaces — light */
+    --bg:#efe9dd; --bg2:#f0e7d4; --panel:#faf6ee; --panel2:#f5eede;
+    --line:#d8cdb8; --ink:#211f1d; --muted:#524c3e; --dim:#57503f;
+    /* data axes — darker and saturated, for contrast on cream */
+    --ax:#d83a5c; --ay:#d9781c; --az:#c8971a;          /* accel — warm */
+    --gx:#1f93c9; --gy:#2f9e57; --gz:#8a52d9;          /* gyro — cool */
+    --c-volume:#c8971a; --c-seek:#1f93c9; --c-play:#2f9e57; --c-skip:#8a52d9; --c-other:#8a8375;
+    --ok:#2f9e57; --warn:#c8971a; --bad:#d83a5c; --idle:#a89a7d;
+    /* Red as TEXT on paper. --bad is a drawing colour too (LED, outline, filled danger button on
+       white); as a 10-12px word on --panel/--panel2 it sits at 3.9-4.5:1, right on the AA line and
+       below it at small sizes. --bad-ink is the same red one step darker (5.4:1 on --panel), used
+       for the "Off" of a switch, the error pill and the red label of "Remove"/"Stop now"; --bad
+       stays exactly where it was for LEDs, outlines and fills.
+       DLACZEGO: czerwień jako TEKST na kremie (≥5,3:1 na --panel/--panel2); --bad zostaje dla
+       LED-ów, obrysów i wypełnień (np. .rfm-btn.danger — biały na czerwonym). */
+    --bad-ink:#b8264a;
+    /* Amber as TEXT on paper. --az/--warn are drawing colours: they are picked to be seen as a
+       line on a chart, a slider fill, an LED or an outline, and as a letter on --panel/--panel2/
+       --bg2 they land at 2.2-2.5:1. --warn-ink is the same warning read one step darker so a
+       word, a number or an address written in it clears 4.5:1 everywhere on the paper skin;
+       --az/--warn stay exactly where they were for lines, fills, LEDs and borders.
+       DLACZEGO: bursztyn jako TEKST na kremie (≥4,5:1 na --panel/--panel2/--bg2);
+       --az/--warn zostają dla linii wykresów, suwaków, LED-ów i obrysów. */
+    --warn-ink:#8a5f0a;
+    /* brand accents (punk / felt) */
+    --pink:#ec1a83; --pink-d:#a4105c; --green:#6cb33f; --green-d:#46781f;
+    --amber:#eaa32b; --lime:#a6d861; --felt-ink:#211f1d; --stitch:#d8cdb8;
+    /* hard drop shadows + stitch colour */
+    --felt-shadow:0 7px 0 rgba(120,90,40,.10);
+    --felt-shadow-sm:0 4px 0 rgba(120,90,40,.12);
+    --felt-tex-soft:linear-gradient(rgba(255,255,255,.52),rgba(255,255,255,.52)),var(--felt-tex);
+    /* The same two washes the project page uses (docs/index.html): the felt stays underneath,
+       but a sheet of the background colour lies over it, so the weave reads as texture rather
+       than noise. --felt-tex-page = the large pastel surfaces (body, full-screen pad),
+       --felt-tex-dark = the dark chrome (app bar). Unwashed, the raw texture came forward and
+       competed with the content for attention. */
+    --felt-tex-page:linear-gradient(rgba(239,233,221,.45),rgba(239,233,221,.45)),var(--felt-tex);
+    --felt-tex-dark:linear-gradient(rgba(33,31,29,.5),rgba(33,31,29,.5)),var(--felt-tex);
+    --pink-btn:#d81678; --body:var(--sans);
+    --felt-tex:url("/web/assets/textures/felt.png");
+    --mono:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+    --sans:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --display:"Baloo 2","Nunito",system-ui,sans-serif;
+    /* The headline "patch" face — the one the project page uses: letters like the logo's.
+       Titles of cards, sections and dialogs ONLY. It stays out of buttons, tabs and labels:
+       Titan One ships in a single weight, so at 11-13 px with font-weight:700 the browser
+       fakes a bold and small text smears into a blob. Baloo 2 keeps those. */
+    --rebel:"Titan One","Baloo 2",system-ui,sans-serif;
+    /* ===== WNĘTRZE KARTY — jak daleko od jej krawędzi zaczyna się treść =====
+       Kartę obszywa ścieg biegnący 5 px w środku (`.card::before` w 07-felt-core.css), więc
+       20 px zostawia mu 15 px filcu — dokładnie tyle, ile od zawsze ma nagłówek `.card>.head`
+       (`14px 20px`). Same treści kart dorabiały sobie tę liczbę osobno i wyszło z tego
+       12/13/14/15/16/18/19 px: przy najmniejszych z nich pasek narzędzi, lista i dziennik
+       dosłownie opierały się o ścieg, a nagłówek nad nimi stał 6 px dalej — widać było i ciasnotę,
+       i rozjazd dwóch pionowych linii, których oko szuka jako jednej.
+       --card-x-sm to ta sama zasada dla kart WĄSKICH (pas podglądu na żywo, kolumna wyjść
+       po prawej), gdzie 20 px z karty szerokiej na 260-470 px zjadałoby treść. */
+    --card-x:20px; --card-x-sm:16px;
+    /* ===== ...I TO SAMO W PIONIE — ile powietrza pod kreskowaną linią =====
+       Nagłówek karty i pasek narzędzi kończą się ŚCIEGIEM na całą szerokość (`.head::after`,
+       `.trigbar::after`). To jest krawędź jak każda inna i treść pod nią ma się od niej odsunąć,
+       a nie na niej usiąść. Siadała: `.ruleslist` nie miała górnej wyściółki, a `.log`/`.feed`
+       górnego marginesu, więc przełącznik „Podgląd: Kompakt / Szczegóły" i pudełko dziennika
+       stykały się z kreską zero w zero (zmierzone: air=0-2 px w 15 miejscach, w 8 zakładkach).
+       12 px trzyma rytm nagłówka (`padding-top:14px`) i paska (`11px`).
+       --card-y-sm dla kafli pasa podglądu: mają NARZUCONE 230 px wysokości, więc każdy piksel
+       wyściółki zabiera go oscyloskopowi. */
+    --card-y:12px; --card-y-sm:8px;
+  }
+  /* ===== BRAND ICON ASSETS (felt PNG set) ===== */
+  :root{
+    --ic-logo:url("/web/assets/icons/logo.png");
+    --ic-discord:url("/web/assets/icons/discord.png");
+    --ic-map:url("/web/assets/icons/map.png");
+    --ic-sensor:url("/web/assets/icons/sensor.png");
+    --ic-conn:url("/web/assets/icons/conn.png");
+    --ic-motion:url("/web/assets/icons/motion.png");
+    --ic-midi:url("/web/assets/icons/midi.png");
+    --ic-tv:url("/web/assets/icons/tv.png");
+    --ic-atom:url("/web/assets/icons/atom.png");
+    --ic-synth:url("/web/assets/icons/synth.png");
+    --ic-vault:url("/web/assets/icons/vault.png");
+    --ic-kaseta:url("/web/assets/icons/kaseta.png");   /* Zestawy (2026-11-22): filcowa kaseta z promo */
+    --ic-mmouse:url("/web/assets/icons/mmouse.png");
+    --ic-mstick:url("/web/assets/icons/mstick.png");
+    --ic-gamepad:url("/web/assets/icons/gamepad.png");
+    --ic-mdpad:url("/web/assets/icons/mdpad.png");
+    --ic-sinus:url("/web/assets/icons/sinus.png");
+    --ic-radial:url("/web/assets/icons/radialmenu.png");
+    --ic-arcade:url("/web/assets/icons/arcade.png");
+    --ic-axes:url("/web/assets/icons/axes.png");
+    /* Ikony rysowane recznie, w tym samym filcu co reszta zestawu:
+       celownik = modul „Skaner" (dwie krzyzujace sie linie to doslownie to, co ten modul rysuje
+       na ekranie), zebatka = wszedzie tam, gdzie panel mowi „Konfiguracja". */
+    --ic-celownik:url("/web/assets/icons/celownik.png");
+    --ic-ustawienia:url("/web/assets/icons/ustawienia.png");
+    --ic-battery:url("/web/assets/icons/battery.png");
+    --ic-save:url("/web/assets/icons/save.png");
+    --ic-toggleon:url("/web/assets/icons/toggleon.png");
+    --ic-toggleoff:url("/web/assets/icons/toggleoff.png");
+    /* OFF STATE OF EVERY SWITCH (toggleoff.png).
+       The drawing is painted in the BRAND PINK — the same colour as „Nowy wyzwalacz" and
+       „Utwórz preset" — so a module that was switched OFF looked like a lit control. One screen
+       away the „Przegląd wszystkich kapsli" matrix says the same fact in muted grey-brown felt.
+       Recoloured with a filter rather than with second artwork: the felt grain, the stitching and
+       the knob shading stay exactly as drawn (the way `.dm-tg.unknown` already greys a cell), only
+       the hue moves to that felt. Measured average of the tinted drawing is #9e9481 — the `--idle`
+       family. ON is untouched: green stays green. */
+    --ic-off-tint:grayscale(1) sepia(.55) brightness(1.8);
+    /* LAMPKA PRZY MODULE — WŁASNA PARA ODCIENI, NIE TA OD PRZEŁĄCZNIKÓW.
+       Kropka dzieliła kiedyś `--ic-off-tint` z przełącznikami, ale czyta się ją inaczej.
+       Przełącznik jest rzeczą, na którą się PATRZY — stoi sam w nagłówku karty i ma podpis obok.
+       Kropek stoi DZIEWIĘĆ w jednej kolumnie i nikt ich nie czyta po kolei: odpowiedzi „co teraz
+       działa" szuka się kątem oka, jednym spojrzeniem w dół paska. Wspólny odcień dawał na to
+       jasnobeżowe #9e9481 obok oliwkowej zieleni — dwa jasne punkty na kremowym filcu, różniące
+       się samym odcieniem. Lampki przy modułach mają wyraźnie mówić, czy moduł działa:
+       nieaktywne nieco ciemniejsze, aktywne jaśniejsze i pulsujące.
+       Stąd metafora ŻARÓWKI, a nie znacznika: zgaszona jest ciemna (#706a5f — wyraźnie niżej niż
+       #9e9481, wciąż daleko od atramentu #211f1d, żeby nie krzyczała mocniej niż napis obok),
+       zapalona podbita nasyceniem i jasnością, z zieloną poświatą. Poświata jest OSOBNYM tokenem,
+       bo na wybranej pozycji (różowe tło, biała obwódka z 20-cols.css) jest zbędna — tam kropkę
+       odcina od tła obwódka, a zielony rozbłysk na różu tylko brudzi krawędź. */
+    --ic-dot-off:grayscale(1) sepia(.42) brightness(1.22);
+    --ic-dot-on:saturate(1.45) brightness(1.1);
+    --ic-dot-glow:drop-shadow(0 0 3px rgba(108,179,63,.85));
+    --ic-planet:url("/web/assets/icons/planet.png");
+    --ic-rest:url("/web/assets/icons/rest.png");
+    --ic-osc:url("/web/assets/icons/osc.png");
+    --ic-skull:url("/web/assets/icons/skull.png");
+    --ic-checks:url("/web/assets/icons/checks.png");
+    --ic-bin:url("/web/assets/icons/bin.png");
+    --ic-dfrog:url("/web/assets/icons/dfrog.png");
+    --ic-wordmark:url("/web/assets/icons/wordmark.png");
+    --ic-dotgreen:url("/web/assets/icons/dotgreen.png");
+    --ic-dotred:url("/web/assets/icons/dotred.png");
+    --ic-frogreal:url("/web/assets/icons/frogreal.png");
+    --ic-frogsim:url("/web/assets/icons/frogsim.png");
+    --ic-warning:url("/web/assets/icons/warning.png");
+    --ic-plusclean:url("/web/assets/icons/plusclean.png");
+    --ic-dangerfrog:url("/web/assets/icons/dangerfrog.png");
+    --ic-save2:url("/web/assets/icons/save2.png");
+    --ic-bin2:url("/web/assets/icons/bin2.png");
+    --ic-connect:url("/web/assets/icons/connect.png");
+    --ic-cboff:url("/web/assets/icons/cboff.png");
+    --ic-cbon:url("/web/assets/icons/cbon.png");
+    --ic-radoff:url("/web/assets/icons/radoff.png");
+    --ic-radon:url("/web/assets/icons/radon.png");
+    --ic-leaf:url("/web/assets/icons/leaf.png");
+    --ic-padsynth:url("/web/assets/icons/padsynth.png");
+    --ic-spray:url("/web/assets/icons/spray.png");
+    --ic-star2:url("/web/assets/icons/star2.png");
+    --ic-folder:url("/web/assets/icons/folder.png");
+    --ic-import:url("/web/assets/icons/import.png");
+    --ic-export:url("/web/assets/icons/export.png");
+    --ic-zzz:url("/web/assets/icons/zzz.png");
+    --ic-camera:url("/web/assets/icons/camera.png");
+    --ic-eye:url("/web/assets/icons/eye.png");
+    --ic-mega:url("/web/assets/icons/mega.png");
+    --ic-mousereal:url("/web/assets/icons/mousereal.png");
+    --ic-gear2:url("/web/assets/icons/gear2.png");
+    --ic-punkskull:url("/web/assets/icons/punkskull.png");
+    --ic-updown:url("/web/assets/icons/updown.png");
+    --ic-punkskull2:url("/web/assets/icons/punkskull2.png");
+    /* "hands off" — the mark and the button for a capsule put on hold */
+    --ic-donttouch:url("/web/assets/icons/donttouch.png");
+    /* two arrows passing each other — one mark for every door into sharing, so a preset bar, the
+       setup card and a REST application card all wear the same face for the same action */
+    --ic-swap:url("/web/assets/icons/swap.png");
+    --ic-heart:url("/web/assets/icons/heart.png");
+    /* the two faces of the exchange row at the top of the Library tab: an envelope for what comes
+       IN from other people, and the megaphone (--ic-mega, already here) for what goes OUT */
+    --ic-envelope:url("/web/assets/icons/envelope.png");
+    /* the frog tag — the mark of the exchange itself, on the card heading */
+    --ic-frogtag:url("/web/assets/icons/frogtag.png");
+    /* two felt panes, the front one lifted off the back — "show this capsule above the game".
+       The same idea the stroked mark in the cheat sheet's header draws, in the brand's own hand:
+       on the capsule pill it sits in a row of felt drawings and was the only line art there. */
+    --ic-overlay:url("/web/assets/icons/overlay.png");
+    /* UX 261120 B5a: czerwony filcowy kwadrat ze ściegiem, znak Stopu awaryjnego (nagłówek karty i przycisk) */
+    --ic-stop:url("/web/assets/icons/stop.png");
+  }
+
+:root{--knob-2:url("/web/assets/knobs/knob-2.png");--knob-4:url("/web/assets/knobs/knob-4.png");--knob-6:url("/web/assets/knobs/knob-6.png");--knob-8:url("/web/assets/knobs/knob-8.png");--knob-11:url("/web/assets/knobs/knob-11.png");}
+:root{
+  --ic-megaphone:url("/web/assets/icons/megaphone.png");
+  --ic-book:url("/web/assets/icons/book.png");
+  --ic-thunder2:url("/web/assets/icons/thunder2.png");
+}
+/* The pose-help orb draws the same artwork as the MCP card's header icon, so it shares
+   --ic-atom instead of carrying a byte-identical second copy under another name. */
+  :root{--ic-info:url("/web/assets/icons/info.png")}

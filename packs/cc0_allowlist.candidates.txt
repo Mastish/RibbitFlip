@@ -1,0 +1,226 @@
+# Kandydaci do packs/cc0_allowlist.txt (reguła 3: współczesne utwory oddane przez kompozytora na CC0).
+# Wygenerowane 2026-10-03 skryptem tools/build_song_manifests.py. Do pakietu A NIE wchodzą automatycznie: autor
+# RibbitFlipa przenosi zaakceptowane linie do packs/cc0_allowlist.txt i przebudowuje manifesty.
+# Kompozytorzy: Sysmoebius, Z Q (181), Massun, Ignacio (17), Augusto, Pedro Manuel (14), Marquis, Jacques D. (3), Arian Mehr, Mehdi (2), Anonymous (1), Leszczewski, Wladislaw (1), Harder, Knox W. (1), Van Schenkhof, Mark (1)
+
+PMLP1026573-1-Algorithm-for-Mind-Control-Techniques-to-be-Used-in-Training-the-Government.mid  # Sysmoebius, Z Q | 1 Algorithm for Mind Control Technique to be Used in Trainin | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1042487-2-Pieces-for-a-Casino-Jukebox-02.mid  # Sysmoebius, Z Q | 2 Pieces for a Casino Jukebox | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028664-MiR-e2L-o.mid  # Sysmoebius, Z Q | 2 Symphonic Montages for a Film | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1031211-3-Chrysofugues-in-A-minoral-b-stratae-F-E,-d-sygygous-Alpha-B-C-1.mid  # Sysmoebius, Z Q | 3 Chrysofugues in A minoral/b-stratae F/E, d-sygygous Alpha- | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028425-Collaterality-Propulsion-Pasticchios-3.mid  # Sysmoebius, Z Q | 4 Collaterality Propulsion Pasticchios | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1033602-A-Parallel-Declan.mid  # Sysmoebius, Z Q | A Parallel Declan | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028847-A-Suite-for-National-Zen-Day-1Allemande.mid  # Sysmoebius, Z Q | A Suite for National Zen Day | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028117-A3-4mB7i.mid  # Sysmoebius, Z Q | A3-4mB7i | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028722-AXdRi-Oo-4-01.mid  # Sysmoebius, Z Q | AXdRi-Oo-4 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1033071-Adagio-Tetuan-in-F-major.mid  # Sysmoebius, Z Q | Adagio Tetuan in F major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1025700-Ae-zAfQ-2zt.mid  # Sysmoebius, Z Q | Ae-zAfQ-2zt | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028977-Air-in-C-major-for-Strings-2Sarabande.mid  # Sysmoebius, Z Q | Air in C major for Strings | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029160-Air-in-D-flat-major-for-Strings-2Sarabande.mid  # Sysmoebius, Z Q | Air in D-flat major for Strings | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029944-Air-in-E-minor-for-Strings-3Quadrille.mid  # Sysmoebius, Z Q | Air in E minor for Strings | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1033275-Air-in-E-flat-Locrian-mode-3Valse.mid  # Sysmoebius, Z Q | Air in E-flat Lydian mode | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1032728-Air-in-E-flat-major-1Minuetto.mid  # Sysmoebius, Z Q | Air in E-flat major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029136-Air-in-G-minor-for-Strings-2Courante.mid  # Sysmoebius, Z Q | Air in G minor for Strings | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1043078-Aire-d'Iridicite-et-velaques-remission.mid  # Sysmoebius, Z Q | Aire d'Iridicite et velaques remission | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029871-Akashic-Fantasia-zeta-E-t-chromal-eta-F-aggregate-b-stomality,-C-dur.mid  # Sysmoebius, Z Q | Akashic Fantasia zeta-E/t-chromal eta-F-aggregate b-stomalit | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1024385-Algorithm-2-Classified-Governmental-Secrets-Exposed.mid  # Sysmoebius, Z Q | Algorithm 2 Classified Governmental Secrets Exposed | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028376-An_Algorithm_Mechohitlerianizing_Ambient_Intelligences-02.mid  # Sysmoebius, Z Q | An Algorithm for Mechohitlerianizing Ambient Intelligences | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z S Sysmoebius
+PMLP1031872-An-Ayre-of-Endymion-01Sarabande-tetraproniques.mid  # Sysmoebius, Z Q | An Ayre of Endymion | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1026489-Anchromal-Nu-w-Eta-Is-Tau-ring-s-qubital,-Morphomal-Mu!.mid  # Sysmoebius, Z Q | Anchromal Nu-w-Eta Is Tau-ring-s-qubital, Morphomal Mu! | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1037703-Arabesque-and-Galette-in-F-minor-1.mid  # Sysmoebius, Z Q | Arabesque and Galette in F minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029193-Ariosa-dal-spignale-para-digli-beata,-ave-Maris-stella.mid  # Sysmoebius, Z Q | Ariosa dal spignale para digli beata, ave Maris stella | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1033958-Automechamilitiasonics-against-all-Biotic-Sentience-02.mid  # Sysmoebius, Z Q | Automechamilitiasonics against all Biotic Sentience | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028227-Beowulf-Ouverture.mid  # Sysmoebius, Z Q | Beowulf Ouverture | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1019480-Berceuse0-v12-e.mid  # Sysmoebius, Z Q | Berceuse0-v12-e | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1023052-Biotic-Origami--Lessons-in-Futility-Is-the-Only-Resistance-02.mid  # Sysmoebius, Z Q | Biotic Origami..Lessons in Futility Is the Only Resistance | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1025603-Bitbyte-Animalo-Fyfe-reeli.mid  # Sysmoebius, Z Q | Bitbyte Animalo Fyfe-reeli | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036012-Canon-Anistrophe-p-flux-7-q-epifugal-F-b-static-C-paralydian-F.mid  # Sysmoebius, Z Q | Canon Anistrophe p-flux 7/q-epifugal F/b-static C paralydian | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036034-Canon-B-laterals-Fraktur-P-moment-Perpetuity-F-rise-D-bases-Rho-tS'.mid  # Sysmoebius, Z Q | Canon B-laterals Fraktur-P-moment Perpetuity-F/rise D bases  | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036031-Canon-C-d-stratical-F-sharpstream-e-K-D-ekisticals-F,B-a.mid  # Sysmoebius, Z Q | Canon C/d-stratical F-sharpstream e-K/D ekisticals F,B-a | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1043470-Canon-Passacaglia-B-flat-minoral-F-Bilateral.mid  # Sysmoebius, Z Q | Canon Passacaglia B-flat minoral F Bilateral | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1044485-Canon-Toccata-and-Galette-01.mid  # Sysmoebius, Z Q | Canon Toccata and Galette | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1016841-Capriccio-No--4-02.mid  # Sysmoebius, Z Q | Capriccio No.4 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1041651-Category-Homologue,-Denouement-Oneirus-Blank-02.mid  # Sysmoebius, Z Q | Category Homologue, Denouement Oneirus Blank | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1017729-Child-Soldier-with-a-Loaded-Pistol.mid  # Sysmoebius, Z Q | Child Soldier with a Loaded Pistol | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1030122-Chrysandante-No--1-m-typal-E.mid  # Sysmoebius, Z Q | Chrysandante No.1 m-typal E | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1030125-Chrysandante-No--2-v-L-pronicity-B-g-collateral-junctural-V-e-minoral.mid  # Sysmoebius, Z Q | Chrysandante No.2 v-L-pronicity B/g-collateral junctoral V-e | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1031880-Chrysandante-B-f-ekisticals-Lode-primer-P'.mid  # Sysmoebius, Z Q | Chysandante B/f-ekisticals Lode-primer P' | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034359-Concerto-No--14-y-A-B-episygygous-L-point-Dodecaversional-P-4.mid  # Sysmoebius, Z Q | Concerto No. 14 y-A/B-episygygous L-point Dodecaversional P | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1025250-Concerto-No--11-in-D-sharp-Phrygrian-2.mid  # Sysmoebius, Z Q | Concerto No.11 in D-sharp Phrygrian | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1031865-Concerto-No--12-in-A-flat-major-1Adagio-cantabile.mid  # Sysmoebius, Z Q | Concerto No.12 in A-flat major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1033997-Concerto-No--13-in-Asharp-minor-1.mid  # Sysmoebius, Z Q | Concerto No.13 in A-sharp minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1030051-Danse-au-dela-des-fleurs-car-reveille.mid  # Sysmoebius, Z Q | Danse au-dela des fleurs car reveille | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1015191-Divertimento-No--3-2.mid  # Sysmoebius, Z Q | Divertimento No.3 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029969-Divertimento-No--6-2.mid  # Sysmoebius, Z Q | Divertimento No.6 in C major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1031722-Divertimento-No-7-in-D-sharp-Phrygrian-mode-3.mid  # Sysmoebius, Z Q | Divertimento No.7 in D-sharp Phrygrian mode | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028023-Double-bass-Concerto-No--1-A-Mixolydian-1.mid  # Sysmoebius, Z Q | Double Bass Concerto No.1 in A mixolydian | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1030147-Double-bass-Concerto-No--3-in-E-major-2.mid  # Sysmoebius, Z Q | Double Bass Concerto No.3 in E major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1030283-Double-bass-Concerto-No--4-in-B-minor-3.mid  # Sysmoebius, Z Q | Double Bass Concerto No.4 in B minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1019160-E2-F3-04-I.mid  # Sysmoebius, Z Q | E2/F3-04-I | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1026359-Earthlings,-Your-Cooperation-Has-Been-Noted.mid  # Sysmoebius, Z Q | Earthlings, Your Cooperation Has Been Noted | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1033168-Eileens-Vegamusik.mid  # Sysmoebius, Z Q | Eileens Vegamusik | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1031585-Elegaic-Allemande-in-A-sharp-Locrian-mode.mid  # Sysmoebius, Z Q | Elegaic Allemande in A-sharp Locrian mode | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028937-Enochian-Overture-for-a-Harp-Concerto.mid  # Sysmoebius, Z Q | Enochian Overture for a Harp Concerto | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1042854-Epialgorithm-of-a-Flux-Incipitor-for-a-Time-Machine-02.mid  # Sysmoebius, Z Q | Epialgorithm of a Flux Incipitor for a Time Machine | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1037378-Eristics-Fugue-B-rhetoric-chi-nu-capacitance-Chi-Beta-U-.mid  # Sysmoebius, Z Q | Eristics Fugue B-rhetoric/chi-nu capacitance Chi-Beta-U | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1024913-F-Cepheix-Goneril-ubiquit-v.mid  # Sysmoebius, Z Q | F-Cepheix Goneril-ubiquit-v | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1026732-F-W2-09gF-i.mid  # Sysmoebius, Z Q | F-W2-09gF-i | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1033634-Faux-Resonant-Usurper.mid  # Sysmoebius, Z Q | Faux-Resonant Usurper | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1035076-Feasibly,-Daughtercell-on-Goader.mid  # Sysmoebius, Z Q | Feasibly, Daughtercell on Goader | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034441-Feuerswerk-fuge-F-dur.mid  # Sysmoebius, Z Q | Feuerswerk-fuge in F major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1020209-Figuration-for-Elongation-Elocution-4,-5,-1.mid  # Sysmoebius, Z Q | Figuration for Elongation Elocution 4, 5, 1 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1020914-Figuration-for-Conversion-Multiplicity-in-Dawson's-Integral-02.mid  # Sysmoebius, Z Q | Figuration of Conversion Multiplicity in Dawson's Integral | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1025705-Fughetta-yMechatotA-focx-zetB-Bundlefie-fRAmfibiux-w.mid  # Sysmoebius, Z Q | Fughetta yMechatotA-focx-zetB-Bundlefie-fRAmfibiux-w | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1033074-Fugue-for-Organ-in-B-major.mid  # Sysmoebius, Z Q | Fugue for Organ in B major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1030375-Fugue-in-G-minor-for-Piano.mid  # Sysmoebius, Z Q | Fugue in G minor for Piano | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1025606-Bitbyte-Animalo-Fyfe-reeli.mid  # Sysmoebius, Z Q | GT2-eEk-2z | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1025609-GT2-eEk-2z.mid  # Sysmoebius, Z Q | GT2-eEk-2z-0 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1026797-Go-K-p-Codex-clear-New-01.mid  # Sysmoebius, Z Q | Go K-p Codex clear New | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1026374-Good-God,-Great-Biotic-in-the-Sky-02.mid  # Sysmoebius, Z Q | Good God, Great Biotic in the Sky | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1035762-Gravity-is-Explication-01.mid  # Sysmoebius, Z Q | Gravity is Explication | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1025576-H-botio-Automechodecamobilisat-b045r-01.mid  # Sysmoebius, Z Q | H-botio-Automechodecamobilisat-b045r | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1026362-Havoc-Is-King.mid  # Sysmoebius, Z Q | Havoc Is King | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1025737-Havoc-x-Is-a-Difference-of-Opinion.mid  # Sysmoebius, Z Q | Havoc x Is a Difference of Opinion | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036455-Helical-Empyrean-Memory.mid  # Sysmoebius, Z Q | Helical Empyrean Memory | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1044679-HjA-dX-7-02.mid  # Sysmoebius, Z Q | HjA-dX-7 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1027558-I-Am-Osiris-of-Orion,-Sure,-Why-Not-.mid  # Sysmoebius, Z Q | I Am Osiris of Orion, Sure, Why Not? | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028818-I-am-Robot,-Hear-me-Roar.mid  # Sysmoebius, Z Q | I am Robot, Hear me Roar | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034102-Inversion-Sonata-A-Kappa-Xi-pQ'.mid  # Sysmoebius, Z Q | Inversion Sonata A-Kappa/Xi-pQ' | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1039239-Jigsaw-Moiré-and-Fugue.mid  # Sysmoebius, Z Q | Jigsaw Moiré and Fugue | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1037188-Keys-FM-3,5-Sonatinas-D-chi-Beta-phrygrianity-W-.mid  # Sysmoebius, Z Q | Keys FM 3,5 Sonatinas D-chi/Beta-phrygrianity-W" | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1027768-LiDAR-Secrets-Leaks.mid  # Sysmoebius, Z Q | LiDAR Secrets Leaks | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1023129-Like-Literally,-the-Universe-All-Dimensions-Life-Anywhere-Anyform-Is-a-Crazy-Leper-colony---.mid  # Sysmoebius, Z Q | Like Literally, the Universe/All Dimensions/Life Anywhere An | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1032415-Little-Book-of-Fables--Religion-and-Phrenologie-01.mid  # Sysmoebius, Z Q | Little Book of Fables, Religion and Phrenologie | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1035755-Little-Fish-Lips.mid  # Sysmoebius, Z Q | Little Fish Lips | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036801-Lorialeta-Fantasia-in-Fraktur-Q-b-nexiality-Promulgates-U.mid  # Sysmoebius, Z Q | Lorialeta Fantasia in Fraktur-Q/b-nexiality Promulgates U | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029536-Magnificat.mid  # Sysmoebius, Z Q | Magnificat | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034804-Mauerische-Nachtmusik.mid  # Sysmoebius, Z Q | Mauerische Nachtmusik | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029388-Mechocolloquy_for_Mechototalitarian_Governance.mid  # Sysmoebius, Z Q | Mechocolloquy for Mechototalitarian Governance | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1023721-Mercede'-gonfalcque-parallax.mid  # Sysmoebius, Z Q | Mercede' gonfalcque parallax | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029961-Minuet-A-r-mixodescriminant-F-supratonal-A-e-descriminancy-D.mid  # Sysmoebius, Z Q | Minuet A-r-mixodescriminant F-supratonal A-e-descriminancy D | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1041200-Minuet-in-B-minor.mid  # Sysmoebius, Z Q | Minuet in B minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1027246-Missa-Brevis-in-F-sharp-Locrian-Ionian-modality-02.mid  # Sysmoebius, Z Q | Missa Brevis in F-sharp Locrian-Ionian modality | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1033637-Mistrallent-Eiproniques.mid  # Sysmoebius, Z Q | Mistrallent Eiproniques | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1041204-Moiré-idisques-egu-fourcher-la-deja-capitan-.mid  # Sysmoebius, Z Q | Moiré idisques egu fourcher la deja capitan | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1031479-Musette-B-epistrochae-C-f-tensoriality-V-tetrapneumal-C-b.mid  # Sysmoebius, Z Q | Musette B-epistrochae-C/f-tensorality V-tetrapneumal C,b | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1033614-Musette-F-an-mero-C-planarity-Y-Delta,-Chi-mu.mid  # Sysmoebius, Z Q | Musette F/an-mero/C-planarity Y-Delta, Chi-mu | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028671-Musette-in-A-sharp-Locrian-mode.mid  # Sysmoebius, Z Q | Musette in A-sharp Locrian mode | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1033162-My-First-Pet-was-a-Human.mid  # Sysmoebius, Z Q | My First Pet was a Human | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1025732-Non-advocacy-Breeds-Internecine-Contempt-(Exit-Music-for-Mechanarchism)-1.mid  # Sysmoebius, Z Q | Non-advocacy Breeds Internecine Contempt | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029721-Nonic-Sonata-a-tetratonal-b-episygygous-E-a-chi-neumal-q-tonic-A-02.mid  # Sysmoebius, Z Q | Nonic Sonata a-tetratonal/b-episygygous E/a-chi-neumal/q-ton | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1032136-O-Scion-Parallax-01Menat-Grosse-Eyre.mid  # Sysmoebius, Z Q | O Scion Parallax | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1027837-Oc-QwqE-5.mid  # Sysmoebius, Z Q | Oc-QwqE-5 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1018085-Octant-Sonata-in-Suprasubmediant-A-F-pseudo-E-G-flat-Dorian-superlydian-modals.mid  # Sysmoebius, Z Q | Octant Sonata in Suprasubmediant A/F-pseudo-E/G-flat-Dorian/ | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034522-On-Pi-spectre-Anomaliac.mid  # Sysmoebius, Z Q | On Pi-spectre Anomaliac | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1030088-Oxymandias,-Applebaum,-Ho!.mid  # Sysmoebius, Z Q | Oxymandias, Applebaum, Ho! | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028230-PG-d2M-vgH-02.mid  # Sysmoebius, Z Q | PG-d2M-vgH | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028776-Parthenofugue-No--10.mid  # Sysmoebius, Z Q | Parthenofugue No.10 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1040695-Parthenofugue-No--11-C-d-scalarity-Partitions-U,-e-occlusive-B.mid  # Sysmoebius, Z Q | Parthenofugue No.11 C/d-scalarity Partitions U,e-occlusive B | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1017991-Parthenofugue-No--5-in-E-flat-Mixolydian.mid  # Sysmoebius, Z Q | Parthenofugue No.5 in E-flat mixolydian | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028494-Parthenofugue-No--7-in-G-major.mid  # Sysmoebius, Z Q | Parthenofugue No.7 in G major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028602-Parthenofugue-No--8-D-e-modal-A-sharp-supralydian,-C-tensorial.mid  # Sysmoebius, Z Q | Parthenofugue No.8 D/e-modal A-sharp supralydian, C-tensoria | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028605-Parthenofugue-No--9-A-antonal-o-group-B-a-C-D-Manifold,-c-aggregate-version-S.mid  # Sysmoebius, Z Q | Parthenofugue No.9 A-antonal-o-group-B/a C-D Manifold, c-agg | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028815-Pastiche-for-the-Palaver-Machine-at-Mad-Hatters-Table-01.mid  # Sysmoebius, Z Q | Pastiche for the Palaver Machine at Mad Hatters Table | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036465-Piano-Sonatina-in-A-major.mid  # Sysmoebius, Z Q | Piano Sonatina in A major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036468-Piano-Sonatina-in-C-major.mid  # Sysmoebius, Z Q | Piano Sonatina in C major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1037382-Post-nirvanic-Anthropicity-Dues-01.mid  # Sysmoebius, Z Q | Post-nirvanic Anthropicity Dues | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1031671-Pronic-Sonata-O-t-typal-alpha-F-locrian-e-weights-E.mid  # Sysmoebius, Z Q | Pronic Sonata O-t-typal alpha-F-locrian e-weights-E | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1043291-Quorum-and-Liberty-Sonnet.mid  # Sysmoebius, Z Q | Quorum and Liberty Sonnet | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034914-Rainbowshot-Octrice-02.mid  # Sysmoebius, Z Q | Rainbowshot Octrice | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028782-Reasons-&-Religions-for-Romeo-and-Juliet.mid  # Sysmoebius, Z Q | Reasons & Religions for Romeo and Juliet | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028562-Regina-coeli-jubila.mid  # Sysmoebius, Z Q | Regina coeli jubila | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1033625-Rumba-for-2-Guitars-in-C-major.mid  # Sysmoebius, Z Q | Rumba for 2 Guitars in C major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1031877-Saturn-Devouring-His-Silence.mid  # Sysmoebius, Z Q | Saturn Devouring His Silence | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1035477-Scalar-Fantasia-B-L-nexus-i4gather-P-A-D,-c-hypostatis-4.mid  # Sysmoebius, Z Q | Scalar Fantasia B/L-nexus-i4gather-P/A-D, c-hypostatis 4 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1041572-String-Quartet-No--4-in-A-minor-4.mid  # Sysmoebius, Z Q | String Quartet No.4 in A minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1033408-Sylphine-Fantasia-zeta-E,-n-majoral-rho.mid  # Sysmoebius, Z Q | Sylphine Fantasia zeta-E, n-majoral/rho | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1019552-Symphony-No--22-in-C-major-4.mid  # Sysmoebius, Z Q | Symphony No.22 in C major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1022978-Symphony-No--31-3.mid  # Sysmoebius, Z Q | Symphony No.31 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1024904-Symphony-No--35-2.mid  # Sysmoebius, Z Q | Symphony No.35 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1025292-Symphony-No--36-1.mid  # Sysmoebius, Z Q | Symphony No.36 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028138-Symphony-No--40-3.mid  # Sysmoebius, Z Q | Symphony No.40 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029504-Symphony-No--41-in-A-major-3.mid  # Sysmoebius, Z Q | Symphony No.41 in A major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029526-Symphony-No--42-in-A-minor-1Presto.mid  # Sysmoebius, Z Q | Symphony No.42 in A minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1031274-Symphony-No--44-1.mid  # Sysmoebius, Z Q | Symphony No.44 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1032228-Symphony-No--45-A-e-spline-modularity-C-para-aggregates-F-1.mid  # Sysmoebius, Z Q | Symphony No.45 A-e-spline modularity C para-aggregates F | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1032339-Symphony-No--46-1.mid  # Sysmoebius, Z Q | Symphony No.46 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1032590-Symphony-No--47-1.mid  # Sysmoebius, Z Q | Symphony No.47 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1033544-Symphony-No--48-in-D-minor-1Allegro.mid  # Sysmoebius, Z Q | Symphony No.48 in D minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1034894-Symphony-No--49-1.mid  # Sysmoebius, Z Q | Symphony No.49 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1035245-Symphony-No--50-4.mid  # Sysmoebius, Z Q | Symphony No.50 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1035616-Symphony-No--51-in-C-major-1.mid  # Sysmoebius, Z Q | Symphony No.51 in C major | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1037237-Symphony-No--52-1.mid  # Sysmoebius, Z Q | Symphony No.52 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1037274-Symphony-No--53-2.mid  # Sysmoebius, Z Q | Symphony No.53 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1039300-Symphony-No--54-1.mid  # Sysmoebius, Z Q | Symphony No.54 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1043762-Symphony-No--61-1.mid  # Sysmoebius, Z Q | Symphony No.61 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1044230-Symphony-No--64-3.mid  # Sysmoebius, Z Q | Symphony No.64 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1044543-Symphony-No--65-2.mid  # Sysmoebius, Z Q | Symphony No.65 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1029486-Symptotic-Canon-D-b-neuter-A-flat-modal-prelydian-E.mid  # Sysmoebius, Z Q | Symptotic Canon D/b-neuter-A-flat modal prelydian E | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029489-Symptotic-Canon-F-b-centralized-neutral-C,-f-locrianity-features-B-F.mid  # Sysmoebius, Z Q | Symptotic Canon F/b-centralized-neutral C, f-locrianity/feat | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029241-Symptotic-Canon-in-A-sharp-O-lydian-modals-for-Contralto,-Tenor.mid  # Sysmoebius, Z Q | Symptotic Canon in A-sharp O-lydian modals for Contralto, Te | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036798-Synaptic-Sonata-Rho-collateral-F-a-rise-F-rho-gather-L-b-coefficientcy.mid  # Sysmoebius, Z Q | Synaptic Sonata Rho-collateral F/a-rise/F/rho-gather L/b-coe | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1032092-Synthetic-Nonic-Sonata-O-t-typal-B-r-rho-Pigamma-elicitation.mid  # Sysmoebius, Z Q | Synthetic Nonic Sonata O-t-typal B-r-rho/Pigamma elicitation | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1031269-Tantric-Fantasia-in-G-minor-1.mid  # Sysmoebius, Z Q | Tantric Fantasia in G minor | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1030085-The-Correct-Answer,-Not-the-Right-Answer,-Eh-.mid  # Sysmoebius, Z Q | The Correct Answer, Not the Right Answer, Eh? | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1035100-The-Golden-Silky,-Mandelbrot-.mid  # Sysmoebius, Z Q | The Golden Silky, Mandelbrot? | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028111-The-Gray-Cross-eyed-Googlier-Stare-01.mid  # Sysmoebius, Z Q | The Gray Cross-eyed Googlier Stare | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1043649-The-Meadows-Apivorous-02.mid  # Sysmoebius, Z Q | The Meadows Apivorous | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1035396-The-Menage-of-Judge-Rhadamanthus-03.mid  # Sysmoebius, Z Q | The Menage of Rhadamanthus | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1028834-The-Metaverse-Is-A-Vessel-in-the-Middle-of-the-Universe.mid  # Sysmoebius, Z Q | The Metaverse Is A Vessel in the Middle of the Universe | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029624-The-Vision-at-Thermopylae.mid  # Sysmoebius, Z Q | The Vision at Thermopylae | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1019566-Thespians-on-the-March-to-Goodness.mid  # Sysmoebius, Z Q | Thespians on the March to Goodness | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1037303-To-Bria.mid  # Sysmoebius, Z Q | To Bria | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034525-Toccata-and-Adagio-01.mid  # Sysmoebius, Z Q | Toccata and Adagio | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1014714-Toccata-and-Allegro.mid  # Sysmoebius, Z Q | Toccata and Allegro | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1017456-Treatise-for-a-Mechatotalitarian.mid  # Sysmoebius, Z Q | Treatise for a Mechatotalitarian | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1034629-Valse-spiccati-tutti-all'intone-perfunctore.mid  # Sysmoebius, Z Q | Valse spiccati tutti all'intone perfunctore | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1026356-Vu-Experimentation-SF-Fodder,-Peligro.mid  # Sysmoebius, Z Q | Vu-Experimentation SF-Fodder, Peligro | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1043627-Watch-the-Weevils-Wax-Quixotic-at-the-Fireside-Chat.mid  # Sysmoebius, Z Q | Watch the Weevils Wax Quixotic at the Fireside Chat | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1036317-Waxen-Gravida.mid  # Sysmoebius, Z Q | Waxen Gravida | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028863-White-noise-for-a-String-quartet-2.mid  # Sysmoebius, Z Q | White Noise for a String Quartet | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1016652-Xenofugue-No--1.mid  # Sysmoebius, Z Q | Xenofugue No.1 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1020176-Xze-qAW0.mid  # Sysmoebius, Z Q | Xze-qAW0 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028860-You-think-There-is-a-Gravity-to-God-.mid  # Sysmoebius, Z Q | You think There is a Gravity to God? | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1028248-Ys-46yV.mid  # Sysmoebius, Z Q | Ys-46yV | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1029726-Zeras-Promontory.mid  # Sysmoebius, Z Q | Zeras Promontory | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP1043633-Zeta-iPaseo-Rho-esDur-01.mid  # Sysmoebius, Z Q | Zeta-iPaseo Rho-esDur | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Z Q Sysmoebius
+PMLP1017250-Zorns-Fugue.mid  # Sysmoebius, Z Q | Zorns Fugue | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (1) | autor pliku: Z Q Sysmoebius
+PMLP924409-Sonata_para_Órgano_(3).mid  # Massun, Ignacio | Organ Sonata No.1, Op.84 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924414-03_Finale_Allegro.mid  # Massun, Ignacio | Organ Sonata No.2, Op.90 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924749-57-4.mid  # Massun, Ignacio | Piano Quartet No.1, Op.57 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924741-60-2.mid  # Massun, Ignacio | Piano Trio, Op.60 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924397-1_Preludio.mid  # Massun, Ignacio | Preludio y Fuga No.2, Op.87 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924399-02_Fuga.mid  # Massun, Ignacio | Preludio y Fuga No.3, Op.88 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924528-80-2.mid  # Massun, Ignacio | String Duo, Op.81 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924387-83-3.mid  # Massun, Ignacio | String Quartet No.12, Op.83 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924484-Cuarteto_de_Cuerdas_Nº_13_(2)_Andante.mid  # Massun, Ignacio | String Quartet No.13, Op.85 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924493-Cuarteto_de_Cuerdas_Nº_14_(4)_Finale.mid  # Massun, Ignacio | String Quartet No.14, Op.86 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924716-63B-5.mid  # Massun, Ignacio | String Quartet with Folk Themes, Op.63 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924729-62-3.mid  # Massun, Ignacio | String Trio No.1, Op.62 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924503-Trio_de_cuerdas_Nº_2_(3)_Menuetto.mid  # Massun, Ignacio | String Trio No.2, Op.81 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924536-Trio_de_cuerdas_Nº_3_(4)_Finale_Allegro.mid  # Massun, Ignacio | String Trio No.3, Op.82 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924709-Duo_de_Violas_(3).mid  # Massun, Ignacio | Viola Duo No.1, Op.64 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924695-76_Sonata_para_Violin_y_Piano_Nº_4_04_Finale_Allegro.mid  # Massun, Ignacio | Violin Sonata No.4, Op.76 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP924702-77_Sonata_para_Violin_y_Piano_Nº_5_04_Finale_-_Allegro.mid  # Massun, Ignacio | Violin Sonata No.5, Op.77 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Ignacio Massun
+PMLP1127128-A_Paz.mid  # Augusto, Pedro Manuel | A Paz, Op.9 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1128161-AlmaEnamorada.mid  # Augusto, Pedro Manuel | Alma Enamorada, Op.13 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1123326-AmorAmarTe.mid  # Augusto, Pedro Manuel | Amor, amar-te..., Op.3 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Pedro Manuel Augusto
+PMLP1127138-Bondade.mid  # Augusto, Pedro Manuel | Bondade, Op.11 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1127120-Brenda.mid  # Augusto, Pedro Manuel | Brenda, Op.8 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1127117-GregaMaluca.mid  # Augusto, Pedro Manuel | Grega maluca, Op.7 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1123336-Incorrespondencia.mid  # Augusto, Pedro Manuel | Incorrespondência, Op.6 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Pedro Augusto
+PMLP1127141-KeresKasarKomigo.mid  # Augusto, Pedro Manuel | Keres Kasar Komigo, Op.12 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1122127-LoveIsTenderLoveIsTrue.mid  # Augusto, Pedro Manuel | Love is tender, love is true, Op.1 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Pedro Manuel Augusto
+PMLP1123330-Moralizar.mid  # Augusto, Pedro Manuel | Moralizar, Op.4 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Pedro Manuel Augusto
+PMLP1123318-PombaBranca.mid  # Augusto, Pedro Manuel | Pomba Branca, Op.2 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Pedro Manuel Augusto
+PMLP1127135-Salamanca.mid  # Augusto, Pedro Manuel | Salamanca, Op.10 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1128164-VoltarACantar.mid  # Augusto, Pedro Manuel | Voltar a Cantar, Op.14 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP1128168-E_Natal.mid  # Augusto, Pedro Manuel | É Natal, Op.15 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Musicalion
+PMLP917147-Anic_Pattack.mid  # Marquis, Jacques D. | Anic Pattack | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Jacques D Marquis
+PMLP912192-La_Créature_Cassé_De_La_Nuit_Recording.mid  # Marquis, Jacques D. | La créature cassé de la nuit | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (3) | autor pliku: Jacques D Marquis
+PMLP912620-Un_petit_Chinois.mid  # Marquis, Jacques D. | Un Petit Chinois | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Jacques D Marquis
+PMLP1449448-Piano_Poem_Sonata_No.7''_(_Elmira)_IN.A_minor_Op.36.mid  # Arian Mehr, Mehdi | Piano Poem Sonata No.7 'Elmira', Op.36 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Mehdi Arian Mehr
+PMLP1449446-II._Hymn_to_Gods.mid  # Arian Mehr, Mehdi | Symphony No.3, Op.51 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Mehdi Arian Mehr
+PMLP855831-Anonymous_-_Emperor_Alexander's_Waltz.mid  # Anonymous | Russian March and the Emperor Alexander's Waltz | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (3) | autor pliku: Schnittkease
+PMLP1435048-Haroisjcord.mid  # Harder, Knox W. | Douceur Gigue, Op.11 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: ?
+PMLP848507-shinyPeople.mid  # Leszczewski, Wladislaw | Shiny People, Op.6 | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (2) | autor pliku: Wladislaw Leszczewski
+PMLP863703-PartingGlass.mid  # Van Schenkhof, Mark | The Parting Glass | MIDI na IMSLP: cc0-1.0 | wszystkie pliki utworu CC0/PD (3) | autor pliku: D. Benjamin Miller

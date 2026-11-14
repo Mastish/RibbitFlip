@@ -1,0 +1,664 @@
+/* Brand icon classes, the felt form controls (checkbox / radio / slider art), the knob widget,
+   the foam-hand cursor states, the in-theme tooltip, and the compact narrow-window header. */
+
+  /* — overview / pairing screens (ov-*) — cream screens + tan stitches — */
+  .ov-pose,.ov-mouse,.pm-scope{background:#f6f1e5}
+  .ov-mouse{border-bottom:2px dashed var(--stitch)}
+  .ov-pose-grip{color:var(--dim)}
+  .ov-pose-grip:hover{color:var(--ink);background:rgba(120,100,60,.10)}
+  .ov-col,.ov-rule-wrap{border-color:var(--stitch)}
+  .ov-midi,.ov-rule-wrap{border-top:1px solid var(--stitch)}
+  .ov-conn,.ov-none,.ov-empty,.ov-cond,.ov-fires,.ov-midi-arr,.ov-midi-dest,.ov-midi-val{color:var(--dim)}
+  .ov-midi-head{color:var(--pink-d)}
+  /* — pairing modal / device editor — light cards — */
+  #pairModal .pm-box,#devEdit .de-box{background:var(--panel);background-image:var(--felt-tex-soft);
+    border:none;border-radius:20px;box-shadow:0 14px 0 rgba(120,90,40,.14)}
+  #pairModal .pm-hint,.pm-hint{color:var(--muted)}#pairModal .pm-hint b{color:var(--ink)}
+  #pairModal .pm-dot{background:var(--pink)}   /* .pm-ring is a border-only sonar ring — no fill (else it covers the dot) */
+  #pairModal .pm-ring{border-color:var(--pink)}
+  #pairModal .pm-checks{display:flex;justify-content:center;align-items:center;height:120px}
+  #pairModal .pm-checks .rf-cel-ic{width:92px;height:92px;filter:drop-shadow(0 6px 11px rgba(0,0,0,.22))}
+  .devpill.pairing{border-color:var(--pink)}
+  /* "Add device" chip: high-contrast cream on the dark ink bar, matching the header buttons.
+     The #deviceSel prefix is required — it beats the runtime-injected `.devpill.add{border-style:
+     dashed}` rule that would otherwise leave a chunky 3px dashed border. */
+  #deviceSel .devpill.add{background:#f4efe4;border:none;color:#211f1d;font-family:var(--display);font-weight:700;
+    box-shadow:0 3px 0 rgba(0,0,0,.30);transition:transform .08s var(--rf-ez-snap),box-shadow .08s,background .12s}
+  #deviceSel .devpill.add:hover{background:#fff;transform:translateY(-1px)}
+  /* No capsule yet: the add button is the whole point of the hub, so it is the loud one — pink,
+     full width, and breathing (14-motion.css) until the first capsule is paired. */
+  #deviceSel .devpill.add.first{background:var(--pink);color:#fff;flex-basis:100%;justify-content:center;
+    min-height:44px;font-size:14px;letter-spacing:.01em;box-shadow:0 3px 0 rgba(0,0,0,.28)}
+  #deviceSel .devpill.add.first:hover{background:var(--pink);filter:brightness(1.06)}
+  #deviceSel .devpill.add.first .dp-plus{color:#fff}
+  #deviceSel .devpill.add.first .dp-add-txt{font-size:14px;color:#fff}
+  #deviceSel .devpill.add:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.30)}
+  #deviceSel .devpill.add .dp-plus{color:var(--pink);font-weight:800;font-size:15px}
+  /* — test-send countdown overlay — light — */
+  #sendOverlay{background:rgba(43,39,35,.72)}
+  #sendOverlay .so-box{background:var(--panel);border:none;border-radius:22px;
+    box-shadow:0 0 60px -12px rgba(0,0,0,.5),0 14px 0 rgba(120,90,40,.14)}
+  #sendOverlay .so-num{color:var(--pink)}
+  /* — cond-toast pill (condition counter) — */
+  .cond-toast{background:#fff;box-shadow:0 3px 0 rgba(120,90,40,.10)}
+  .cond-toast.none{color:var(--dim)}.cond-toast.some{color:var(--warn-ink)}.cond-toast.all{color:var(--green-d)}
+
+  @media (prefers-reduced-motion:reduce){
+    button.btn,.tabbar button,.card,.cardfold{transition:none}
+  }
+
+  /* One focus ring for every focusable element: pink, or lime where the surface is dark ink. */
+  :where(button,[role=button],[role=tab],[role=switch],a,select,summary,input,textarea):focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+  header :where(button,[role=switch]):focus-visible,.badge:focus-visible{outline-color:var(--lime)}
+  /* unified icon mini-buttons (felt chip, 24x24) */
+  .icon-btn,.se-row-acts button{display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;padding:0;flex:0 0 auto;border:1px solid var(--line);border-radius:7px;background:#fff;
+    color:var(--muted);cursor:pointer;line-height:1;transition:background .12s,border-color .12s,color .12s}
+  .icon-btn:hover,.se-row-acts button:hover{background:#f1e9d6;color:var(--ink)}
+  #rfInc .ic-tools button{border-radius:7px;padding:3px 7px;transition:background .12s}
+  #rfInc .ic-tools button:hover{background:#f1e9d6}
+  /* global disabled state */
+  button:disabled,.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none!important;box-shadow:none}
+
+
+  /* — PNG brand icons (self-hosted, offline/CSP-safe) — used instead of emoji wherever the
+       brand look matters. Each .ric-* class just points at an --ic-* variable from 01. — */
+  .ric-frogreal{background-image:var(--ic-frogreal)}
+  .ric-frogsim{background-image:var(--ic-frogsim)}
+  .ric-plusclean{background-image:var(--ic-plusclean)}
+  .ric-dangerfrog{background-image:var(--ic-dangerfrog)}
+  .ric-save2{background-image:var(--ic-save2)}
+  .ric-bin2{background-image:var(--ic-bin2)}
+  .ric-connect{background-image:var(--ic-connect)}
+  .ric-cboff{background-image:var(--ic-cboff)}
+  .ric-cbon{background-image:var(--ic-cbon)}
+  .ric-radoff{background-image:var(--ic-radoff)}
+  .ric-radon{background-image:var(--ic-radon)}
+  .ric-leaf{background-image:var(--ic-leaf)}
+  .ric-padsynth{background-image:var(--ic-padsynth)}
+  .ric-spray{background-image:var(--ic-spray)}
+  .ric-star2{background-image:var(--ic-star2)}
+  .ric-folder{background-image:var(--ic-folder)}
+  .ric-import{background-image:var(--ic-import)}
+  .ric-export{background-image:var(--ic-export)}
+  .ric-zzz{background-image:var(--ic-zzz)}
+  .ric-donttouch{background-image:var(--ic-donttouch)}
+  .ric-bin{background-image:var(--ic-bin)}
+  .ric-camera{background-image:var(--ic-camera)}
+  .ric-eye{background-image:var(--ic-eye)}
+  .ric-mega{background-image:var(--ic-mega)}
+  .ric-mousereal{background-image:var(--ic-mousereal)}
+  .ric-gear2{background-image:var(--ic-gear2)}
+  .ric-punkskull{background-image:var(--ic-punkskull)}
+  .ric-overlay{background-image:var(--ic-overlay)}
+  .rfic{display:inline-block;background-position:center;background-repeat:no-repeat;background-size:contain;flex:0 0 auto}
+  .brand span.rf-frog{width:40px;height:40px;background-position:center;background-repeat:no-repeat;background-size:contain;
+    background-image:var(--ic-logo);filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+  .tabbar .tab-btn,.tabbar .tabbtn,.tabbar button{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;position:relative;font-size:12px;padding:8px 15px;line-height:1.12}
+  .tabbar .tab-btn .rfic{width:40px;height:40px}
+  .tabbar .tab-btn>span:not(.rfic):not(.tab-dot){white-space:nowrap}
+  .tab-ic-map{background-image:var(--ic-map)}
+  /* „Nakładka" (dawny ekran „Mapowania") — ta sama grafika, co miał przycisk w pasku
+     i co ma nagłówek jej karty. Osobna od --ic-map celowo: „Mapowanie" i „Nakładka" to dwie
+     różne rzeczy i nie mogą dzielić ikony. */
+  .tab-ic-axes{background-image:var(--ic-axes)}
+  .tab-ic-celownik{background-image:var(--ic-celownik)}
+  .tab-ic-ustawienia{background-image:var(--ic-ustawienia)}
+  .tab-ic-motion{background-image:var(--ic-motion)}
+  /* Motion control is two tabs now (Mysz / Kontroler). Mysz borrows the mode-selector artwork;
+     Kontroler got its own felt gamepad (owner's pick, 2026-08-24) — the stick knob alone read
+     as "analog stick", not "the controller as a whole". */
+  .tab-ic-mmouse{background-image:var(--ic-mmouse)}
+  .tab-ic-gamepad{background-image:var(--ic-gamepad)}
+  .tab-ic-mstick{background-image:var(--ic-mstick)}
+  .tab-ic-midi{background-image:var(--ic-midi)}
+  .tab-ic-sensor{background-image:var(--ic-sensor)}
+  .tab-ic-conn{background-image:var(--ic-conn)}
+  .tab-ic-synth{background-image:var(--ic-synth)}
+  .tab-ic-vault{background-image:var(--ic-vault)}
+  .tab-ic-kaseta{background-image:var(--ic-kaseta)}
+  .tab-ic-rest{background-image:var(--ic-rest)}
+  .tab-ic-osc{background-image:var(--ic-osc)}
+  /* Koło wyboru — ta sama grafika, co w nagłówku jego karty (hd-ic-radial). Zakładka i karta mają
+     wyglądać na jedno miejsce, a osobna ikona tylko po to, żeby była osobna, niczego nie mówi.
+     Sinus zostaje przy karcie Wyzwalaczy w Mapowaniu — to jego pierwotne miejsce. */
+  .tab-ic-radial{background-image:var(--ic-radial)}
+  /* „Konfiguracja" (ustawienia samego programu, wydzielone z „Zestawów" 2026-08-31) — to samo
+     kółko zębate, którym każdy moduł podpisuje swoją zakładkę „Konfiguracja" (`.rfpc-tab-ic.is-cfg`
+     w 22-modtabs.css). Świadomie TA SAMA grafika: pytanie jest to samo („gdzie się to ustawia"),
+     tylko raz o moduł, a raz o cały program. */
+  .tab-ic-gear2{background-image:var(--ic-gear2)}
+  .tab-ic-eye{background-image:var(--ic-eye)}
+  .tab-emoji{font-size:17px;line-height:1;margin-right:1px}
+  .hd-ic{width:29px;height:29px;vertical-align:-7px;margin-right:8px}
+  .hd-ic-motion{background-image:var(--ic-motion)}
+  .hd-ic-mmouse{background-image:var(--ic-mmouse)}
+  .hd-ic-mstick{background-image:var(--ic-mstick)}
+  .hd-ic-gamepad{background-image:var(--ic-gamepad)}
+  .hd-ic-midi{background-image:var(--ic-midi)}
+  .hd-ic-tv{background-image:var(--ic-tv)}
+  /* „Przegląd wszystkich kapsli" — OKO, od 2026-08-31. Stała tu wcześniej dłoń „nie dotykaj"
+     (`donttouch`), a ta w całej aplikacji znaczy WSTRZYMANY: nosi ją pigułka wstrzymanego kapsla,
+     znacznik `dt-ic` i kolumna „Cały kapsel" w tej samej macierzy. Jedna grafika na dwie różne
+     rzeczy, i to obok siebie na jednym ekranie. Oko mówi to, czym ten ekran jest: popatrz na
+     wszystko naraz. Ta sama para klas, co przy każdym innym ekranie — `tab-ic-*` na przycisku
+     w nawigacji (i tym samym na przycisku w prawej kolumnie, bo to JEDEN węzeł) i `hd-ic-*`
+     w nagłówku karty, żeby przycisk i to, co otwiera, wyglądały na jedno miejsce. */
+  .hd-ic-eye{background-image:var(--ic-eye)}
+  .hd-ic-atom{background-image:var(--ic-atom)}
+  .hd-ic-sinus{background-image:var(--ic-sinus)}
+  .hd-ic-radial{background-image:var(--ic-radial)}
+  .hd-ic-rest{background-image:var(--ic-rest)}
+  .hd-ic-osc{background-image:var(--ic-osc)}
+  .hd-ic-save{background-image:var(--ic-save)}
+  .hd-ic-battery{background-image:var(--ic-battery)}
+  .hd-ic-axes{background-image:var(--ic-axes)}
+  .hd-ic-celownik{background-image:var(--ic-celownik)}
+  .hd-ic-frogtag{background-image:var(--ic-frogtag)}
+  /* „Zgłoś problem" — żaba w tarapatach. Karta o kłopocie, nie o ustawieniu. */
+  .hd-ic-dangerfrog{background-image:var(--ic-dangerfrog)}
+  /* Ikona tytułu huba konfiguracji. Ta sama, którą nosił usunięty rząd „Presety wyzwalaczy":
+     zmieniła się powierzchnia, nie temat. */
+  .cfh-title .prof-ic{width:20px;height:20px;vertical-align:-5px;margin-right:5px;background-image:var(--ic-arcade)}
+  .seg.mmode .mm-ic-mouse{background-image:var(--ic-mmouse)}
+  .seg.mmode .mm-ic-stick{background-image:var(--ic-mstick)}
+  .seg.mmode .mm-ic-dpad{background-image:var(--ic-mdpad)}
+  .hd-ic-synth{background-image:var(--ic-synth)}
+  .pad-sec-h .hd-ic{width:22px;height:22px;vertical-align:-5px;margin-right:4px}
+  .rf-toggle{display:inline-flex;align-items:center;gap:7px;margin-left:auto;flex:0 0 auto;cursor:pointer;user-select:none;-webkit-user-select:none;padding:2px 4px;border-radius:12px;background:none;border:none}
+  .rf-toggle:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+  /* „Off”/„On” przy przełączniku to napis czytany w nagłówku KAŻDEGO modułu — stąd 12px
+     zamiast 11 i czerwień do tekstu (--bad-ink): --bad przy 11px dawał 4,16:1 na papierze.
+     WHY: this pair of words is read on every module header, so it gets text-grade red and one
+     more pixel; the switch drawing itself is unchanged. */
+  .rf-tg-lbl{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.5px;color:var(--dim);transition:color .2s}
+  .rf-toggle:not(.on) .rf-tg-lbl.off{color:var(--bad-ink)}
+  .rf-toggle.on .rf-tg-lbl.on{color:var(--green-d)}
+  /* old #mEnable.on / grp-enable.on button rules gave a solid green bg — neutralize for the toggle divs */
+  .rf-toggle.on{background:none !important;border:none !important;box-shadow:none !important;color:var(--ink) !important}
+  /* …I TO SAMO DLA STANU „NA ŻYWO". `#mEnable.live` (04-pose-mouse-cmd) oraz `.grp-enable.live`
+     (06-connect-midi-pads) to spadek po czasach, gdy włącznik grupy był <button>. Kolory z tamtych
+     reguł przegrywają z linią wyżej, ale ANIMACJA nie miała z czym przegrać — i CAŁA dźwignia Myszy
+     pulsowała `opacity: 1 → 0.35 → 1`, gdy kapsel prowadził kursor. Wyglądało to jak znikający
+     i wracający przycisk, a żaden inny moduł tak nie robił: `#kEnable`, `#trigEnable`, `#miEnable`,
+     `#oscEnable` i `#wheelEnable` mają na sobie `animation:none`, bo nikt nie napisał dla nich
+     starej reguły po id. Objaw (2026-09-10): „mysz jak jest aktywna — jej przycisk
+     znika i pojawia się… nie rozumiem, dlaczego zachowuje się inaczej niż pozostałe moduły".
+     Sygnał „na żywo" zostaje tam, gdzie mają go wszystkie moduły: w bursztynowym napisie „On". */
+  .rf-toggle.live{animation:none !important}
+  .rf-tg-knob{position:relative;width:52px;height:38px;flex:0 0 auto;transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  .rf-tg-knob::before,.rf-tg-knob::after{content:"";position:absolute;inset:0;background-repeat:no-repeat;background-position:center;background-size:52px 52px;transition:opacity .28s var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  /* OFF gets the muted felt tint (--ic-off-tint, 01-assets-tokens): the drawing is pink, and pink
+     is what this app uses for „press me" — an off module must not look like a lit control. */
+  .rf-tg-knob::before{background-image:var(--ic-toggleoff);opacity:1;filter:var(--ic-off-tint)}
+  .rf-tg-knob::after{background-image:var(--ic-toggleon);opacity:0}
+  .rf-toggle.on .rf-tg-knob::before{opacity:0}
+  .rf-toggle.on .rf-tg-knob::after{opacity:1}
+  .rf-toggle:hover .rf-tg-knob{transform:translateY(-1px)}
+  @media(prefers-reduced-motion:reduce){.rf-tg-knob,.rf-tg-knob::before,.rf-tg-knob::after{transition:none}.rf-toggle:hover .rf-tg-knob{transform:none}.rf-toggle.live .rf-tg-lbl.on{animation:none}}
+  .rf-toggle.live .rf-tg-lbl.on{color:var(--amber);animation:pulse 1.4s infinite}
+  /* ---------- PRZEŁĄCZNIK NA POJEDYNCZYM `<input type=checkbox>` ---------------------------------
+     Ta sama dźwignia, co przy modułach (`.rf-tg-knob` wyżej: te same dwa rysunki, ta sama krzywa
+     przenikania, ten sam podskok pod kursorem), tylko bez opakowania `<div role="switch">`
+     i bez napisów Off/On. Dwa nośniki, bo w Czujniku były dwa różne rodzaje włącznika:
+       · `input[type=checkbox].rf-swi` — pole wyboru („odwróć" przy każdej osi, lustro,
+         odwrócenie przechyłu, wygładzanie podglądu),
+       · `.paxsw` — `<button role="switch">` w nagłówku karty osi (dostrajanie sygnału).
+
+     SKĄD (2026-08-31): toggle w czujnikach mają wyglądać jak przyciski
+     włącz/wyłącz przy modułach. Czujnik miał dziewięć systemowych
+     kwadracików obok filcowych dźwigni w nagłówkach kart, czyli dwa różne języki włączania w jednej
+     aplikacji, a przy „odwróć” przy każdej z sześciu osi jeszcze i najmniejszy cel do kliknięcia.
+
+     DLACZEGO NA WEJŚCIU, A NIE JAKO `.rf-toggle`. Tamten wzorzec to `<div role="switch">` z ręcznie
+     dorobioną obsługą Enter/Spacji (rf-27) — sensowny tam, gdzie przełącznik jest sam. Tutaj każdy
+     siedzi w `<label>` z tekstem i ma podpiętego `onchange`; `appearance:none` zabiera systemowy
+     rysunek i NIC poza nim: klik w napis, spacja, Tab, `:checked` i wszystkie nasłuchy zostają
+     dokładnie takie, jakie były. Zero zmian w JS-ie, poza dopisaniem klasy.
+
+     Rozmiar przez `--sw`, bo wiersz ustawień i pływające okienko nad kulą to dwa różne miejsca.
+     Wysokość i rozmiar tła liczą się z niego w proporcji oryginału (52 px szerokości, 38 px
+     wysokości ramki, rysunek 52×52 przycięty góra-dół). */
+  input[type=checkbox].rf-swi,.paxsw{--sw:46px;-webkit-appearance:none;appearance:none;margin:0;padding:0;flex:0 0 auto;
+    box-shadow:none;border-radius:0;
+    width:var(--sw);height:calc(var(--sw)*0.7308);border:none;background:none;cursor:pointer;
+    position:relative;
+    transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  input[type=checkbox].rf-swi::before,input[type=checkbox].rf-swi::after,
+  .paxsw::before,.paxsw::after{content:"";position:absolute;inset:0;background-repeat:no-repeat;
+    background-position:center;background-size:var(--sw) var(--sw);
+    transition:opacity .28s var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  input[type=checkbox].rf-swi::before,.paxsw::before{background-image:var(--ic-toggleoff);opacity:1;filter:var(--ic-off-tint)}
+  input[type=checkbox].rf-swi::after,.paxsw::after{background-image:var(--ic-toggleon);opacity:0}
+  input[type=checkbox].rf-swi:checked::before,.paxsw[aria-checked="true"]::before{opacity:0}
+  input[type=checkbox].rf-swi:checked::after,.paxsw[aria-checked="true"]::after{opacity:1}
+  input[type=checkbox].rf-swi:hover,.paxsw:hover{transform:translateY(-1px)}
+  input[type=checkbox].rf-swi:focus-visible,.paxsw:focus-visible{outline:2px solid var(--pink);outline-offset:1px;border-radius:11px}
+  input[type=checkbox].rf-swi:disabled,.paxsw:disabled{opacity:.45;cursor:default}
+  input[type=checkbox].rf-swi.sm{--sw:34px}
+  /* WIERSZ Z PRZEŁĄCZNIKIEM (UX 261120 A1, synteza 3.3): włączanie czegoś wewnątrz karty. Cały
+     wiersz jest `<label>`, więc klik w napis przełącza, a dźwignia stoi z lewej (albo z prawej:
+     `.rf-swrow.end`, gdy wiersz jest nagłówkiem bloku). Opis pod nazwą w `<small>`.
+       <label class="rf-swrow"><input type="checkbox" class="rf-swi" id="mInvX">
+         <span class="rf-swrow-tx">Odwróć lewo i prawo<small>…</small></span></label>
+     `.rf-toggle` z napisami Wył./Wł. zostaje WYŁĄCZNIE dla włącznika modułu w nagłówku. */
+  .rf-swrow{display:flex;align-items:center;gap:12px;min-height:40px;padding:2px 0;cursor:pointer;
+    color:var(--ink);font-size:14px;line-height:1.35;text-align:left}
+  .rf-swrow.end{flex-direction:row-reverse;justify-content:space-between}
+  .rf-swrow-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .rf-swrow-tx small{font-size:12px;color:var(--muted);font-weight:500}
+  .rf-swrow:has(input:disabled){cursor:default;color:var(--dim)}
+  /* Przełącznik osi jest dopychany do prawej krawędzi nagłówka swojej karty. Stoi tu, a nie
+     w 05-macro-tabs.css, bo wspólna reguła wyżej zeruje marginesy i tamta przegrałaby
+     kolejnością arkuszy — przy tej samej specyficzności wygrywa arkusz wczytany później. */
+  .paxsw{margin-left:auto}
+  @media(prefers-reduced-motion:reduce){
+    input[type=checkbox].rf-swi,input[type=checkbox].rf-swi::before,input[type=checkbox].rf-swi::after,
+    .paxsw,.paxsw::before,.paxsw::after{transition:none}
+    input[type=checkbox].rf-swi:hover,.paxsw:hover{transform:none}}
+  .rail-fold>summary .hd-ic{width:24px;height:24px;vertical-align:-6px;margin-right:7px}
+  /* The footer button is 12px text; the card-header size (29px) would tower over it. */
+  .foot-help .hd-ic{width:17px;height:17px;vertical-align:-3px;margin-right:0}
+  .live-rail .card>.head h2 .hd-ic{width:20px;height:20px;vertical-align:-5px;margin-right:6px}
+  /* status dot on input-group tabs: green = group enabled, dark grey-brown felt = off.
+     The off drawing is dotred.png — brand pink — so it is tinted here for the same reason the
+     switch above is: a pink dot next to a module reads as „this one is lit", which is the exact
+     opposite of what it means. Amber („zmienione") is drawn elsewhere and left alone.
+     Odcienie mieszkają w 01-assets-tokens.css (`--ic-dot-off` / `--ic-dot-on` / `--ic-dot-glow`)
+     razem z powodem, dla którego kropka ma je WŁASNE, a nie wspólne z przełącznikami. Sam ruch —
+     pulsowanie zapalonej lampki — dokłada 20-cols.css, bo kropka mieszka dziś w pionowej
+     nawigacji i tam ma czym pulsować. */
+  .tab-btn .tab-dot{position:absolute;top:4px;right:6px;width:14px;height:14px;border-radius:0;background:var(--ic-dotred) center/contain no-repeat;flex:0 0 auto;box-shadow:none;transition:none;filter:var(--ic-dot-off)}
+  .tab-btn .tab-dot.on{background:var(--ic-dotgreen) center/contain no-repeat;box-shadow:none;animation:none;filter:var(--ic-dot-on) var(--ic-dot-glow)}
+  .tab-btn.active .tab-dot{box-shadow:none}
+  /* active (green-dot) tabs: subtle green wave pulsing OUTWARD from under the button (box-shadow ring, not a dot opacity blink) */
+  .tabbar .tab-btn:has(.tab-dot.on)::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;animation:tabwave 1.9s ease-out infinite}
+  @keyframes tabwave{0%{box-shadow:0 0 0 0 rgba(108,179,63,.5)}70%,100%{box-shadow:0 0 0 11px rgba(108,179,63,0)}}
+  @media(prefers-reduced-motion:reduce){.tabbar .tab-btn:has(.tab-dot.on)::before{animation:none}}
+  /* ===== device-connected celebration ===== */
+  .rf-celebrate{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .rf-cel-cvs{position:absolute;inset:0;pointer-events:none}
+  .rf-cel-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:13px;transform:translateY(-6px)}
+  .rf-cel-ic{width:108px;height:108px;background:var(--ic-checks) center/contain no-repeat;transform-origin:68% 88%;animation:rfCelWave 2.1s cubic-bezier(.3,.8,.3,1) both;filter:drop-shadow(0 9px 15px rgba(0,0,0,.28))}
+  .rf-cel-msg{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.2px;color:var(--ink);background:var(--panel);background-image:var(--felt-tex-soft);border:2px solid var(--green);border-radius:14px;padding:9px 20px;box-shadow:0 6px 0 rgba(70,120,30,.28);animation:rfCelMsg .5s .14s both}
+  @keyframes rfCelWave{0%{transform:scale(0) rotate(0);opacity:0}12%{transform:scale(1.18) rotate(0);opacity:1}20%{transform:scale(1) rotate(-17deg)}32%{transform:scale(1) rotate(13deg)}44%{transform:scale(1) rotate(-9deg)}56%{transform:scale(1) rotate(6deg)}66%{transform:scale(1) rotate(-3deg)}76%,100%{transform:scale(1) rotate(0)}}
+  @keyframes rfCelMsg{0%{transform:translateY(11px) scale(.9);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+  .rf-celebrate.rf-cel-out{animation:rfCelFade .4s both}@keyframes rfCelFade{to{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.rf-cel-ic{animation:rfCelMsg .3s both}.rf-cel-msg{animation:none}}
+  .tabbar .tab-right{margin-left:auto}   /* sensor / connection / setups tabs pushed to the right */
+  /* UX 261120 B5b (P-G6-03): kontrolki wykresów w DRUGIM wierszu, w zwykłym przepływie pod tytułem.
+     Przyklejone absolutnie do prawego rogu nakładały się na tytuł przy 1280 px. */
+  .rail-fold{position:relative}
+  .rail-ctrls{position:relative;z-index:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px var(--card-x) 10px}
+  .rail-ctrls .btn{min-height:32px;padding:5px 12px;font-size:13px;box-shadow:0 3px 0 rgba(120,90,40,.14)}
+  .rail-ctrls .btn:active{box-shadow:0 1px 0 rgba(120,90,40,.14)}
+  .rail-range{display:inline-flex;align-items:center;gap:8px;margin-right:4px}
+  .rail-range-lbl{font-size:13px;font-weight:600;color:var(--muted)}
+  .rail-range .seg{display:inline-flex;overflow:hidden}
+  .rail-range .seg button{min-height:30px;padding:0 11px;font-size:12px;border:0;cursor:pointer}
+
+/* ===== KNOB WIDGET (sound library) — progressive enhancement of .se-fld range sliders ===== */
+.se-knob-fld{align-items:center;text-align:center;gap:5px;}
+.se-knob-fld>span{justify-content:center;text-align:center;min-height:13px;line-height:1.15;}
+.se-knob-fld input.knob-model{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;border:0;overflow:hidden;clip:rect(0 0 0 0);opacity:0;pointer-events:none;}
+.knob{position:relative;width:76px;height:70px;margin:2px auto 0;touch-action:none;outline:none;-webkit-tap-highlight-color:transparent;}
+.knob-dial{position:absolute;left:50%;top:16px;width:52px;height:52px;margin-left:-26px;border-radius:50%;}
+.knob-cap{display:block;width:100%;height:100%;background-repeat:no-repeat;background-position:center;background-size:contain;transform:rotate(0deg);transform-origin:50% 50%;transition:transform .07s linear;cursor:grab;filter:drop-shadow(0 2px 2px rgba(80,60,20,.28));}
+.knob.dragging .knob-cap{cursor:grabbing;transition:none;}
+.knob:focus-visible .knob-dial{box-shadow:0 0 0 2px var(--pink),0 0 0 4px rgba(236,26,131,.22);}
+.knob-mark{position:absolute;font-size:11px;line-height:1;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.1px;pointer-events:none;white-space:nowrap;}
+/* the live value, over the cap — where a hand on a knob looks first (rf-knob.js `.knob-val`) */
+.knob-val{top:0;left:50%;transform:translateX(-50%);color:var(--ink);font-weight:700;font-size:12px;}
+.knob-min{left:0;bottom:0;}
+.knob-max{right:0;bottom:0;}
+.knob-entry{display:flex;align-items:center;justify-content:center;gap:3px;margin-top:1px;}
+.knob-num{width:56px;text-align:center;font-family:var(--mono);font-size:12px;font-weight:600;padding:3px 2px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);-moz-appearance:textfield;}
+.knob-num::-webkit-outer-spin-button,.knob-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.knob-num:focus-visible{outline:none;border-color:var(--pink);box-shadow:0 0 0 2px rgba(236,26,131,.30);}
+.knob-unit{font-size:11px;color:var(--dim);font-weight:500;text-transform:uppercase;letter-spacing:.2px;}
+.se-grid{align-items:start;}
+/* sound-library icon (megaphone) */
+.rfic.lib-ic{width:22px;height:22px;vertical-align:-5px;margin-right:7px;background-image:var(--ic-megaphone)}
+/* triggers-guide icon (book) */
+.rfic.guide-ic{width:20px;height:20px;vertical-align:-4px;margin-right:7px;background-image:var(--ic-book)}
+/* LED-command thunder icons */
+.rfic.thunder-ic{width:22px;height:22px;vertical-align:-5px;margin-right:7px;background-image:var(--ic-thunder2)}
+.rfic.thunder-ic.sm{width:16px;height:16px;vertical-align:-3px;margin-right:5px}
+/* info icon (felt) — used in summaries, callouts, alerts, toasts and the battery hint */
+.rfic.info-ic{width:20px;height:20px;vertical-align:-4px;margin-right:7px;background-image:var(--ic-info)}
+.rfm-ic .rfic.info-ic{width:34px;height:34px;margin:0;vertical-align:0}
+.hinti.rfic.info-ic{width:12px;height:12px;margin:0;vertical-align:-2px}
+/* active tab — white keyline around the icon and status dot so they read on the coloured background */
+.tabbar .tab-btn.active .rfic,
+.tabbar .tab-btn.active .tab-dot{
+  filter:drop-shadow(1.3px 0 0 #fff) drop-shadow(-1.3px 0 0 #fff) drop-shadow(0 1.3px 0 #fff) drop-shadow(0 -1.3px 0 #fff);
+}
+/* same white keyline on icons that sit on coloured or dark surfaces */
+header .rfic, header .bic,
+.mmode button.on .mm-ic,
+.btn.primary .bic, .btn.primary .rfic,
+#rfSafe .ts-danger .bic, #rfSafe .ts-danger .rfic{
+  filter:drop-shadow(1.3px 0 0 #fff) drop-shadow(-1.3px 0 0 #fff) drop-shadow(0 1.3px 0 #fff) drop-shadow(0 -1.3px 0 #fff);
+}
+.bic-checks{background-image:var(--ic-checks)}
+/* triggers are not drag-reorderable — no grab cursor */
+.ruleslist .rule-wrap{cursor:default}
+/* effects XY pad = subtle water blue */
+.fxpad canvas{background:linear-gradient(180deg,#e9f4fd 0%,#d7e9f7 100%);border-color:#bcd6ec}
+/* LED / command card bottom — breathing room so the result and log boxes do not collide */
+#cmdCard .cmd-presets{padding:0 var(--card-x) 12px}
+#cmdCard .cmd-result{margin:4px var(--card-x) 10px;padding:9px 13px}
+#cmdCard .cmd-log{margin:var(--card-y) var(--card-x) 16px;padding:9px 13px}
+  /* ===== Icon aliases, inline icon helper, and felt skins for the native form controls ===== */
+  :root{--ic-bin:var(--ic-bin2);--ic-save:var(--ic-save2);--ic-dfrog:var(--ic-dangerfrog);}
+
+  /* inline icon inside buttons/labels (replaces leading emoji) */
+  .bic{display:inline-block;width:1.2em;height:1.2em;vertical-align:-0.24em;margin-right:.34em;flex:0 0 auto;
+    background-position:center;background-size:contain;background-repeat:no-repeat}
+  .bic-save{background-image:var(--ic-save2)}
+  .bic-bin{background-image:var(--ic-bin2)}
+  .bic-zzz{background-image:var(--ic-zzz)}
+  .bic-camera{background-image:var(--ic-camera)}
+  .bic-folder{background-image:var(--ic-folder)}
+  .bic-import{background-image:var(--ic-import)}
+  .bic-export{background-image:var(--ic-export)}
+  .bic-plus{background-image:var(--ic-plusclean)}
+  .bic-connect{background-image:var(--ic-connect)}
+  .bic-star{background-image:var(--ic-star2)}
+  .bic-mega{background-image:var(--ic-mega)}
+  .bic-eye{background-image:var(--ic-eye)}
+  .bic-gear{background-image:var(--ic-gear2)}
+  .bic-spray{background-image:var(--ic-spray)}
+  .bic-synth{background-image:var(--ic-padsynth)}
+  .bic-drag{background-image:var(--ic-mousereal)}
+  /* the project page wears the project's own face — same artwork as the brand in the app bar */
+  .bic-site{background-image:var(--ic-logo)}
+  /* the community server wears the felt Discord mark, cut from the same cloth as the rest of the set */
+  .bic-discord{background-image:var(--ic-discord)}
+  /* every „Wymiana" button, wherever things are saved: the Discord mark named a PLACE, this one
+     names the ACTION, which is what those buttons actually do (send, browse, bring one back) */
+  .bic-swap{background-image:var(--ic-swap)}
+  /* the three promises in „How sharing works" (rf-39m): the vault that stays home, the check that
+     runs on a stranger's file, the switch nothing flips for you */
+  .bic-vault{background-image:var(--ic-vault)}
+  .bic-toggleoff{background-image:var(--ic-toggleoff)}
+
+  /* checkboxes → felt checkbox art */
+  input[type=checkbox]{appearance:none;-webkit-appearance:none;width:22px;height:22px;flex:0 0 auto;margin:0;padding:0;
+    border:none;box-shadow:none;background:var(--ic-cboff) center/contain no-repeat;cursor:pointer;vertical-align:-5px;
+    transition:transform var(--rf-d-pop,220ms) var(--rf-ez-overshoot,cubic-bezier(0.34,1.56,0.64,1))}
+  input[type=checkbox]:checked{background-image:var(--ic-cbon)}
+  input[type=checkbox]:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:6px}
+  /* radios → felt radio art */
+  input[type=radio]{appearance:none;-webkit-appearance:none;width:22px;height:22px;flex:0 0 auto;margin:0;padding:0;
+    border:none;box-shadow:none;background:var(--ic-radoff) center/contain no-repeat;cursor:pointer;vertical-align:-5px;
+    transition:transform var(--rf-d-pop,220ms) var(--rf-ez-overshoot,cubic-bezier(0.34,1.56,0.64,1))}
+  input[type=radio]:checked{background-image:var(--ic-radon)}
+  input[type=radio]:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:50%}
+  /* pop ONLY on a real user toggle-on (class added in a change listener) — NOT on every innerHTML rebuild
+     that recreates an already-checked input (device pill mute, #rfInc rows, cap-inv checkboxes…). */
+  input[type=checkbox].rf-checkpop,input[type=radio].rf-checkpop{animation:rf-pop var(--rf-d-pop,220ms) var(--rf-ez-overshoot,cubic-bezier(0.34,1.56,0.64,1))}
+  @media (prefers-reduced-motion:reduce){input[type=checkbox],input[type=radio],input[type=checkbox]:checked,input[type=radio]:checked,input[type=checkbox].rf-checkpop,input[type=radio].rf-checkpop{animation:none !important;transition:none !important;transform:none !important}}
+
+  /* sliders → felt track + leaf-tag thumb (the app used accent-color NATIVE sliders,
+     so a thumb-only rule was ignored — force custom appearance on the input). */
+  input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:24px;accent-color:auto}
+  input[type=range]::-webkit-slider-runnable-track{height:7px;border-radius:999px;
+    background:var(--line,#d8cdb8);box-shadow:inset 0 1px 0 rgba(120,90,40,.14)}
+  input[type=range]::-moz-range-track{height:7px;border-radius:999px;background:var(--line,#d8cdb8)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:26px;height:26px;margin-top:-10px;
+    background:var(--ic-leaf) center/contain no-repeat;border:none;box-shadow:none;cursor:pointer;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px;background:var(--ic-leaf) center/contain no-repeat;
+    border:none;box-shadow:none;cursor:pointer}
+
+  /* mode toggle (live / simulation): big frog icons */
+  #modeToggle .modesw-ic{flex:none;width:32px;height:32px;background-position:center;background-size:contain;background-repeat:no-repeat;font-size:0}
+  #modeToggle .modesw-seg.real .modesw-ic{background-image:var(--ic-frogreal)}
+  #modeToggle .modesw-seg.sim .modesw-ic{background-image:var(--ic-frogsim)}
+
+  /* danger dialog: big frog on top-center (for the "macros are dangerous" confirm) */
+  .rfm-card.danger .rfm-ic .rfm-dfrog{width:100%;height:100%;background:var(--ic-dangerfrog) center/contain no-repeat}
+  .rfm-card.danger.rfm-bigicon .rfm-ic{width:96px;height:96px;background:transparent;box-shadow:none}
+
+  /* loading "spinner" = punk skull that spins AND springy-pulses (replaces the plain rotating ring) */
+  @keyframes rfSkullSpin{
+    0%{transform:rotate(0deg) scale(1)}
+    50%{transform:rotate(180deg) scale(1.18)}
+    70%{transform:rotate(240deg) scale(.9)}
+    100%{transform:rotate(360deg) scale(1)}}
+  .rf-skull-spin{background:var(--ic-punkskull) center/contain no-repeat;
+    animation:rfSkullSpin 1.15s cubic-bezier(.5,-0.4,.5,1.4) infinite;transform-origin:center}
+  @media (prefers-reduced-motion:reduce){.rf-skull-spin{animation:rfSkullFade 1.6s ease-in-out infinite}}   /* reduce: no spin/scale — gentle opacity breathe only */
+  /* the mode-restart loading ring → spinning + springy-pulsing punk skull */
+  .rfm-restart .rfm-spin{width:76px;height:76px;border:none!important;border-radius:0!important;
+    background:var(--ic-punkskull) center/contain no-repeat!important;
+    animation:rfSkullSpin 1.15s cubic-bezier(.5,-0.4,.5,1.4) infinite!important;transform-origin:center}
+  @media (prefers-reduced-motion:reduce){.rfm-restart .rfm-spin{animation:rfSkullFade 1.6s ease-in-out infinite!important}}   /* reduce: static skull, opacity fade only */
+  /* macro-danger warning: big danger frog on top, centered */
+  .ts-warn-big{flex-direction:column;align-items:center;text-align:center}
+  .ts-warn-big .ts-dfrog{width:92px;height:92px}
+  /* mode-switch dialog: big frog tile (sim / live) */
+  .rfm-ic:has(.rfm-frogtile){width:92px;height:92px;padding:10px;border-radius:22px}
+  .rfm-card.sim .rfm-ic:has(.rfm-frogtile){background:#e9f6d6}
+  .rfm-ic .rfm-frogtile{display:block;width:100%;height:100%;background-position:center;background-size:contain;background-repeat:no-repeat}
+  .rfm-frogsim{background-image:var(--ic-frogsim)}
+  .rfm-frogreal{background-image:var(--ic-frogreal)}
+  /* simulation notice: warning triangle + a left-aligned, multi-paragraph body (the dialog
+     writes plain text, so the line breaks have to survive as pre-line) */
+  .rfm-warntile{background-image:var(--ic-warning)}
+  .rfm-card.simnote .rfm-msg{white-space:pre-line;text-align:left}
+  /* device mute button → megaphone (crossed when muted) */
+  .dp-mute .bic-mega{width:17px;height:17px;margin:0;vertical-align:-3px}
+  .dp-mute.is-muted{position:relative;opacity:.5}
+  .dp-mute.is-muted::after{content:"";position:absolute;left:2px;right:2px;top:50%;height:2px;
+    background:var(--bad,#d42b28);transform:rotate(-20deg);border-radius:2px}
+  /* "hands off this capsule" — the same sign as on the button lives in the mark on the pill and in
+     the cheat sheet, so one picture always means one thing: nothing gets out of this capsule. */
+  .rfic.dt-ic{background-image:var(--ic-donttouch);width:17px;height:17px;vertical-align:-3px}
+  .dp-pause .dt-ic{width:17px;height:17px;margin:0;vertical-align:-3px;
+    filter:grayscale(1) opacity(.62);transition:filter .14s}
+  .dp-pause:hover .dt-ic,.dp-pause.is-paused .dt-ic{filter:none}
+  .ov-hold .dt-ic{width:14px;height:14px;vertical-align:-2px}
+  /* add-device "+" → clean plus icon */
+  .devpill.add .dp-plus{width:16px;height:16px;background:var(--ic-plusclean) center/contain no-repeat;font-size:0!important}
+  /* "show this capsule above the game" — the felt drawing of two panes, on the capsule's own
+     action bar. A touch larger than its neighbours (18px, like the spray can): the whole picture
+     is a rectangle inside a rectangle, so at 17px the two panes start reading as one block. */
+  .rfic.ovl-ic{background-image:var(--ic-overlay);width:18px;height:18px;vertical-align:-4px}
+  /* spray-can icon, used on every "edit" affordance */
+  .rfic.spray-ic{background-image:var(--ic-spray);width:17px;height:17px;vertical-align:-3px}
+  .rfic.spray-ic.sm{width:14px;height:14px;vertical-align:-2px}
+  .dp-edit .spray-ic{width:18px;height:18px;vertical-align:-4px}
+
+  /* ===== punk foam-hand cursor — states (idle / hover / press / grab), CONSTANT size ===== */
+  html.rf-cursor,html.rf-cursor *{cursor:var(--rf-cur) !important}
+  /* HOVERING something clickable (buttons, tabs, links, toggles, checkboxes…) -> the SAME
+     pointing finger, ringed with a 1 px pink outline: "you can click this". That ring appears
+     in this one state and nowhere else — pressing drops back to the plain finger-down pose,
+     and grab-able controls (knob / slider / effect pad) keep the plain open hand.
+     Descendant selectors (`X:hover *`) are required — every element carries an explicit
+     cursor from the universal rule above.
+     `:not(:active)` is NOT decorative: these selectors are more specific than the press rules
+     below, so without it a held button would keep the hover pose and never show "finger down"
+     (source order only breaks ties — it does not beat higher specificity). */
+  html.rf-cursor a:hover:not(:active),html.rf-cursor a:hover:not(:active) *,
+  html.rf-cursor button:not(:disabled):hover:not(:active),html.rf-cursor button:not(:disabled):hover:not(:active) *,
+  html.rf-cursor .btn:not([disabled]):hover:not(:active),html.rf-cursor .btn:not([disabled]):hover:not(:active) *,
+  html.rf-cursor [role=button]:hover:not(:active),html.rf-cursor [role=button]:hover:not(:active) *,
+  html.rf-cursor [role=tab]:hover:not(:active),html.rf-cursor [role=tab]:hover:not(:active) *,
+  html.rf-cursor [role=switch]:hover:not(:active),html.rf-cursor [role=switch]:hover:not(:active) *,
+  html.rf-cursor summary:hover:not(:active),html.rf-cursor summary:hover:not(:active) *,
+  html.rf-cursor label:hover:not(:active),html.rf-cursor label:hover:not(:active) *,
+  html.rf-cursor select:hover:not(:active),
+  html.rf-cursor input[type=checkbox]:hover:not(:active),html.rf-cursor input[type=radio]:hover:not(:active),
+  html.rf-cursor .devpill:hover:not(:active),html.rf-cursor .devpill:hover:not(:active) *,
+  html.rf-cursor .tab-btn:hover:not(:active),html.rf-cursor .tab-btn:hover:not(:active) *,
+  html.rf-cursor .rf-toggle:hover:not(:active),html.rf-cursor .rf-toggle:hover:not(:active) *{cursor:var(--rf-cur-click) !important}
+  /* text fields keep the marker pose even inside a hovered clickable container (label/summary/
+     role=button): re-stated here because the ringed-hand block above outranks the generic
+     writing rule further down for `textarea` / `[contenteditable]`. */
+  html.rf-cursor input[type=text]:hover:not(:disabled),html.rf-cursor input[type=number]:hover:not(:disabled),
+  html.rf-cursor input[type=search]:hover:not(:disabled),html.rf-cursor input[type=email]:hover:not(:disabled),
+  html.rf-cursor input[type=password]:hover:not(:disabled),html.rf-cursor input[type=tel]:hover:not(:disabled),
+  html.rf-cursor input[type=url]:hover:not(:disabled),html.rf-cursor input:not([type]):hover:not(:disabled),
+  html.rf-cursor textarea:hover:not(:disabled),html.rf-cursor [contenteditable=""]:hover:not(:disabled),
+  html.rf-cursor [contenteditable=true]:hover:not(:disabled){cursor:var(--rf-cur-write) !important}
+  /* press (mousedown) -> finger down */
+  html.rf-cursor a:active,html.rf-cursor button:active,html.rf-cursor .btn:active,
+  html.rf-cursor [role=button]:active,html.rf-cursor [role=tab]:active,html.rf-cursor [role=switch]:active,
+  html.rf-cursor summary:active,html.rf-cursor label:active,html.rf-cursor select:active,
+  html.rf-cursor .devpill:active,html.rf-cursor .tab-btn:active,html.rf-cursor .rf-toggle:active,html.rf-cursor *:active{cursor:var(--rf-cur-press) !important}
+  /* drag handles -> grabbed fist */
+  html.rf-cursor .drag-grip,html.rf-cursor [draggable=true],html.rf-cursor .drag-grip:hover,html.rf-cursor .drag-grip:active{cursor:var(--rf-cur-grab) !important}
+  /* value handles (slider + knob) = the ONLY things with the open hand: hover = open hand, press/drag = grabbed fist.
+     Cover the knob AND its descendants (the .knob-cap) so the whole control reads as grab-able. */
+  html.rf-cursor input[type=range]:hover,
+  html.rf-cursor .knob:hover,html.rf-cursor .knob:hover *{cursor:var(--rf-cur-hover) !important}
+  html.rf-cursor input[type=range]:active,
+  html.rf-cursor .knob:active,html.rf-cursor .knob:active *,
+  html.rf-cursor .knob.dragging,html.rf-cursor .knob.dragging *{cursor:var(--rf-cur-grab) !important}
+  /* slider thumb pseudo sets its own cursor:pointer (a system cursor). `inherit` resolves to the UA
+     shadow cursor (still system), so set the foam poses explicitly with var() — which works on the
+     thumb (its background already uses var(--ic-leaf)). Hover = open hand, mousedown = grabbed fist. */
+  /* NB: keep -webkit and -moz thumbs in SEPARATE rules — combining them makes Chromium/Edge drop the whole rule. */
+  html.rf-cursor input[type=range]::-webkit-slider-thumb{cursor:var(--rf-cur-hover) !important}
+  html.rf-cursor input[type=range]::-moz-range-thumb{cursor:var(--rf-cur-hover) !important}
+  html.rf-cursor input[type=range]:active::-webkit-slider-thumb{cursor:var(--rf-cur-grab) !important}
+  html.rf-cursor input[type=range]:active::-moz-range-thumb{cursor:var(--rf-cur-grab) !important}
+  /* PASEK PRZEWIJANIA TEŻ JEST UCHWYTEM WARTOŚCI (2026-08-31): żabia łapka,
+     zachowanie jak przy hover nad kontrolką poziomego suwaka, a jak jest wciśnięta — dłoń
+     zaciśnięta. Kciuk suwaka robi dokładnie to, co uchwyt suwaka poziomego: chwytasz i ciągniesz.
+     Dostaje więc te same dwie pozy, co `input[type=range]` wyżej.
+
+     DLACZEGO TRZEBA GO WYMIENIĆ OSOBNO, skoro `html.rf-cursor *` daje łapkę wszystkiemu: `*` NIE
+     dopasowuje pseudoelementów. Części paska mają własne style (`::-webkit-scrollbar-*` w
+     07-felt-core.css), a te nie ustawiały kursora — więc zostawał systemowy grot i to on był na
+     zrzucie. Działa TYLKO dlatego, że te paski są w Chromium „custom scrollbars": mają własne
+     reguły `::-webkit-scrollbar`, a dla takich silnik rozwiązuje kursor normalnie. Pasek bez
+     stylowania dostałby grot i nie dałoby się tego zmienić.
+
+     Nad TOREM (poza kciukiem) zostaje zwykła łapka aplikacji: tor nie jest uchwytem, tylko miejscem
+     do kliknięcia „przeskocz o stronę". */
+  /* ⚠️ DWA ZESTAWY REGUŁ, I TO NIE JEST POWTÓRZENIE. `html.rf-cursor ::-webkit-scrollbar-thumb`
+     ma KOMBINATOR POTOMKA, więc dopasowuje paski elementów WEWNĄTRZ strony (obie kolumny, listy),
+     ale NIE pasek samego dokumentu — bo jego elementem jest `html`, a `html` nie jest własnym
+     potomkiem. Pierwsza wersja tej poprawki miała tylko wariant z odstępem i dlatego „nie działała":
+     kolumny dostały żabią łapkę, a użytkownik trzymał pasek STRONY, przy prawej krawędzi okna,
+     który jako jedyny został z systemowym grotem. Zmierzone: kciuk `<html>` miał wtedy kursor
+     odziedziczony (`hand-idle`), a nie ustawiony (`hand-hover`) — i to jest różnica, po której
+     widać, że reguła w ogóle trafiła. Wariant bez odstępu (`html.rf-cursor::-webkit-…`) celuje
+     w pasek dokumentu; `body` dołożone dlatego, że Chromium potrafi wziąć styl paska głównego
+     z `body`, gdy `html` swojego nie ma. */
+  html.rf-cursor ::-webkit-scrollbar,
+  html.rf-cursor::-webkit-scrollbar,
+  html.rf-cursor body::-webkit-scrollbar{cursor:var(--rf-cur) !important}
+  html.rf-cursor ::-webkit-scrollbar-track,
+  html.rf-cursor::-webkit-scrollbar-track,
+  html.rf-cursor body::-webkit-scrollbar-track{cursor:var(--rf-cur) !important}
+  html.rf-cursor ::-webkit-scrollbar-thumb,
+  html.rf-cursor::-webkit-scrollbar-thumb,
+  html.rf-cursor body::-webkit-scrollbar-thumb{cursor:var(--rf-cur-hover) !important}
+  html.rf-cursor ::-webkit-scrollbar-thumb:active,
+  html.rf-cursor::-webkit-scrollbar-thumb:active,
+  html.rf-cursor body::-webkit-scrollbar-thumb:active{cursor:var(--rf-cur-grab) !important}
+  /* KULA ORIENTACJI 3D TEŻ JEST UCHWYTEM WARTOŚCI (2026-08-31): nad orientacją 3D też
+     niech kursor zmienia się na łapkę z rozwartymi palcami i ściśniętą, jak jest naciśnięte.
+     Chwytasz ją i ciągniesz dokładnie tak, jak gałkę czy suwak — więc dostaje te same dwie pozy.
+     Dotyczy OBU rysunków: dużej karty w Czujniku (`canvas.pose3d`) i miniatury w prawej kolumnie
+     (`.rf-puck`).
+
+     ⚠️ DLACZEGO TRZEBA TO PISAĆ TUTAJ, skoro `04-pose-mouse-cmd.css` i `20-cols.css` od dawna mówią
+     `cursor:grab`: tamte reguły są BEZ `!important`, a uniwersalne `html.rf-cursor *` — z nim. Przy
+     włączonym filcowym kursorze systemowe słowo `grab` przegrywało więc zawsze i nad kulą stała
+     zwykła łapka spoczynkowa. Tamte zostają dla trybu bez filcowego kursora.
+
+     STAN „ZACIŚNIĘTA" jest klasą, nie tylko `:active`: `vp-grab` nadaje rf-14b na czas przeciągania
+     i to ona przeżywa wyjście kursora poza płótno w trakcie ruchu — `:active` na canvasie potrafi
+     zgasnąć, gdy wskaźnik ucieknie poza jego prostokąt, a ręka wtedy nadal trzyma kapsel. */
+  html.rf-cursor canvas.pose3d.vp-on,html.rf-cursor canvas.pose3d.vp-ready,
+  html.rf-cursor canvas.pose3d.vp-axis,
+  html.rf-cursor .rf-puck.vp-on,html.rf-cursor .rf-puck.vp-ready{cursor:var(--rf-cur-hover) !important}
+  html.rf-cursor canvas.pose3d.vp-grab,html.rf-cursor .rf-puck.vp-grab,
+  html.rf-cursor canvas.pose3d.vp-on:active,html.rf-cursor canvas.pose3d.vp-ready:active,
+  html.rf-cursor .rf-puck.vp-on:active,html.rf-cursor .rf-puck.vp-ready:active{cursor:var(--rf-cur-grab) !important}
+  /* music / play pad: hide the cursor while you play (mousedown-drag) so it never covers the pad */
+  html.rf-cursor .playpad canvas:active{cursor:none !important}
+  /* effect XY pad = grab-able: hover = open hand, press = grabbed fist */
+  html.rf-cursor .fxpad-cv:hover{cursor:var(--rf-cur-hover) !important}
+  html.rf-cursor .fxpad-cv:active{cursor:var(--rf-cur-grab) !important}
+  /* real caret only where the user actually types */
+  html.rf-cursor input[type=text],html.rf-cursor input[type=number],html.rf-cursor input[type=search],
+  html.rf-cursor input[type=email],html.rf-cursor input[type=password],html.rf-cursor input[type=tel],
+  html.rf-cursor input[type=url],html.rf-cursor input:not([type]),html.rf-cursor textarea,
+  html.rf-cursor [contenteditable=""],html.rf-cursor [contenteditable=true]{cursor:var(--rf-cur-write) !important}
+  /* dedicated in-theme tooltip beside the hand (replaces native title popups) */
+  #rf-tip{position:fixed;z-index:2147483646;display:none;pointer-events:none;top:0;left:0;
+    max-width:264px;padding:5px 10px 6px;border-radius:9px;
+    font-family:var(--display,"Baloo 2",sans-serif);font-weight:500;font-size:13px;line-height:1.3;letter-spacing:.2px;
+    color:#f6efe0;background:var(--felt-ink,#211f1d);
+    border:2px solid rgba(246,239,224,.16);
+    box-shadow:0 4px 0 rgba(0,0,0,.28),0 9px 22px rgba(0,0,0,.34);
+    white-space:normal;overflow-wrap:anywhere;text-align:left;
+    animation:rfTipIn .12s var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  /* Tooltip with a picture. The drawing is deliberately BIGGER than the button it describes:
+     in the pill's action bar the icons are 17px and two of them mean different kinds of "off",
+     so the tooltip is where that difference has room to be legible. */
+  .rf-tip-row{display:flex;align-items:center;gap:10px}
+  /* Longhands, NEVER `background:` — the shorthand would reset background-image and wipe out
+     the .ric-* class that puts the picture there. Same trap that hid the pill's status light. */
+  /* White keyline, the same trick the active module buttons use. The drawings are dark line-art
+     (the bin is nearly black, the "hands off" sign is a black disc) and were sinking into the
+     tooltip's ink background. Four drop-shadows trace the alpha silhouette, then the soft dark one
+     comes LAST so it falls under the outlined shape rather than under the bare drawing.
+     1px, not the 1.3px of the module buttons: those icons are 40px, these are 30px, and above ~1.2px
+     the rim starts closing the bin's grid and the blanket's stitching. */
+  .rf-tip-ic{width:30px;height:30px;flex:0 0 auto;
+    background-position:center;background-size:contain;background-repeat:no-repeat;
+    filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)
+           drop-shadow(0 1px 0 rgba(0,0,0,.45))}
+  /* The overlay drawing gets four more pixels than its neighbours. It is the one picture here whose
+     subject is a rectangle behind a rectangle: at 30px the offset pane closes up and the whole
+     thing reads as a single pink card — which is the opposite of what "one window on top of
+     another" is supposed to say. The white keyline above is doing real work here too, because the
+     back pane is pale green on the tooltip's dark ink. */
+  .rf-tip-ic.ric-overlay{width:34px;height:34px}
+  #rf-tip:has(.rf-tip-row){max-width:320px;padding:8px 12px 9px}
+  /* Long tips get a longer line. Same idea as the picture variant above: the default 264px is
+     tuned for a one-line label, and a 240-character sentence turned into seven stacked lines.
+     360px is the widest measure that still clears the right edge in the narrowest supported
+     window after place() flips the bubble to the left of the hand. Declared AFTER the :has()
+     rule on purpose — the two have equal specificity, and a tip that is both long and pictured
+     wants the wider one. rf-05 toggles .rf-tip-long from the TRANSLATED string. */
+  #rf-tip.rf-tip-long{max-width:360px}
+  #rf-tip::after{content:"";position:absolute;inset:3px;border-radius:6px;
+    border:1.5px dashed rgba(246,239,224,.22);pointer-events:none}
+  @keyframes rfTipIn{from{opacity:0;transform:translateY(2px) scale(.98)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){#rf-tip{animation:none}}
+
+  /* playing pad: per-pad frog badge → synth icon */
+  .pp-frog{font-size:0!important;width:22px;height:22px;flex:0 0 auto;background:var(--ic-padsynth) center/contain no-repeat}
+  /* effect pad: spray badge (per pad + section header) */
+  .fx-spray{display:inline-block;width:22px;height:22px;flex:0 0 auto;vertical-align:-5px;background:var(--ic-spray) center/contain no-repeat}
+  /* drag handle → punk mouse */
+  .drag-grip{font-size:0!important;letter-spacing:0!important;width:20px;height:20px;flex:0 0 auto;
+    background:var(--ic-mousereal) center/contain no-repeat;opacity:.7}
+  .rule-wrap:hover .drag-grip,.mi-row:hover .drag-grip{opacity:1}
+  /* ===== Compact header on narrow windows — keep the app bar to ≤2 rows =====
+     These sit last in the file, so they win the cascade over the felt-skin rules above. */
+  @media (max-width:900px){
+    /* (the all-mappings button lives in the tab bar now — it keeps its label like every other tab) */
+    /* project-page and Discord links → the artwork alone (font-size:0 collapses the label; .bic is sized in em, so it needs a px floor) */
+    #siteLink,#discordLink{font-size:0;padding-left:10px;padding-right:10px}
+    #siteLink .bic-site,#discordLink .bic-discord{width:19px;height:19px;margin-right:0}
+    /* mode switch → icon-only segments, still a comfortable tap target */
+    header #modeToggle.modesw .modesw-txt{display:none}
+    header #modeToggle.modesw .modesw-seg{min-width:44px;padding:6px 10px}
+    /* drop the tagline under the wordmark */
+    .brand small{display:none}
+  }
+  @media (max-width:620px){
+    header{gap:8px;padding:9px 12px}
+    .ctrl{gap:6px}
+    header .btn{padding:6px 9px}
+  }

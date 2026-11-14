@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Keys/Organ/Loud"
+ },
+ "probki": [
+  {
+   "plik": "organy-1.wav",
+   "nazwa": "Rode_Man3Open_25.wav",
+   "nuta": 60,
+   "root": 59.959,
+   "petla": [
+    0.5337,
+    0.9358
+   ]
+  },
+  {
+   "plik": "organy-2.wav",
+   "nazwa": "Rode_Man3Open_34.wav",
+   "nuta": 69,
+   "root": 68.97,
+   "petla": [
+    1.5235,
+    2.3111
+   ]
+  },
+  {
+   "plik": "organy-3.wav",
+   "nazwa": "Rode_Man3Open_43.wav",
+   "nuta": 78,
+   "root": 77.998,
+   "petla": [
+    0.5218,
+    1.0841
+   ]
+  }
+ ]
+}

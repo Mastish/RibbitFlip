@@ -1,0 +1,59 @@
+{
+  "enabled": true,
+  "rules": [
+    {
+      "id": "example-tilt-right",
+      "label": "Tilt right -> D",
+      "enabled": true,
+      "source": {
+        "kind": "filter",
+        "metric": "roll"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 8.0,
+      "thresholdHi": null,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 0,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "d",
+      "sequence": "",
+      "glow": true,
+      "led": {
+        "on": false,
+        "ms": 300
+      }
+    },
+    {
+      "id": "example-tilt-left",
+      "label": "Tilt left -> A",
+      "enabled": true,
+      "source": {
+        "kind": "filter",
+        "metric": "roll"
+      },
+      "abs": false,
+      "cmp": "<",
+      "threshold": -8.0,
+      "thresholdHi": null,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 0,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "a",
+      "sequence": "",
+      "glow": true,
+      "led": {
+        "on": false,
+        "ms": 300
+      }
+    }
+  ]
+}

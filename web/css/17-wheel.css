@@ -1,0 +1,463 @@
+/* KOŁO WYBORU — RYSUNEK (SVG). Jeden wygląd dla wszystkich powierzchni: sceny w zakładce, ściągi
+   w panelu, nakładki nad grą i okienka przy kursorze.
+
+   DLACZEGO TO JEST W CSS, A NIE W JS: od 2026-08-26 koło jest wektorem, a nie płótnem (w makiecie
+   wyglądało o wiele ładniej i działało o wiele płynniej). Pakiet z serwera
+   przychodzi SKOKAMI — 25 razy na sekundę i tylko wtedy, gdy coś się ruszy — więc gładkość musi
+   zrobić przeglądarka: przejścia na transform i opacity, liczone na GPU. Kolor porównuje się
+   wzrokiem, ruch widzi się kątem oka; dlatego wskazany wycinek WYSUWA SIĘ, a nie tylko zmienia
+   barwę.
+
+   TOKENY --w-* są jedynym miejscem, w którym ten rysunek zna kolory. Motyw powierzchni (kremowa
+   karta / ciemna / sama treść nad grą) podmienia tokeny, a nie reguły — to samo, co robi nakładka
+   ze swoimi zmiennymi w 15-overlay.css. */
+/* WARTOŚCI PONIŻEJ SĄ PRZENIESIONE 1:1 z prototypu (poza repozytorium,
+   sekcja „TOKENY I MOTYWY" oraz „KOŁO"). Nazwy tokenów są nasze, liczby jego — wersja „w duchu
+   makiety” wizualnie i responsywnie odbiegała od prototypu HTML, więc drugi raz nie zgadujemy „w duchu makiety", tylko bierzemy jej liczby. */
+:root{
+  --w-slice:var(--panel);
+  --w-line:var(--line);
+  --w-line-w:1.6;
+  --w-accent:var(--ok);
+  --w-ink:var(--ink);
+  --w-dim:var(--dim);
+  --w-stitch:var(--stitch);
+  /* Środek koła ma WŁASNE dwa tokeny, bo w motywach z półprzezroczystym wycinkiem tarcza martwej
+     strefy musi być odrobinę gęstsza niż wycinki — inaczej znika w tle razem z nimi. */
+  --w-hub:var(--panel);
+  --w-hub-stroke:var(--line);
+  --w-needle:rgba(33,31,29,.45);
+  --w-tint:.18;
+  /* Cień pod całą tarczą. W kremowej karcie płaski, „filcowy" (bez rozmycia, tak jak reszta
+     panelu); nad grą żadnego, bo tam koło ma świecić, a nie leżeć na czymś. */
+  --w-disc-shadow:drop-shadow(0 7px 0 rgba(120,90,40,.13));
+  --w-glow:none;
+  --w-glow-hot:none;
+  --w-anim:280ms;
+  --w-spring:cubic-bezier(.34,1.56,.64,1);
+  --w-ease:cubic-bezier(.22,.61,.36,1);
+}
+
+.wh-svg{position:relative;display:block;margin:0 auto}
+.wh-svg svg{position:absolute;inset:0;overflow:visible;display:block}
+.wh-ring{filter:var(--w-disc-shadow)}
+
+/* WYCINEK = DWIE zagnieżdżone grupy, bo dwie różne animacje naraz:
+     .wh-sl-anim  — rozkwit (skala od punktu narodzin, ze staggerem),
+     .wh-sl-hover — wysunięcie wzdłuż dwusiecznej przy wskazaniu.
+   Trzymanie ich na jednym elemencie kończyłoby się nadpisywaniem transformu. */
+.wh-sl-anim{transform-box:view-box}
+.wh-sl-hover{transition:transform var(--w-anim) var(--w-spring);transform:translate(0,0)}
+.wh-sl.on .wh-sl-hover{transform:translate(var(--ox),var(--oy))}
+
+.wh-fill{
+  fill:var(--w-slice);stroke:var(--w-line);stroke-width:var(--w-line-w);
+  stroke-linejoin:round;filter:var(--w-glow);
+  transition:stroke 160ms var(--w-ease),filter 200ms var(--w-ease),opacity 200ms var(--w-ease);
+}
+/* WSKAZANY WYCINEK zmienia BARWĘ KRAWĘDZI, a nie jej grubość. Pogrubianie przy najechaniu
+   przesuwało obrys o pół piksela i wycinek „drgał" w miejscu; w prototypie grubość zmienia
+   wyłącznie RODZIC z otwartą obręczą, i tylko dlatego, że to stan trwały, a nie chwilowy. */
+.wh-sl.on .wh-fill{stroke:var(--sc,var(--w-accent));filter:var(--w-glow-hot,var(--w-glow))}
+/* Rodzic z otwartą obręczą zostaje wyróżniony, żeby było widać, CZYJE są te dzieci. */
+.wh-sl.openp .wh-fill{stroke:var(--sc,var(--w-accent));stroke-width:calc(var(--w-line-w) + 1.1)}
+.wh-sl.openp .wh-tint{opacity:calc(var(--w-tint) * .55)}
+/* Reszta pasma pod otwartą obręczą przygasa, ale DALEJ ISTNIEJE — widać drogę, którą się przyszło.
+   Wycinek gaśnie MOCNIEJ niż jego napis: przygaszony do .45 tekst przestaje być czytelny, a to on
+   niesie tu całą informację o tym, gdzie się jest. */
+.wh-sl.dim .wh-fill{opacity:.45}
+.wh-sl.dim .wh-lab,.wh-sl.dim .wh-ico,.wh-sl.dim .wh-chip{opacity:.55}
+
+/* PUSTE POLE — wycinek bez akcji, bez makra i bez dzieci. Ma wyglądać na miejsce, w którym NIC
+   się nie stanie: wypełnienie bledsze, krawędź cichsza, napis przygaszony. To nie jest wygaszenie
+   „nieaktywnego" elementu — puste pole jest w pełni wybieralne i po to tu stoi. Chodzi o to, żeby
+   oko odróżniło je od wycinków, które coś wysyłają, ZANIM ręka na nim wyląduje.
+
+   PODŚWIETLENIE JEST NEUTRALNE, nie w barwie akcentu: akcent na całym kole znaczy „to zaraz
+   pójdzie", a tu nie pójdzie nic. Załatwia to podmiana --sc na kolor przygaszonego tuszu — jednym
+   tokenem dla krawędzi, warstwy podświetlenia i całej reszty, która się nim maluje. Rysunek nie
+   wypisuje pustemu polu własnego --sc w atrybucie `style` (patrz `mt` w _whBuild), więc ta reguła
+   ma się o co oprzeć. */
+.wh-sl.is-empty{--sc:var(--w-dim)}
+.wh-sl.is-empty .wh-fill{opacity:.62}
+.wh-sl.is-empty .wh-lab{fill:var(--w-dim);font-weight:600}
+.wh-sl.is-empty .wh-stitch{opacity:.45}
+/* Wskazane puste pole podnosi się jak każde inne (ruch mówi „tu jesteś"), ale podświetlenie jest
+   słabsze niż na zwykłym wycinku: potwierdza wskazanie, nie zapowiada akcji. */
+.wh-sl.is-empty.on .wh-fill{opacity:.8}
+.wh-sl.is-empty.on .wh-tint{opacity:calc(var(--w-tint) * .5)}
+
+/* Podświetlenie wskazanego wycinka: osobna warstwa z kolorem akcentu, a nie color-mix na wypełnieniu.
+   Osobna, żeby przejście było płynne i żeby motyw z półprzezroczystym wycinkiem nie tracił kontrastu. */
+.wh-tint{fill:var(--sc,var(--w-accent));opacity:0;transition:opacity 160ms var(--w-ease);pointer-events:none}
+.wh-sl.on .wh-tint{opacity:var(--w-tint)}
+
+/* ŚCIEG — obszycie wycinka. Element motywu „Jasny" (kremowa karta jak w panelu) i nigdzie indziej
+   nie ma sensu: nad grą obszycie wisiałoby w powietrzu, a na ściądze karta ma już własny szew. */
+.wh-stitch{fill:none;stroke:var(--w-stitch);stroke-width:1.4;stroke-dasharray:5 4;
+  stroke-linejoin:round;opacity:.9;display:none}
+.wh-svg[data-look="felt"] .wh-stitch,.wh-svg[data-look="felt"] .wh-hub-stitch{display:block}
+
+.wh-ico{text-anchor:middle;dominant-baseline:central;
+  transition:transform var(--w-anim) var(--w-spring);transform-box:fill-box;transform-origin:50% 50%}
+.wh-sl.on .wh-ico{transform:scale(1.15)}
+/* Ikona w kolorowym kółku: czytelniejsza na ciemnym tle, bo dostaje własne tło i stały rozmiar.
+   Opcja, nie domyślne — na kole bez kolorów to szesnaście identycznych krążków w barwie akcentu.
+   Krążek jest PEŁNY, nie przygaszony: tusz na ikonie liczy się z jego koloru (patrz _whInk),
+   a półprzezroczysty krążek zmieniałby tło pod literą i psuł ten rachunek. */
+.wh-chip{fill:var(--sc,var(--w-accent));
+  transition:transform var(--w-anim) var(--w-spring),opacity 200ms var(--w-ease);
+  transform-box:fill-box;transform-origin:50% 50%}
+.wh-sl.on .wh-chip{transform:scale(1.12)}
+
+/* NAZWA jest pełnym tuszem ZAWSZE, a nie dopiero przy wskazaniu. Przygaszona i rozjaśniana przy
+   najechaniu robiła z koła listę, po której trzeba wodzić, żeby ją przeczytać — a koło ma być
+   czytelne w całości w chwili, w której się otwiera. Wskazanie niesie wysunięcie wycinka,
+   podświetlenie i krawędź w barwie akcentu; napis nie musi tego powtarzać. */
+.wh-lab{fill:var(--w-ink);font-family:var(--sans);font-weight:700;
+  text-anchor:middle;dominant-baseline:central;transition:fill 160ms var(--w-ease)}
+
+/* Kropki-zapowiedź podmenu (wzorzec z Neverwinter Nights): mówią „tu jest coś dalej", ZANIM się
+   tam wejdzie. Bez nich jedynym sposobem sprawdzenia byłoby wejście, a to jest już decyzja.
+   Na wskazanym wycinku ODDYCHAJĄ — to jedyna rzecz na kole, która rusza się sama, i mówi
+   „tu jest coś, co się otworzy", zanim ręka zdąży spytać. */
+.wh-dot{fill:var(--sc,var(--w-accent));opacity:.55;transition:opacity 160ms var(--w-ease);
+  transform-box:fill-box;transform-origin:50% 50%}
+.wh-sl.on .wh-dot,.wh-sl.openp .wh-dot{opacity:1}
+.wh-sl.on .wh-dot{animation:whOddech 1.5s ease-in-out infinite}
+/* Prototyp animuje sam promień (r: 2.2px → 3.3px). U nas kropka skaluje się razem z kołem, więc
+   te same piksele byłyby na małym kafelku pulsowaniem od zera do dwóch średnic — stąd ten sam
+   ruch zapisany krotnością (1 → 1,5), niezależną od wielkości rysunku. */
+@keyframes whOddech{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+
+.wh-hub-ring{fill:var(--w-hub);stroke:var(--w-hub-stroke);stroke-width:1.6;filter:var(--w-glow)}
+.wh-hub-stitch{fill:none;stroke:var(--w-stitch);stroke-width:1.4;stroke-dasharray:5 4;display:none}
+/* ODLICZANIE biegnie wokół środka, bo w chwili czekania patrzy się w środek koła — tam stoi nazwa
+   tego, co zaraz pójdzie. Bez łuku czekanie jest nie do odróżnienia od zawieszenia. */
+.wh-dwell{fill:none;stroke:var(--w-accent);stroke-width:3.2;stroke-linecap:round;
+  transform-box:view-box;transform-origin:50% 50%;transform:rotate(-90deg);opacity:0;
+  transition:stroke-dashoffset 90ms linear,opacity 120ms var(--w-ease)}
+.wh-dwell.run{opacity:1}
+
+/* WSKAZÓWKA: jedna kreska o stałej długości, obracana i skracana przekształceniem. Dzięki temu
+   skok między pakietami (25 Hz) wygładza CSS, zamiast szarpać co ramkę.
+   ⚠️ Kąt podawany do `rotate()` MUSI być ciągły — patrz whUnwrapDeg w rf-46a. Wartość modulo 360
+   sprawia, że to przejście animuje różnicę 358° zamiast 2° i wskazówka objeżdża całe koło. */
+.wh-needle{transform-box:view-box;transition:transform 90ms linear}
+.wh-needle-l{stroke:var(--w-needle);stroke-width:1.6;stroke-dasharray:4 4;stroke-linecap:round}
+.wh-needle-d{fill:var(--w-needle)}
+.wh-needle.hot .wh-needle-l{stroke:var(--w-accent);opacity:.9}
+.wh-needle.hot .wh-needle-d{fill:var(--w-accent);opacity:.9}
+
+/* ŚRODEK jest HTML-em, nie SVG: tylko tam zawijanie tekstu i wielokropek są za darmo. Nie łapie
+   zdarzeń, bo wskazanie i klik liczy scena z kąta i odległości. */
+.wh-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.wh-hub-in{padding:0 6px;width:100%}
+.wh-hub-crumb{font-size:.72em;font-weight:800;color:var(--w-dim);letter-spacing:.2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.wh-hub-ico{font-size:1.75em;line-height:1.15}
+/* Nazwa w środku jest pełnym tuszem, nie barwą akcentu: w środku koła nie ma z czym jej mylić,
+   a akcent na czterech liniach naraz (nazwa, krawędź, podświetlenie, łuk) przestaje cokolwiek
+   wyróżniać. Tak samo w prototypie. */
+.wh-hub-title{font-size:1em;font-weight:800;color:var(--w-ink);line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wh-hub-hint{font-size:.68em;color:var(--w-dim);line-height:1.25;margin-top:4px;opacity:.75}
+
+/* ROZKWIT. 280 ms ze staggerem 22 ms na wycinek: oko nadąża za tym, CO się pojawiło, a ręka nie
+   czeka. Obręcz dzieci rozkwita OD wycinka-rodzica (transform-origin ustawia JS na jego środek). */
+/* Trzy różne skale startowe, nie jedna — wprost z prototypu. Całe koło startuje z 0,6 (rozkwit ma
+   być widoczny), obręcz dzieci z 0,7 (rośnie z wycinka-rodzica, więc ma bliżej), środek z 0,55
+   (jest najmniejszy, więc przy tej samej skali wyglądałby na nieruchomy). */
+@keyframes whBloom{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes whBloomBand{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes whBloomHub{from{opacity:0;transform:translate(-50%,-50%) scale(.55)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.wh-svg.wh-open .wh-sl-anim{animation:whBloom var(--w-anim) var(--w-spring) backwards}
+.wh-svg.wh-open .wh-hub{animation:whBloomHub calc(var(--w-anim) * .8) var(--w-spring) backwards}
+.wh-svg.wh-open .wh-hub-g{animation:whBloom calc(var(--w-anim) * .8) var(--w-spring) backwards;
+  transform-box:view-box}
+/* Wejście w podmenu rozkwita SAMĄ nową obręcz — pasmo pod spodem stoi, bo się nie zmieniło. */
+.wh-svg.wh-grow .wh-sl[data-b="1"] .wh-sl-anim,
+.wh-svg.wh-grow .wh-sl[data-b="2"] .wh-sl-anim{animation:whBloomBand var(--w-anim) var(--w-spring) backwards}
+
+/* ZWINIĘCIE. Koło znika SZYBCIEJ, niż się pojawiło (0,55 czasu rozkwitu) i bez sprężyny: rozkwit
+   ma być zauważony, a zniknięcie ma tylko nie być skokiem. Wartości z prototypu (`zwin` +
+   `.wheel.is-closing`). Zamknięcie to jedyny moment, w którym rysunek MUSI jeszcze chwilę
+   pożyć po tym, jak przestał być potrzebny — dlatego pojemnik czyści się dopiero po animacji
+   (whPlayClose w rf-46). */
+@keyframes whShut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.72)}}
+.wh-svg.wh-close{animation:whShut calc(var(--w-anim) * .55) var(--w-ease) forwards;
+  transform-origin:50% 50%}
+
+/* MAŁE KOŁO: poniżej ~180 px zostają ikony i nazwy, znika opis w środku i okruszki. „Za dużo
+   elementów" na małym rysunku to nie bogactwo, tylko plama. */
+.wh-svg.is-small .wh-hub-hint,.wh-svg.is-small .wh-hub-crumb{display:none}
+.wh-svg.is-small .wh-dot{opacity:.7}
+
+/* KOŁO UŚPIONE — wyłącznie tryb „Przełączaj kliknięciami". Rysunek stoi na ekranie, ale nie
+   słucha: kliknięcie go dopiero WŁĄCZA, a dopiero następne wybiera. Przygaszenie jest tu jedynym
+   sposobem powiedzenia tego z odległości, z której zdania w środku już nie widać — a to jest
+   normalna odległość od nakładki nad grą albo od telewizora.
+   ⚠️ PRZYGASA SAM PIERŚCIEŃ (.wh-ring), NIE CAŁY RYSUNEK: środek jest osobnym elementem HTML
+   i zostaje w pełnym tuszu, bo to on niesie zdanie „kliknij, żeby włączyć". Przygaszona
+   instrukcja obsługi to instrukcja, której się nie czyta.
+   ⚠️ SAMA PRZEZROCZYSTOŚĆ, ANI JEDNA WŁAŚCIWOŚĆ WIĘCEJ. `filter` na tym elemencie NALEŻY JUŻ do
+   cienia tarczy (`--w-disc-shadow`, wiersz 44) i jest inny w każdym z pięciu wyglądów — dopisanie
+   tu drugiego nie przygasiłoby koła, tylko ZDJĘŁO mu cień, i to na czas, w którym rysunek ma
+   wyglądać tak samo, tylko ciszej. */
+.wh-svg .wh-ring{transition:opacity 140ms var(--w-ease)}
+.wh-svg.wh-sleep .wh-ring{opacity:.45}
+
+/* TRZY WYGLĄDY. Różnią się WYŁĄCZNIE tokenami — reguły wyżej ich nie znają.
+   „bare" = nad grą zostaje samo koło: wycinki prawie niewidoczne w środku, żyją krawędzie i litery,
+   bo tło okna jest wtedy WYCIĘTE i cokolwiek zmieszanego z jego kolorem zniknęłoby razem z nim. */
+.wh-svg[data-look="dark"],.wh-svg[data-look="bare"]{
+  --w-slice:rgba(250,246,238,.07);
+  --w-line:rgba(255,255,255,.14);
+  /* Na ciemnym zielony akcent panelu robi się błotem — prototyp bierze tu limonkę i to ona jest
+     barwą wskazania, krawędzi, łuku odliczania i krążków pod ikonami. */
+  --w-accent:#a6d861;
+  --w-ink:#efe9dd;
+  --w-dim:#bdb4a1;
+  --w-stitch:#4a4436;
+  --w-hub:rgba(250,246,238,.09);
+  --w-hub-stroke:rgba(255,255,255,.16);
+  --w-needle:rgba(239,233,221,.4);
+  --w-tint:.22;
+  --w-disc-shadow:drop-shadow(0 10px 14px rgba(0,0,0,.5));
+}
+/* Nad grą tło okna jest WYCIĘTE, więc cień nie ma na czym leżeć — zostaje sama tarcza. Wycinek
+   jest ciemniejszy i ma mocniejszą krawędź niż w motywie „Ciemny": tam koło leży na tle karty,
+   tutaj na czymkolwiek, co akurat wyświetla gra. */
+.wh-svg[data-look="bare"]{--w-slice:rgba(8,10,14,.34);--w-line:rgba(255,255,255,.3);
+  --w-hub:rgba(8,10,14,.44);--w-hub-stroke:rgba(255,255,255,.34);--w-tint:.26;
+  --w-disc-shadow:none}
+/* NEON — koło jako nakładka nad ciemną grą. Wycinki prawie czarne, żyją same krawędzie: cyjan na
+   spoczynku, róż na wskazaniu, i jedno i drugie ze świeceniem. Liczby przeniesione 1:1 z prototypu
+   (sekcja `html[data-theme="neon"]`), bo to na nim ten wygląd był wybierany. */
+.wh-svg[data-look="neon"]{
+  --w-slice:rgba(4,8,14,.62);
+  --w-line:#37e6ff;
+  --w-line-w:1.8;
+  --w-accent:#ec1a83;
+  --w-ink:#ffffff;
+  --w-dim:#9fd9ee;
+  --w-stitch:#1d2839;
+  --w-hub:rgba(4,8,14,.72);
+  --w-hub-stroke:#37e6ff;
+  --w-needle:rgba(55,230,255,.7);
+  --w-tint:.3;
+  /* Świecenie jest tu treścią, a nie ozdobą: przy prawie czarnym wypełnieniu to ono odkleja koło
+     od obrazu gry. `--w-glow-hot` dostaje wyłącznie wskazany wycinek (patrz `.wh-sl.on .wh-fill`). */
+  --w-glow:drop-shadow(0 0 5px rgba(55,230,255,.65));
+  --w-glow-hot:drop-shadow(0 0 10px rgba(236,26,131,.9)) drop-shadow(0 0 22px rgba(236,26,131,.45));
+  --w-disc-shadow:none;
+}
+/* SZKŁO — matowa szyba. Wycinki są półprzezroczystą bielą, a rozmycie robi PODKŁAD HTML-owy pod
+   SVG (patrz `.wh-svg::before` niżej): `backdrop-filter` nie działa wprost na elementach SVG
+   w części przeglądarek, więc prototyp rozwiązał to tak samo i tak samo robimy tutaj. */
+.wh-svg[data-look="glass"]{
+  --w-slice:rgba(255,255,255,.55);
+  --w-line:rgba(255,255,255,.85);
+  --w-line-w:1.4;
+  --w-accent:#2f9e57;
+  --w-ink:#1b2330;
+  --w-dim:#4a5666;
+  --w-stitch:#c9d4e4;
+  --w-hub:rgba(255,255,255,.66);
+  --w-hub-stroke:rgba(255,255,255,.9);
+  --w-needle:rgba(27,35,48,.35);
+  --w-tint:.24;
+  --w-disc-shadow:drop-shadow(0 12px 22px rgba(60,80,120,.22));
+}
+/* PODKŁAD POD SZKŁO. Tarcza HTML-owa pod SVG, o promieniu koła (`--wh-r` wpisuje rysunek przy
+   budowie — jedna liczba, ta sama, z której liczone są wycinki). Rysowana przez ::before, żeby
+   nie dokładać elementu do drzewa, które przebudowuje się przy każdej zmianie kształtu. */
+.wh-svg::before{content:"";position:absolute;left:50%;top:50%;border-radius:50%;
+  width:calc(var(--wh-r,0px) * 2 + 12px);height:calc(var(--wh-r,0px) * 2 + 12px);
+  transform:translate(-50%,-50%);display:none;pointer-events:none}
+.wh-svg[data-look="glass"]::before{display:block;
+  background:rgba(255,255,255,.16);
+  box-shadow:0 14px 34px rgba(60,80,120,.2), inset 0 0 0 1px rgba(255,255,255,.5)}
+/* ROZMYCIE TYLKO TAM, GDZIE JEST CO ROZMYWAĆ. W nakładce tło okna jest WYCIĘTE kolorem kluczowym,
+   więc `backdrop-filter` rozmywałby jednolitą plamę koloru dziury — czyli nic, a przy okazji
+   zamazywałby samo cięcie. Nad grą szkło zostaje więc matową, jaśniejszą tarczą. */
+html:not(.rf-ovl) .wh-svg[data-look="glass"]::before{
+  backdrop-filter:blur(14px) saturate(1.25);
+  -webkit-backdrop-filter:blur(14px) saturate(1.25)}
+html.rf-ovl .wh-svg[data-look="glass"]::before{background:rgba(255,255,255,.3)}
+/* Nakładka „Sama treść" wycina tło kolorem kluczowym, więc litery dostają halo odrysowane OD tego
+   koloru — to jedyne, co przeżywa cięcie i trzyma je czytelnymi nad czymkolwiek. */
+html.rf-ovl[data-theme="bare"] .wh-lab,
+html.rf-ovl[data-theme="bare"] .wh-ico{paint-order:stroke;stroke:var(--ovl-halo,#000);
+  stroke-width:2.6px;stroke-linejoin:round}
+html.rf-ovl[data-theme="bare"] .wh-hub-title,
+html.rf-ovl[data-theme="bare"] .wh-hub-hint,
+html.rf-ovl[data-theme="bare"] .wh-hub-crumb{text-shadow:0 0 3px var(--ovl-halo,#000),0 0 6px var(--ovl-halo,#000)}
+
+/* MNIEJ RUCHU. Prośba systemowa nie może zabić czytelności: zamiast rozkwitu ze skalowaniem
+   zostaje samo pojawienie się, a wskazanie przestawia się natychmiast. */
+@media (prefers-reduced-motion:reduce){
+  .wh-sl-hover,.wh-fill,.wh-tint,.wh-ico,.wh-chip,.wh-lab,.wh-dot,.wh-needle,.wh-dwell{transition:none}
+  .wh-svg.wh-open .wh-sl-anim,.wh-svg.wh-open .wh-hub,.wh-svg.wh-open .wh-hub-g,
+  .wh-svg.wh-grow .wh-sl[data-b="1"] .wh-sl-anim,
+  .wh-svg.wh-grow .wh-sl[data-b="2"] .wh-sl-anim{animation:none}
+  /* Zamknięcie i tak omija animację po stronie JS (whPlayClose), ale gdyby klasa zdążyła
+     wejść — koło ma zniknąć, a nie zapaść się w sprężynie. */
+  .wh-svg.wh-close{animation:none;opacity:0}
+  .wh-sl.on .wh-sl-hover{transform:none}
+  /* Oddech kropek to ruch, który nie niesie nic ponad „tu jest podmenu" — a to mówi już sama
+     obecność kropek i ich rozjaśnienie. Gasimy go w całości. */
+  .wh-sl.on .wh-dot{animation:none}
+}
+
+/* ------------------------------------------------------------------------------------------
+   SPIS WYCINKÓW KOŁA W KOLUMNIE KAPSLA (rf-46g, ściąga „Nakładka")
+   ------------------------------------------------------------------------------------------
+   Stoi między rysunkiem koła a listą reguł, bo tam należy w czytaniu kolumny: najpierw to, co
+   widać w grze, potem spis tego, co kapsel wysyła. Plakietki, a nie wiersze jak przy regułach —
+   wycinek nie ma warunku ani licznika, ma tylko nazwę, więc wiersz na całą szerokość kolumny
+   byłby pustą linijką z jednym słowem. Wyłączone koło ZOSTAJE, tylko przygaszone: „jest, ale
+   zgaszone" to inna odpowiedź niż „nie ma go wcale", a ta druga chowa spis w całości (rf-46g). */
+  .ov-whlist{border-top:1px solid var(--stitch);padding:7px 12px 9px}
+  .ov-whlist.is-off{opacity:.62}
+  .ov-whlist-h{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+  .ov-whlist-h b{font-size:12px}
+  .ov-whlist-h span{font-size:11px;color:var(--dim);padding:1px 7px;border-radius:999px;
+    border:1px dashed var(--stitch)}
+  .ov-whlist-h i{font-style:normal;font-size:11px;color:var(--warn,#ffb74c)}
+  .ov-whlist-b{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .ov-whsl{display:inline-flex;align-items:center;gap:5px;font-size:12px;
+    padding:2px 8px;border-radius:999px;background:var(--bg2,rgba(0,0,0,.04));
+    border:1px solid var(--stitch)}
+  .ov-whsl i{font-style:normal;font-size:13px;line-height:1}
+  /* Wycinek-drzwi: strzałka zamiast zdania. Puste pole nic nie wysyła, więc mówi to samo, co
+     mówi o nim wiersz w karcie koła — przygaszeniem, nie osobną etykietą. */
+  .ov-whsl b{font-weight:600;color:var(--dim);margin-left:1px}
+  .ov-whsl.is-empty{opacity:.55;font-style:italic}
+
+/* ------------------------------------------------------------------------------------------
+   PAS KAPSLI W ZAKŁADCE „KOŁO WYBORU" (rf-46h)
+   ------------------------------------------------------------------------------------------
+   Pas kafli nad kartą: jeden kafel na kapsel, w środku jego własne koło. Forma jest ta sama, co
+   pas kontrolerów w zakładce „Kontroler" (.ph-box w 14c-controller.css) i to jest celowe — dwa
+   pasy odpowiadające na to samo pytanie („który to jest i który ustawiam") mają wyglądać jak
+   jedna rzecz aplikacji, a nie jak dwa pomysły. Różni je zawartość: tam w kaflu są kapsle grające
+   na jednym padzie, tu jedno koło jednego kapsla. */
+.wh-caps{display:flex;gap:12px;flex-wrap:wrap;padding:11px var(--card-x);border-bottom:1px solid var(--line)}
+.wh-caps-tile{flex:0 1 auto;width:196px;background:var(--bg2);cursor:pointer;
+  border:1px solid var(--line);border-radius:12px;padding:9px 10px 8px;
+  display:flex;flex-direction:column;gap:7px}
+/* Edytowany kapsel obwiedziony JEGO kolorem, nie jednym akcentem aplikacji: ten sam kolor niesie
+   go w pigułkach u góry strony, w kolumnie ściągi i w obwódkach na rysunku pada. */
+.wh-caps-tile.active{border-color:var(--dcol,var(--az));
+  box-shadow:0 0 0 1px var(--dcol,var(--az));
+  background:color-mix(in srgb,var(--dcol,var(--az)) 8%,var(--bg2))}
+.wh-caps-tile:focus-visible{outline:2px solid var(--az);outline-offset:2px}
+/* Kafel jest szeroką powierzchnią pełną kontrolek — press to 1 px w dół, nigdy scale (patrz ta
+   sama pułapka w 14c-controller.css: skalowanie zabierało przycisk spod kursora i klik ginął).
+   Strażnik :has() musi być POWTÓRZONY, żeby wygrać z ogólną regułą z 14-motion. */
+.wh-caps-tile:active:not(:has(:is(button,select,input,label,[role="switch"]):active)){
+  transform:translateY(1px)}
+.wh-caps-tile.off{opacity:.72}
+.wh-caps-th{display:flex;align-items:center;gap:6px;font-size:13px;min-height:20px}
+.wh-caps-th b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Plakietka „ustawiasz teraz" nosi kolor kapsla w TLE i w obwódce, ale tusz ma zawsze zwykły.
+   Kolory kapsli są jasne z założenia (żółty, seledyn) — napis pisany tym kolorem znikał na kremowej
+   karcie, czyli akurat na kaflu, który miał być najlepiej widoczny. */
+.wh-caps-badge{margin-left:auto;font-size:10px;letter-spacing:.02em;color:var(--ink);
+  background:color-mix(in srgb,var(--dcol,var(--az)) 26%,transparent);
+  border:1px dashed color-mix(in srgb,var(--dcol,var(--az)) 65%,var(--line));
+  border-radius:999px;padding:1px 7px;white-space:nowrap}
+/* Koło na kaflu. Kwadrat o stałym boku — pas ma być rytmem takich samych kafli, a nie schodami
+   o wysokości zależnej od tego, kto ma ile wycinków. */
+.wh-caps-mini{width:100%;height:128px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;background:var(--panel,#f6f1e5);border:1px dashed var(--stitch)}
+.wh-caps-mini.empty{font-size:12px;color:var(--dim);font-style:italic}
+.wh-caps-tf{display:flex;align-items:baseline;gap:7px;font-size:11px;color:var(--dim);
+  flex-wrap:wrap;min-height:15px}
+.wh-caps-mode{padding:1px 7px;border-radius:999px;border:1px dashed var(--stitch)}
+.wh-caps-cnt{margin-left:auto;font-variant-numeric:tabular-nums}
+/* Przełącznik na kaflu jest tym samym przełącznikiem, co w nagłówku karty — tylko mniejszym,
+   bo tutaj jest jednym z pięciu, a nie jedynym. */
+.wh-caps-sw{margin-left:0;transform:scale(.86);transform-origin:left center}
+.wh-caps-sw.dis{opacity:.45;pointer-events:none}
+.wh-caps-pick{font:inherit;font-size:12px;color:var(--ink);background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:4px 8px;max-width:min(46vw,320px)}
+.wh-caps-pick:focus-visible{outline:2px solid var(--az);outline-offset:1px}
+@media (max-width:760px){
+  .wh-caps-tile{flex:1 1 100%;width:auto}
+}
+/* Bez własnego bloku „mniej ruchu": jeden piksel wciśnięcia to natychmiastowa odpowiedź na
+   dotknięcie, a nie animacja — tak samo jak przy kaflach kontrolerów (14c-controller.css). */
+
+/* PASKA KONFIGURACJI („Konfiguracja: [lista] [zmienione] Zapisz zmiany · Zapisz jako… · Przywróć ·
+   Skopiuj na…") NIE MA OD 2026-09-02 — razem z nim znikły reguły `.wh-cfgbar*` i `.wh-cfgpick`.
+   Powód jest w rf-46h przy `wheelCapsHtml`: odkąd moduł ma wspólną ramkę trzech zakładek, pasek
+   był drugim kompletem tych samych przycisków dziesięć centymetrów od pierwszego (audyt UX #25).
+   Nazwę i „zmienione" mówi teraz blok stanu na górze Konfiguracji, a listę — Biblioteka. */
+
+/* Podpis konfiguracji na kaflu kapsla. Kropka zamiast słowa: na kaflu liczy się jedno spojrzenie,
+   a „zmienione" pisane obok nazwy zabierałoby całą linię i tak zwykle by się nie zmieściło. */
+.wh-caps-cfg{font-size:11px;color:var(--dim);min-height:14px;display:flex;align-items:center;gap:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wh-caps-cfg b{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.wh-caps-cfg i{font-style:normal;font-size:13px;line-height:1}
+.wh-caps-cfg i.is-dirty{color:var(--warn,#b8860b)}
+.wh-caps-cfg i.is-gone{color:var(--bad,#d4433f);font-size:11px;font-weight:700}
+
+/* „↺ PRZYWRÓĆ FABRYCZNE" W NAGŁÓWKU LISTY BIBLIOTEKI (dostawia go rf-46k `whMountLibFactory`).
+   Nagłówek listy jest wąski — to kolumna z wyszukiwarką — więc pozwalamy mu się ZAWINĄĆ zamiast
+   ściskać pole szukania do kilku liter. Zakres wyłącznie ten moduł: pozostałych siedem nie ma
+   czego do tego nagłówka dostawiać (przywracanie wbudowanych pozycji ma tylko koło). */
+#rfpc-kolo .rfpc-libsplit .rfpc-h{flex-wrap:wrap}
+#rfpc-kolo .rfpc-libsplit .rfpc-h .rfpc-search{flex:1 1 150px;min-width:140px}
+#rfpc-kolo .rfpc-libsplit .rfpc-h .wh-lib-factory{flex:0 0 auto;white-space:nowrap;margin:0}
+
+/* ===== SCENA BEZ KOŁA (klasa `wh-bare` z rf-46d3) ==========================================
+   Scena jest wysoka na cały ekran, bo koło stroi się patrząc na koło i wypchnięte poza okno
+   przestaje być podglądem (03-triggers.css: od góry do dołu tego elementu UI).
+   Na kapslu, który NIE MA JESZCZE dwóch wycinków, ta sama reguła daje osiemsetpikselowy pusty
+   prostokąt z zaproszeniem do klikania w nic (audyt UX #32, 2026-09-02). Dopóki nie ma czego
+   narysować, pudło kurczy się do jednego zdania — i tylko dopóki: pierwszy drugi wycinek
+   przywraca pełną scenę, bo klasa znika razem z powodem.
+   `!important` NIE jest tu potrzebne: 17-wheel.css ładuje się po 03-triggers.css, a selektor ma
+   o jedną klasę więcej niż tamten. */
+#wheelCard.wh-bare[data-stage="wide"] .wh-stage{height:auto;min-height:0}
+#wheelCard.wh-bare .wh-scene{min-height:180px;cursor:default}
+/* Zaproszenie zostaje jednym zdaniem, więc nie musi się mieścić w środku narysowanego okręgu —
+   dostaje całą szerokość sceny i normalną wagę pisma. */
+#wheelCard.wh-bare .wh-scene-open b{font-size:13.5px;font-weight:600;max-width:40ch;
+  line-height:1.5;white-space:normal}
+/* …a rysunek, dziennik i okręgi progów nie mają o czym mówić: koła nie ma. */
+#wheelCard.wh-bare .wh-log,#wheelCard.wh-bare .wh-canvas{display:none}
+
+/* ===== UX 261120 B1 ===== */
+/* Pas kapsli tylko przy dwóch i więcej kapslach (rf-46h `_whCapsShow`). `.card>.head` ma własne
+   `display`, więc sam atrybut `hidden` by go nie schował. */
+#whCapsHead[hidden],#whCapsList[hidden]{display:none}
+/* (koniec sekcji B1) */
+
+/* ===== UX 261120 L4e: Koło lżej ===== */
+/* Wiersz wycinka zwinięty do nagłówka: numer, ikona, nazwa, skrót akcji i plakietki. Pola wiersza
+   pokazuje dopiero rozwinięcie (`is-open` = wiersz zaznaczony albo z otwartym makrem, rf-46c). */
+.wh-slice-head{display:flex;align-items:center;gap:9px;width:100%;min-height:32px;padding:2px 2px;
+  border:0;background:transparent;font:inherit;font-size:13px;color:var(--ink);text-align:left;cursor:pointer}
+.wh-slice-head:focus-visible{outline:2px solid var(--az);outline-offset:2px;border-radius:8px}
+.wh-slice-head::after{content:"\25be";margin-left:auto;color:var(--dim);font-size:11px;padding-left:6px}
+.wh-slice.is-open>.wh-slice-head::after{content:"\25b4"}
+.wh-h-ico{flex:0 0 auto;width:22px;text-align:center;font-size:15px;line-height:1}
+.wh-h-name{flex:0 1 auto;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wh-h-key{flex:0 1 auto;min-width:0;font-family:var(--mono);font-size:12px;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wh-h-key:empty{display:none}
+.wh-slice:not(.is-open)>.wh-slice-main,.wh-slice:not(.is-open)>.wh-seqline,
+.wh-slice:not(.is-open)>.wh-seqsum,.wh-slice:not(.is-open)>.wh-kidnote{display:none}
+/* Piętra kolumny edycji: zwijaki filcowe zamiast sekcji `wh-sec`, grupy w „Zaawansowane”. */
+.wh-edit>details.cardfold{margin-top:10px}
+.wh-fold-in{display:flex;flex-direction:column;gap:9px}
+.wh-adv-grp{display:flex;flex-direction:column;gap:9px;padding-top:6px}
+.wh-adv-grp+.wh-adv-grp{margin-top:8px;border-top:1.5px dashed var(--stitch);padding-top:12px}
+.wh-adv-h{margin:0;font-family:var(--display);font-size:13px;font-weight:700;color:var(--ink)}
+/* (koniec sekcji L4e) */

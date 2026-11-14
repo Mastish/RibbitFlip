@@ -1,0 +1,160 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "Exo One (1 kapsel)",
+ "description": "Jeden kapsel jako pad Xbox: przechył prowadzi lewym drążkiem, przycisk trzyma grawitację (nurkowanie, RT), a szybki obrót nadgarstkiem włącza i wyłącza szybowanie (LT). Kamery nie ma: kapsel prowadzi jeden drążek naraz. Skok (A) zostaje dla wersji na dwa kapsle.",
+ "cassette": 7,
+ "howto": [
+  "Przechył prowadzi, przycisk trzymany to grawitacja i nurkowanie.",
+  "Szybki obrót nadgarstkiem włącza szybowanie, drugi taki obrót je wyłącza.",
+  "Kamera i skok są w wersji na dwa kapsle: jeden kapsel prowadzi jeden drążek."
+ ],
+ "forApp": "Exo One (Steam), wariant na jeden kapsel",
+ "author": "RibbitFlip",
+ "rev": 2,
+ "exe": [
+  "exo one.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Lot",
+   "role": {
+    "name": "Lot (jedna ręka)",
+    "note": "Przechył prowadzi, przycisk trzyma grawitację, obrót nadgarstkiem włącza szybowanie."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "exo1-drop",
+      "label": "Grawitacja i nurkowanie (trzymaj przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 150
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:rt",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "exo1-glide-sw",
+      "label": "Przełącznik szybowania (obrót nadgarstkiem)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": true,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "latch",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      },
+      "noAction": true
+     },
+     {
+      "id": "exo1-glide",
+      "label": "Szybowanie (trzyma LT, gdy przełącznik włączony)",
+      "enabled": true,
+      "source": {
+       "kind": "trigger",
+       "ref": "exo1-glide-sw"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:lt",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "own",
+     "stickBackend": "gamepad",
+     "stickWhich": "left",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 40,
+     "stickExpo": 1.6,
+     "stickInner": 0.1,
+     "stickOuter": 0.02,
+     "stickAccel": 0.6,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 1.0
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,53 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Keys/Upright Nr1"
+ },
+ "probki": [
+  {
+   "plik": "piano-1.wav",
+   "nazwa": "UR1_C3_mf_RR1.wav",
+   "nuta": 60,
+   "root": 59.985,
+   "petla": [
+    0.9672,
+    1.3802
+   ]
+  },
+  {
+   "plik": "piano-2.wav",
+   "nazwa": "UR1_G3_mf_RR1.wav",
+   "nuta": 67,
+   "root": 66.965,
+   "petla": [
+    1.5679,
+    1.969
+   ]
+  },
+  {
+   "plik": "piano-3.wav",
+   "nazwa": "UR1_C4_mf_RR1.wav",
+   "nuta": 72,
+   "root": 71.944,
+   "petla": [
+    1.4441,
+    1.8678
+   ]
+  },
+  {
+   "plik": "piano-4.wav",
+   "nazwa": "UR1_G4_mf_RR1.wav",
+   "nuta": 79,
+   "root": 78.984,
+   "petla": [
+    0.7996,
+    1.2067
+   ]
+  }
+ ]
+}

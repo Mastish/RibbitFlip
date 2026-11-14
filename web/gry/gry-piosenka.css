@@ -1,0 +1,506 @@
+/* KROK „1 PIOSENKA” JAK GRA, NIE JAK APLIKACJA (2026-11-19).
+   Sam wygląd: ten arkusz nie zmienia budowy strony ani logiki, tylko przestawia i przebiera to, co buduje
+   biblioteka.js, lobby-scena.js i zabi-chor.js. Wszystko siedzi pod #wybor:not(.wgraj), więc panel „Wgraj własny”
+   i pozostałe ekrany zostają po staremu.
+   Pomysł: filcowa scena z menu głównego w tle (ta sama grafika, już wczytana), utwory jako ciemne naszywki
+   z kolorowym grzbietem trudności, wybrany utwór jako duża jasna etykieta, po prawej plakat z pieczątką trudności,
+   a na krawędzi sceny ściąga sterowania i „Dalej”.
+   Ruch tylko przez translate / scale / rotate / opacity (osobne właściwości, żeby nie gryzły się z transform
+   z najazdu i wciśnięcia). ŚCIEŻKI WZGLĘDNE, jak w gry.css. */
+
+/* ---------- scena w tle i rampa (podłoga sceny) ----------
+   Oba kroki „Zagraj” (1 Piosenka i 2 Rozgrywka) stoją na tej samej scenie z tą samą rampą, więc przejście między
+   nimi nie przestawia tła. W Rozgrywce zmienia się tylko tło: karty graczy i ustawienia zostają, jak były,
+   a stopka z „Śpiewamy!” wypada na podłodze sceny. */
+.lobby:is([data-ekran="wybor"],[data-ekran="konfiguracja"]){--rampa:clamp(84px,16.5vh,184px)}
+.lobby:is([data-ekran="wybor"],[data-ekran="konfiguracja"])::before{
+  background-image:radial-gradient(ellipse 44% 50% at 72% 44%,rgba(255,214,140,.13),transparent 70%),
+    linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.2)),url(../assets/koncert/scena.webp);
+  background-blend-mode:normal;background-repeat:no-repeat;background-position:0 0;
+  /* podłoga sceny zaczyna się na 81,8% wysokości grafiki: rozciągnięcie w pionie stawia ją dokładnie na rampie */
+  background-size:100% 100%,100% 100%,100% calc((100% - var(--rampa)) / .818)}
+
+#wybor:not(.wgraj){--wiersz:clamp(38px,4.6vh,50px);--grzbiet:clamp(42px,3.1vw,56px);--przek-h:clamp(34px,4.2vh,44px);
+  --dodaj-w:clamp(138px,11.4vw,188px);--kurtka3:#2c2824;--nic-70:rgba(243,233,210,.7)}
+#wybor:not(.wgraj) .wybor-uklad{grid-template-columns:minmax(0,1.14fr) minmax(330px,1fr);grid-template-rows:auto minmax(0,1fr);
+  column-gap:clamp(18px,2.8vw,52px);padding:0 clamp(0px,4.6vw,100px) calc(var(--rampa) - var(--pad) + 2px)}
+#wybor:not(.wgraj) .kol-piosenki{grid-area:1/1/3/2}
+#wybor:not(.wgraj) .kol-wybrana{grid-area:1/2/3/3}
+/* proporcje z makiety: lista węższa od plakatu (w 1707 px: 676 i 751). Marginesy sceny zostają, bo banda nagłówka
+   jest wspólna z krokiem 2 i panelem „Wgraj własny”. W węższym oknie lista trzyma 560 px, żeby przekładki
+   i „Wgraj własny” mieściły się w jednym rzędzie */
+@media (min-width:1180px){
+  #wybor:not(.wgraj){--dodaj-w:clamp(150px,10.4vw,178px)}
+  #wybor:not(.wgraj) .wybor-uklad{grid-template-columns:minmax(560px,.9fr) minmax(330px,1fr);column-gap:clamp(18px,3.2vw,56px)}}
+
+/* ---------- lista: bez kremowej karty, same naszywki na scenie ---------- */
+#wybor:not(.wgraj) .kol-piosenki{background:none;box-shadow:none;padding:0;color:var(--nic)}
+#wybor:not(.wgraj) .kol-piosenki::before{content:none}
+#wybor:not(.wgraj) .kol-piosenki>.kol-naglowek{display:contents}
+#wybor:not(.wgraj) .kol-piosenki>.kol-naglowek>span:first-child{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+
+/* przekładki: jeden rząd nad listą (źródło utworów, szukanie, sortowanie, a na końcu „Wgraj własny”) */
+#wybor:not(.wgraj) .biblio-gora{position:relative;z-index:4;display:flex;flex-wrap:nowrap;align-items:flex-end;gap:5px;min-height:0;
+  padding:0 calc(var(--dodaj-w) + 6px) 0 6px;margin:0 0 clamp(6px,1vh,10px);border-bottom:5px solid var(--naszywka);
+  filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
+#wybor:not(.wgraj) .biblio-filtry{display:flex;flex:0 1 auto;min-width:0;align-items:flex-end;gap:5px;padding:0;background:none;box-shadow:none}
+#wybor:not(.wgraj) .biblio-filtr{flex:0 1 auto;min-width:0;height:calc(var(--przek-h) - 6px);padding:0 clamp(9px,1vw,15px);gap:6px;border-radius:9px 9px 0 0;
+  background-color:#3a342e;background-image:var(--felt);background-blend-mode:multiply;background-size:360px;color:var(--nic-70);
+  box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);font-size:clamp(11.5px,1.45vh,14px);letter-spacing:1.2px;transform:none}
+#wybor:not(.wgraj) .biblio-filtr::before,#wybor:not(.wgraj) .biblio-filtr::after{content:none}
+#wybor:not(.wgraj) .biblio-filtr-et{overflow:hidden;text-overflow:ellipsis;font-size:inherit;color:inherit}
+#wybor:not(.wgraj) .biblio-filtr .biblio-licznik{font:400 clamp(11.5px,1.45vh,14px)/1 var(--rebel);color:var(--bursztyn);background:none;padding:0}
+#wybor:not(.wgraj) .biblio-filtr[aria-selected="true"]{height:var(--przek-h);background-color:var(--naszywka);color:var(--ink);box-shadow:none}
+#wybor:not(.wgraj) .biblio-filtr[aria-selected="true"] .biblio-licznik{color:var(--pink-d)}
+#wybor:not(.wgraj) .biblio-filtr:hover{color:var(--nic)}
+#wybor:not(.wgraj) .biblio-filtr[aria-selected="true"]:hover{color:var(--ink)}
+#wybor:not(.wgraj) .biblio-sort-et{display:none}
+/* szukanie: okrągły guzik z lupą, rozwija się dopiero, gdy ktoś w niego wejdzie albo coś wpisał */
+#wybor:not(.wgraj) .szuk{order:2;flex:0 0 auto;width:clamp(32px,3.6vh,38px);height:clamp(32px,3.6vh,38px);min-width:0;margin:0 0 5px auto;border-radius:20px;overflow:hidden;
+  background-color:var(--naszywka);box-shadow:0 3px 0 rgba(0,0,0,.45)}
+#wybor:not(.wgraj) .szuk:is(:focus-within,:has(.szuk-pole:not(:placeholder-shown))){flex:1 1 150px;width:auto;max-width:260px}
+#wybor:not(.wgraj) .szuk:not(:focus-within):not(:has(.szuk-pole:not(:placeholder-shown))) .szuk-pole{position:absolute;inset:0;width:100%;opacity:0;cursor:pointer}
+/* sortowanie: jeden okrągły guzik; najazd albo fokus rozwija cztery opcje w dół, nad listą */
+#wybor:not(.wgraj) .biblio-sort{order:3;position:relative;z-index:6;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+  width:clamp(32px,3.6vh,38px);height:clamp(32px,3.6vh,38px);margin:0 0 5px;padding:0;background:none;box-shadow:none;border-radius:0;overflow:visible}
+#wybor:not(.wgraj) .biblio-sort::before,#wybor:not(.wgraj) .biblio-sort::after{content:none}
+#wybor:not(.wgraj) .biblio-sort .segment-opcja{flex:none;display:none;width:max-content;min-width:168px;height:clamp(32px,3.6vh,38px);padding:0 14px;border-radius:8px;text-align:left;
+  background-color:var(--naszywka);background-image:var(--felt);color:var(--ink);box-shadow:0 3px 0 rgba(0,0,0,.45);font-size:13px;letter-spacing:.8px;transform:none}
+#wybor:not(.wgraj) .biblio-sort .segment-opcja[aria-checked="true"]{display:block;order:-1;min-width:0;width:clamp(32px,3.6vh,38px);padding:0;border-radius:20px;font-size:0;
+  background-image:linear-gradient(var(--ink),var(--ink)),linear-gradient(var(--ink),var(--ink)),linear-gradient(var(--ink),var(--ink)),var(--felt);
+  background-repeat:no-repeat,no-repeat,no-repeat,repeat;background-size:16px 3px,11px 3px,6px 3px,360px;background-position:50% calc(50% - 6px),calc(50% - 2.5px) 50%,calc(50% - 5px) calc(50% + 6px),0 0}
+#wybor:not(.wgraj) .biblio-sort:is(:hover,:focus-within) .segment-opcja{display:block}
+#wybor:not(.wgraj) .biblio-sort:is(:hover,:focus-within) .segment-opcja[aria-checked="true"]{width:max-content;min-width:168px;padding:0 14px;border-radius:8px;font-size:13px;
+  background-color:var(--bursztyn);background-image:var(--felt);background-repeat:repeat;background-size:360px;background-position:0 0}
+/* „Wgraj własny” jako ostatnia, różowa przekładka: pas dwóch dużych zakładek znika i oddaje miejsce liście */
+#wybor:not(.wgraj) .dodaj-pasek{grid-area:1/1/2/2;justify-self:end;align-self:start;z-index:5;display:block;width:var(--dodaj-w);margin:0;padding:0}
+#wybor:not(.wgraj) .zrodlo-zakladki{display:block;position:static}
+#wybor:not(.wgraj) :is(#btnWybierzUtwor,.zrodlo-albo,.zrodlo-opis,.dodaj-stan){display:none}
+#wybor:not(.wgraj) #btnDodajUtwory{display:flex;align-items:center;justify-content:center;width:100%;height:calc(var(--przek-h) - 1px);min-height:0;margin:0;padding:0 10px;border:none;border-radius:9px 9px 0 0;
+  background-color:var(--pink);background-image:var(--felt);background-blend-mode:multiply;background-size:360px;color:#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.18);
+  outline-offset:2px;transform:none;overflow:hidden;isolation:isolate;gap:7px}
+/* zaproszenie zostaje (poświata, błysk i podskakujący plus z gry.css), tylko w rozmiarze przekładki */
+#wybor:not(.wgraj) #btnDodajUtwory::before{inset:4px 4px 0;border-bottom:none;border-radius:6px 6px 0 0}
+#wybor:not(.wgraj) #btnDodajUtwory .zrodlo-ikona{width:clamp(17px,2.3vh,22px);border-radius:3px;box-shadow:none;font-size:clamp(14px,1.9vh,18px)}
+#wybor:not(.wgraj) #btnDodajUtwory .zrodlo-glowa{display:block;min-width:0}
+#wybor:not(.wgraj) #btnDodajUtwory .zrodlo-tytul{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 clamp(11.5px,1.45vh,14px)/1 var(--display);letter-spacing:1.2px;
+  text-transform:uppercase;color:#fff;text-shadow:none}
+#wybor:not(.wgraj) #btnDodajUtwory:hover{background-color:var(--pink-btn)}
+
+/* naszywka utworu: [grzbiet trudności][miniatura][tytuł ........ czas · partie] */
+#wybor:not(.wgraj) .biblio-lista{display:block;padding:6px 12px 14px 26px;scroll-padding-block:6px;scrollbar-width:none}
+#wybor:not(.wgraj) .biblio-lista::-webkit-scrollbar{display:none}
+#wybor:not(.wgraj) .biblio-lista>.bkarta{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"wybor ulub";align-items:center;gap:0 6px;
+  min-height:var(--wiersz);margin:0 0 6px;padding:0 10px 0 calc(var(--grzbiet) + 8px);border-radius:8px;overflow:visible;
+  background-color:var(--kurtka3);background-image:var(--felt);background-blend-mode:multiply;background-size:360px;color:var(--nic);
+  box-shadow:0 4px 0 rgba(0,0,0,.45);outline:2px dashed rgba(233,220,196,.26);outline-offset:-5px;
+  transform-origin:0 50%;opacity:.74;translate:20px 0;scale:.955;transition:opacity .16s,translate .16s var(--e-wej),scale .16s var(--e-wej)}
+#wybor:not(.wgraj) .biblio-lista>.bkarta::before,#wybor:not(.wgraj) .biblio-lista>.bkarta::after{content:none}
+/* Zapas dla przeglądarki bez view timeline (koło utworów niżej): im bliżej wybranego, tym większa i jaśniejsza, trzy
+   stopnie po obu stronach. Tylko tam, bo te reguły z :has() każą przeglądarce przeliczać styl WSZYSTKICH wierszy
+   przy każdej zmianie wybranego: przy 522 utworach było to ok. 120 ms na jeden krok koła, a koło i tak je zasłania. */
+@supports not (animation-timeline:view()){
+  #wybor:not(.wgraj) .biblio-lista>.bkarta:is(.wybrana + .bkarta + .bkarta + .bkarta,:has(+ .bkarta + .bkarta + .bkarta.wybrana)){opacity:.84;translate:13px 0;scale:.97}
+  #wybor:not(.wgraj) .biblio-lista>.bkarta:is(.wybrana + .bkarta + .bkarta,:has(+ .bkarta + .bkarta.wybrana)){opacity:.93;translate:6px 0;scale:.985}
+  #wybor:not(.wgraj) .biblio-lista>.bkarta:is(.wybrana + .bkarta,:has(+ .bkarta.wybrana)){opacity:1;translate:0 0;scale:1}
+  /* lista bez wybranego utworu (inna zakładka) i lista przefiltrowana szukaniem: wszystkie naszywki pełne, bo „sąsiad wybranego” nic tu nie znaczy */
+  #wybor:not(.wgraj) .biblio-lista:not(:has(>.bkarta.wybrana))>.bkarta,#wybor:not(.wgraj) .biblioteka:has(.szuk.aktywna) .biblio-lista>.bkarta:not(.wybrana){opacity:1;translate:0 0;scale:1}
+}
+#wybor:not(.wgraj) .biblio-lista>.bkarta:is(:hover,:focus-within,.gra){opacity:1}
+/* wiersz odfiltrowany szukaniem znika od razu (bez animowania wysokości, czyli bez przeliczania układu co klatkę) */
+#wybor:not(.wgraj) .biblio-lista>.bkarta[hidden]{display:none!important}
+#wybor:not(.wgraj) .biblio-lista>.bkarta:hover{background-color:#38322d}
+#wybor:not(.wgraj) .biblio-lista>.bkarta.wchodzi{animation:piosWejscie .2s var(--e-wej) backwards;animation-delay:calc(var(--i,0) * 40ms)}
+@keyframes piosWejscie{from{opacity:0}}
+#wybor:not(.wgraj) .bkarta-wybor{grid-area:wybor;grid-template-columns:auto minmax(0,1fr);gap:clamp(8px,.8vw,12px);align-self:stretch;padding:0;border-radius:6px}
+#wybor:not(.wgraj) .bkarta-wybor:active{transform:none}
+#wybor:not(.wgraj) .bkarta-tekst{flex-direction:row;align-items:center;gap:12px}
+#wybor:not(.wgraj) .bkarta-tytul{flex:1 1 auto;min-width:0;display:block;white-space:nowrap;text-overflow:ellipsis;font:800 clamp(14px,1.75vh,18px)/1.2 var(--display);
+  letter-spacing:.8px;text-transform:uppercase;color:var(--nic)}
+#wybor:not(.wgraj) .bkarta-meta{flex:0 1 auto;display:block;white-space:nowrap;text-overflow:ellipsis;font:700 clamp(12px,1.35vh,13.5px)/1.2 var(--sans);color:var(--nic-70)}
+#wybor:not(.wgraj) .biblio-lista .bkarta-meta>.licencja-znaczek{display:none}
+#wybor:not(.wgraj) .biblio-lista .bkarta-meta>.trudnosc{position:absolute;left:0;top:0;bottom:0;width:var(--grzbiet);height:auto;margin:0;padding:0;display:grid;place-items:center;
+  border-radius:8px 0 0 8px;box-shadow:inset -2px 0 0 rgba(0,0,0,.28);font:400 clamp(15px,1.9vh,19px)/1 var(--rebel);letter-spacing:.3px;background-image:var(--felt);background-blend-mode:multiply;background-size:360px}
+#wybor:not(.wgraj) .bkarta-rolka{border-radius:5px;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+/* zwykły wiersz: serce tylko przy ulubionych, przyciski wysuwają się z prawej przy najeździe, fokusie i podglądzie */
+#wybor:not(.wgraj) .biblio-lista>.bkarta:not(.wybrana) .bkarta-ulub{grid-area:ulub;visibility:visible;min-width:0;width:26px;height:26px;padding:0;background:none;box-shadow:none}
+#wybor:not(.wgraj) .biblio-lista>.bkarta:not(.wybrana) .bkarta-ulub::after{content:none}
+#wybor:not(.wgraj) .biblio-lista>.bkarta:not(.wybrana) .bkarta-ulub:not([aria-pressed="true"]){display:none}
+#wybor:not(.wgraj) .biblio-lista>.bkarta:not(.wybrana) .bkarta-akcje{display:none;position:absolute;right:6px;top:50%;translate:0 -50%;z-index:2;padding:3px 0 3px 12px;
+  background:linear-gradient(90deg,transparent,var(--kurtka3) 12px)}
+#wybor:not(.wgraj) .biblio-lista>.bkarta:not(.wybrana):is(:hover,:focus-within,.gra,:has(.lapka-nad)) .bkarta-akcje{display:flex;visibility:visible}
+#wybor:not(.wgraj) .biblio-lista>.bkarta:not(.wybrana):hover .bkarta-akcje{background:linear-gradient(90deg,transparent,#38322d 12px)}
+
+/* WYBRANY UTWÓR: duża jasna etykieta, lekko przekrzywiona, w dwóch liniach (tytuł, pod nim opis i przyciski) */
+#wybor:not(.wgraj) .biblio-lista>.bkarta.wybrana{grid-template-columns:minmax(0,1fr) auto auto;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:none;gap:0 6px;
+  --grzbiet-d:calc(var(--grzbiet) * 1.75);min-height:calc(var(--wiersz) * 1.95);margin:10px -4px 10px -16px;padding:0 12px 0 calc(var(--grzbiet-d) + 12px);z-index:3;
+  background-color:var(--naszywka);color:var(--ink);opacity:1;translate:-6px 0;scale:1;rotate:-.7deg;
+  box-shadow:0 7px 0 rgba(0,0,0,.5),0 0 0 3px var(--kurtka);outline:3px dashed var(--pink);outline-offset:-7px}
+#wybor:not(.wgraj) .biblio-lista>.bkarta.wybrana:hover{background-color:var(--naszywka)}
+#wybor:not(.wgraj) .bkarta.wybrana .bkarta-wybor{grid-area:1/1/3/4;align-items:center;padding:clamp(7px,1vh,11px) 0}
+#wybor:not(.wgraj) .bkarta.wybrana .bkarta-tekst{flex-direction:column;align-items:flex-start;justify-content:center;gap:clamp(4px,.7vh,8px);align-self:stretch}
+#wybor:not(.wgraj) .bkarta.wybrana .bkarta-tytul{flex:none;max-width:100%;font:400 clamp(21px,3.3vh,37px)/1.05 var(--rebel);letter-spacing:.6px;color:var(--ink);text-shadow:2px 2px 0 rgba(236,26,131,.26)}
+#wybor:not(.wgraj) .bkarta.wybrana .bkarta-meta{flex:none;max-width:calc(100% - var(--akcje-w,292px));font-size:clamp(12.5px,1.5vh,15px);color:var(--muted)}
+#wybor:not(.wgraj) .biblio-lista .bkarta.wybrana .bkarta-meta>.trudnosc{width:var(--grzbiet-d);font-size:clamp(26px,4.1vh,46px)}
+#wybor:not(.wgraj) .bkarta.wybrana .bkarta-ulub{grid-area:2/2/3/3;align-self:end;margin-bottom:clamp(7px,1vh,11px);z-index:1}
+#wybor:not(.wgraj) .bkarta.wybrana .bkarta-akcje{grid-area:2/3/3/4;align-self:end;margin-bottom:clamp(7px,1vh,11px);z-index:1}
+/* wybrany wiersz nie przykleja się do krawędzi listy: nad i pod nim zostają co najmniej dwie naszywki */
+#wybor:not(.wgraj) .biblio-lista .bkarta :is(.bkarta-wybor,.przycisk){scroll-margin-block:calc(var(--wiersz) * 2.4 + 12px)}
+
+/* tekst na ciemnym: brak wyników, folder „Moje”, notatki */
+#wybor:not(.wgraj) .kol-piosenki :is(.szuk-brak,.biblio-folder,.biblio-nota,.biblio-pusty){color:var(--nic)}
+
+/* ---------- rampa: ściąga sterowania z lewej, „Dalej” z prawej ---------- */
+#wybor:not(.wgraj) .lista-podpowiedz{position:absolute;left:4px;top:calc(100% + var(--rampa) * .37);translate:0 -50%;z-index:2;width:max-content;max-width:132%;margin:0;
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px clamp(10px,1.3vw,22px);font:800 clamp(12.5px,1.55vh,15.5px)/1.2 var(--display);letter-spacing:.6px;color:rgba(243,233,210,.92);
+  text-shadow:0 2px 0 rgba(0,0,0,.55);white-space:normal}
+#wybor .lista-podpowiedz .podp{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+#wybor .lista-podpowiedz kbd{display:inline-grid;place-items:center;min-height:clamp(26px,3.2vh,34px);padding:0 10px;border-radius:7px;background-color:var(--naszywka);background-image:var(--felt);
+  color:var(--ink);font:400 clamp(11.5px,1.4vh,14px)/1 var(--rebel);letter-spacing:.6px;text-transform:uppercase;text-shadow:none;box-shadow:0 4px 0 rgba(0,0,0,.55)}
+#wybor:not(.wgraj) .kol-wybrana>.dalej{position:absolute;right:clamp(0px,.8vw,12px);top:calc(100% + var(--rampa) * .37);translate:0 -50%;rotate:-2.4deg;z-index:2;margin:0;
+  font-size:clamp(24px,4.3vh,46px);padding-top:clamp(9px,1.5vh,16px);padding-bottom:clamp(8px,1.3vh,14px)}
+
+/* ---------- plakat wybranej piosenki ---------- */
+#wybor:not(.wgraj) .kol-wybrana{--pieczec:clamp(92px,14.8vh,160px);rotate:.45deg;padding-bottom:clamp(12px,1.8vh,20px);box-shadow:0 10px 0 rgba(0,0,0,.5),0 26px 50px rgba(0,0,0,.45)}
+/* dwa paski różowej taśmy trzymają plakat na ścianie */
+#wybor:not(.wgraj) #wybrana::before,#wybor:not(.wgraj) #wybrana::after{content:"";position:absolute;top:-13px;width:clamp(70px,6.2vw,108px);height:clamp(20px,2.7vh,30px);z-index:3;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.16) 0 6px,transparent 6px 12px),rgba(236,26,131,.84);box-shadow:0 3px 0 rgba(0,0,0,.22)}
+#wybor:not(.wgraj) #wybrana::before{left:6%;rotate:-6deg}
+#wybor:not(.wgraj) #wybrana::after{right:34%;rotate:4deg}
+#wybor:not(.wgraj) .wybrana-tytul{order:0;margin-right:calc(var(--pieczec) * .82);font-size:clamp(24px,4.2vh,44px)}
+#wybor:not(.wgraj) .wybrana-opis{order:1;margin-right:calc(var(--pieczec) * .82)}
+#wybor:not(.wgraj) .wybrana-atrybucja{order:1}
+#wybor:not(.wgraj) .wybrana-meta{order:2;margin-right:calc(var(--pieczec) * .5)}
+#wybor:not(.wgraj) .wybrana-meta>.trudnosc{display:none}
+#wybor:not(.wgraj) #wybranaStaty{order:3}
+/* pieczątka trudności w rogu plakatu: liczba, poziom słowem i bot, w kolorze poziomu */
+#wybor:not(.wgraj) #wybrana{--st:var(--green-d)}
+#wybor:not(.wgraj) #wybrana:has(.wybrana-meta>.trudnosc[data-poziom="srednia"]){--st:#5d8616}
+#wybor:not(.wgraj) #wybrana:has(.wybrana-meta>.trudnosc[data-poziom="trudna"]){--st:#a2670a}
+#wybor:not(.wgraj) #wybrana:has(.wybrana-meta>.trudnosc[data-poziom="bardzoTrudna"]){--st:var(--pink-d)}
+#wybor:not(.wgraj) #wybrana:has(.wybrana-meta>.trudnosc[data-poziom="ekstremalna"]){--st:var(--ink)}
+#wybor:not(.wgraj) .staty-suma{position:absolute;right:clamp(8px,1vw,18px);top:clamp(-22px,-1.6vh,-10px);z-index:4;width:var(--pieczec);height:var(--pieczec);margin:0;padding:0 8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(1px,.3vh,4px);border-radius:50%;rotate:10deg;text-align:center;
+  color:var(--st);background-color:var(--naszywka);background-image:var(--felt);border:clamp(3px,.45vh,5px) solid var(--st);
+  box-shadow:inset 0 0 0 3px var(--naszywka),inset 0 0 0 5px var(--st),0 5px 0 rgba(0,0,0,.28);
+  font:800 clamp(10px,1.35vh,14.5px)/1 var(--display);letter-spacing:1.4px;text-transform:uppercase}
+#wybor:not(.wgraj) .staty-suma>b{font:400 clamp(30px,5.8vh,64px)/.9 var(--rebel);letter-spacing:0;color:var(--st)}
+#wybor:not(.wgraj) .staty-suma>.staty-skala{display:none}
+#wybor:not(.wgraj) .staty-suma>.staty-poziom{max-width:100%;letter-spacing:.3px;font-size:.94em}
+#wybor:not(.wgraj) .staty-suma>.staty-bot{margin:0;padding:0;background:none;box-shadow:none;color:var(--st);font:800 clamp(9px,1.15vh,12px)/1 var(--display);letter-spacing:1px}
+/* podgląd partii: ciemna gablota zamiast żółtej ramki, przełączniki jako guziki z lampką */
+#wybor:not(.wgraj) .wybrana-podglad{background-color:var(--kurtka);background-image:var(--felt);background-blend-mode:multiply;background-size:360px;color:var(--nic);
+  box-shadow:inset 0 0 0 3px #000,0 6px 0 rgba(0,0,0,.35);border-radius:12px}
+#wybor:not(.wgraj) .wybrana-podglad::after{border-color:rgba(233,220,196,.3)}
+#wybor:not(.wgraj) .wybrana-podglad :is(.pp-tytul,.pp-info,.pp-podklad,.ps-auto-et){color:var(--nic)}
+#wybor:not(.wgraj) .wybrana-podglad .pp-info{color:var(--bursztyn)}
+#wybor:not(.wgraj) .wybrana-podglad .pp-powieksz{color:var(--ink)}
+#wybor:not(.wgraj) .wybrana-podglad .ps-od>button[aria-checked="false"]{color:var(--nic-70)}
+/* Rolka rośnie z oknem (do 250 px), ale to ONA oddaje miejsce, gdy plakat robi się ciasny (długi tytuł w dwóch liniach,
+   druga linia przycisków pod rolką): kurczy się do 60 px. Wcześniej rolka miała stałą wysokość, a kurczyła się tablica
+   pod nią, do paska na kilkanaście pikseli, w którym przewijała się sama naklejka „Nikt jeszcze tego nie zaśpiewał”.
+   Płótno wypełnia swoje pudełko (inset:0), więc jego własne wymiary nie rozpychają układu. */
+/* tylko w zwykłym widoku: powiększony podgląd („Powiększ”) ma własny układ w gry.css i wypełnia cały plakat */
+#wybor:not(.wgraj) .kol-wybrana:not(:has(.podglad-partii.rozwiniety)) .wybrana-podglad{flex:0 1000 auto;min-height:0}
+#wybor:not(.wgraj) .wybrana-podglad .podglad-partii:not(.rozwiniety),
+#wybor:not(.wgraj) .wybrana-podglad .podglad-partii:not(.rozwiniety) .pp-srodek{flex:1 1 auto;min-height:0}
+#wybor:not(.wgraj) .wybrana-podglad .podglad-partii:not(.rozwiniety) .pp-rolkabox{flex:0 1 clamp(60px,calc(34vh - 140px),250px);min-height:60px}
+#wybor:not(.wgraj) .wybrana-podglad .podglad-partii:not(.rozwiniety) .pp-rolka{position:absolute;inset:0;height:100%}
+/* powiększony podgląd („Powiększ”): rolka bierze to, co zostaje po przyciskach, zamiast trzymać sztywne 300 px;
+   przełączniki instrumentu i silnika MIDI dodały przyciskom linię i z tamtym minimum wychodziły poniżej plakatu */
+#wybor:not(.wgraj) .wybrana-podglad .podglad-partii.rozwiniety{flex:1 1 auto;min-height:0}
+#wybor:not(.wgraj) .wybrana-podglad .podglad-partii.rozwiniety .pp-rolkabox{min-height:120px}
+/* tablica pod podglądem: swoja wysokość, bez paska przewijania; pusta (sama naklejka) nie przewija się wcale */
+#wybor:not(.wgraj) .wybrana-tablica{flex:0 1 auto;scrollbar-width:none}
+#wybor:not(.wgraj) .wybrana-tablica::-webkit-scrollbar{display:none}
+#wybor:not(.wgraj) .wybrana-tablica:has(.wybrana-top-pusto){flex:none;overflow:visible}
+#wybor:not(.wgraj) .pp-przel{gap:8px;padding:0 12px 0 10px;min-height:28px;border-radius:8px;background:rgba(243,233,210,.1);box-shadow:inset 0 0 0 1.5px rgba(233,220,196,.28)}
+#wybor:not(.wgraj) .pp-przel .przel{width:15px;height:15px;min-width:0;padding:0;border-radius:50%;background:#4a443c;box-shadow:0 0 0 2px rgba(0,0,0,.5)}
+#wybor:not(.wgraj) .pp-przel .przel[aria-checked="true"]{background:#7fe04a;box-shadow:0 0 0 2px rgba(0,0,0,.5),0 0 9px #7fe04a}
+#wybor:not(.wgraj) .pp-przel .przel-galka{display:none}
+#wybor:not(.wgraj) .pp-przel .pp-podklad{font:800 12.5px/1 var(--display);letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+/* tablica bez wyników: różowa naklejka zamiast białego paska */
+#wybor:not(.wgraj) .wybrana-top-pusto{width:max-content;max-width:100%;margin:4px 0 0 6px;padding:8px 14px 7px;border-radius:5px;background:var(--pink);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.3);
+  font:400 clamp(13px,1.6vh,16px)/1.2 var(--rebel);letter-spacing:.5px;rotate:-1.6deg;list-style:none}
+
+/* szuflada ustawień piosenki: przyciemnia scenę zamiast ją rozjaśniać */
+#wybor:not(.wgraj) .szuflada-tlo{background:rgba(0,0,0,.5)}
+#wybor:not(.wgraj) .pp-przel .przel::before{content:"";position:absolute;inset:-8px}   /* cel 24 px mimo małej lampki */
+
+/* węższe okno: ciaśniejsze przekładki i krótszy pas przycisków w etykiecie (na końcu arkusza, żeby wygrało z regułami wyżej) */
+@media (max-width:1440px){#wybor:not(.wgraj){--akcje-w:258px}
+  #wybor:not(.wgraj){--dodaj-w:150px}
+  #wybor:not(.wgraj) .biblio-filtr{padding:0 7px;gap:4px;letter-spacing:.3px;font-size:11px}
+  #wybor:not(.wgraj) #btnDodajUtwory{padding:0 6px}
+  #wybor:not(.wgraj) #btnDodajUtwory .zrodlo-tytul{letter-spacing:.4px}}
+
+/* ================= „WGRAJ WŁASNY”: półka z płytami i wrzutnia na kasetę (2026-11-19) =================
+   Ten sam krok, druga przekładka. Paczki stoją pierwsze, bo tylko je da się obsłużyć kapslem (plik i adres
+   wymagają myszy albo klawiatury). Budowę panelu robi pakiety.js; tu jest sam wygląd, pod #wybor.wgraj. */
+#wybor.wgraj{--przek-h:clamp(34px,4.2vh,44px);--kurtka3:#2c2824;--nic-70:rgba(243,233,210,.74);--okl:clamp(150px,27vh,292px)}
+#wybor.wgraj .wybor-uklad{padding:0 clamp(0px,4.6vw,100px) calc(var(--rampa) - var(--pad) + 2px)}
+/* przekładki: „‹ Wybierz utwór” wraca do listy, różowa „Wgraj własny” jest tą otwartą */
+#wybor.wgraj .zrodlo-zakladki{display:flex;align-items:flex-end;gap:5px;min-height:0;padding:0 6px;border-bottom:5px solid var(--pink);filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
+#wybor.wgraj :is(.zrodlo-albo,.zrodlo-opis,.dodaj-stan){display:none}
+#wybor.wgraj .zrodlo-zak{container-type:normal;flex:none;width:auto;height:calc(var(--przek-h) - 6px);min-height:0;margin:0;padding:0 clamp(10px,1.1vw,16px);gap:7px;border:none;border-radius:9px 9px 0 0;
+  background-color:#3a342e;background-image:var(--felt);background-blend-mode:multiply;background-size:360px;color:var(--nic-70);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);transform:none;translate:none}
+#wybor.wgraj .zrodlo-zak::before,#wybor.wgraj .zrodlo-zak::after{content:none}
+#wybor.wgraj .zrodlo-zak .zrodlo-glowa{display:block}
+#wybor.wgraj .zrodlo-zak .zrodlo-tytul{display:block;font:800 clamp(11.5px,1.45vh,14px)/1 var(--display);letter-spacing:1.2px;color:inherit;text-shadow:none}
+#wybor.wgraj .zrodlo-zak .zrodlo-ikona{width:clamp(17px,2.3vh,22px);border-radius:3px;box-shadow:none;font-size:clamp(14px,1.9vh,18px)}
+#wybor.wgraj #btnWybierzUtwor .zrodlo-ikona{display:none}
+#wybor.wgraj #btnWybierzUtwor .zrodlo-tytul::before{content:"\2039\00a0"}
+#wybor.wgraj #btnWybierzUtwor:hover{color:var(--nic)}
+#wybor.wgraj #btnDodajUtwory{height:var(--przek-h);background-color:var(--pink);color:#fff;box-shadow:none}
+/* panel bez kremowej karty: półka i wrzutnia stoją wprost na scenie */
+#wybor.wgraj #dodajPanel{background:none;box-shadow:none;border-radius:0;padding:clamp(12px,2vh,24px) 4px 10px;color:var(--nic)}
+#wybor.wgraj .dodaj-tresc{display:grid;grid-template-columns:minmax(0,1fr) clamp(236px,23.5vw,350px);gap:clamp(18px,2.8vw,48px);align-items:start}
+#wybor.wgraj .pk-dodaj-gora{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#wybor.wgraj #bibPaczki{grid-column:1;grid-row:1;min-width:0;margin:0;padding:0;background:none;box-shadow:none;border-radius:0}
+#wybor.wgraj .pk-paczki-naglowek{margin:0 0 clamp(8px,1.4vh,16px);padding:0;font:400 clamp(20px,3.1vh,34px)/1 var(--rebel);letter-spacing:1px;text-transform:uppercase;color:var(--nic);text-shadow:3px 3px 0 var(--pink)}
+#wybor.wgraj .pk-paczki-tresc{display:flex;flex-direction:column;gap:clamp(8px,1.4vh,14px);padding:0}
+#wybor.wgraj .pk-karty{order:1;position:relative;flex-direction:row;align-items:stretch;gap:clamp(26px,3.6vw,64px);margin:0;padding:12px clamp(26px,3.4vw,60px) 28px 8px}
+#wybor.wgraj .pk-karty::after{content:"";position:absolute;left:0;right:0;bottom:0;height:13px;border-radius:4px;background-color:#3a342e;background-image:var(--felt);background-blend-mode:multiply;
+  outline:2px dashed rgba(233,220,196,.3);outline-offset:-4px;box-shadow:0 6px 0 rgba(0,0,0,.5)}
+#wybor.wgraj .pk-nota{order:2;margin:4px 0 0;max-width:92ch;font:700 clamp(11.5px,1.35vh,13.5px)/1.4 var(--sans);color:var(--nic-70)}
+#wybor.wgraj .pk-licencje{display:none}   /* ten sam ekran otwiera odnośnik na rampie */
+/* okładka paczki: kolor paczki, tytuł, duża liczba utworów, zza okładki wystaje płyta */
+#wybor.wgraj .pk-karta{--akc:clamp(46px,6.2vh,64px);--okl-kolor:var(--pink-btn);--okl-scieg:rgba(255,255,255,.5);flex:1 1 0;min-width:0;max-width:330px;min-height:calc(var(--okl) + var(--akc));
+  isolation:isolate;gap:clamp(4px,.7vh,8px);padding:clamp(12px,1.9vh,22px) clamp(12px,1.2vw,20px) calc(var(--akc) + clamp(12px,1.8vh,20px));border-radius:0;background:none;box-shadow:none;color:#fff;
+  transition:translate .16s var(--e-wej),rotate .16s var(--e-wej)}
+#wybor.wgraj .pk-karta[data-pack="cc0_classics"]{--okl-kolor:var(--green);--okl-scieg:rgba(33,31,29,.36);color:var(--ink);box-shadow:none}
+#wybor.wgraj .pk-karta[data-pack="cc_by_classics"]{--okl-kolor:var(--amber);--okl-scieg:rgba(33,31,29,.36);color:var(--ink);box-shadow:none}
+#wybor.wgraj .pk-karta::before{content:"";position:absolute;inset:0 0 var(--akc) 0;z-index:-1;border-radius:7px;background-color:var(--okl-kolor);background-image:var(--felt);background-blend-mode:multiply;background-size:360px;
+  box-shadow:0 9px 0 rgba(0,0,0,.5);outline:3px dashed var(--okl-scieg);outline-offset:-9px}
+#wybor.wgraj .pk-karta::after{content:"";position:absolute;z-index:-2;top:calc((100% - var(--akc)) * .07);right:-17%;height:calc((100% - var(--akc)) * .86);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#faf6ee 0 3%,#ec1a83 3.5% 19%,#0e0d0c 19.5% 22%,#3b3530 22.5% 34%,#0e0d0c 34.5% 36%,#3b3530 36.5% 50%,#0e0d0c 50.5% 52%,#3b3530 52.5% 68%,#0e0d0c 68.5% 70%,#3b3530 70.5% 100%);
+  box-shadow:0 8px 0 rgba(0,0,0,.55),0 0 0 3px rgba(233,220,196,.4)}
+#wybor.wgraj .pk-karta:is(:hover,:focus-within){translate:0 -8px;rotate:-1.2deg}
+#wybor.wgraj .pk-karta:has(.pk-stan){z-index:2}   /* pieczątka „Pobrana” wychodzi nad sąsiednią okładkę */
+#wybor.wgraj .pk-glowa{flex-direction:column;align-items:flex-start;gap:clamp(3px,.6vh,7px)}
+#wybor.wgraj .pk-nazwa{font:400 clamp(16px,2.7vh,29px)/1.03 var(--rebel);letter-spacing:.5px;text-transform:uppercase}
+#wybor.wgraj .pk-lic{padding:0;border-radius:0;background:none;box-shadow:none;color:inherit;font:800 clamp(10.5px,1.2vh,12px)/1.25 var(--display);letter-spacing:1.1px;text-transform:uppercase}
+#wybor.wgraj .pk-opis{margin-top:auto;color:inherit;font:700 clamp(11px,1.3vh,13px)/1.3 var(--sans);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden}
+#wybor.wgraj .pk-opis[data-utwory]::before{content:attr(data-utwory);display:block;margin-bottom:clamp(2px,.6vh,6px);font:400 clamp(30px,6vh,64px)/.92 var(--rebel)}
+#wybor.wgraj :is(.pk-blad,.pk-uwaga){padding:4px 8px;border-radius:6px;background:var(--naszywka);color:var(--pink-d)}
+/* pod okładką: krótki przycisk pobrania albo „Usuń paczkę”; pobrana paczka ma pieczątkę w poprzek okładki */
+#wybor.wgraj .pk-akcje{position:absolute;left:0;right:0;bottom:0;min-height:calc(var(--akc) - 16px);flex-wrap:nowrap;align-items:stretch;gap:8px}
+#wybor.wgraj .pk-akcje:has(.pk-pasek){flex-wrap:wrap;align-items:center;padding:8px;border-radius:8px;background:var(--kurtka3);color:var(--nic)}
+#wybor.wgraj .pk-akcje .pk-pasek-napis{color:var(--nic)}
+#wybor.wgraj .pk-pobierz{flex:0 1 auto;min-width:0;padding:0 clamp(12px,1.3vw,20px);font:400 clamp(13px,1.8vh,18px)/1.1 var(--rebel);letter-spacing:.7px;text-transform:uppercase}
+#wybor.wgraj .pk-pobierz[data-krotko]{font-size:0}
+#wybor.wgraj .pk-pobierz[data-krotko]::before{content:attr(data-krotko);font:400 clamp(13px,1.8vh,18px)/1.1 var(--rebel);letter-spacing:.7px;white-space:nowrap}
+#wybor.wgraj .pk-usun{align-self:center;background-color:var(--kurtka3);background-image:var(--felt);background-blend-mode:multiply;color:var(--nic);box-shadow:0 4px 0 #000}
+#wybor.wgraj .pk-usun::after{border-color:rgba(233,220,196,.3)}
+#wybor.wgraj .pk-stan{position:absolute;left:22%;bottom:calc(100% + 16px + var(--okl) * .6);z-index:3;white-space:nowrap;padding:clamp(6px,1vh,10px) clamp(8px,1vw,14px) clamp(4px,.8vh,8px);
+  border:clamp(3px,.45vh,5px) solid var(--naszywka);border-radius:9px;background:rgba(27,25,23,.88);color:var(--naszywka);box-shadow:0 6px 0 rgba(0,0,0,.4);rotate:-7deg;
+  font:400 clamp(11.5px,1.7vh,18px)/1.05 var(--rebel);letter-spacing:.8px;text-transform:uppercase;text-align:center}
+/* wrzutnia: własny plik wsuwa się jak kaseta, adres jest pod spodem */
+#wybor.wgraj .pk-dodaj{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:clamp(10px,1.7vh,18px);margin:clamp(0px,1.4vh,14px) 0 0;padding:clamp(14px,2.2vh,24px) clamp(14px,1.4vw,22px) clamp(14px,2vh,22px);
+  border-radius:14px;background-color:var(--kurtka3);background-image:var(--felt);background-blend-mode:multiply;background-size:360px;color:var(--nic);
+  outline:2px dashed rgba(233,220,196,.35);outline-offset:-8px;box-shadow:0 10px 0 rgba(0,0,0,.5)}
+#wybor.wgraj .pk-dodaj>.pk-url{gap:clamp(5px,.9vh,9px);margin:0;padding:0;border:none;border-radius:0;background:none;box-shadow:none}
+#wybor.wgraj .pk-dodaj>.pk-plik{order:1}
+#wybor.wgraj .pk-dodaj>form.pk-url{order:2;padding-top:clamp(8px,1.4vh,14px);border-top:2px dashed rgba(233,220,196,.24)}
+#wybor.wgraj .pk-plik>.pk-url-et{font:400 clamp(17px,2.6vh,27px)/1.05 var(--rebel);letter-spacing:1px;text-transform:uppercase;text-align:center;color:var(--nic);text-shadow:2px 2px 0 var(--pink)}
+#wybor.wgraj form.pk-url>.pk-url-et{font:800 clamp(11.5px,1.35vh,13px)/1.2 var(--display);letter-spacing:1.2px;text-transform:uppercase;color:var(--nic-70)}
+#wybor.wgraj .pk-dodaj .pk-url-nota{margin:0;font:700 clamp(11px,1.25vh,12.5px)/1.35 var(--sans);color:var(--nic-70)}
+#wybor.wgraj .pk-plik>.pk-url-nota{display:none}   /* to samo mówi ściąga na rampie */
+#wybor.wgraj .pk-plik-strefa{--kas:clamp(64px,10.5vh,112px);position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;min-height:0;margin:0;
+  padding:calc(var(--kas) + clamp(26px,4.2vh,44px)) 6px 2px;border:none;border-radius:8px;background:none;box-shadow:none;color:var(--nic);cursor:pointer}
+#wybor.wgraj .pk-plik-strefa::after{content:none}
+/* szczelina (na wierzchu) i kaseta (pod nią, wystaje górą) */
+#wybor.wgraj .pk-plik-strefa::before{content:"";position:absolute;left:0;right:0;top:calc(var(--kas) * .8);height:clamp(30px,4.8vh,50px);z-index:1;border:none;border-radius:9px;background:#0b0a09;
+  box-shadow:inset 0 7px 0 #000,0 3px 0 rgba(233,220,196,.2)}
+#wybor.wgraj .pk-plik-ikona{position:absolute;left:50%;top:0;z-index:0;width:calc(var(--kas) * 1.62);height:var(--kas);margin:0;border:none;border-radius:8px;translate:-50% 0;rotate:-5deg;
+  background:radial-gradient(circle at 28% 52%,var(--naszywka) 0 5%,var(--ink) 5.5% 13%,transparent 13.5%),radial-gradient(circle at 72% 52%,var(--naszywka) 0 5%,var(--ink) 5.5% 13%,transparent 13.5%),var(--naszywka);
+  box-shadow:0 5px 0 rgba(0,0,0,.4);outline:2px dashed rgba(33,31,29,.3);outline-offset:-5px;transition:translate .18s var(--e-wej)}
+#wybor.wgraj .pk-plik-ikona::before{content:".MID";position:absolute;left:0;right:0;top:9%;width:auto;height:auto;border:none;background:none;transform:none;text-align:center;
+  font:400 calc(var(--kas) * .2)/1 var(--rebel);letter-spacing:2px;color:var(--pink-d)}
+#wybor.wgraj .pk-plik-ikona::after{content:none}
+#wybor.wgraj .pk-plik-strefa:is(:hover,:focus-visible) .pk-plik-ikona{translate:-50% calc(var(--kas) * .16)}
+#wybor.wgraj .pk-plik-strefa>b{font:800 clamp(13px,1.7vh,16.5px)/1.2 var(--display);letter-spacing:.3px;color:var(--nic)}
+/* „Wybierz cały folder”: ciemny klawisz pod szczeliną */
+#wybor.wgraj .pk-plik-folder{align-self:center;padding:clamp(6px,1vh,9px) 16px;background-color:var(--kurtka);background-image:var(--felt);background-blend-mode:multiply;color:var(--nic);box-shadow:0 4px 0 #000;font:400 clamp(12.5px,1.6vh,15px)/1.1 var(--rebel);letter-spacing:.7px;text-transform:uppercase}
+#wybor.wgraj .pk-plik-folder::after{border-color:rgba(233,220,196,.3)}
+#wybor.wgraj .pk-plik-strefa>small{font:700 clamp(11.5px,1.35vh,13px)/1.2 var(--sans);color:var(--nic-70)}
+/* rampa: z lewej przypomnienie o upuszczaniu i wklejaniu, z prawej jedna linia o autorach i licencjach */
+#wybor.wgraj .dodaj-upusc{position:absolute;left:4px;top:calc(100% + var(--rampa) * .37);translate:0 -50%;z-index:2;max-width:50%;margin:0;color:rgba(243,233,210,.92);
+  font:800 clamp(12.5px,1.55vh,15.5px)/1.25 var(--display);letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.55)}
+#wybor.wgraj .dodaj-upusc .kafel-upusc-ikona{background-color:var(--naszywka);color:var(--ink);box-shadow:0 4px 0 rgba(0,0,0,.55);text-shadow:none}
+#wybor.wgraj .stopka-licencje{position:absolute;right:4px;top:calc(100% + var(--rampa) * .37);translate:0 -50%;z-index:2;max-width:46%;margin:0;text-align:right;color:var(--nic-70);
+  font:700 clamp(11.5px,1.35vh,13.5px)/1.4 var(--sans);text-shadow:0 2px 0 rgba(0,0,0,.55)}
+#wybor.wgraj .stopka-licencje .link-licencje{color:var(--nic);padding-block:5px}   /* cel 24 px */
+
+/* ================= KOŁO UTWORÓW: skala naszywek zależy od miejsca na liście (2026-11-19) =================
+   Jak w szafie grającej: naszywka na środku listy jest pełna, im bliżej krawędzi, tym mniejsza, bledsza, bardziej
+   wcięta i bliżej sąsiadki. Robi to animacja spięta z przewijaniem (view timeline), więc liczy ją kompozytor: bez JS
+   i bez przeliczania układu, także przy przewijaniu kółkiem myszy. Wybrany utwór stoi ZAWSZE na środku listy:
+   ustawia go tam wysrodkujNaLiscie (zabi-chor.js) po każdym wyborze, a puste pół listy nad pierwszym i pod ostatnim
+   wierszem pozwala wyśrodkować także je. Przeglądarka bez view timeline zostaje przy trzech stopniach „sąsiada
+   wybranego” wyżej.
+   Liczby z makiety (C:/tmp/rb-start-261118/makieta): wiersz 60 px przy oknie 1067 px, etykieta wybranego 118,
+   sąsiedzi 1 / 1 / .92 / .84 / .76 / .68 (tak samo malało pismo: 19 → 13 px), wcięcia 0 / 0 / 20 / 36 / 48 / 56 px.
+   --wiersz trzeba ustawić także na samej naszywce, bo gry.css daje jej własne 46 px.
+   --kh = wysokość listy w px (ustawia ją wysrodkujNaLiscie w zabi-chor.js; zanim to zrobi, przybliżenie z vh).
+   NIE zastępować jej jednostkami kontenera (cqh + container-type:size): z nimi każda zmiana wskazanego wiersza
+   przeliczała styl całej biblioteki, przy 522 utworach ok. 75 ms na krok koła zamiast 1,4 ms. */
+#wybor:not(.wgraj),#wybor:not(.wgraj) .biblio-lista>.bkarta{--wiersz:clamp(42px,5.6vh,62px)}
+#wybor:not(.wgraj){--grzbiet:clamp(44px,3.4vw,60px)}
+#wybor:not(.wgraj) .bkarta-tytul{font-size:clamp(14.5px,1.8vh,20px)}
+#wybor:not(.wgraj) .biblio-lista .bkarta-meta>.trudnosc{font-size:clamp(15px,1.9vh,20px)}
+@supports (animation-timeline:view()){
+  #wybor:not(.wgraj) .biblio-lista{--kh:61vh}
+  #wybor:not(.wgraj) .biblio-lista::before,#wybor:not(.wgraj) .biblio-lista::after{content:"";display:block;height:calc(var(--kh) * .5 - var(--wiersz) * .95 - 12px)}
+  #wybor:not(.wgraj) .biblio-lista>.bkarta:not(.wybrana){animation:piosKolo linear both;animation-timeline:view(block);animation-range:cover 0% cover 100%}
+  /* wybrana etykieta nie maleje, ale przesuwa się razem z sąsiadkami, żeby nie nachodziła na nie poza środkiem listy */
+  #wybor:not(.wgraj) .biblio-lista>.bkarta.wybrana{animation:piosKoloWybrana linear both;animation-timeline:view(block);animation-range:cover 0% cover 100%}
+  /* 0% = wiersz wchodzi dołem, 50% = środek listy, 100% = wychodzi górą. Punkty wypadają tam, gdzie w układzie stoi
+     pierwszy, drugi, trzeci i czwarty sąsiad wybranego (14, 23, 33 i 42% drogi od środka); pierwszy sąsiad jest
+     jeszcze pełny. Przesunięcie w pionie = suma tego, o ile zmalały wiersze bliżej środka. */
+  @keyframes piosKolo{
+    0%{opacity:.42;scale:.68;translate:56px calc(var(--kh) * -0.056)}
+    8%{opacity:.6;scale:.76;translate:48px calc(var(--kh) * -0.03)}
+    17.4%{opacity:.78;scale:.84;translate:36px calc(var(--kh) * -0.013)}
+    26.7%{opacity:.92;scale:.92;translate:20px calc(var(--kh) * -0.003)}
+    36%{opacity:1;scale:1;translate:0 0}
+    64%{opacity:1;scale:1;translate:0 0}
+    73.3%{opacity:.92;scale:.92;translate:20px calc(var(--kh) * 0.003)}
+    82.6%{opacity:.78;scale:.84;translate:36px calc(var(--kh) * 0.013)}
+    92%{opacity:.6;scale:.76;translate:48px calc(var(--kh) * 0.03)}
+    100%{opacity:.42;scale:.68;translate:56px calc(var(--kh) * 0.056)}}
+  @keyframes piosKoloWybrana{
+    0%{translate:-6px calc(var(--kh) * -0.056)}8%{translate:-6px calc(var(--kh) * -0.03)}17.4%{translate:-6px calc(var(--kh) * -0.013)}26.7%{translate:-6px calc(var(--kh) * -0.003)}36%{translate:-6px 0}
+    64%{translate:-6px 0}73.3%{translate:-6px calc(var(--kh) * 0.003)}82.6%{translate:-6px calc(var(--kh) * 0.013)}92%{translate:-6px calc(var(--kh) * 0.03)}100%{translate:-6px calc(var(--kh) * 0.056)}}
+}
+
+/* ---------- ramka fokusu: na całej etykiecie, nie na samym przycisku ----------
+   Fokus wiersza od razu go wybiera, więc „gdzie jestem” mówi duża etykieta. Zwykła ramka fokusu siedziała na
+   przycisku z tytułem, czyli bez grzbietu z oceną i z odstępem od brzegu etykiety: wyglądała jak przesunięta.
+   Teraz przycisk ramki nie ma, a przy sterowaniu z klawiatury, pada i kapsla obwódkę dostaje cała etykieta
+   (różowa, u kapsla w jego kolorze). */
+#wybor:not(.wgraj) .biblio-lista .bkarta-wybor:is(:focus,:focus-visible){outline:none}
+#wybor:not(.wgraj) .biblio-lista>.bkarta.wybrana:has(.bkarta-wybor:focus-visible),
+body.nawigacja #wybor:not(.wgraj) .biblio-lista>.bkarta.wybrana:has(.bkarta-wybor:focus){
+  box-shadow:0 7px 0 rgba(0,0,0,.5),0 0 0 3px var(--kurtka),0 0 0 6px var(--pink)}
+body.pilot #wybor:not(.wgraj) .biblio-lista>.bkarta.wybrana:has(.bkarta-wybor:focus){
+  box-shadow:0 7px 0 rgba(0,0,0,.5),0 0 0 3px var(--kurtka),0 0 0 6px var(--pilot,var(--pink))}
+
+/* ---------- koło liter z lewej: duża litera obok wybranego utworu, mniejsze nad nią i pod nią ----------
+   Buduje je odswiezIndeksListy (zabi-chor.js): pasek ma wysokość listy, więc jego środek to środek listy. Każda
+   litera stoi na środku i jest odsunięta o --p kroków (pozycjaLitery), a [data-d] = odległość od bieżącej litery
+   (0…4) daje jej wielkość. Zmienia się tylko translate, scale i krycie. */
+#wybor:not(.wgraj){--lit:clamp(40px,3.5vw,60px)}
+#wybor:not(.wgraj) .lista-indeks{position:absolute;left:0;z-index:3;width:var(--lit);overflow:hidden;user-select:none;
+  --duza:clamp(36px,4.9vh,52px);--krok:clamp(19px,2.7vh,29px);
+  mask-image:linear-gradient(transparent,#000 13%,#000 87%,transparent)}
+#wybor:not(.wgraj) .lista-indeks[hidden]{display:none}
+#wybor:not(.wgraj) .lista-indeks>span{position:absolute;left:50%;top:50%;width:var(--duza);height:var(--duza);margin:calc(var(--duza) / -2) 0 0 calc(var(--duza) / -2);
+  display:grid;place-items:center;border-radius:50%;cursor:pointer;font:800 calc(var(--duza) * .54)/1 var(--display);color:rgba(243,233,210,.8);text-shadow:0 2px 0 rgba(0,0,0,.6);
+  translate:0 calc(var(--p,0) * var(--krok));scale:.46;opacity:.6;
+  transition:translate .2s var(--e-wej),scale .2s var(--e-wej),opacity .2s,color .2s,background-color .2s}
+#wybor:not(.wgraj) .lista-indeks>span:hover{color:#fff;opacity:1}
+#wybor:not(.wgraj) .lista-indeks>span[data-d="3"]{scale:.5;opacity:.74}
+#wybor:not(.wgraj) .lista-indeks>span[data-d="2"]{scale:.56;opacity:.88}
+#wybor:not(.wgraj) .lista-indeks>span[data-d="1"]{scale:.68;opacity:1;color:var(--nic)}
+#wybor:not(.wgraj) .lista-indeks>span.tu{scale:1;opacity:1;color:#fff;font:400 calc(var(--duza) * .56)/1 var(--rebel);background-color:var(--pink);background-image:var(--felt);background-blend-mode:multiply;background-size:360px;
+  box-shadow:0 4px 0 rgba(0,0,0,.5),inset 0 0 0 2px rgba(255,255,255,.22);text-shadow:none;rotate:-4deg}
+#wybor:not(.wgraj) .kol-piosenki:has(.lista-indeks:not([hidden])) .biblio-widoki{margin-left:var(--lit)}
+@media (prefers-reduced-motion:reduce){#wybor:not(.wgraj) .lista-indeks>span{transition:none}}
+
+/* ---------- mniej szumu na naszywce (2026-11-19): bez miniatury rolki (jest duża po prawej), bez „Wybierz”
+   (to samo robi naciśnięcie, drugie kliknięcie i „Dalej”), w opisie sam czas i liczba partii ---------- */
+#wybor:not(.wgraj) .biblio-lista :is(.bkarta-rolkabox,.bkarta-wybierz){display:none}
+#wybor:not(.wgraj) .biblio-lista .bkarta-wybor{grid-template-columns:minmax(0,1fr)}
+#wybor:not(.wgraj) .biblio-lista .bkarta-meta[data-krotko]{font-size:0}
+#wybor:not(.wgraj) .biblio-lista .bkarta-meta[data-krotko]::after{content:attr(data-krotko);font:700 clamp(12px,1.4vh,14px)/1.2 var(--sans)}
+#wybor:not(.wgraj) .biblio-lista .bkarta.wybrana .bkarta-meta[data-krotko]::after{font-size:clamp(12.5px,1.55vh,15.5px)}
+#wybor:not(.wgraj){--akcje-w:190px}
+#wybor:not(.wgraj) .biblio-lista>.bkarta.gra:not(.wybrana){outline-color:var(--pink)}   /* gra podgląd tego utworu */
+
+/* ---------- wybór partii w podglądzie: widać ścieżki utworu, a przycisk zaprasza pulsowaniem (2026-11-19) ----------
+   Która partia gra, decyduje o całej rozgrywce, a przycisk wyglądał jak zwykłe pole. Kropki = ścieżki utworu w ich
+   kolorach (bieżąca większa, buduje je ppWyborZbuduj w biblioteka.js); przy więcej niż jednej (.wiele) wokół
+   przycisku oddycha bursztynowa obwódka, a przez kropki przechodzi fala. Tylko krycie i skala; po rozwinięciu listy
+   i przy ograniczonym ruchu stoi. */
+/* (wygląd samych kropek: gry.css, przy .pp-wybor-ile) */
+#wybor:not(.wgraj) .pp-wybor-przycisk.wiele{position:relative;box-shadow:inset 0 0 0 2px var(--pink),0 3px 0 rgba(0,0,0,.35)}
+#wybor:not(.wgraj) .pp-wybor-przycisk.wiele::after{content:"";position:absolute;inset:-4px;border-radius:999px;pointer-events:none;
+  box-shadow:0 0 0 3px var(--bursztyn),0 0 16px 3px rgba(234,163,43,.8);opacity:0;animation:ppZaproszenie 1.5s ease-in-out infinite}
+#wybor:not(.wgraj) .pp-wybor-przycisk.wiele .pp-wybor-ile{background:var(--bursztyn);color:var(--ink);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.35);font-weight:800}
+#wybor:not(.wgraj) .pp-wybor-przycisk.wiele .pp-sciezki>i{animation:ppSciezka 1.5s ease-in-out infinite;animation-delay:calc(var(--i,0) * .13s)}
+#wybor:not(.wgraj) .pp-wybor-przycisk.wiele .pp-sciezki>i.tu{animation-name:ppSciezkaTu}
+#wybor:not(.wgraj) .pp-wybor-przycisk.wiele[aria-expanded="true"]::after,
+#wybor:not(.wgraj) .pp-wybor-przycisk.wiele[aria-expanded="true"] .pp-sciezki>i{animation:none}
+@keyframes ppZaproszenie{0%,100%{opacity:0}50%{opacity:1}}
+@keyframes ppSciezka{0%,55%,100%{scale:1;opacity:.6}22%{scale:1.55;opacity:1}}
+@keyframes ppSciezkaTu{0%,55%,100%{scale:1}22%{scale:1.3}}
+@media (prefers-reduced-motion:reduce){
+  #wybor:not(.wgraj) .pp-wybor-przycisk.wiele::after{animation:none;opacity:.7}
+  #wybor:not(.wgraj) .pp-wybor-przycisk.wiele .pp-sciezki>i{animation:none}}
+
+/* ---------- instrument żaby w podglądzie (krok „1 Piosenka”): ‹ obrazek i nazwa › ---------- */
+/* (poza krokiem „1 Piosenka” przełącznik jest schowany: gry.css) */
+#wybor:not(.wgraj) .pp-instr{display:inline-flex;align-items:center;gap:3px;min-height:28px;padding:0 3px;border-radius:8px;
+  background:rgba(243,233,210,.1);box-shadow:inset 0 0 0 1.5px rgba(233,220,196,.28)}
+#wybor:not(.wgraj) .pp-instr-strz{display:grid;place-items:center;width:24px;height:24px;padding:0 0 2px;border:none;border-radius:6px;cursor:pointer;
+  background-color:var(--bursztyn);background-image:var(--felt);background-blend-mode:multiply;background-size:360px;color:var(--ink);font:400 17px/1 var(--rebel)}
+#wybor:not(.wgraj) .pp-instr-strz:hover:not(:disabled){background-color:var(--naszywka)}
+#wybor:not(.wgraj) .pp-instr-strz:active:not(:disabled){scale:.92}
+#wybor:not(.wgraj) .pp-instr-strz:disabled{opacity:.35;cursor:default}
+#wybor:not(.wgraj) .pp-instr-srodek{display:inline-flex;align-items:center;gap:6px;min-width:0;padding:0 5px}
+#wybor:not(.wgraj) .pp-instr-obraz{flex:none;display:grid;place-items:center;width:22px;height:22px}
+#wybor:not(.wgraj) .pp-instr-obraz :is(img,svg){width:100%;height:100%;object-fit:contain}
+/* silnik MIDI: ten sam przełącznik, zamiast obrazka plakietka „MIDI” */
+#wybor:not(.wgraj) .pp-silnik .pp-instr-obraz{width:auto;height:auto;padding:3px 5px 2px;border-radius:4px;background-color:var(--pink);color:#fff;
+  font:400 10.5px/1 var(--rebel);letter-spacing:.6px}
+#wybor:not(.wgraj) .pp-instr-nazwa{max-width:15ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:800 12.5px/1 var(--display);letter-spacing:.8px;text-transform:uppercase;color:var(--nic)}
+
+/* szerokie okno: lista jest węższa od plakatu (proporcje z makiety), więc przekładki mają trochę mniejsze pismo
+   i odstępy: trzy zakładki z trzycyfrowymi licznikami mieszczą się obok lupy, sortowania i „Wgraj własny”
+   (na końcu arkusza, żeby wygrało z regułami wyżej; węższe okno ma własny blok max-width:1440px) */
+@media (min-width:1441px){
+  #wybor:not(.wgraj) .biblio-filtr{padding:0 clamp(6px,.5vw,8px);gap:5px;letter-spacing:.7px;font-size:clamp(11.5px,1.25vh,13px)}
+  #wybor:not(.wgraj) .biblio-filtr .biblio-licznik{font-size:clamp(11.5px,1.25vh,13px)}
+  #wybor:not(.wgraj) #btnDodajUtwory{padding:0 7px}
+  #wybor:not(.wgraj) #btnDodajUtwory .zrodlo-tytul{letter-spacing:.9px}}
+
+/* ---------- przyciski pod rolką nie skaczą (2026-11-19) ----------
+   Rząd zawijał się zależnie od długości nazw („Trąbka” albo „Pianino elektryczne”, „Zespół” albo „Jeden instrument”),
+   od napisu „Stop” / „▶ Posłuchaj partii” i od liczby cyfr w „takt 9 z 16”, więc sąsiedzi przeskakiwali między
+   wierszami. Teraz są dwa stałe wiersze: u góry odtwarzanie (posłuchaj, podkład, auto, od początku / od środka),
+   pod nim brzmienie: instrument żaby i silnik MIDI po równo, a na końcu licznik taktów. Za długa nazwa się skraca,
+   zamiast przepychać resztę; przycisk odtwarzania (11em = najdłuższy napis, angielski) i licznik taktów mają stałą
+   szerokość. Wymuszone łamanie to pusty ::after z order. W wąskim oknie górny wiersz łamie się sam, zawsze tak samo. */
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol{justify-content:flex-start}
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol .ps-auto{margin-left:auto}   /* „auto” i „od początku / od środka” przy prawej krawędzi */
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol::after{content:"";order:5;flex:0 0 100%;height:0;margin-top:-8px}
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol .pp-graj{min-width:11em;justify-content:center;text-align:center}
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol .pp-info{order:12;flex:none;display:inline-block;min-width:12ch;min-height:1.2em;margin-left:0;text-align:right}
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol .pp-instr{order:10;display:flex;flex:1 1 0;min-width:0}
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol .pp-instr-srodek{flex:1 1 auto;justify-content:center}
+#wybor:not(.wgraj) .wybrana-podglad .pp-dol .pp-instr-nazwa{max-width:none;min-width:0}
+/* strzałki partii na ciemnej gablocie: odstęp od pulsującej obwódki przycisku */
+#wybor:not(.wgraj) .wybrana-podglad .pp-wybor{gap:9px}
+
+/* ---------- lilie wodne zamiast kwadracików w paskach trudności (2026-11-19) ----------
+   Ta sama filcowa lilia co na padzie efektów w Syncie (assets/pad/lilypad.png, gra już ją wczytuje): pełna = punkt
+   czynnika, wyblakła = brak, od siódmej w górę przebarwiona na ciepło (jak dotąd „mocny” ciemniejszy bursztyn).
+   Lekko obrócone na przemian, żeby rząd wyglądał jak rozłożony ręcznie. */
+#wybor:not(.wgraj) .staty-pasek{height:clamp(13px,2vh,21px);gap:1px}
+#wybor:not(.wgraj) .staty-pasek i{background:url(../assets/pad/lilypad.png) center/contain no-repeat;border-radius:0;box-shadow:none;transform:none;
+  filter:grayscale(1);opacity:.2;rotate:-14deg}
+#wybor:not(.wgraj) .staty-pasek i:nth-child(even){rotate:9deg}
+#wybor:not(.wgraj) .staty-pasek i:nth-child(3n){rotate:27deg}
+#wybor:not(.wgraj) .staty-pasek i.pelny{filter:none;opacity:1}
+#wybor:not(.wgraj) .staty-pasek i.mocny{filter:hue-rotate(-62deg) saturate(1.5)}
+
+/* ---------- zakres trudności „od–do” (2026-11-19): utwór z kilkoma partiami ----------
+   Liczba na grzbiecie to melodia; pod nią mniejszy zakres wszystkich partii (data-zakres z biblioteka.js), a na plakacie
+   plakietka przy czasie i liczbie partii. Bez tego utwór z łatwą melodią i trudnym akompaniamentem wyglądał na łatwy. */
+#wybor:not(.wgraj) .biblio-lista .bkarta-meta>.trudnosc[data-zakres]{align-content:center;gap:3px}
+#wybor:not(.wgraj) .biblio-lista .bkarta-meta>.trudnosc[data-zakres]::after{content:attr(data-zakres);font:800 .54em/1 var(--display);letter-spacing:0;white-space:nowrap;opacity:.88}
+#wybor:not(.wgraj) .biblio-lista .bkarta.wybrana .bkarta-meta>.trudnosc[data-zakres]::after{font-size:.36em;padding:3px 6px 2px;border-radius:999px;background:rgba(0,0,0,.2);opacity:1}
+#wybor:not(.wgraj) .wybrana-zakres{display:inline-block;margin-left:8px;padding:2px 9px 1px;border-radius:999px;background-color:var(--bursztyn);color:var(--ink);
+  box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.3);font:800 .86em/1.5 var(--display);letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}

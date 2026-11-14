@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Brass/Trumpet/sus"
+ },
+ "probki": [
+  {
+   "plik": "trabka-1.wav",
+   "nazwa": "Sum_SHTrumpet_sus_C3_v3_rr1.wav",
+   "nuta": 60,
+   "root": 59.976,
+   "petla": [
+    1.0304,
+    1.4589
+   ]
+  },
+  {
+   "plik": "trabka-2.wav",
+   "nazwa": "Sum_SHTrumpet_sus_G3_v3_rr1.wav",
+   "nuta": 67,
+   "root": 67.047,
+   "petla": [
+    0.9945,
+    1.3454
+   ]
+  },
+  {
+   "plik": "trabka-3.wav",
+   "nazwa": "Sum_SHTrumpet_sus_D4_v3_rr1.wav",
+   "nuta": 74,
+   "root": 74.029,
+   "petla": [
+    0.6014,
+    1.0534
+   ]
+  }
+ ]
+}

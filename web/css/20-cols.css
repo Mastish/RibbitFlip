@@ -1,0 +1,1169 @@
+/* ==================================================================================================
+   UKŁAD TRZECH KOLUMN — siatka, pionowa nawigacja, prawa kolumna, chowanie paneli, scrolle.
+
+   Do 2026-08-28 panel był jednym pionowym stosem: hub kapsli, podgląd na żywo, poziomy pasek
+   zakładek i pod nim panel. Przy oknie 1440×900 dawało to 2140 px wysokości, a podgląd na żywo —
+   potrzebny dokładnie wtedy, gdy stroi się progi — stał najdalej od pól, które się stroi.
+
+   Ten arkusz NIE wnosi własnego wyglądu. Kolory, promienie, cienie i fonty biorą się z tokenów
+   (01-assets-tokens.css), ruch z 14-motion.css, a przyciski ze ściegiem z 14d-buttons.css. Nowego
+   jest tu tylko rozmieszczenie: gdzie co stoi i jak się chowa.
+
+   Ładowany PO 19-cfghub.css, a PRZED 15-overlay.css — ten musi zostać ostatnim arkuszem
+   (tests/test_ui_tabs.py, f13), bo nakładka nad grą zdejmuje panelowi całą resztę wyglądu.
+   ================================================================================================== */
+
+:root{ --rf-d-panel:.32s; }
+
+/* ---------- siatka ------------------------------------------------------------------------------
+   Tory boczne są `auto`, a szerokość ustawiają i animują same panele (`width`). Interpolacja
+   `grid-template-columns` też by zadziałała, ale animowanie szerokości elementu jest starsze
+   i pewniejsze, a przy okazji nie miesza wielkości toru z wielkością zawartości.                  */
+.rf-app{
+  --lpW:206px; --rpW:274px;
+  display:grid; gap:14px; align-items:start;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  grid-template-areas:"rail main rcol";
+  max-width:1780px; margin:0 auto; width:100%;
+}
+.rf-rail{grid-area:rail;width:var(--lpW)}
+.rf-main{grid-area:main;min-width:0}
+.rf-rcol{grid-area:rcol;width:var(--rpW)}
+.rf-rail,.rf-rcol{
+  position:sticky; top:calc(var(--topbar-h,64px) + 8px);
+  max-height:calc(100vh - var(--topbar-h,64px) - 22px); overflow:auto;
+  transition:width var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1));
+}
+/* MIEJSCE NA KUBEK. Słoik na napiwki (`.rf-kofi`, 13-dialogs-overview.css) stoi `position:fixed`
+   w prawym dolnym rogu — 146 × 46 px, dokładnie NAD dołem tej kolumny. Ostatnia karta („Podgląd
+   na żywo": wiersz `.pose3d-info` i siatka kanałów) chowała się pod nim i przy 1600, i przy
+   1280 px, a że kolumna ma własny scroll, nie dało się jej stamtąd wyciągnąć: przewijanie kończyło
+   się dokładnie tam, gdzie zaczyna się kubek.
+   Rezerwujemy więc wysokość kubka plus odstęp NA DOLE ZAWARTOŚCI, zamiast ruszać sam kubek (jest
+   przypięty do rogu okna i ma tam zostać). Wysokość karty się nie zmienia — rośnie obszar
+   przewijania, więc karta zawsze da się wyprowadzić spod kubka; a gdy kolumna jest krótsza od
+   ekranu, ta sama rezerwa po prostu kończy ją wyżej. */
+.rf-rcol{padding-bottom:78px}
+/* UX 261120 (D6): w rozwiniętej kolumnie kubek jest jej OSTATNIM dzieckiem (rf-39e `_rfkPlace`)
+   i stoi przypięty do jej dołu, więc rezerwa pod nim jest zbędna, a maska dolnej krawędzi
+   zgasiłaby sam przycisk. Górna maska zostaje. */
+.rf-rcol:has(> .rf-kofi){padding-bottom:0}
+.rf-rcol:has(> .rf-kofi).fade-bot{-webkit-mask-image:none;mask-image:none}
+.rf-rcol:has(> .rf-kofi).fade-top.fade-bot{
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 20px)}
+/* 64 px, nie 54. Karta paska ma ścieg 5 px w środku (`.card::before`), a przy 54 px zostawały
+   na przyciski dokładnie 33 px MIĘDZY liniami ściegu — krawędź każdego przycisku modułu leżała
+   NA kresce (zmierzone: 0 px prześwitu), a dwa sterowniki paska górnego przechodziły przez nią
+   o 1 px. Zwężenie przycisków nie wchodziło w grę: ikona ma 23 px i zostałaby bez pola.
+   Prawy pas zostaje przy 54 px — jego liczba wynika z kwadratu kafla kapsla (blok niżej), a nie
+   z symetrii; ta była skutkiem ubocznym, nie powodem. */
+body.lp-collapsed .rf-app{--lpW:64px}
+/* 54 px, TYLE SAMO CO ZWINIĘTY LEWY PASEK (2026-08-29, etap 6c — było 38 px). Zwinięte prawe
+   menu było za wąskie: kapsle mają stać w kwadratach, a w 38 px były widoczne tylko częściowo.
+   Liczba nie jest z sufitu — wynika z kafla, który ma się w niej zmieścić (patrz blok
+   „KAFEL KAPSLA = KWADRAT" niżej): 54 − 3 − 3 (wcięcie panelu) − 4 − 4 (marginesy `#deviceSel`)
+   = równe 40 px na kwadrat. Przy 38 px zostawało 24 px na obrazek kapsla o szerokości 30 px,
+   więc rysunek wychodził poza pigułkę i był obcinany jej `overflow:hidden` — stąd „niecałe
+   widoczne". Wartość równa lewemu paskowi daje przy okazji symetryczną ramę: oba zwinięte
+   pasy mają tę samą szerokość, zamiast dwóch różnych wąskich. */
+body.rp-collapsed .rf-app{--rpW:54px}
+.rf-rail>.card+.card{margin-top:12px}
+/* CIEŃ OSTATNIEJ KARTY. Karty filcu rzucają twardy cień 7 px w dół (`0 7px 0`), a kolumna z własnym
+   przewijaniem przycina wszystko poza swoim polem — bez tej rezerwy dół ostatniej karty wyglądał
+   na ucięty (zgłoszenie 29.09). Prawa kolumna ma już 78 px pod kubek; tu wystarczy cień i oddech. */
+.rf-rail{padding-bottom:12px}
+
+/* ---------- scrolle -----------------------------------------------------------------------------
+   Cienkie, w kolorze filcu, na przezroczystym torze. `scrollbar-gutter:stable` rezerwuje miejsce
+   z góry, więc pojawienie się paska nie przesuwa treści o kilka pikseli w bok.                     */
+.rf-rail,.rf-rcol,.rf-main{scrollbar-width:thin;scrollbar-color:#cdbfa4 transparent;scrollbar-gutter:stable}
+.rf-rail::-webkit-scrollbar,.rf-rcol::-webkit-scrollbar{width:11px;height:11px}
+.rf-rail::-webkit-scrollbar-track,.rf-rcol::-webkit-scrollbar-track{background:transparent}
+.rf-rail::-webkit-scrollbar-thumb,.rf-rcol::-webkit-scrollbar-thumb{
+  background:#d5c8b0;background-clip:content-box;border:3px solid transparent;border-radius:99px;
+  transition:background .15s}
+.rf-rail::-webkit-scrollbar-thumb:hover,.rf-rcol::-webkit-scrollbar-thumb:hover{
+  background:#bda98a;background-clip:content-box}
+/* Krawędzie gasną TYLKO wtedy, gdy naprawdę jest co przewijać, i tylko z tej strony, z której coś
+   jeszcze zostało (klasy dokłada rfCols.fadeEdges). Lista, która mieści się w całości, nie ma
+   żadnej maski — inaczej wyglądałaby na uciętą. */
+.rf-rail.fade-top,.rf-rcol.fade-top{
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 20px)}
+.rf-rail.fade-bot,.rf-rcol.fade-bot{
+  -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 24px),transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 calc(100% - 24px),transparent 100%)}
+.rf-rail.fade-top.fade-bot,.rf-rcol.fade-top.fade-bot{
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 24px),transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 24px),transparent 100%)}
+
+/* ---------- pasek panelu (tytuł + przycisk zwijania) -------------------------------------------- */
+.rf-pbar{display:flex;align-items:center;gap:8px;padding:9px 11px 8px;border-bottom:1px solid var(--line)}
+.rf-pbar b{font-family:var(--rebel);font-weight:400;font-size:14px;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;max-width:220px;opacity:1;
+  transition:max-width var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),opacity .18s ease}
+/* Sufit wysokości TYLKO w lewym pasku — po to, żeby dało się go zjechać do zera przy zwijaniu
+   (patrz „TYTUŁ WYPADA TAKŻE Z WYSOKOŚCI" niżej). Prawy pasek zwinięty stawia swój napis PIONOWO
+   (`writing-mode:vertical-rl`) i wtedy potrzebuje całej wysokości kolumny — dlatego reguła nie
+   może stać na wspólnym `.rf-pbar b`. */
+.rf-rail .rf-pbar b{max-height:40px;
+  transition:max-width var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             max-height var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),opacity .18s ease}
+.rf-rbar{background:var(--panel);background-image:var(--felt-tex-soft);border-radius:14px;
+  box-shadow:var(--felt-shadow-sm);border-bottom:none;margin-bottom:11px;padding:7px 9px}
+
+/* ---------- lewa kolumna: nawigacja ------------------------------------------------------------- */
+.rf-sect{padding:9px var(--card-x-sm) 4px;font-size:12px;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--dim);font-weight:800;font-family:var(--sans);max-height:60px;opacity:1;overflow:hidden;
+  transition:max-height var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             opacity .18s ease,padding var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rf-railmini{padding:2px 13px 11px;font-size:12px;color:var(--dim);font-weight:600;line-height:1.5;
+  max-height:120px;opacity:1;overflow:hidden;
+  transition:max-height var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             opacity .18s ease,padding var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rnav{display:flex;flex-direction:column;gap:3px;padding:2px 8px 9px;
+  transition:padding var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rnav-btn{display:flex;align-items:center;gap:9px;width:100%;position:relative;
+  background:transparent;border:none;border-radius:11px;padding:7px 9px;color:var(--ink);
+  font-family:var(--display);font-weight:600;font-size:14px;line-height:1.15;text-align:left;
+  cursor:pointer;transition:background .14s,color .14s,box-shadow .18s var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             padding var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rnav-btn .rfic{width:23px;height:23px;flex:0 0 auto}
+.rnav-btn>span:not(.rfic):not(.tab-dot):not(.tab-emoji){
+  flex:1 1 auto;min-width:0;max-width:190px;opacity:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:max-width var(--rf-d-panel) var(--rf-ez-overshoot,cubic-bezier(.34,1.56,.64,1)),opacity .18s ease}
+/* Kropka stanu: na pasku wisiała w rogu kafla (10-icons-controls.css). W wierszu należy jej się
+   koniec wiersza — i to jest ta sama kropka, ten sam `data-grp` i to samo updateTabDots().
+   `relative`, a nie `static`: zapalona lampka nosi pod sobą pulsującą aureolę w `::after`, a ta
+   musi się ustawiać względem KROPKI. Przy `static` uciekłaby do `.rnav-btn` (jedyny rodzic z
+   `position`) i pulsowałaby wokół całego wiersza. Dla układu `relative` i `static` znaczą to samo,
+   więc nic się nie przesuwa. */
+.rnav-btn .tab-dot{position:relative;top:auto;right:auto;width:14px;height:14px;flex:0 0 auto;
+  --rf-dot-wave:8px}
+/* PULSOWANIE = DOWÓD ŻYCIA, NIE OZDOBA. Zapalona lampka różni się od zgaszonej kolorem, a kolor
+   sam nie może nieść stanu (WCAG 1.4.1) — dlatego kropka ma dymek („Włączony na wybranym kapslu",
+   rf-34) i opis dla czytnika. Ruch dokłada trzeci, najszybszy kanał: dziewięć kropek w kolumnie
+   przegląda się kątem oka i to JEDYNA z nich, która się rusza, ściąga wzrok, zanim ktokolwiek
+   porówna odcienie. Fala jedzie NA ZEWNĄTRZ z `box-shadow` (jak `tabwave` starego paska), a nie
+   miganiem przezroczystości: mrugająca kropka czyta się jak usterka, rozchodzący się krąg jak
+   praca. Oddech samej kropki (`rfDotBreath`) ma ten sam czas, więc obie rzeczy są jednym ruchem,
+   nie dwoma. Rytm 2,1 s jest celowo wolniejszy niż tętno — ma być zauważalny, nie natarczywy;
+   siedzi się z tym panelem godzinami. */
+/* UX 261120 L23 („mniej naraz”): działający moduł świeci spokojnie. Kropka oddycha i wypuszcza
+   falę tylko przy PROBLEMIE (`.warn`: moduł włączony, a kapsel śpi albo jest szukany, rf-34
+   `updateTabDots`). Wtedy fala jest musztardowa, a dymek mówi, co nie gra. */
+.rnav-btn .tab-dot.on.warn{animation:rfDotBreath 2.1s var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)) infinite}
+/* BEZ `z-index:-1`, choć aureola idzie „pod" kropkę. Ani kropka, ani wiersz nie tworzą kontekstu
+   układania (`position:relative` z `z-index:auto`), więc ujemny indeks zjechałby POD tło wiersza —
+   i biała fala na wybranej, różowej pozycji byłaby niewidoczna. Nie jest potrzebny: cień rozchodzi
+   się rozmyciem NA ZEWNĄTRZ pudełka o rozmiarze kropki, więc samego rysunku nie zasłania. */
+.rnav-btn .tab-dot.on.warn::after{content:"";position:absolute;inset:0;border-radius:50%;
+  pointer-events:none;
+  animation:rfDotWave 2.1s var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)) infinite}
+@keyframes rfDotWave{
+  0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--warn) 70%,transparent)}
+  70%,100%{box-shadow:0 0 0 var(--rf-dot-wave,8px) color-mix(in srgb,var(--warn) 0%,transparent)}}
+@keyframes rfDotBreath{0%,100%{transform:scale(1)}45%{transform:scale(1.11)}}
+/* STEROWANIE WSTRZYMANE (UX 261120, F-G0-03): moduł jest włączony, ale nic z niego nie wychodzi,
+   więc kropka nie oddycha i nie wypuszcza fali, a zieleń jest przygaszona. Stan niesie też dymek
+   („Włączony, ale sterowanie jest wstrzymane”, rf-34 `updateTabDots`), nie sam kolor. */
+.rnav-btn .tab-dot.on.held,.rnav-btn.active .tab-dot.on.held{animation:none;
+  filter:var(--ic-dot-on) saturate(.25) opacity(.55)}
+.rnav-btn .tab-dot.on.held::after{display:none}
+.rnav-btn:hover{background:var(--panel2)}
+/* WYBRANA POZYCJA = KREMOWA NASZYWKA Z RÓŻOWYM ŚCIEGIEM (UX 261120, P-G0-03). Wypełniony róż
+   znaczy w tej aplikacji AKCJĘ („Nowy wyzwalacz”, „Kup mi kawę”), a stan wybrany go pożyczał: na
+   starcie pięć różowych plam walczyło o wzrok. Teraz wybrane to krem `--panel` z różowym ściegiem
+   w środku i twardym różowym cieniem, ciemny napis i pogrubienie. Rysunek i kropka zostają w swoich
+   kolorach, bez białej obwódki (ta była potrzebna tylko na różu).
+   WHY: filled pink is reserved for actions; the selected item is a cream patch with a pink stitch. */
+.rnav-btn.active{background:var(--panel);color:var(--ink);font-weight:800;box-shadow:0 3px 0 var(--pink-d)}
+.rnav-btn.active:hover{background:var(--panel2)}   /* pozycja wybrana też ma odpowiadać na kursor */
+.rnav-btn.active::after{border-color:var(--pink-btn)}   /* kształt ściegu: 14d-buttons.css */
+.rnav-btn.active .tab-dot.on{filter:var(--ic-dot-on) var(--ic-dot-glow)}
+.rnav-btn.active .tab-dot{filter:var(--ic-dot-off)}
+.rnav-fallback{display:flex;flex-wrap:wrap;flex-direction:row;gap:7px}   /* awaryjny stos bez rf-34b */
+
+/* ---------- portret aktywnego kapsla nad „Moduł" (rf-34b buildNavCap) ----------------------------
+   Kropki przy modułach mówią o JEDNYM kapslu — tym wybranym. Wybierało się go jednak po drugiej
+   stronie ekranu, w prawej kolumnie, więc pytanie i odpowiedź stały 1000 px od siebie. Rysunek stoi
+   teraz DOKŁADNIE nad kropkami, o których mówi.
+
+   BEZ WŁASNEGO ŚCIEGU. Blok siedzi w karcie `.card.rf-pcard`, a ta nosi kreskowaną ramkę w
+   `::before`; przyciski `.btn` noszą swoją. Trzecia ramka w środku dwóch pierwszych daje kratę
+   (opisane w 14d-buttons.css), dlatego strzałki są `.icon-btn` — rodziną z założenia ze ściegu
+   wyłączoną — a sam blok oddziela od nawigacji jedna kreska `border-bottom`, jak w pasku panelu.
+
+   SZEROKOŚĆ JEST WALUTĄ: pasek ma 206 px, wcięcie bloku zabiera 20, dwie strzałki 60, dwa odstępy
+   12 — na rysunek zostaje 114 px i bierzemy z tego 100, żeby przy dłuższej nazwie nic nie musiało
+   się zwężać. Źródło grafiki ma 256 px (`capImgBig`), bo 96-pikselowe z pigułki rozciągnięte na
+   ekranie 2× robi się miękkie.                                                                     */
+.rf-navcap{padding:8px 10px 6px;text-align:center}
+.rf-navcap-row{display:flex;align-items:center;justify-content:center;gap:6px}
+/* Strzałka jest 30-pikselowym kwadratem, a nie 24 jak zwykły `.icon-btn`: stoi obok rysunku
+   wysokiego na 100 px i przy 24 px wyglądałaby jak okruch, a przy okazji jest to wygodniejszy cel.
+   `visibility` w przejściu (z zerowym czasem) przygotowuje zwinięty pasek niżej — bez niej strzałka
+   o zerowej szerokości zostawałaby w kolejności tabulatora jako niewidzialny przycisk. */
+.rf-navcap-arrow{width:30px;height:30px;border-radius:9px;visibility:visible;
+  transition:background .12s,border-color .12s,color .12s,
+             width var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             opacity .18s ease,visibility 0s linear 0s}
+.rf-navcap-arrow .rf-ptog-ic{width:15px;height:15px}
+/* Jedna ścieżka SVG na obie strony — „w prawo" to obrót, dokładnie jak przy grocie zwijania. */
+.rf-navcap-arrow.is-next .rf-ptog-ic{transform:rotate(180deg)}
+/* 64 px (UX 261120, D7): rysunek dalej rozpoznawalny, a nawigacja odzyskuje ok. 70 px wysokości. */
+.rf-navcap-art{position:relative;display:flex;align-items:center;justify-content:center;
+  width:64px;height:64px;flex:0 0 auto;
+  transition:width var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             height var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+/* rysunek to przycisk menu wyglądu i edycji kapsla (rf-34b, 2026-11-20): bez tła i ramki przycisku */
+button.rf-navcap-art{padding:0;margin:0;border:none;background:none;color:inherit;font:inherit;cursor:pointer;border-radius:50%}
+button.rf-navcap-art:hover .rf-navcap-img{filter:drop-shadow(0 3px 5px rgba(53,46,34,.22)) brightness(1.06)}
+button.rf-navcap-art:focus-visible{outline:2.5px solid var(--ink,#352e22);outline-offset:3px}
+.rf-navcap-img{width:100%;height:100%;object-fit:contain;display:block;
+  filter:drop-shadow(0 3px 5px rgba(53,46,34,.22));-webkit-user-drag:none;user-select:none}
+/* Ta sama reguła zapasowa, co w `capImgSpan`: slot bez rysunku dostaje kolorową kropkę w swoim
+   kolorze (`--dcol` ustawia rf-34b), a nie dziurę wielkości obrazka. */
+.rf-navcap-dot{width:46%;height:46%;border-radius:50%;background:var(--dcol,#8aa0b5);
+  box-shadow:var(--felt-shadow-sm)}
+/* Nazwa, stan i zdanie o kropkach chowają się przy zwijaniu przez `max-height`, więc sufit musi
+   stać już tutaj — `max-height:0` nie ma od czego animować bez wartości wyjściowej. */
+.rf-navcap-name,.rf-navcap-state,.rf-navcap-note{max-height:48px;opacity:1;overflow:hidden;
+  transition:max-height var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             opacity .18s ease,margin var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rf-navcap-name{margin-top:4px;font-family:var(--display);font-weight:700;font-size:14px;
+  line-height:1.2;color:var(--ink);white-space:nowrap;text-overflow:ellipsis}
+.rf-navcap-state{margin-top:1px;font-size:12px;font-weight:600;color:var(--dim);
+  white-space:nowrap;text-overflow:ellipsis}
+
+
+/* rysunek zakładki „Przegląd" — ta sama grafika, co kolumna „Cały kapsel" w macierzy */
+.tab-ic-donttouch{background-image:var(--ic-donttouch)}
+
+/* ---------- DWA STEROWNIKI NAGŁÓWKA = JEDEN KSZTAŁT (2026-08-30, etap 8) --------------------------
+   Oczko i zwijanie/rozwijanie lewego menu działały i wyglądały koślawo. Oględziny wykazały pięć rzeczy naraz, wszystkie
+   zmierzone przed zmianą:
+
+   1. `#tabVisBtn` miał `display:block`. Reguła układu (`display:inline-flex`) wisiała pod
+      `.tabbar .tv-btn`, a przycisk przeprowadził się stąd do `.rf-pbar` — więc jej nie dostał.
+      Chevron, oko i plakietka układały się jak zwykły TEKST i zawijały do dwóch linii w przycisku
+      szerokim na 41 px. To jest źródło „koślawości", reszta tylko ją podbijała.
+   2. Dwa rozmiary obok siebie: oko 41×29 px, zwijanie 26×26 px.
+   3. Dwa promienie (9 px i 7 px) i dwa ubrania — oko ze ściegiem `0 3px 0`, zwijanie bez cienia.
+   4. Dwa różne hovery: oko zmieniało sam kolor napisu, zwijanie brało `background:#f1e9d6`
+      z `.icon-btn`. Ta sama ręka, dwie różne odpowiedzi.
+   5. Dwa języki ikon: oko to SVG 15 px kreślone `stroke:1.4`, zwijanie to ZNAK TYPOGRAFICZNY «/»
+      z fontu. Kanon aplikacji dla interaktywnego UI to ikony SVG.
+
+   Teraz oba są tym samym 28-pikselowym kwadratem: jedna wielkość, jeden promień, jedno tło, jeden
+   cień, jeden hover i jeden pierścień fokusu. 28 px, a nie 26 — w zwiniętym pasku (54 px, po
+   wcięciach 46 px na treść) kwadrat 28 px zostawia po 9 px z każdej strony i jest wygodnym celem
+   dla myszy, a 24-pikselowy `.icon-btn` byłby w tym pasku najmniejszym klikalnym elementem panelu.
+
+   ⚠️ SPECYFICZNOŚĆ. Selektory MUSZĄ mieć trzy klasy plus `button`: `button.btn.sm` (0,3,1)
+   z 03-triggers.css i `button.btn:hover` (0,2,1) z 07-felt-core.css biją zwykłe `.rf-pbar .tv-btn`
+   (0,2,0) — to ta sama pułapka, którą opisuje komentarz przy `.rf-ovbtn` wyżej. Przy remisie wygrywa
+   ten arkusz, bo 20-cols.css ładuje się po 07 i 14d.                                              */
+.rf-pbar button.btn.tv-btn,.rf-pbar button.icon-btn.rf-ptog{
+  width:28px;height:28px;padding:0;flex:0 0 auto;position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:0;
+  border:1px solid var(--line);border-radius:9px;background:#fff;background-image:none;
+  color:var(--muted);box-shadow:var(--felt-shadow-sm);
+  transition:background .14s,color .14s,box-shadow .18s var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             transform var(--rf-d-release,.22s) var(--rf-ez-overshoot,cubic-bezier(.34,1.56,.64,1))}
+.rf-pbar button.btn.tv-btn:hover,.rf-pbar button.icon-btn.rf-ptog:hover{
+  background:#f1e9d6;color:var(--ink);box-shadow:var(--felt-shadow-sm);transform:none}
+/* Wciśnięcie W DÓŁ, nie ściśnięcie. Oba te przyciski noszą ścieg (niżej, wiersze ~923-927), a
+   ścieg jest kreskowaną LINIĄ — skalowanie przy kliknięciu ciągnie ją na boki i z powrotem, czyli
+   robi z wciśnięcia poziome odbicie. Ta sama zasada, co w 14-motion.css: co ma ścieg, to jedzie
+   pionowo. Wyjątek od reguły „24-32-pikselowy kwadrat ściska się", bo tu kwadrat ścieg DOSTAŁ. */
+.rf-pbar button.btn.tv-btn:active,.rf-pbar button.icon-btn.rf-ptog:active{
+  transform:translateY(2px);transition:transform var(--rf-d-press,.09s) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rf-pbar button.btn.tv-btn:focus-visible,.rf-pbar button.icon-btn.rf-ptog:focus-visible{
+  outline:3px solid var(--pink);outline-offset:2px}
+/* `order` USUNIĘTE 2026-09-02: przestawiało obrazek, zostawiając tabulatorowi kolejność z DOM,
+   czyli odwrotną do widocznej. Przycisk „Widoczność" wstawia się teraz PRZED sterownikiem
+   zwijania (rf-48 `initTabVis`), więc jedna kolejność obsługuje oko, mysz i klawiaturę. */
+/* Grot zwijania: JEDNA ścieżka SVG obracana o 180°, a nie dwa różne znaki. Powód jest ruchowy —
+   obrót da się animować tą samą krzywą i tym samym czasem, co jazda panelu (`--rf-d-panel`),
+   więc przycisk przestaje „przeskakiwać" w chwili kliknięcia i dojeżdża razem z panelem. */
+.rf-ptog-ic{width:15px;height:15px;display:block;
+  transition:transform var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rf-ptog.is-right .rf-ptog-ic{transform:rotate(180deg)}
+/* Chevron „Widoczności" ZNIKA w tym pasku. W 28-pikselowym przycisku nie ma dla niego miejsca obok
+   oka, a przede wszystkim: tuż obok stoi DRUGI grot (zwijanie panelu), który znaczy coś zupełnie
+   innego. Dwa groty obok siebie to zagadka, nie interfejs — stan rozwinięcia szuflady niesie
+   `aria-expanded` i sama szuflada, która jest widoczna. */
+.rf-pbar .tv-btn .tv-chev{display:none}
+.rf-pbar .tv-btn .tv-eye svg{width:16px;height:16px}
+/* Licznik ukrytych zakładek jako PLAKIETKA W ROGU — w wierszu obok oka nie zmieściłby się
+   (17 + 6 + 16 = 39 px przy 28 px przycisku), a w rogu nie zabiera miejsca nikomu. Obwódka
+   w kolorze panelu odcina go od krawędzi przycisku, żeby nie zlewał się z jego obwódką. */
+.rf-pbar .tv-btn .tv-cnt{position:absolute;top:-5px;right:-5px;min-width:15px;height:15px;
+  line-height:15px;font-size:10px;padding:0 3px;box-shadow:0 0 0 2px var(--panel)}
+.rf-pbar button.btn.tv-btn.on{color:var(--ink);box-shadow:var(--felt-shadow-sm),inset 0 0 0 2px var(--pink)}
+.rf-pbar .tv-btn.on .tv-cnt{display:inline-block}
+.rf-pbar .tv-btn.on .tv-eye-slash{display:block}
+/* Szuflada stoi na górze środkowej kolumny (rf-48 initTabVis) — w trybie samej ściągi nie ma tam
+   czego przełączać, więc znika razem z resztą panelu. */
+body.overview-only .tv-wrap{display:none!important}
+
+/* ---------- lewa kolumna zwinięta: pasek ikon (54 px) --------------------------------------------
+   Etykiety chowają się przez max-width i opacity, NIGDY przez display:none — tego nie da się
+   animować i ucina przejście w pół drogi. Klikalne zostaje to, bez czego nie da się nawigować:
+   rysunki modułów i kropki stanu. Nazwa siedzi w podpowiedzi (title na przycisku).                */
+body.lp-collapsed .rf-rail .rf-pbar b,
+body.lp-collapsed .rf-rail .rnav-btn>span:not(.rfic):not(.tab-dot):not(.tab-emoji){max-width:0;opacity:0}
+body.lp-collapsed .rf-rail .rf-sect,
+body.lp-collapsed .rf-rail .rf-railmini{max-height:0;opacity:0;padding-top:0;padding-bottom:0}
+/* TYTUŁ WYPADA TAKŻE Z WYSOKOŚCI, NIE TYLKO Z SZEROKOŚCI (2026-08-30, etap 8).
+   `max-width:0` zabiera napisowi szerokość, ale w pasku ustawionym PIONOWO szerokość nie jest tym,
+   co zajmuje miejsce. Zostawały: 16 px wiersza tekstu, 7 px odstępu siatki flex i `flex:1`, które
+   w kolumnie każe elementowi jeszcze ROSNĄĆ. Zmierzone przed zmianą: 23 px pustki nad przyciskami
+   i pasek wysoki na 103 px zamiast 47 px w rozwiniętym — dokładnie ta dziura, przez którą przyciski
+   wisiały w powietrzu.
+   `max-height` animuje się tak samo jak `max-width` (ta sama sztuczka, co przy `.rf-sect` wyżej),
+   więc napis dalej GAŚNIE, a nie znika skokiem. `display:none` jest tu zakazane — nie da się go
+   animować i urwałby przejście w pół drogi. */
+body.lp-collapsed .rf-rail .rf-pbar b{flex:0 0 auto;max-height:0;margin:0;padding:0}
+/* W 54-pikselowym pasku tytuł i dwa sterowniki nie zmieszczą się w rzędzie, więc pasek staje
+   pionowo — „Widoczność" i przycisk rozwijania zostają pod ręką, zamiast znikać. `align-items:center`
+   jest tu jawnie, choć oba przyciski mają stałą szerokość: bez tego domyślny `stretch` rozciągałby
+   każdy przyszły element paska na całe 46 px i wystarczyłoby dołożyć trzeci sterownik, żeby pasek
+   znów się rozjechał. */
+body.lp-collapsed .rf-rail .rf-pbar{flex-direction:column;gap:6px;justify-content:center;
+  align-items:center;padding:9px 10px}
+/* 10 px, nie 5: ścieg karty biegnie 5 px w środku, więc przy 5 px przycisk siadał dokładnie na
+   kresce. Teraz zostaje mu 5 px filcu z każdej strony — ten sam prześwit, co treść każdej innej
+   karty ma od swojego ściegu. Przyciski zachowują 33 px, bo to szerokość podyktowana ikoną. */
+/* ZWINIĘTY PASEK ZOSTAWIA SAM PORTRET. W 54-pikselowym pasku (46 px na treść) dwie strzałki i
+   rysunek nie staną w rzędzie, a portret jest tu ważniejszy: to on odpowiada „czyje są te kropki",
+   które w zwiniętym pasku siedzą w rogach kafli. Kapsla zmienia się wtedy w prawej kolumnie —
+   ta zwinięta ZOSTAWIA kapsle jako klikalne kwadraty (blok wyżej), więc droga nie znika.
+   `visibility:hidden` z opóźnieniem równym jeździe panelu wypycha strzałki z kolejności tabulatora
+   DOPIERO po przejściu: bez niego zostawałyby niewidzialnymi przyciskami o zerowej szerokości,
+   z `display:none` zaś nie dałoby się animować i przejście urwałoby się w pół drogi. */
+body.lp-collapsed .rf-rail .rf-navcap{padding:9px 6px 7px}
+body.lp-collapsed .rf-rail .rf-navcap-row{gap:0}
+body.lp-collapsed .rf-rail .rf-navcap-arrow{width:0;padding:0;border-width:0;opacity:0;
+  visibility:hidden;
+  transition:width var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),
+             opacity .18s ease,visibility 0s linear var(--rf-d-panel)}
+body.lp-collapsed .rf-rail .rf-navcap-art{width:36px;height:36px}
+body.lp-collapsed .rf-rail .rf-navcap-name,
+body.lp-collapsed .rf-rail .rf-navcap-state,
+body.lp-collapsed .rf-rail .rf-navcap-note{max-height:0;opacity:0;margin-top:0}
+body.lp-collapsed .rf-rail .rnav{padding:6px 10px 8px;align-items:center}
+body.lp-collapsed .rf-rail .rnav-btn{justify-content:center;padding:8px 0;gap:0}
+/* Zwinięty pasek: kropka wraca w róg kafla i maleje do 10 px, więc fala też — przy 8 px wychodziła
+   poza 54-pikselowy pasek i biła w sąsiedni wiersz. Sama wartość jest zmienną na kropce, żeby oba
+   warianty klatek (zielony i biały) brały ją bez powielania definicji. */
+body.lp-collapsed .rf-rail .rnav-btn .tab-dot{position:absolute;top:2px;right:2px;width:10px;height:10px;
+  --rf-dot-wave:5px}
+
+/* ---------- prawa kolumna ------------------------------------------------------------------------ */
+.rf-devwrap{margin-bottom:11px}
+.rf-navfoot{padding:10px 0 0}
+.rf-ovbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+.rf-ovbtn .rfic{width:20px;height:20px;flex:0 0 auto}
+/* `:hover` MUSI tu być wymieniony osobno, dokładnie tak, jak robi to `button.btn.on:hover` w 07.
+   Bez tego `button.btn:hover{background:#fff}` (0,2,1) bije `.rf-ovbtn.active` (0,2,0) i wciśnięty
+   przycisk pod kursorem robi się biały — razem z białym napisem, czyli etykieta znika. */
+/* Wybrany Przegląd to ta sama kremowa naszywka z różowym ściegiem, co wybrana pozycja nawigacji
+   (UX 261120, P-G0-03): róż wypełniony zostaje dla akcji. */
+.rf-ovbtn.active,.rf-ovbtn.active:hover{background:var(--panel);color:var(--ink);
+  box-shadow:0 3px 0 var(--pink-d);--rf-stitch:var(--pink-btn)}
+
+/* ---------- kapsle: ZWARTE WIERSZE (kanon z makiety `.navitem`/`.devrow`) --------------------------
+   Do 2026-08-29 stały tu PEŁNE pigułki z rzędu na całą szerokość strony: obrazek kapsla 30 px,
+   napis 14 px, plakietka „EDYTOWANY", stan w osobnym bąbelku — a że w 274 px to się nie mieściło,
+   wiersz miał włączone zawijanie i puchł na dwie, czasem trzy linie, przez co kapsle
+   były za duże i nieczytelne. Wiersz ma mieć wysokość wiersza, nie kafla.
+
+   NIC TU NIE ZNIKA Z DOM-U — to jest ten sam węzeł pigułki z rf-11, tylko podany zwarcie. Dzięki
+   temu różnicowy renderer, delegowany nasłuch na #deviceSel, i18n i wszystkie stany działają bez
+   ani jednej gałęzi więcej w JS.                                                                   */
+.rf-rcol .devices-panel{padding:9px 9px 10px}
+.rf-rcol .devices-h{flex-wrap:wrap;gap:6px}
+.rf-rcol .devices-hint{margin-left:0;font-size:11px;line-height:1.45}
+/* `flex-wrap:nowrap` jest tu WARUNKIEM zwężania, nie kosmetyką: w kolumnie z zawijaniem szerokość
+   linii rośnie do najszerszej pigułki, więc `align-items:stretch` rozciągało ją do treści zamiast
+   do panelu — i w 38-pikselowym pasku pigułka zostawała szeroka na 41 px, wystając poza kolumnę. */
+.rf-rcol .devices-panel .devsel{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:4px;min-width:0}
+.rf-rcol .devices-panel .devpill{min-width:0;flex:0 0 auto}
+.rf-rcol .devices-panel .devpill:not(.add){flex-direction:column;align-items:stretch}
+/* Wiersz, nie pigułka: prostokąt z małym promieniem czyta się w pionowej liście jako POZYCJA listy,
+   a nie jako osobny znaczek. Obwódka cieńsza, bo przy 3 px na wybranym wierszu sąsiednie wyglądały
+   na wciśnięte. */
+.rf-devcompact .devpill:not(.add){border-radius:11px;min-height:0;font-size:13px;--rf-stitch-r:7px}
+.rf-devcompact .devpill.add{border-radius:11px;min-height:34px;font-size:12.5px}
+/* JEDNA LINIA. Zawijanie zdjęte — nazwa dostaje całą resztę i skraca się wielokropkiem, a stan
+   i znaczki mają stałą szerokość, więc nie ma czego przenosić do drugiego wiersza. */
+.rf-devcompact .devpill .dp-main{padding:0 8px;gap:7px;min-height:38px;min-width:0;flex-wrap:nowrap}
+.rf-devcompact .devpill .dp-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:13px}
+/* Kropka w kolorze kapsla zamiast obrazka 30 px — w wierszu chodzi o ROZPOZNANIE, a rysunek kapsla
+   i tak stoi w pełnej okazałości w edytorze i w ściądze. */
+.rf-devcompact .devpill .dp-cap{width:19px;height:19px}
+.rf-devcompact .devpill .dp-dot{width:12px;height:12px}
+/* Stan („wstrzymany", „szukam") ma STAŁE miejsce po prawej i nie zjada nazwy: `flex:0 0 auto`
+   plus sufit szerokości. `margin-right` trzyma go z dala od obwódki — bez tego pigułka stanu
+   kładła się na krawędzi wiersza i wyglądała na uciętą, choć mieściła się w całości. */
+.rf-devcompact .devpill .dp-state{font-size:9.5px;padding:1px 6px;margin:0 2px 0 0;flex:0 0 auto;
+  max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rf-devcompact .devpill .dp-mark{width:12px;height:12px;margin-left:0}
+/* Plakietka „EDYTOWANY" schowana W TEJ KOLUMNIE: zabierała połowę miejsca na nazwę, a mówiła to,
+   co widać bez słów — w pionowej liście świeci dokładnie jeden wiersz (kolor kapsla + grubsza
+   obwódka), a po zwinięciu panelu ten sam kapsel ma pierścień na kwadracie.
+   ⚠️ Od 2026-08-30 to JEDYNA odpowiedź na pytanie „czyj to ekran": pasek „Aktualnie edytowany"
+   z góry zakładek został usunięty jako dublujący tę kolumnę (rf-11). Gdyby kolumna kiedyś
+   znikała z układu, trzeba wrócić albo do plakietki, albo do paska. */
+.rf-devcompact .devpill .dp-edited{display:none!important}
+
+/* ---------- pełny podgląd po przeprowadzce do Czujnika --------------------------------------------
+   `.live-rail` była pisana pod pasek na CAŁĄ SZEROKOŚĆ STRONY: cztery kafle w jednym rzędzie, więc
+   przy 1500 px każdy dostawał ~430 px. Zakładka Czujnik siedzi w kolumnie środkowej, która przy
+   oknie 1600 px ma ~1090 px — te same cztery kafle zeszłyby do ~280 px i przeprowadzka nie
+   naprawiłaby problemu, tylko przesunęła go o metr.
+
+   `auto-fit` z twardym minimum 420 px: w środkowej kolumnie wychodzą dwa rzędy po dwa kafle
+   (~530 px każdy, czyli SZERZEJ niż w pierwotnym pasku), a na szerokim monitorze wracają cztery
+   w rzędzie same z siebie. Kafel nigdy nie schodzi poniżej 420 px, bo poniżej wykres przestaje
+   być wykresem. Poniżej 860 px kolumna jest jedna — to reguła z 05-macro-tabs.css i zostaje.     */
+#tab-czujnik .live-rail{grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+@media (max-width:860px){ #tab-czujnik .live-rail{grid-template-columns:minmax(0,1fr)} }
+
+/* ---------- miniatura podglądu na żywo (kanon z makiety `.mini`/`.puck`/`.scope`) -----------------
+   Cztery kafle, każdy: jeden podpis i jeden obraz. Bez pól, bez suwaków, bez opisanych osi — pełne
+   karty (orientacja 3D, kanały 0-2, kanały 3-5, filtr 3D) razem z paskiem „Okno/Pauza/Zeruj/
+   Wyczyść" stoją od 2026-08-29 na górze zakładki Czujnik, gdzie mają całą szerokość strony.
+
+   DWIE KOLUMNY, NIE JEDNA (2026-08-29, druga tura). Kafli jest cztery, nie trzy, a do tego doszedł
+   pas naciśnięć — jeden pod drugim urosłyby do ~340 px i prawa kolumna zaczęłaby się przewijać już
+   przy 1440×900 (przy trzech kaflach brakowało 24 px, przy czterech brakowałoby blisko 70).
+   Ustawione parami zajmują ~245 px, czyli MNIEJ niż poprzednie trzy, i każdy przebieg dostaje
+   WIĘCEJ wysokości niż miał (56 px zamiast 52) — a to wysokość, nie szerokość, decyduje o tym, czy
+   widać wychylenie. Szerokość spada z ~232 do ~112 px, czyli dokładnie tyle, ile miniatura zakłada
+   od początku („sparkline szerokości 100 px" w rf-34c) i tyle, ile te same kafle dostają w pasie
+   poziomym poniżej 1280 px. Kto potrzebuje odczytać wykres, a nie zerknąć — ma pełne karty
+   w zakładce Czujnik; ten kafel odpowiada na „drga / nie drga / w którą stronę".                  */
+.rf-lvgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:2px 11px 10px}
+/* PRZÓD KAPSLA (rf-41e, 2026-09-29): kafel na całą szerokość pod wykresami — kropla potrzebuje
+   kwadratu, a w połowie kolumny (~112 px) byłaby znaczkiem. Nagłówek jest przyciskiem: rozwija pod
+   rysunkiem te same ustawienia, które ma blok „przód kapsla” w edytorze nakładki. */
+.rf-mini-front{grid-column:1/-1}
+.rf-front-head{all:unset;display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;font-weight:800;margin-bottom:5px}
+.rf-front-head:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:4px}
+.rf-front-chev{width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;
+  transform:rotate(45deg) translate(-2px,-2px);transition:transform .15s}
+.rf-mini-front.open .rf-front-chev{transform:rotate(-135deg)}
+.rf-front-cv{display:block;width:100%;max-width:190px;aspect-ratio:1;margin:0 auto}
+.rf-front-cv[hidden]{display:none}
+.rf-front-body{margin-top:6px;border-top:1.5px dashed var(--line);padding-top:8px}
+/* WSPÓLNY KOMPONENT USTAWIEŃ (frontSettingsHtml) — ten sam w prawej kolumnie i w edytorze nakładki. */
+.fs{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.fs-why,.fs-note{font-size:11.5px;color:var(--muted);line-height:1.4}
+.fs-row{display:flex;align-items:center;gap:8px;min-width:0}
+.fs-l{flex:0 0 auto;min-width:74px;font-weight:700;color:var(--muted);font-size:11.5px}
+.fs-stat{font-weight:700;min-width:0}
+.fs-rng{flex:1 1 auto;min-width:0;accent-color:var(--pink)}
+/* Suwak pod podpisem, na całą szerokość: w prawej kolumnie (~200 px) wiersz „podpis · suwak · wartość”
+   zostawiał suwakowi kilka pikseli. */
+.fs-sl{display:grid;grid-template-columns:1fr auto;grid-template-areas:"l v" "r r";row-gap:1px}
+.fs-sl .fs-l{grid-area:l}.fs-sl .fs-v{grid-area:v}.fs-sl .fs-rng{grid-area:r;width:100%}
+.fs-v{flex:0 0 auto;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--pink-d);min-width:34px;text-align:right}
+.fs-btns{display:flex;flex-wrap:wrap;gap:6px}
+.fs-chks{display:flex;flex-wrap:wrap;gap:4px 12px}
+.fs-chk{display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer}
+.fs-link{justify-content:space-between;flex-wrap:wrap;border-top:1.5px dashed var(--line);padding-top:7px}
+.fs-led{justify-content:space-between}
+.fs-led .fs-chk{font-weight:700;font-size:12px}
+.fs-lamp{width:14px;height:14px;border-radius:50%;flex:0 0 auto;background:#d9d0bd;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.fs-lamp.on{background:var(--lime);box-shadow:0 0 10px 3px rgba(166,216,97,.8)}
+.fs-link-t{font-size:11.5px;color:var(--muted);font-weight:700}
+.rf-mini{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:8px;
+  display:flex;flex-direction:column;min-width:0}
+.rf-mini-t{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;
+  margin-bottom:5px;font-weight:800;line-height:1.25}
+.rf-puck{display:block;width:100%}
+/* OBA OBRAZY ROSNĄ DO WYSOKOŚCI RZĘDU (2026-08-30, etap 8). Do tej pory rósł tylko `.rf-puck`, bo
+   jedynym powodem różnicy wysokości był pas naciśnięć doklejony pod przebiegiem 0-2. Pas wyszedł do
+   własnego wiersza (patrz `.rf-mini-lane` niżej), ale kafle W RZĘDZIE dalej nie są równe same
+   z siebie: podpisy łamią się na różną liczbę linii („Orientacja 3D" jedna, „Kanały 0–2, żyroskop"
+   dwie), a legenda filtra ma trzy wiersze przy jednym wierszu legendy kanałów. Bez `flex:1 1 auto`
+   na przebiegu niższy kafel kończyłby się pustym pasem pod wykresem — dokładnie tą „dziurą", której
+   zlecenie zakazuje. `min-height` pilnuje, żeby rozciąganie nigdy nie zeszło poniżej dotychczasowej
+   wysokości; siatka wyrównuje kafle w rzędzie domyślnym `align-items:stretch`. */
+.rf-puck{height:76px;flex:1 1 auto;min-height:64px}
+.rf-mini-lt{display:flex;align-items:center;gap:4px;margin:0 0 4px}
+.rf-mini-ic{width:11px;height:11px;flex:0 0 auto}
+/* WYŻSZY PAS (2026-08-30, etap 9b). Pas naciśnięć jest wyższy i pokazuje czas
+   naciśnięcia. 16 px wystarczało na kreskę i pasek, ale nie na napis: czcionka 9 px potrzebuje
+   ~11 px światła, a pasek trzymania ma jeszcze po 2,5 px marginesu z góry i z dołu. 30 px daje
+   napisowi 25 px wnętrza i przy okazji robi z pasa coś, co da się ODCZYTAĆ, a nie tylko zauważyć.
+   Zmierzone: wiersz pasa rośnie o 14 px — czyli mniej więcej tyle, ile zwolniło przejście kuli
+   z kwadratu na 4/3 (patrz niżej). */
+.rf-btnlane{display:block;width:100%;height:30px;flex:0 0 auto;border-radius:5px;
+  background:var(--panel);border:1px solid var(--line)}
+/* Odczyt „ostatnie 340 ms" dosunięty do prawej krawędzi nagłówka pasa (dlaczego nie w rogu płótna —
+   patrz `laneLast()` w rf-34f). Cyfry o stałej szerokości, żeby napis nie drgał przy każdej zmianie
+   liczby, i bez WERSALIKÓW nagłówka: to odczyt, nie etykieta. */
+.rf-lane-last{margin-left:auto;display:inline-flex;align-items:baseline;gap:3px;
+  font-weight:700;letter-spacing:0;text-transform:none}
+.rf-lane-last[hidden]{display:none}
+.rf-lane-last b{color:var(--ink);font-family:var(--mono);
+  font-variant-numeric:tabular-nums lining-nums}
+/* ---------- PAS NACIŚNIĘĆ NA CAŁĄ SZEROKOŚĆ (2026-08-30, etap 8) ----------------------------------
+   Osobny wiersz siatki (`1/-1` w obu układach: kolumna i poziomy pas poniżej 1280 px), bez ramki
+   i tła kafla: płótno niesie własne tło i obwódkę (`.rf-btnlane`). Szerokość to rozdzielczość
+   czasu: przy ok. 242 px dwa stuknięcia w odstępie 100 ms dają się policzyć.                     */
+.rf-mini-lane{grid-column:1/-1;display:flex;flex-direction:column;min-width:0}
+
+/* ---------- mała kula JAKO STER (2026-08-30, etap 8) ----------------------------------------------
+   Przy aktywnym sterowaniu ręcznym orientacja po prawej też pozwala sterować. Obsługę myszy wnosi `vpWireSphere` (rf-14b, to samo, co dla dużej
+   kuli — patrz rf-34d-mini-input.js); tutaj jest wyłącznie ZAPOWIEDŹ, że kula odpowiada na rękę.
+
+   TE SAME KLASY, CO NA DUŻEJ (`vp-on` / `vp-grab` z 04-pose-mouse-cmd.css) — to nie przypadek,
+   tylko warunek: stan przełącza jedna funkcja (`syncManual`), a dwie nazwy klas na jeden stan to
+   dwie rzeczy do rozjechania. Zmienia się sam ROZMIAR sygnału: duża kula bierze pierścień 2 px
+   i poświatę 22 px, co przy kaflu 99×119 px zjadłoby obrazek. Tu 1,5 px pierścienia i 10 px
+   miękkiego rozmycia — widać „to jest teraz żywe", a kula zostaje kulą.
+   `touch-action:none` MUSI być, i to nie dla telefonu: bez niego przeglądarka może uznać
+   przeciągnięcie w pionie za przewijanie prawej kolumny i zabrać nam wskaźnik w połowie gestu.  */
+/* DWA POZIOMY AFORDANCJI OD ETAPU 9b, bo są dwa różne stany (patrz `syncManual` w rf-34d).
+   `vp-ready` = symulacja, tryb wyłączony: sam kursor „łapka". Kula JEST czynna — chwyt włączy tryb
+   (`vpEngage` w rf-14b), więc łapka to obietnica, którą da się dotrzymać.
+   `vp-on` = ręka trzyma kapsel: dodatkowo pierścień w kolorze azymutu. Gdyby świecił się zawsze,
+   przestałby cokolwiek znaczyć. */
+.rf-puck.vp-ready{cursor:grab;touch-action:none}
+.rf-puck.vp-on{cursor:grab;touch-action:none;
+  box-shadow:0 0 0 1.5px var(--az),0 0 10px -3px var(--az)}
+.rf-puck.vp-grab{cursor:grabbing}
+/* Ten sam sygnał, co na dużej karcie w Czujniku (`#pose3dCard.vp-manual` w 04-pose-mouse-cmd.css):
+   przy włączonym sterowaniu ręcznym pulsuje RAMKA kafla, nie tylko pierścień na kuli. Miniatura
+   stoi w przyklejonej prawej kolumnie, więc jest to jedyny znak trybu ręcznego widoczny z modułu,
+   w którym akurat się pracuje — a tryb ręczny wysyła prawdziwe pakiety, więc warto o nim wiedzieć,
+   nie wchodząc do Czujnika. `:has()` zamiast drugiej klasy dokładanej z JS-a: stan już JEST na
+   płótnie (`syncManual` w rf-34d), a druga jego kopia to drugie miejsce do rozjechania się. */
+.rf-mini-pose:has(.rf-puck.vp-on){outline:2px solid var(--az);outline-offset:2px;border-radius:12px;
+  animation:vpCardPulse 1.7s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  .rf-puck.vp-on{transition:none}
+  .rf-mini-pose:has(.rf-puck.vp-on){animation:none;outline-color:var(--az)}
+}
+
+/* ---------- dwa przyciski przy miniaturze (2026-08-29, etap 6a) -----------------------------------
+   NAGŁÓWEK Z ODNOŚNIKIEM. `.rf-sect-act` jest klasą MODYFIKUJĄCĄ, nie zmianą `.rf-sect` — tym samym
+   nagłówkiem podpisane są jeszcze „Nawigacja", „Moduł", „Reszta" i „Co wychodzi z tego kapsla",
+   a one mają zostać zwykłym napisem. Zwijanie panelu działa dalej: `max-height`/`opacity` siedzą
+   na `.rf-sect`, a flex ich nie dotyka.                                                            */
+.rf-sect-act{display:flex;align-items:center;justify-content:space-between;gap:8px}
+/* „Zobacz szczegóły" — normalny przycisk aplikacji ze ściegiem (14d-buttons.css), tylko ciszej:
+   napis nagłówka ma 10,5 px, więc pełnowymiarowy `btn xs` przy nim krzyczy. Trzy rzeczy trzeba
+   zdjąć jawnie, bo `button.btn{font:inherit}` z 02-base.css zaciąga je z nagłówka i żadna reguła
+   przycisku ich nie nadpisuje: WIELKIE LITERY, rozstrzelenie i rozmiar. Selektor musi mieć trzy
+   klasy — samo `.rf-morebtn` (0,1,0) przegrałoby z `.btn.xs` (0,2,0) z 06-connect-midi-pads.css.
+
+   BEZ IKONY — I TO JEST POMIAR, NIE GUST. W nagłówku zostaje 238 px, sam napis „PODGLĄD NA ŻYWO"
+   zajmuje 123 px, więc na przycisk jest 107 px z odstępem. Z ikoną `bic-eye` wychodziło 117 px:
+   nagłówek łamał się na dwa wiersze i przycisk wisiał obok kikuta napisu. Ikona kosztowała tu
+   15 px i nie mówiła nic, czego nie mówi słowo „Zobacz". Przycisk sterowania niżej ikonę ZACHOWUJE
+   — tam szerokości jest cała siatka, a ikona jest częścią oryginału, który ten przycisk dubluje. */
+.rf-sect .btn.rf-morebtn{flex:0 0 auto;font-size:12px;padding:3px 8px;
+  text-transform:none;letter-spacing:0;font-weight:700;white-space:nowrap}
+/* WIERSZ AKCJI POD KAFLAMI. Kafle stoją w dwóch kolumnach, a „Steruj ręcznie" dotyczy całej
+   miniatury — stąd `grid-column:1/-1` (działa też w pasie poziomym poniżej 1280 px, gdzie kolumn
+   jest cztery). `flex-wrap` jest ubezpieczeniem na najdłuższy stan napisu („Wróć do animacji").
+
+   WYSOKOŚĆ JEST TU WALUTĄ. Prawa kolumna była policzona tak, żeby przy 1440×900 NIE przewijać się
+   (patrz akapit „DWIE KOLUMNY, NIE JEDNA" wyżej), a każdy dodany wiersz tę rezerwę zjada. Dlatego
+   wiersz wchodzi ujemnym marginesem w 10-pikselowe wcięcie, które siatka i tak ma pod spodem —
+   zamiast dokładać własne. Zmierzone: bez tego zabiegu 15 px przewijania przy 1440×900. */
+/* Od 2026-08-31 wiersz stoi TUŻ POD KULĄ, a nie na samym dole (patrz `mPose` w rf-34c), więc
+   ujemny margines jest już tylko u góry: dolny wchodził w wcięcie siatki, którego w środku
+   kolumny nie ma — zjadałby oddech przed pierwszym wykresem. */
+.rf-mini-acts{grid-column:1/-1;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-3px 0 1px}
+/* W trybie LIVE „Steruj ręcznie" nie istnieje (to podtryb symulacji — `syncManual` w rf-34d chowa
+   przycisk), a pusty wiersz zostawiałby po nim kilka pikseli odstępu bez powodu. Wiersz znika
+   razem ze swoją jedyną zawartością — dzięki temu pod kulą LIVE ląduje wprost pas naciśnięć. */
+.rf-mini-acts:not(:has(.btn:not([hidden]))){display:none}
+.rf-mini-acts .btn{flex:1 1 auto}
+/* Ikona „chwyć kapsel" i napis w jednej linii, wyśrodkowane — przycisk jest tu szeroki na całą
+   siatkę, więc treść dosunięta do lewej wyglądałaby jak pomyłka. */
+.rf-mini-hand{display:inline-flex;align-items:center;justify-content:center}
+
+/* ---------- PRZYCISKI KAPSLA POD PASEM NACIŚNIĘĆ (2026-08-30, etap 9b) ---------------------------
+   Przyciski klikania przy sterowaniu ręcznym pokazują się pod pasem naciśnięć. Elementy są PRZENIESIONE z paska sterowania na karcie w Czujniku (`appendChild`
+   przenosi węzeł razem z nasłuchami — uzasadnienie przy `NS.vpActs` w rf-34d), więc przychodzą tu
+   z klasą `btn xs` i całym wyglądem tamtego paska. Tutaj dostają wyłącznie UŁOŻENIE: trzy równe
+   kolumny na całą szerokość siatki. Równe, bo to trzy akcje tej samej rangi — „Przycisk kapsla"
+   jest najczęstszy, ale nie ważniejszy, a różne szerokości robiłyby z pasa schodki.
+   NAPIS SIĘ ŁAMIE, A NIE URYWA. Kolumna ma ~77 px, a „Przycisk kapsla" potrzebuje ~92 px — przy
+   `text-overflow:ellipsis` wychodziło „Przycisk ka…", czyli przycisk, którego nazwy nie da się
+   przeczytać. Skrócenie napisu odpada (to PRZENIESIONY element, jego napis ma już swój klucz
+   w rf-01-i18n i ten sam tekst widnieje w pomocy „Jak sterować?"), więc łamiemy na dwa wiersze.
+   `align-items:stretch` siatki wyrówna pozostałe dwa do tej samej wysokości.
+   `min-width:0` pozwala napisom się zmieścić zamiast rozpychać siatkę przy wąskiej kolumnie. */
+.rf-mini-vpacts{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;margin:-3px 0 -2px}
+.rf-mini-vpacts[hidden]{display:none}
+.rf-mini-vpacts .btn{min-width:0;white-space:normal;line-height:1.15;text-align:center;
+  justify-content:center;font-size:10.5px;padding:4px 5px}
+
+/* ---------- PEŁNA KULA W PRAWEJ KOLUMNIE, ZAWSZE (2026-08-30, etap 9b) ---------------------------
+   Z dwóch form wybrana ta: prawa kula cały czas w pełnej postaci, tylko na jasnym tle zamiast
+   ciemnego.
+
+   DLACZEGO PEŁNA. Kula w prawej kolumnie jest STEREM (chwyt sam włącza tryb ręczny — `vpEngage`
+   w rf-14b), a sterowanie stoi na sześciu literach osi, które są jednocześnie uchwytami: chwyć „X"
+   i zakręć kapslem wokół niej. Przy kaflu 112×76 px litera „−Y" miała 11 px i pole trafienia
+   mniejsze niż kciuk — uchwyt formalnie był, praktycznie nie.
+   DLACZEGO ZAWSZE. Forma zmienna przesuwała wszystko pod sobą o 276 px, więc przycisk, który się
+   właśnie kliknęło, uciekał spod kursora. A odkąd chwyt sam włącza tryb, nie ma już stanu
+   „kula nieczynna", w którym mała forma byłaby uczciwa.
+
+   4/3, NIE KWADRAT — zmierzony kompromis, nie gust. Kwadrat dawał kulę o średnicy 179 px i kosztował
+   kolumnę 290 px; 4/3 daje 141 px średnicy za 172 px. Skoro forma jest teraz STAŁA, tę różnicę
+   płaci się przez cały czas pracy, a nie tylko przy sterowaniu. Litery osi zostają wygodne do
+   trafienia, bo pole trafienia ma podłogę `Math.max(15,scale*0.19)`. Gdyby trzeba było większej
+   kulę — do zmiany jest jedna wartość: `aspect-ratio:1/1`.
+   Proporcja przez `aspect-ratio`, a nie wysokość w pikselach: szerokość kolumny zależy od `--rpW`,
+   od zwinięcia panelu i od szerokości okna.
+
+   JASNE TŁO. Ciemny gradient był PRZEPISANY z `canvas.pose3d` (04-pose-mouse-cmd.css) razem z resztą
+   wyglądu dużej karty i w kolumnie wyglądał jak wycięta dziura — pozostałe cztery kafle są filcowe
+   i jasne. Sama sfera jest kremowa (`#fdfaf2`→`#e6dcc6` w `drawPose3D`), więc na jasnym tle nic nie
+   traci: kontrast niosą kolory osi (różowy X, zielony Y, złoty Z) i ciemna siatka południków.
+   ⚠️ NA DUŻEJ KARCIE W CZUJNIKU CIEMNE ZOSTAJE — tam kula ma 300 px i własną, ciemną scenę, która
+   jest świadomym elementem tamtej karty. Zmieniamy WYŁĄCZNIE prawą kolumnę.
+
+   MAŁA KULA, 140 px (UX 261120 L23, „mniej naraz”). Kafel odpowiada na „czy żyje”, zdanie pod
+   kulą mówi to słowami; liczby i wykresy są w Czujniku. Kula stoi na środku kafla.
+
+   KLASA SIEDZI NA SIATCE (`.pose-big`), nie na kaflu: reguły dotyczą trzech różnych elementów
+   i potrzebują wspólnego przodka. Zostaje mimo stałej formy, bo pas poniżej 1280 px musi ją cofnąć.
+   Stawia ją `poseSync()` w rf-34e.                                                              */
+.rf-lvgrid.pose-big .rf-mini-pose{grid-column:1/-1;position:relative}
+.rf-lvgrid.pose-big .rf-mini-pose{align-items:center}
+.rf-lvgrid.pose-big .rf-mini-pose .rf-puck{width:140px;height:140px;min-height:0;flex:0 0 auto;
+  border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.rf-outs-card{padding:0 0 4px}
+.rf-outs{display:flex;flex-direction:column;gap:5px;padding:2px var(--card-x-sm) 11px}
+.rf-out{display:flex;align-items:center;gap:8px;background:var(--panel2);border-radius:9px;
+  padding:5px 9px;font-size:12.5px;font-weight:700}
+.rf-out-dot{width:9px;height:9px;border-radius:50%;background:#ddd2ba;flex:0 0 auto}
+.rf-out-dot.on{background:var(--green);box-shadow:0 0 0 2px rgba(108,179,63,.22)}
+.rf-out-ic{width:18px;height:18px}
+.rf-out-w{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Nazwa noszonej konfiguracji — druga połowa odpowiedzi „co stąd wychodzi". Ustępuje pierwsza
+   przy zwężaniu (nazwa modułu jest ważniejsza), ale całą mówi podpowiedź. */
+.rf-out-cfg{flex:0 1 auto;min-width:0;max-width:118px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:12px;font-weight:700;color:var(--dim);background:var(--panel);
+  border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.rf-out-off{color:var(--dim);font-weight:600;align-items:flex-start}
+.rf-out-off b{font-weight:800;color:var(--ink)}
+/* WIERSZ „NIC NIE WYCHODZI" ZAWIJA SIĘ, zamiast się urywać. Pozostałe wiersze to nazwa modułu plus
+   nazwa konfiguracji — tam skrócenie wielokropkiem jest w porządku, bo całość mówi podpowiedź i obie
+   części da się rozpoznać po początku. Ten jeden wiersz jest ZDANIEM („Triki 1 jest wstrzymany, nic
+   nie wychodzi") i ucięty na „nic nie w…" przestaje być odpowiedzią na cokolwiek. */
+.rf-out-off .rf-out-w{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+.rf-out-off .rf-out-dot{margin-top:3px}
+
+/* ---------- szybkie akcje kapsla: ten sam ruch, inna oś -----------------------------------------
+   Kanon z 11-felt-forms-devices.css: pasek akcji ROZPYCHA pigułkę, nie kładzie się na niej — jako
+   nakładka zasłaniał krótkie nazwy i klik w nazwę trafiał w przycisk akcji. Prawa kolumna ma
+   274 px, więc pasek w bok się nie mieści. ZASADA ZOSTAJE, zmienia się oś: ten sam czas (220 ms)
+   i to samo wyprzedzające easing, tylko w dół. Reguły są SCOPOWANE do `.rf-rcol`, żeby pigułki
+   w innych miejscach (nakładki nad grą, edytor kapsla) zachowały ruch w bok.                      */
+.rf-rcol .devices-panel .devpill .dp-actions{
+  max-width:none;max-height:0;box-shadow:inset 0 1px 0 var(--line);
+  transition:max-height var(--rf-d-pop,220ms) var(--rf-ez-overshoot,cubic-bezier(.34,1.56,.64,1)),
+             opacity var(--rf-d-pop,220ms) ease}
+.rf-rcol .devices-panel .devpill:hover .dp-actions,
+.rf-rcol .devices-panel .devpill:has(:focus-visible) .dp-actions,
+.rf-rcol .devices-panel .devpill:focus-visible .dp-actions{max-width:none;max-height:44px;opacity:1}
+.rf-rcol .devices-panel .devpill .dp-actions .dp-act{flex:1 1 0;min-height:38px}
+@media (hover:none){
+  /* Ekran dotykowy nie ma najechania, więc pasek stoi otwarty przy wybranym kapslu. */
+  .rf-rcol .devices-panel .devpill.active .dp-actions{max-width:none;max-height:44px;opacity:1}
+}
+@media (prefers-reduced-motion:reduce){
+  .rf-rcol .devices-panel .devpill .dp-actions{transition:none}
+}
+
+/* ---------- prawa kolumna zwinięta: pionowa zakładka (54 px) -------------------------------------
+   KAPSLE ZOSTAJĄ jako klikalne kafle i nadal przełączają aktywny kapsel — to najczęstszy ruch
+   w całej aplikacji i zwinięcie panelu nie może go odcinać. Znika podgląd, opisy i akcje.        */
+/* ZWINIĘTA PRAWA KOLUMNA WYGLĄDA JAK ZWINIĘTA LEWA (2026-08-31): bez nazwy, a zwinięte prawe menu
+   wygląda bardziej jak zwinięte lewe.
+
+   NAZWA PANELU ZNIKA. Stała tu obrócona o 90° i była jedyną rzeczą, która odróżniała ten pasek od
+   lewego — a przy okazji jedyną, która w 54-pikselowym pasie zabierała 150 px WYSOKOŚCI, spychając
+   kapsle poniżej pierwszego ekranu. Lewy pasek rozwiązał to samo dawno temu i tą samą drogą
+   (`max-height:0` wyżej): tytuł GAŚNIE i wypada z układu, a wraca przy rozwinięciu. `display:none`
+   jest tu zakazane z tego samego powodu, co tam — nie da się go animować.
+
+   RESZTA GEOMETRII PRZEPISANA Z LEWEGO PASKA co do piksela: ten sam kierunek, ten sam odstęp,
+   to samo wcięcie i to samo wyśrodkowanie. Dwa zwinięte pasy po bokach ekranu mają być tym samym
+   meblem w dwóch egzemplarzach, a nie dwoma podobnymi. */
+body.rp-collapsed .rf-rbar{flex-direction:column;gap:6px;justify-content:center;
+  align-items:center;padding:9px 4px 9px}
+body.rp-collapsed .rf-rbar b{flex:0 0 auto;max-width:0;max-height:0;opacity:0;
+  margin:0;padding:0;background:none;box-shadow:none;overflow:hidden}
+body.rp-collapsed .rf-rbar b::after{display:none}
+/* W tak wąskim pasku zapas na suwak (scrollbar-gutter) zjadłby piątą część szerokości. */
+body.rp-collapsed .rf-rcol,body.lp-collapsed .rf-rail{scrollbar-gutter:auto;overflow-x:hidden}
+body.rp-collapsed .rf-rcol .devices-panel{padding:6px 3px 7px}
+body.rp-collapsed .rf-rcol .devices-panel::before{inset:3px}
+body.rp-collapsed .rf-rcol .devices-panel .devsel{gap:6px}
+/* Etykiety chowa max-width, ale w kontenerze flex trzeba dołożyć min-width:0 — bez tego
+   min-width:auto (czyli szerokość treści) wygrywa z max-width i pigułka zostaje szeroka.
+   Nagłówek huba i pasek akcji znikają całkiem (display), bo to nie są etykiety do zwężenia,
+   tylko całe bloki, których w pasku nie ma — ten sam ruch, co `.quick` w makiecie. */
+body.rp-collapsed .rf-rcol .devices-h{display:none}
+body.rp-collapsed .rf-rcol .devpill .dp-actions{display:none}
+body.rp-collapsed .rf-rcol .devpill .dp-name,
+body.rp-collapsed .rf-rcol .devpill .dp-state,
+body.rp-collapsed .rf-rcol .devpill .dp-edited,
+body.rp-collapsed .rf-rcol .devpill .dp-add-txt{max-width:0;min-width:0;opacity:0;overflow:hidden}
+/* Zerowa szerokość to za mało, gdy element ma jeszcze własne wypełnienie — w 38-pikselowym pasku
+   trzy razy po kilka pikseli rozpychały pigułkę do 95 px i pasek zaczynał się przewijać w bok. */
+body.rp-collapsed .rf-rcol .devpill .dp-state,
+body.rp-collapsed .rf-rcol .devpill .dp-edited{padding:0;margin:0;border:0}
+/* Kształt samego kafla (kwadrat, obrazek kapsla, znaczki stanu) siedzi w bloku
+   „KAFEL KAPSLA = KWADRAT" pod tą sekcją — musi być zawężony do okien ≥1280 px, bo niżej
+   zwinięty pas jest POZIOMY i pigułki są w nim szerokimi wierszami. */
+body.rp-collapsed .rf-rcol .rf-navfoot{padding:7px 0 0}
+body.rp-collapsed .rf-rcol .rf-ovbtn{padding:6px 0;min-width:0}
+body.rp-collapsed .rf-rcol .rf-ovbtn>span:not(.rfic){max-width:0;min-width:0;opacity:0;overflow:hidden;
+  transition:max-width var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1)),opacity .18s ease}
+/* Podgląd i lista wyjść zwijają się siatką 1fr → 0fr, czyli dokładnie do własnej wysokości,
+   bez zgadywania max-height. */
+.rf-lvwrap{display:grid;grid-template-rows:1fr;
+  transition:grid-template-rows var(--rf-d-panel) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rf-lvinner{min-height:0;opacity:1;transition:opacity .2s ease;
+  /* `clip` z marginesem zamiast `hidden`: zwijanie (1fr → 0fr) nadal przycina treść, ale 7-pikselowy
+     cień ostatniej karty („Co wychodzi z tego kapsla") mieści się w marginesie zamiast być ucięty.
+     Zwinięty podgląd ma opacity 0, więc te 10 px treści poza polem i tak nie jest widać. */
+  overflow:clip;overflow-clip-margin:10px}
+body.rp-collapsed .rf-lvwrap{grid-template-rows:0fr}
+body.rp-collapsed .rf-lvinner{opacity:0}
+
+/* ---------- KAFEL KAPSLA = KWADRAT (2026-08-29, etap 6c) -----------------------------------------
+   CO BYŁO NIE TAK. W 38-pikselowym pasku pigułka miała 24 px szerokości i 40-44 px wysokości, więc
+   z „kapsla" robił się pionowy prostokąt. Gorzej: rysunek kapsla ma 30 px, a mieścił się w 20 px
+   treści — wychodził poza pigułkę i był ucinany jej `overflow:hidden`. Stąd kapsle
+   widoczne tylko częściowo zamiast w kwadratach.
+
+   CO JEST TERAZ. Kafel bierze całą szerokość, jaką dostał (`width:100%`), a wysokość dobiera sobie
+   sam przez `aspect-ratio:1` — kwadrat wychodzi z układu, a nie z wpisanej na sztywno liczby, więc
+   zostanie kwadratem także wtedy, gdy pasek kiedyś zmieni szerokość albo pojawi się w nim suwak.
+   Przy 54 px daje to 40×40 px, czyli 36 px treści na rysunek kapsla o 30 px: mieści się w całości
+   z 3-pikselowym marginesem z każdej strony. Rozmiar rysunku jest ten sam, co w rozwiniętym
+   panelu (`.dp-cap{30px}` w 07-felt-core) — nie ma drugiej wartości do pilnowania.
+
+   ZAWĘŻONE DO ≥1280 px, I TO NIE JEST OSTROŻNOŚĆ NA WYROST. Poniżej tej szerokości zwinięty pas
+   robi się POZIOMY (`@media (max-width:1279px)` niżej), pigułki są w nim szerokimi wierszami po
+   ~282 px i mają widoczne nazwy — `aspect-ratio:1` zrobiłby z każdej kwadrat 282×282 px.
+
+   PIERŚCIEŃ AKTYWNEGO PRZEZ OBWÓDKĘ, NIE `box-shadow`. Tej właściwości nie wolno tu użyć: połączony
+   kapsel nosi w niej własny pierścień połączenia (`.devpill.online`, 13-dialogs-overview.css),
+   więc drugi pierścień walczyłby z nim (ostrzeżenie przy `.devpill.active` w 07-felt-core). Aktywny kafel dostaje więc to samo, co w pełnym panelu:
+   tło w kolorze kapsla i obwódkę w tym kolorze — tylko grubszą (3 px zamiast 2 px, które
+   `.rf-devcompact` dobierał pod cienkie wiersze, a nie pod kwadrat).                              */
+@media (min-width:1280px){
+  body.rp-collapsed .rf-rcol .devpill{width:100%;aspect-ratio:1;min-height:0;border-radius:13px}
+  /* `min-height:0` MUSI tu być: `.rf-devcompact .dp-main` ma 38 px minimalnej wysokości (dobrane
+     pod wiersz), co przy 40-pikselowym kwadracie rozpychało kafel do 42 px i psuło proporcję. */
+  body.rp-collapsed .rf-rcol .devpill .dp-main{flex:1 1 auto;min-height:0;padding:0;gap:0;
+    justify-content:center;align-items:center}
+  /* ETYKIETY WYPADAJĄ Z UKŁADU, nie tylko z widoku. Zwężanie ich do `max-width:0` (reguła wyżej,
+     dobra dla wąskiego paska) NIE wystarcza w kwadracie: `.dp-name` ma `flex:1 1 auto`, więc mimo
+     zerowej szerokości bierze udział w rozdziale wolnego miejsca i `justify-content:center`
+     przestaje centrować — rysunek kapsla był zepchnięty 4,5 px w prawo i wystawał 1,5 px poza
+     kafel. W kwadracie nie ma żadnych napisów, więc `display:none` jest tu zwyczajnie prawdą
+     i przy okazji jedynym ustawieniem, którego algorytm flexa nie potrafi obejść. */
+  body.rp-collapsed .rf-rcol .devpill .dp-name,
+  body.rp-collapsed .rf-rcol .devpill .dp-state,
+  body.rp-collapsed .rf-rcol .devpill .dp-edited{display:none}
+  body.rp-collapsed .rf-rcol .devpill .dp-cap{width:30px;height:30px}
+  /* LAMPKA POŁĄCZENIA I ZNAK RĘKI DO ROGÓW. To nie są ozdoby, tylko dwa realne stany: `::before`
+     na `.dp-main` to lampka (zielona = połączony, czerwona = nie, różowa = parowanie), a `::after`
+     na pigułce — „trzymam ten kapsel myszą". Oba stoją w WIERSZU obok rysunku, więc w kwadracie
+     nie miały gdzie się zmieścić: 9 + 30 = 39 px przy 36 px treści. To one, a nie etykiety,
+     spychały rysunek o 4,5 px w prawo (przy 38-pikselowym pasku wypychały go wprost poza kafel —
+     to jest ta „niecała widoczność" kapsli). W rogach nie zabierają szerokości nikomu.
+     `overflow:visible` zdejmuje przycinanie: w zwiniętym kaflu nie ma już czego przycinać (pasek
+     akcji jest `display:none`), a zaokrąglony róg ucinałby plakietki wsunięte na 3 px. Przy okazji
+     przestaje być ucinany błysk „który to kapsel" (`.devpill::before`, `inset:-3px`). */
+  body.rp-collapsed .rf-rcol .devpill{overflow:visible}
+  body.rp-collapsed .rf-rcol .devpill:not(.add) .dp-main::before{position:absolute;top:3px;right:3px}
+  body.rp-collapsed .rf-rcol .devpill.vhand::after{position:absolute;top:3px;left:3px;margin:0}
+  /* Kapsel bez rysunku pokazuje kropkę w swoim kolorze — w kwadracie ma miejsce, żeby urosnąć
+     z 12 px (wiersz) do 16 px i dalej znaczyć „to ten kapsel". */
+  body.rp-collapsed .rf-rcol .devpill .dp-dot{width:16px;height:16px}
+  /* AKTYWNY KAFEL — PIERŚCIEŃ `outline`, NIE `box-shadow` I NIE SAMA OBWÓDKA.
+     `box-shadow` odpada z powodu opisanego wyżej (pierścień połączenia `.devpill.online`).
+     Sama obwódka w kolorze kapsla — czyli to, co wystarcza w pełnym panelu — tutaj NIE wystarcza,
+     i to widać na zrzucie: kapsel 1 ma bladożółty kolor własny, więc 3 px obwódki w tym kolorze
+     ginie na tle tinty z tego samego koloru, a gdy kapsel jest jeszcze wstrzymany (opacity .62
+     + grayscale), aktywny kafel czyta się SŁABIEJ niż sąsiad z pulsującym pierścieniem „połączony".
+     Pierścień w kolorze tuszu rozstrzyga to niezależnie od koloru kapsla i jego stanu — a tusz jest
+     tu już konwencją podkreślenia (`.devpill:hover{border-color:var(--ink)}` w 07-felt-core).
+     Odstęp 2 px mieści się w pasku: kafel ma 40 px, pasek 54 px, więc po bokach zostaje po 7 px. */
+  body.rp-collapsed .rf-rcol .devpill.active{border-width:3px;
+    outline:2.5px solid var(--ink);outline-offset:2px;border-radius:13px}
+  /* Znaczki „wyciszony" i „wstrzymany" WRACAJĄ (w 38 px nie było ich gdzie postawić) — jako małe
+     plakietki w dolnych rogach kafla. Rogi, bo środek należy do rysunku kapsla; dwa różne rogi, bo
+     oba stany mogą być włączone naraz i nakładałyby się na siebie. */
+  body.rp-collapsed .rf-rcol .devpill .dp-mark{position:absolute;bottom:2px;width:14px;height:14px;margin:0}
+  body.rp-collapsed .rf-rcol .devpill .dp-mark-pause{right:2px}
+  body.rp-collapsed .rf-rcol .devpill .dp-mark-mute{left:2px}
+  /* „Dodaj urządzenie" ZOSTAJE, jako kwadrat z plusem. Ukrycie go byłoby wygodniejsze w kodzie,
+     ale odcinałoby jedyną drogę do sparowania kapsla bez rozwijania panelu — a to jest czynność,
+     dla której ten pasek istnieje. Kafel jest tej samej wielkości co kapsle (siatka zostaje
+     siatką), tylko cichszy: przerywana obwódka i sam plus, bez tła. */
+  body.rp-collapsed .rf-rcol .devpill.add{width:100%;aspect-ratio:1;min-height:0;border-radius:13px;
+    justify-content:center;padding:0}
+  body.rp-collapsed .rf-rcol .devpill.add .dp-plus{width:18px;height:18px}
+}
+
+/* ---------- ściąga w osobnym oknie (?view=overview) ----------------------------------------------
+   Ekran ma pokazywać SAMĄ ściągę. 13-dialogs-overview.css chowa stary pasek zakładek, podgląd
+   i pozostałe panele; tu dochodzą pojemniki, których wtedy jeszcze nie było.                      */
+body.overview-only .rf-rail,body.overview-only .rf-rcol{display:none!important}
+body.overview-only .rf-app{grid-template-columns:minmax(0,1fr);grid-template-areas:"main";gap:0}
+body.overview-only .rf-main{width:100%}
+
+/* ---------- węższe okna -------------------------------------------------------------------------- */
+@media (max-width:1279px){
+  /* Podgląd przenosi się NAD środkową kolumnę jako przyklejony poziomy pas: przy tej szerokości
+     trzecia kolumna zjadałaby treść, a podgląd musi zostać w zasięgu wzroku przy strojeniu. */
+  .rf-app{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"rail rcol" "rail main"}
+  /* Pas zostaje przyklejony — po to tu jest, bo próg stroi się patrząc na wykres. Żeby nie urósł
+     w drugi ekran, kapsle i podgląd stają OBOK SIEBIE zamiast jeden pod drugim (to samo, co robi
+     makieta: „mini wykresy obok siebie”), a całość ma jeszcze twardy sufit wysokości. */
+  /* ⚠️ TŁO I DOMKNIĘTA SZCZELINA (2026-09-05). Jako KOLUMNA pas mógł być przezroczysty — obok
+     niego było tło strony. Jako przyklejony POZIOMY pas jedzie NAD środkową kolumną, więc bez
+     własnego, nieprzezroczystego tła prześwitywała przez niego przewijana treść. Tło jest takie
+     samo jak strony (07-felt-core.css:11), razem z fakturą filcu — wzorzec z 09-felt-pads-synth.
+     `top` schodzi z `+8px` do samego `--topbar-h`, a ośmiopikselowy odstęp wraca jako `padding-top`
+     TEGO SAMEGO elementu: inaczej w szczelinie między paskiem aplikacji a pasem widać byłoby
+     przejeżdżającą treść karty. `padding-bottom` gubi tu 78-px rezerwę „na kubek" (wyżej w tym
+     pliku) — słoik z napiwkiem siedzi w prawym dolnym rogu OKNA i nie ma nic wspólnego z pasem
+     przyklejonym do góry, a rezerwa dokładała mu tylko wysokości. */
+  .rf-rcol{width:auto;max-height:46vh;z-index:20;
+    display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"bar bar" "dev live";
+    column-gap:12px;align-items:start;
+    top:var(--topbar-h,64px);padding-top:8px;padding-bottom:8px;
+    background-color:var(--bg);background-image:var(--felt-tex-page);background-repeat:repeat}
+  .rf-rbar{grid-area:bar}
+  .rf-devwrap{grid-area:dev;width:296px;margin-bottom:0}
+  .rf-lvwrap{grid-area:live}
+  /* Podpowiedź „kliknij kapsel = …" to nauka na pierwszy raz, a nie rzecz do czytania w pasie —
+     przy pełnej szerokości stoi obok pigułek, tu zabierałaby połowę jego wysokości. */
+  .rf-rcol .devices-hint{display:none}
+  .rf-navfoot{padding:8px 0 0}
+  /* Pigułki zostają w kolumnie także tutaj: 296 px to nadal wąsko, a jeden układ pigułki dla
+     całej prawej strony znaczy jeden ruch akcji (w dół) niezależnie od szerokości okna. */
+  /* W poziomym pasie CZTERY kafle miniatury stają OBOK SIEBIE (to samo, co robi makieta): kula
+     dostaje stałe 104 px, trzy przebiegi dzielą resztę po równo. Jeden pod drugim urósłby tu
+     w drugi ekran, a pas ma być przyklejony i niski. */
+  .rf-lvgrid{display:grid;grid-template-columns:104px repeat(3,minmax(0,1fr));gap:9px;
+    padding:2px 11px 10px}
+  .rf-puck{height:56px;min-height:0}
+  .rf-outs{flex-direction:row;flex-wrap:wrap}
+  .rf-out{flex:0 0 auto}
+  body.rp-collapsed .rf-rbar{flex-direction:row;padding:7px 9px}
+  body.rp-collapsed .rf-rbar b{writing-mode:horizontal-tb;flex:1;font-size:14px;color:var(--ink)}
+  body.rp-collapsed .rf-app{--rpW:auto}
+  /* Zwinięty poziomy pas to sama belka z nazwą — kapsle i podgląd chowa `.rf-lvwrap`, a to, co
+     zostaje widoczne, wygląda tak jak w rozwiniętym: bez pionowych napisów i zerowych szerokości. */
+  body.rp-collapsed .rf-rcol .devices-h{display:flex;max-height:none;opacity:1}
+  body.rp-collapsed .rf-rcol .devpill .dp-name,
+  body.rp-collapsed .rf-rcol .devpill .dp-state,
+  body.rp-collapsed .rf-rcol .rf-ovbtn>span:not(.rfic){max-height:none;max-width:190px;opacity:1}
+  /* POWIĘKSZONA KULA W POZIOMYM PASIE (2026-08-30, etap 9). Tutaj `grid-column:1/-1` byłoby
+     karykaturą: pas ma cztery kolumny obok siebie i kwadrat na całą jego szerokość urósłby na pół
+     ekranu, spychając trzy przebiegi pod niego — czyli dokładnie w ten „drugi ekran", którego ten
+     układ ma unikać. Kula zostaje więc w SWOJEJ kolumnie, a rośnie ta kolumna: 104 → 168 px, czyli
+     150 px kwadratu po wcięciach. To wystarczy, żeby litery osi dało się trafić (na dużej karcie
+     mają promień ~40 px, tu ~28 px), a trzy przebiegi obok dalej mają po ~1/3 reszty pasa.
+     Filtr wraca do jednej kolumny z tego samego powodu — w czterech kolumnach nie ma po nim
+     „pustej połowy" do zasłonięcia.                                                              */
+  .rf-lvgrid.pose-big{grid-template-columns:168px repeat(3,minmax(0,1fr));grid-auto-flow:dense}
+  .rf-lvgrid.pose-big .rf-mini-pose{grid-column:auto}
+  /* Przód kapsla w pasie: jedna kolumna, jak filtr — na całą szerokość pasa kropla byłaby
+     kwadratem na pół ekranu (patrz `.rf-mini-front` wyżej, w układzie kolumnowym). */
+  .rf-lvgrid .rf-mini-front{grid-column:auto}
+  /* ⚠️ TRZY PRZEBIEGI MUSZĄ SIĘ ZMIEŚCIĆ W PASIE (2026-09-05). Pas ma twardy sufit 46vh — przy
+     1024x700 to 322 px — a kolejność DOM (kula, „Steruj ręcznie", pas naciśnięć, przyciski kapsla,
+     dopiero przebiegi; decyzja 2026-08-31, rf-34c-rcol.js) spychała przebiegi PONIŻEJ cięcia:
+     w pasie widać było samą kulę, czyli wszystko oprócz tego, po co ten pas istnieje. Kula
+     rozciąga się więc na trzy rzędy PIERWSZEJ kolumny, a wiersze akcji jadą przez kolumny 2–4;
+     `grid-auto-flow:dense` wciąga trzy przebiegi w powstałą pod nimi lukę. DOM zostaje nietknięty. */
+  .rf-lvgrid.pose-big .rf-mini-pose{grid-row:1/4}
+  .rf-lvgrid .rf-mini-acts,.rf-lvgrid .rf-mini-lane,.rf-lvgrid .rf-mini-vpacts{grid-column:2/-1}
+  /* MIEJSCE NA KUBEK, TYM RAZEM W STOPCE. Ta sama pigułka `.rf-kofi` co wyżej (146 × 46 px,
+     `position:fixed` w prawym dolnym rogu) siada dokładnie na przycisku „Zgłoś problem": przy
+     1024 px przycisk chowa się pod nią w 50 ze 125 px szerokości, przy 900 px — cały (112 px).
+     Powyżej 1279 px stopka jest szeroka i przycisk kończy się na lewo od kubka, więc rezerwa
+     dotyczy tylko wąskich okien. 76 px = 46 px kubka + 16 px odstępu od dołu okna + luz.
+     Kubek zostaje tam, gdzie jest (decyzje wyżej i w 13-dialogs-overview.css). */
+  footer{padding-bottom:76px}
+}
+@media (max-width:1100px){
+  /* Jeszcze ciaśniej: przy 1024 px trzy przebiegi obok kuli 168 px dostawały po ~95 px i legendy
+     osi zawijały się na trzy wiersze, wypychając wykresy pod cięcie pasa. Kula schodzi do 136 px
+     (kwadrat 118 px — litery osi nadal do trafienia), pigułki kapsli do 230 px, a legendy znikają:
+     kolory osi są opisane na dużej karcie w Czujniku, a tutaj zabierały więcej miejsca niż sam
+     wykres. Zmierzone przy 1024x700: kolumny 136/110/110/110, dół siatki 433 px < 468 px pasa. */
+  .rf-devwrap{width:230px}
+  .rf-lvgrid.pose-big{grid-template-columns:136px repeat(3,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  /* Okno awaryjne: jedna kolumna. Strona jest tu z natury długa i to jest w porządku. */
+  .rf-app{grid-template-columns:minmax(0,1fr);grid-template-areas:"rail" "rcol" "main"}
+  .rf-rail,.rf-rcol{position:static;max-height:none;width:auto}
+  .rf-rail>.card+.card{margin-top:10px}
+  .rnav{flex-direction:row;flex-wrap:wrap}
+  .rnav-btn{width:auto}
+  body.lp-collapsed .rf-app,body.rp-collapsed .rf-app{--lpW:auto;--rpW:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  /* Przejścia gasną, panele nadal się chowają. */
+  .rf-rail,.rf-rcol,.rf-pbar b,.rf-sect,.rf-railmini,.rnav,.rnav-btn,.rf-lvwrap,.rf-lvinner,
+  .rf-navcap-arrow,.rf-navcap-art,.rf-navcap-name,.rf-navcap-state,.rf-navcap-note,
+  .rnav-btn>span:not(.rfic):not(.tab-dot):not(.tab-emoji){transition:none!important}
+  /* Lampka przestaje pulsować, ale NIE gaśnie: kolor, poświata i dymek zostają, więc odpowiedź na
+     „co działa" jest ta sama — traci tylko trzeci kanał, ten ruchowy. Aureola znika w całości,
+     bo zatrzymana w klatce zerowej byłaby ciasnym zielonym pierścieniem bez żadnego znaczenia. */
+  .rnav-btn .tab-dot.on{animation:none!important;transform:none!important}
+  .rnav-btn .tab-dot.on::after{display:none}
+}
+
+/* ==================================================================================================
+   ODDECH, WYŚRODKOWANIE I ŚCIEG W PASKACH PANELI (2026-08-31)
+
+   Przyciski w zwiniętej i rozwiniętej prawej kolumnie potrzebowały oddechu i dobrego wyśrodkowania
+   (grafiki miejscami były poza środkiem), a przyciski zwiń/rozwiń i nazwy paneli dostają obszycia.
+
+   „OFFCENTER" BYŁO POLICZALNE, nie subiektywne — zmierzone przed poprawką
+   (sondą pomiarową poza repozytorium; odchyłka środka rysunku od środka kafla):
+     · „Dodaj urządzenie" w zwiniętym pasku: −2,5 px w lewo,
+     · „Przegląd wszystkich kapsli" w zwiniętym pasku: −4 px w lewo, przy kaflu 54×78 px.
+   Przyczyna jest w obu wypadkach TA SAMA i nie jest nią margines: napis chowany przez `max-width:0`
+   ZOSTAJE elementem wiersza flex, więc `gap` sprzed niego dalej zajmuje miejsce, a `justify-content:
+   center` centruje „rysunek + odstęp + nic". Przesunięcie to dokładnie połowa odstępu (8/2 = 4,
+   5/2 = 2,5) — stąd te dwie liczby. Kafle kapsli tego nie miały, bo tam etykiety wypadają z układu
+   przez `display:none` (patrz blok „KAFEL KAPSLA = KWADRAT" wyżej).
+
+   Zerujemy więc ODSTĘP, a nie napis: `max-width` dalej się animuje przy zwijaniu panelu, czego
+   `display:none` by nie umiało.                                                                    */
+body.rp-collapsed .rf-rcol .rf-ovbtn,
+body.rp-collapsed .rf-rcol .devpill.add{gap:0}
+/* 54×78 px na rysunek 20 px to nie „oddech", tylko zgubiony przycisk: wysokość brał zawinięty
+   napis o zerowej szerokości. Kwadrat, jak kafle kapsli nad nim — jeden kształt na cały pasek. */
+body.rp-collapsed .rf-rcol .rf-ovbtn{padding:0;aspect-ratio:1;min-height:0;overflow:hidden}
+body.rp-collapsed .rf-rcol .rf-ovbtn .rfic{width:24px;height:24px}
+
+/* ---------- oddech ------------------------------------------------------------------------------
+   Zwinięty pasek: kafel ma 40 px, pas 54 px — po bokach zostawało po 7 px, a między kaflami 6 px,
+   więc pion był ciaśniejszy niż poziom i kafle zlewały się w słupek. Wyrównane do 8 px w obie
+   strony. Rozwinięty: wiersz kapsli i przycisk „Przegląd" stały 10-11 px od siebie i od krawędzi
+   karty — to jest odstęp WEWNĄTRZ sekcji, a między sekcjami ma być widocznie więcej.              */
+/* Wcięcie karty i odstęp kafli — te same liczby, co `.rnav` w lewym pasku. */
+body.rp-collapsed .rf-rcol .devices-panel{padding:6px 5px 8px}
+body.rp-collapsed .rf-rcol .devices-panel .devsel{gap:6px}
+body.rp-collapsed .rf-rcol .rf-navfoot{padding:9px 0 0}
+.rf-devwrap{margin-bottom:14px}
+.rf-navfoot{padding:13px 0 2px}
+
+/* ---------- ścieg na przyciskach paska i na nazwie panelu ----------------------------------------
+   „Oko" jest przyciskiem `.btn`, więc ścieg z 14d-buttons.css dostawało od zawsze; grot zwijania
+   jest `.icon-btn`, a ta rodzina jest ze ściegu WYŁĄCZONA z założenia (przy 24-26 px kreskowana
+   linia mieści cztery kreski i czyta się jak szum). Skoro oba mają wyglądać na jedno, rosną do
+   32 px — wtedy ścieg ma po czym biec i przy okazji jest to wygodniejszy cel dla myszy.
+   Promień mniejszy o wcięcie: narożnik 10 px, wcięcie 4 px, łuk 6 px.                             */
+.rf-pbar button.btn.tv-btn,.rf-pbar button.icon-btn.rf-ptog{width:32px;height:32px;border-radius:10px}
+.rf-pbar button.btn.tv-btn{--rf-stitch-in:4px;--rf-stitch-r:6px}
+.rf-pbar button.icon-btn.rf-ptog::after{
+  content:"";position:absolute;inset:4px;pointer-events:none;
+  border:1.5px dashed var(--stitch);border-radius:6px;transition:border-color .12s ease}
+.rf-pbar button.icon-btn.rf-ptog:hover::after{border-color:#bcab8d}
+/* NAZWA PANELU TO NAGŁÓWEK, NIE PRZYCISK (UX 261120, P-G0-16). Biała naszywka ze ściegiem
+   wyglądała dokładnie jak dwa przyciski obok i zapraszała do kliknięcia, a nic nie robiła.
+   Lewy pasek nie ma już napisu (nazwę kolumny niesie `aria-label`), prawy ma zwykły nagłówek
+   Titan One bez tła i cienia. */
+.rf-pbar b{background:none;box-shadow:none;padding:0 2px}
+.rf-pbar-fill{flex:1 1 auto;min-width:0}
+/* Pasek oddaje naszywce tyle, ile się da: wcięcie 8 px zamiast 11 i odstęp 6 px zamiast 8. */
+.rf-rail .rf-pbar{padding:9px 8px 8px;gap:6px}
+
+/* ==================================================================================================
+   TRZY POPRAWKI UKŁADU (2026-08-31)
+
+   1. „PRZYCISK PO PRAWEJ ON HOVER WYCHODZI POZA RAMKĘ JAK ROŚNIE". Zmierzone: 2,6 px z każdej
+      strony. To nie jest usterka układu, tylko `button.btn:hover{transform:translateY(-1px)
+      scale(1.02)}` z 14-motion.css — dwa procent szerokości. Na zwykłym przycisku stojącym pośrodku
+      karty tego się nie widzi; „Przegląd wszystkich kapsli" ma `width:100%`, więc te dwa procent
+      wychodzą dokładnie tam, gdzie kończy się kolumna. Ten sam wniosek, co przy panelach 25.08:
+      SZEROKIE POWIERZCHNIE PODNOSI SIĘ, A NIE SKALUJE. Selektor musi mieć trzy klasy plus `button`,
+      bo `button.btn:hover` to (0,2,1).
+   2. MACIERZ DOTYKAŁA ŚCIEGU SWOJEJ KARTY. Tabela stała 2 px od krawędzi, a ścieg biegnie 5 px
+      w środku — pasy wierszy i podpis „KAPSEL" wchodziły więc wprost na kreskowaną linię. Wcięcie
+      14 px zostawia jej 9 px oddechu. Pionu nie ruszamy: dołem tabela ma już 17 px.
+   3. NAGŁÓWEK SEKCJI STAŁ NA KRAWĘDZI KARTY. „MODUŁ" ma nad sobą pasek „Nawigacja" i tego nie
+      widać; „RESZTA" zaczyna kartę, więc jej podpis siadał 9 px od góry, czyli 4 px od ściegu.
+      Pierwszy nagłówek w karcie dostaje tyle miejsca, ile pasek dałby mu z góry.                   */
+button.btn.rf-ovbtn:hover{transform:translateY(-1px)}
+#devModsHost .dm-box{padding:2px 14px 8px}
+.rf-pcard>.rf-sect:first-child{padding-top:14px}
+
+/* ==================================================================================================
+   WŁASNY PASEK PRZEWIJANIA DLA DWÓCH KOLUMN (rf-34g-railscroll.js)
+
+   Powód jest jeden i twardy: kursor nad NATYWNYM paskiem maluje przeglądarka i nie da się go zmienić
+   ani CSS-em, ani JS-em (przeciąganie paska nie wysyła zdarzeń do DOM-u). Tam ma być
+   filcowa łapka, więc pasek musi być NASZYM elementem — patrz nagłówek tamtego pliku.
+
+   ⚠️ KLASA `rf-sb-host` JEST BEZPIECZNIKIEM. Chowamy pasek systemowy dopiero wtedy, gdy skrypt
+   naprawdę dołożył swój — inaczej wycięty plik albo błąd w bootstrapie zostawiłby kolumnę bez
+   ŻADNEGO paska i bez żadnego znaku, że się przewija.                                             */
+.rf-sb-host{scrollbar-width:none}
+.rf-sb-host::-webkit-scrollbar{width:0;height:0}
+/* Miejsce na własny pasek. `scrollbar-gutter` przestaje cokolwiek rezerwować, gdy pasek systemowy
+   ma zerową szerokość, więc odstęp bierzemy na siebie. */
+.rf-sb-host{padding-right:11px;scrollbar-gutter:auto}
+
+/* Przyklejone dziecko o zerowej wysokości — jedyny układ, w którym element nie jedzie z treścią,
+   a nie trzeba liczyć położenia kolumny na ekranie (uzasadnienie w nagłówku rf-34g). */
+.rf-sb{position:sticky;top:0;height:0;z-index:6;pointer-events:none}
+.rf-sb.on{pointer-events:auto}
+.rf-sb-track{position:absolute;top:0;right:-11px;width:11px;opacity:0;
+  transition:opacity .16s ease}
+.rf-sb.on .rf-sb-track{opacity:1}
+/* Kciuk wygląda dokładnie tak, jak wyglądał pasek systemowy tej aplikacji (07-felt-core + reguły
+   kolumn wyżej): filcowa pigułka wcięta przezroczystą obwódką, ciemniejsza pod kursorem. Ruch
+   przez `transform`, nie `top` — przewijanie jest tu rzeczą, którą widać co klatkę. */
+.rf-sb-th{position:absolute;top:0;left:0;width:11px;display:block;
+  background:#d5c8b0;background-clip:content-box;border:3px solid transparent;border-radius:99px;
+  transition:background .15s}
+.rf-sb-th:hover,.rf-sb-th.drag{background:#bda98a;background-clip:content-box}
+/* POZY UCHWYTU WARTOŚCI — to jest cel całej tej przebudowy. Te same dwie, co suwak, gałka i kula
+   orientacji 3D (10-icons-controls.css): otwarta dłoń pod kursorem, zaciśnięta przy ciągnięciu.
+   Stan „ciągnę" jest KLASĄ, nie `:hover` — ręka wyjeżdża poza 11-pikselowy kciuk przy pierwszym
+   szarpnięciu, a wtedy `:hover` gaśnie, choć kciuk nadal jest trzymany. Dlatego też pozę zaciśniętą
+   dostaje przy ciągnięciu CAŁY dokument: kursor bywa wtedy nad zupełnie innym elementem. */
+html.rf-cursor .rf-sb-th{cursor:var(--rf-cur-hover) !important}
+html.rf-cursor .rf-sb-th.drag{cursor:var(--rf-cur-grab) !important}
+html.rf-cursor.rf-sb-dragging,html.rf-cursor.rf-sb-dragging *{cursor:var(--rf-cur-grab) !important}
+/* Bez filcowego kursora zostają słowa systemowe — ten sam podział ról, co przy suwaku. */
+.rf-sb-th{cursor:grab}
+.rf-sb-th.drag{cursor:grabbing}
+
+@media (max-width:1279px){
+  /* Prawa kolumna jest tu POZIOMYM pasem i SIATKĄ z nazwanymi obszarami — dziecko bez obszaru
+     rozpychałoby jej układ. Wraca pasek systemowy: brzydszy kursor jest mniejszym złem niż
+     rozjechana kolumna. */
+  .rf-rcol .rf-sb{display:none}
+  .rf-rcol.rf-sb-host{scrollbar-width:thin;padding-right:0}
+  .rf-rcol.rf-sb-host::-webkit-scrollbar{width:11px;height:11px}
+}
+
+/* ==================================================================================================
+   UX 261120 A2: NAWIGACJA W JEDNEJ KARCIE, KARTA STANU, WIDOCZNOŚĆ POLAMI WYBORU
+   ================================================================================================== */
+/* Sekcje jednej karty dzieli kreskowany ścieg zamiast osobnych kart (rf-34b `navSect`). */
+.rf-nav-sect{border-top:1.5px dashed var(--stitch);margin:4px 10px 0;padding:9px 0 4px}
+.rf-navgrp{display:block}
+.rnav.rf-nav-top{padding-bottom:4px}
+/* „Ustawienia” na samym dole, odcięte ściegiem: dotyczą programu, nie kapsla. */
+.rnav.rf-nav-app{border-top:1.5px dashed var(--stitch);margin:4px 10px 0;padding:8px 0 9px}
+body.lp-collapsed .rf-rail .rf-nav-sect{border-top:none;margin:0}
+body.lp-collapsed .rf-rail .rnav.rf-nav-app{margin:0 10px;padding:6px 0 8px}
+/* Znak nowej karty przy RibbitBeat: tam, gdzie moduły mają kropkę stanu. */
+.rf-nav-ext{margin-left:auto;width:14px;height:14px;flex:0 0 auto;background:var(--ic-export) center/contain no-repeat}
+body.lp-collapsed .rf-rail .rf-nav-ext{display:none}
+
+/* Karta stanu: nagłówek z nazwą kapsla zwykłym krojem (nie wersalikami, bo niesie imię). */
+.rf-outs-card .rf-outs-head{text-transform:none;letter-spacing:.2px;font-size:13px;color:var(--ink)}
+.rf-outs-card .rf-outs-head b{font-weight:800}
+.rf-rcol .rf-outs-card{margin-bottom:12px}
+/* Wiersz z akcją (wstrzymane sterowanie, pusta lista): zdanie zawija się, przycisk pod nim. */
+.rf-out.rf-out-act{flex-wrap:wrap;align-items:center}
+.rf-out.rf-out-act .rf-out-w{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+.rf-out.rf-out-act .rf-out-btn{flex:1 0 100%;margin-top:4px}
+.rf-out.rf-out-held{background:color-mix(in srgb,var(--warn) 16%,var(--panel));border:1.5px dashed var(--warn);
+  padding:8px 10px;color:var(--ink)}
+.rf-out.rf-out-held .rf-out-w{font-weight:800}
+.rf-out-ic.rf-out-ic-pause{width:22px;height:22px;flex:0 0 auto;background:url(/web/assets/icons/pauza.png) center/contain no-repeat}
+
+/* Widoczność modułów (rf-48): filcowe pole wyboru zamiast dźwigni. Rozmiar i rysunek pola są
+   globalne (10-icons-controls.css), tu tylko miejsce pod nazwą. */
+.tv-head{font-family:var(--display);font-weight:800;font-size:13px;color:var(--ink);margin:0 2px 4px}
+.tv-grp{font-size:12px}
+.tv-name{font-size:12px}
+.tv-note{font-size:12.5px}
+label.tv-cell{cursor:pointer}
+label.tv-cell.tv-lock{cursor:default}
+.tv-cell input.tv-cb{margin:2px auto 0!important;padding:0}
+.tv-cell input.tv-cb:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:6px}
+/* Mapowanie (kotwica) zostaje zawsze: pole widać, ale jest wygaszone, a powód mówi dymek. */
+label.tv-cell.tv-lock input.tv-cb{filter:grayscale(1);opacity:.55;cursor:default}
+/* Aplikacja nie odpowiada (rf-08 `rfOfflineSet`): komunikat `rf-need` pod paskiem, w rytmie kolumn. */
+#rfOffline{margin:12px auto 0;width:calc(100% - 48px);max-width:1732px;box-sizing:border-box}
+#rfOffline[hidden]{display:none}
+
+/* ==================================================================================================
+   UX 261120 L23: RAMA LŻEJ („mniej naraz”): mała kula ze zdaniem stanu, „Więcej modułów (N)”,
+   „Pomoc i społeczność”, pierwsze pytanie. Tylko tokeny i istniejące wzorce filcowe.
+   ================================================================================================== */
+/* Jedno zdanie pod kulą (rf-34c `_say`): zielony napis = kapsel reaguje, przygaszony = nie widać ruchu. */
+.rf-mini-say{margin:7px 0 0;font-size:12.5px;font-weight:700;line-height:1.3;text-align:center;color:var(--muted)}
+.rf-mini-say.on{color:var(--green-d)}
+
+/* „Więcej modułów (N)”: pozycja nawigacji z filcowym grotem (rozwin.png), lista rozwija się w miejscu.
+   `.rnav` ma `display:flex`, więc atrybut `hidden` musi mieć własną regułę. */
+#rfNavMoreWrap[hidden],.rf-navmore-list[hidden]{display:none}
+.rf-navmore{padding:0 8px 6px}
+.rf-navmore-btn{color:var(--muted);font-weight:700}
+.rf-navmore-btn:hover{color:var(--ink)}
+.rf-navmore-ic{width:16px!important;height:16px!important;margin:0 4px 0 3px;
+  background:url(/web/assets/icons/rozwin.png) center/contain no-repeat;
+  transition:transform var(--rf-d-pop,220ms) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+.rf-navmore-btn[aria-expanded="true"] .rf-navmore-ic{transform:rotate(90deg)}
+.rnav.rf-navmore-list{padding:2px 0 2px 10px;margin-left:10px;border-left:1.5px dashed var(--stitch)}
+body.lp-collapsed .rf-rail .rf-navmore{padding:0 10px 6px}
+body.lp-collapsed .rf-rail .rnav.rf-navmore-list{padding-left:0;margin-left:0;border-left:none}
+@media (prefers-reduced-motion:reduce){.rf-navmore-ic{transition:none}}
+
+/* „Pomoc i społeczność” (rf-34h): przycisk paska z filcowym okienkiem, w nim dwa odnośniki. */
+.rf-help{position:relative;display:inline-flex}
+.rf-help-chev{display:inline-block;width:11px;height:11px;margin-left:7px;flex:0 0 auto;
+  background:url(/web/assets/icons/rozwin.png) center/contain no-repeat;transform:rotate(90deg);
+  transition:transform var(--rf-d-pop,220ms) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+#helpBtn[aria-expanded="true"] .rf-help-chev{transform:rotate(-90deg)}
+.rf-help-pop{position:absolute;right:0;top:calc(100% + 10px);z-index:70;min-width:230px;
+  display:flex;flex-direction:column;gap:9px;padding:13px;border-radius:14px;
+  background:var(--panel);background-image:var(--felt-tex-soft);
+  box-shadow:0 10px 0 rgba(120,90,40,.16),0 0 0 1.5px var(--stitch)}
+.rf-help-pop[hidden]{display:none}
+header .rf-help-pop .btn{display:flex;align-items:center;justify-content:flex-start;width:100%;box-sizing:border-box}
+/* W okienku napisy stoją przy każdej szerokości (pasek wąskiego okna chowa je w 10-icons-controls.css). */
+header .rf-help-pop #siteLink,header .rf-help-pop #discordLink{font-size:inherit;padding-left:12px;padding-right:12px}
+header .rf-help-pop .btn-lbl{display:inline}
+@media (max-width:1439px){header #helpBtn .rf-help-chev{margin-left:4px}}
+@media (prefers-reduced-motion:reduce){.rf-help-chev{transition:none}}
+
+/* Pierwsze pytanie (rf-48b): szerszy bąbel czaszki z czterema kaflami wyboru (`.rf-pick`, B1). */
+#rfSkullNotes .rss-bubble.rf-ask{max-width:min(560px,calc(100vw - 300px))}
+.rf-ask-picks{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;position:relative;z-index:1}
+.rf-ask-picks .pad-add-tile.rf-pick{min-height:68px;font-weight:600}
+.pad-add-tile.rf-pick .pat-ic.rfic{width:34px;height:34px}
+.rf-ask-note{position:relative;z-index:1;margin:10px 2px 0;font-size:12.5px;font-weight:600;line-height:1.4;color:var(--muted)}
+/* Ustawienia › Wygląd panelu: wiersz „Do czego używasz RibbitFlipa” z przyciskiem zamiast dźwigni. */
+.rf-swrow.rf-ask-row{align-items:center;margin-top:10px;cursor:default}
+.rf-swrow.rf-ask-row .btn{flex:0 0 auto}

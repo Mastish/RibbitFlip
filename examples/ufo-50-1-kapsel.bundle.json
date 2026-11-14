@@ -1,0 +1,151 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "UFO 50 (1 kapsel)",
+ "description": "Cała konsola LX na jednym kapslu: przechył to krzyżak (osiem kierunków), przycisk to pierwszy przycisk gry (A), szybki obrót nadgarstkiem w dowolną stronę to drugi (X), a energiczne potrząśnięcie to Start. ⚠️ Drugi przycisk jest TAPNIĘCIEM — obrót to prędkość, nie pozycja, więc nie da się go trzymać. Do gier, które wymagają trzymania drugiego przycisku (bieg, ładowanie), weź wersję na dwa kapsle.",
+ "cassette": 8,
+ "forApp": "UFO 50 (Steam) — wariant na jeden kapsel",
+ "author": "RibbitFlip",
+ "rev": 2,
+ "exe": [
+  "ufo50.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Cała konsola",
+   "role": {
+    "name": "Krzyżak, oba przyciski i Start",
+    "note": "Przechył to krzyżak. Przycisk = A, obrót nadgarstkiem = X, potrząśnięcie = Start."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "ufo1-a",
+      "label": "Przycisk 1 (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 100
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:a",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "ufo1-x",
+      "label": "Przycisk 2 (szybki obrót nadgarstkiem)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": true,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:x",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "ufo1-start",
+      "label": "Start (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 18000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:start",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "dpad",
+     "padShare": "own",
+     "dpadBackend": "gamepad",
+     "dpadDiagonal": true,
+     "dpadSource": "filter",
+     "dpadMetricX": "roll",
+     "dpadMetricY": "pitch",
+     "dpadFilterScale": 35,
+     "dpadFilterDead": 12,
+     "dpadInner": 0.3,
+     "dpadRange": 10000.0,
+     "dpadInvertX": false,
+     "dpadInvertY": false
+    }
+   }
+  }
+ ]
+}

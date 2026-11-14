@@ -1,0 +1,112 @@
+/* Recorded gestures: the editor's mode bar, the recorder box (rf-12d) and the simple-mode
+   layout (rf-12e). Everything reuses the editor's own building blocks (.ed-grid, .fld, .seg,
+   .ed-sec, .ed-sig-note, .btn) — only what has no counterpart there is styled here. */
+
+  /* mode bar at the top of the editor */
+  .gr-modebar{gap:10px 12px}
+  .gr-lbl{font-size:12px;font-weight:600;color:var(--muted)}
+  .gr-ic{display:inline-block;margin-right:5px;font-size:13px;line-height:1}
+  /* the two doors: „✋ Nagraj gest" next to „Nowy wyzwalacz" (bars) and in the empty list */
+  .rules-empty-doors{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  /* the simple mode's numbered steps, their „done" marks and the line next to Save */
+  .gr-step{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
+    background:var(--pink);color:#fff;font-size:11px;font-weight:700;letter-spacing:0;text-transform:none}
+  .gr-done{color:var(--ok);font-weight:600;letter-spacing:0;text-transform:none;font-size:11px}
+  .gr-done:empty{display:none}
+  .gr-ready{margin-right:auto;font-size:12px;color:var(--warn);align-self:center}
+  .gr-ready.ok{color:var(--ok)}
+  .gr-ready:empty{display:none}
+  /* the recorder's own notes: which mode does what, and whether the capsule can be recorded */
+  .gr-modehint{flex:1 1 100%;font-size:11px;line-height:1.45;color:var(--dim)}
+  .gr-note{font-size:12px;line-height:1.5;color:var(--muted);border-radius:8px;padding:6px 9px;
+    background:color-mix(in srgb,var(--az) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--az) 35%,transparent)}
+  .gr-note.off{color:var(--warn-ink,var(--warn));background:color-mix(in srgb,var(--warn) 10%,var(--panel));border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+  /* one take just landed: the live box blinks once; a finished recording lights the check row */
+  .gr-live.flash{animation:gr-flash .6s ease-out 1}
+  @keyframes gr-flash{0%{background:color-mix(in srgb,var(--ok) 30%,var(--panel))}100%{background:color-mix(in srgb,var(--pink) 10%,var(--panel))}}
+  .gr-test.hot{border-radius:9px;padding:6px 9px;background:color-mix(in srgb,var(--ok) 12%,var(--panel));border:1px dashed color-mix(in srgb,var(--ok) 50%,transparent)}
+  .gr-test.hot .gr-lbl{color:var(--ok)}
+  .gr-spark{color:var(--pink-d);vertical-align:middle;margin:0 2px}
+  .gr-take.bad .gr-spark{display:none}
+  /* Wybrany tryb i wybrane źródło „Gest” nie mają już własnego różu: stan wybrany segmentu to
+     czarny filc z 08-felt-components (D5), róż zostaje dla akcji. */
+
+  /* the recorder box */
+  .gr-box{display:flex;flex-direction:column;gap:9px;border:1px solid var(--line);border-radius:10px;
+    background:var(--bg2);padding:10px 12px}
+  .gr-box.compact{padding:8px 10px;gap:7px}
+  .gr-row{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+  .gr-ctl .fld{margin:0}
+  .gr-end input[type=range]{width:130px;min-width:90px}
+  .gr-end .num{font-family:var(--mono);font-size:12px;color:var(--ink);min-width:58px}
+  .gr-btns{display:inline-flex;gap:7px;margin-left:auto}
+  .gr-live{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-radius:9px;
+    background:color-mix(in srgb,var(--pink) 10%,var(--panel));border:1px dashed color-mix(in srgb,var(--pink) 45%,transparent);
+    color:var(--ink);font-size:13px}
+  .gr-live[hidden]{display:none}
+  .gr-pulse{width:10px;height:10px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink);
+    animation:pulse 1s infinite;flex:none}
+  .gr-dots{display:inline-flex;gap:5px;margin-left:2px}
+  .gr-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--pink);background:transparent;opacity:.55}
+  .gr-dot.on{background:var(--pink);opacity:1}
+  .gr-live .btn{margin-left:auto}
+  .gr-live .btn+.btn{margin-left:0}
+
+  /* THE LIVE PICTURE (rf-12d gestScopeDraw) — the movement as it happens, above the recordings
+     it turns into. Sized here and nowhere else: fit() reads clientWidth/clientHeight, so the
+     canvas needs a height in CSS or it draws into a 150 px default box that ignores the layout. */
+  .gr-scope-wrap{display:flex;flex-direction:column;gap:3px}
+  .gr-scope-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .gr-scope-read{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .gr-scope{display:block;width:100%;height:96px;border-radius:8px}
+  .gr-box.compact .gr-scope{height:76px}
+  /* the manual recorder's ONE button, while it is the „Stop" half of itself */
+  .gr-btns .btn.gr-stop{border-color:color-mix(in srgb,var(--bad) 55%,transparent);color:var(--bad)}
+
+  /* the takes as chips, the verdict lines, the check meter */
+  .gr-takes{display:flex;gap:6px;flex-wrap:wrap}
+  .gr-takes:empty{display:none}
+  .gr-take{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--ink);
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 9px}
+  .gr-take b{color:var(--pink-d)}
+  .gr-take.bad{border-color:var(--bad);color:var(--bad)}
+  .gr-x{font:inherit;line-height:1;width:18px;height:18px;border-radius:50%;border:0;background:transparent;
+    color:var(--dim);cursor:pointer;padding:0}
+  .gr-x:hover{background:var(--bad);color:#fff}
+  .gr-verdict{font-size:12px;line-height:1.55;color:var(--muted)}
+  .gr-verdict:empty{display:none}
+  .gr-verdict .ok{color:var(--muted)}
+  .gr-verdict .warn{color:var(--warn)}
+  .gr-verdict .dim{color:var(--dim)}
+  .gr-verdict .btn.xs{margin-left:6px;vertical-align:middle}
+  .gr-test{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .gr-test[hidden]{display:none}
+  .gr-meter{position:relative;flex:1 1 140px;height:12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);overflow:hidden}
+  .gr-meter-bar{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--dim);transition:width .25s var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  .gr-meter.ok .gr-meter-bar{background:var(--ok)}
+  .gr-meter.no .gr-meter-bar{background:var(--warn)}
+  .gr-meter-thr{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--warn);opacity:.9}
+  .gr-trial{font-family:var(--mono);font-size:12px;color:var(--ink);min-width:150px}
+  .gr-notice{font-size:12px;line-height:1.5;color:var(--muted);background:color-mix(in srgb,var(--warn) 9%,var(--panel));
+    border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:8px;padding:6px 9px}
+
+  /* accuracy slider, description, the advanced knobs */
+  .gr-acc{flex-wrap:wrap;gap:8px 10px}
+  .gr-acc input[type=range]{flex:1 1 200px;min-width:120px}
+  .gr-acclbl{color:var(--pink-d);min-width:110px}
+  .gr-scale{flex:1 1 100%;display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:-4px}
+  .gr-knobs{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:6px}
+  .gr-knobs .fld{margin:0}
+  .ed-grid .gr-knobs input[type=number]{width:74px}
+  /* inside a condition card the params row is a flex-wrap line: the recorder, the slider, the
+     tuning fold and the description each take a whole line of it */
+  .ed-cond-params>.col2,.ed-cond-params>.gr-acc,.ed-cond-params>details.gr-adv,.ed-cond-params>.gr-desc,.ed-cond-params>.gr-desc+.ed-sig-note{flex:1 1 100%}
+  .ed-cond-params>details.gr-adv{margin-top:0}
+  .gr-simple .ed-more{grid-column:1/-1;border:1px solid var(--line);border-radius:10px;padding:6px 12px;background:var(--panel)}
+  .gr-simple .ed-more>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);padding:4px 0}
+  .gr-simple .ed-more[open]>summary{margin-bottom:8px}
+  .gr-simple .ed-more .ed-sec{margin-top:4px}
+  .gr-more{margin-bottom:6px}
+  /* the condition card's kind strip gets a fifth button; keep the strip on one line where it fits */
+  /* a behaviour that makes no sense for an event source is shown, not hidden, but plainly off */
+  .seg-beh button:disabled{opacity:.4;cursor:not-allowed}

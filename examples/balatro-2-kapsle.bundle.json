@@ -1,0 +1,225 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "Balatro (2 kapsle)",
+ "description": "Balatro na dwie ręce, jeden pad Xbox. Lewa: przechył przesuwa wybór po kartach (krzyżak), przycisk zaznacza kartę (A). Prawa: przycisk zagrywa rękę (X), szybki obrót nadgarstkiem odrzuca zaznaczone (Y), potrząśnięcie otwiera menu (Start). Przyciski odczytane z plików gry.",
+ "cassette": 6,
+ "howto": [
+  "Lewy kapsel: przechył przesuwa wybór po kartach, przycisk zaznacza kartę.",
+  "Prawy kapsel: przycisk zagrywa rękę, szybki obrót nadgarstkiem odrzuca zaznaczone, potrząśnięcie otwiera menu.",
+  "W sklepie przycisk prawego kapsla losuje ponownie, a obrót przechodzi do następnej rundy."
+ ],
+ "forApp": "Balatro (Steam), wariant na dwa kapsle",
+ "author": "RibbitFlip",
+ "rev": 1,
+ "exe": [
+  "balatro.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Karty",
+   "role": {
+    "name": "Karty (lewa ręka)",
+    "note": "Przechył przesuwa wybór po kartach, przycisk zaznacza kartę."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "bal2-a",
+      "label": "Zaznacz kartę (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 100
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:a",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "dpad",
+     "padShare": "own",
+     "dpadBackend": "gamepad",
+     "dpadDiagonal": false,
+     "dpadSource": "filter",
+     "dpadMetricX": "roll",
+     "dpadMetricY": "pitch",
+     "dpadFilterScale": 35,
+     "dpadFilterDead": 12,
+     "dpadInner": 0.3,
+     "dpadRange": 10000.0,
+     "dpadInvertX": false,
+     "dpadInvertY": false
+    }
+   }
+  },
+  {
+   "slot": "d1",
+   "name": "Zagranie",
+   "role": {
+    "name": "Zagranie (prawa ręka)",
+    "note": "Przycisk zagrywa rękę, obrót nadgarstkiem odrzuca, potrząśnięcie otwiera menu."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "bal2-play",
+      "label": "Zagraj rękę (przycisk kapsla)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 100
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:x",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "bal2-discard",
+      "label": "Odrzuć (szybki obrót nadgarstkiem)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "twist"
+      },
+      "abs": true,
+      "cmp": ">",
+      "threshold": 200,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:y",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     },
+     {
+      "id": "bal2-start",
+      "label": "Menu (potrząśnięcie)",
+      "enabled": true,
+      "source": {
+       "kind": "filter",
+       "metric": "spin"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 12000,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "once",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:start",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "d0",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 45,
+     "stickExpo": 1.6,
+     "stickInner": 0.9,
+     "stickOuter": 0.0,
+     "stickAccel": 0.7,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 0.1,
+     "stickSensY": 0.1
+    }
+   }
+  }
+ ]
+}

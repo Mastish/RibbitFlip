@@ -1,0 +1,26 @@
+{
+ "url": "http://127.0.0.1:8770",
+ "dev": "auto",
+ "accuracy": 30,
+ "params": {
+  "channels": "gyro",
+  "accelWeight": 0.7,
+  "accelMode": "delta",
+  "resampleN": 40,
+  "smooth": 3,
+  "band": 0.2,
+  "shapeOnly": true,
+  "intensityTol": 3.33,
+  "durationTol": 2.6,
+  "threshold": 62.0,
+  "simRef": 1.5,
+  "startEnergy": 20.0,
+  "endEnergy": 10.0,
+  "endFrac": 0.12,
+  "endHoldMs": 200,
+  "minMs": 120,
+  "maxMs": 2500,
+  "preRollMs": 100,
+  "cooldownMs": 300
+ }
+}

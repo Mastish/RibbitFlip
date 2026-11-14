@@ -1,0 +1,6 @@
+{
+  "autoSleep": false,
+  "idleMin": 5.0,
+  "wakeHex": "201000d007340003",
+  "batterySec": 300.0
+}

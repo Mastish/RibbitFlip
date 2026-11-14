@@ -1,0 +1,699 @@
+/* Macro editor and playback, the fixed "live" rail of scopes, the 3D axis calibration panel
+   and its presets, the mapping guide, and the condition-counter toast. */
+
+  /* ===== MACRO EDITOR: recording + element library ===== */
+  .seqtools{display:flex;flex-direction:column;gap:8px;border:1px dashed var(--line);border-radius:10px;
+    padding:9px 11px;margin-bottom:8px;background:var(--bg2)}
+  .seqtools-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  #seqRec.rec{background:var(--bad);border-color:var(--bad);color:#fff;animation:pulse 1s infinite}
+  .seqtools-lib{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .seqtools-lib select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+  .seqchips{display:flex;gap:5px;flex-wrap:wrap;flex:1;min-width:160px}
+  .seqchip{font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:7px;padding:3px 8px;cursor:pointer;user-select:none;transition:.12s}
+  .seqchip:hover{border-color:var(--pink);background:rgba(236,26,131,.06)}
+  .seqchip.wait{color:var(--c-seek);border-color:rgba(76,212,255,.3)}
+  .seqchip.mouse{color:var(--gz);border-color:rgba(176,124,255,.3)}
+  .seqchip.pad{color:var(--ok);border-color:rgba(58,214,138,.32)}
+  .seqrec-hint{font-size:11px;color:var(--dim)}
+  .seqrec-hint b{color:var(--bad)}
+
+  /* ===== TIMEKEEPING (multi countdown + macro playback) ===== */
+  .rseq{font-family:var(--mono);font-size:11px;color:var(--c-seek);background:rgba(76,212,255,.10);
+    border:1px solid rgba(76,212,255,.28);border-radius:6px;padding:0 6px;display:none}
+  .rseq.on{display:inline-block}
+  .seqrun{padding:0;max-height:0;overflow:hidden;transition:max-height .2s ease;border-bottom:1px solid transparent}
+  .seqrun.on{max-height:120px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--bg2)}
+  .seqrun-head{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);margin-bottom:7px}
+  .seqrun-head b{color:var(--ink)}
+  .seqrun-head .tag{font-family:var(--mono);font-size:11px;color:var(--az)}
+  .seqrun-steps{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .sqs{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid var(--line);
+    background:var(--panel);color:var(--muted);transition:.12s}
+  .sqs.done{color:var(--ok);border-color:rgba(124,255,176,.3)}
+  .sqs.cur{color:#3a2c08;border-color:var(--amber);background:var(--amber);box-shadow:0 0 10px -3px var(--az)}
+  .sqs.wait{color:var(--c-seek)}
+  .seqrun-bar{height:5px;border-radius:4px;background:var(--bg);border:1px solid var(--line);margin-top:8px;overflow:hidden}
+  .seqrun-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--c-seek),var(--az));transition:width .05s linear}
+
+  /* ===== TABS + FIXED "LIVE" BAR ===== */
+  /* fixed bar: capsule + 3 oscilloscopes (0-2, 3-5, 3D filter) in ONE row, EQUAL height, compact */
+  .live-rail{display:grid;grid-template-columns:minmax(190px,0.7fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+  @media (max-width:1280px){.live-rail{grid-template-columns:1fr 1fr}}      /* 2x2 on medium screens */
+  @media (max-width:860px){.live-rail{grid-template-columns:1fr}}
+  .live-rail>.card{display:flex;flex-direction:column;height:230px}      /* all tiles the same height */
+  .live-rail .card>.head{padding:8px var(--card-x-sm);flex-wrap:wrap;gap:7px;flex:0 0 auto}
+  .live-rail .card>.head h2{font-size:11px;letter-spacing:.2px}
+  .live-rail #pose3dCard .head .hint{display:none}
+  .live-rail #poseRecenter{font-size:11px;padding:4px 8px}
+  .live-rail .scopewrap{flex:1 1 auto;min-height:0}
+  .live-rail canvas.scope{height:100%}                                   /* canvas fills the tile */
+  /* bottom padding is deliberately bigger than the top: the take-control button lives down there
+     and, flush against the tile's edge, it read as sitting ON the dashed frame */
+  .live-rail .pose3d-wrap{flex:1 1 auto;min-height:0;padding:var(--card-y-sm) var(--card-x-sm) 11px}
+  .live-rail canvas.pose3d{flex:1 1 0;min-height:0;height:auto}
+  /* Driving by hand needs something to grab. In the rail every tile is 230px, and the manual bar
+     under the sphere left the canvas a ~34px sliver — technically draggable, useless in practice.
+     Taking control therefore grows THIS tile (the row grows with it; the neighbours keep their
+     height and stay top-aligned) and puts the sphere back at a size a hand can aim at. */
+  .live-rail>#pose3dCard.vp-manual{height:auto}
+  .live-rail #pose3dCard.vp-manual .pose3d-wrap{min-height:285px}
+  .live-rail #pose3dCard.vp-manual canvas.pose3d{min-height:200px}
+  .live-rail .pose3d-info{font-size:11px;margin-top:4px}
+  /* UX 261120 B5b (P-G6-01, część P0): na ekranie Czujnika kula ma co najmniej 240 px wysokości.
+     Kafel 230 px zostawiał jej ok. 106 px, mniej niż miniaturze w prawej kolumnie. */
+  .live-rail>#pose3dCard{height:auto}
+  .live-rail #pose3dCard canvas.pose3d{flex:0 0 240px;height:240px;min-height:240px}
+  /* Podpis trybu stoi W RAMCE kuli, nie na niej. Ramka jest wcięta o padding kontenera, więc
+     odstęp liczy się od tego samego paddingu; stałe 12/7 px kładły napis na przerywanej krawędzi
+     i wypuszczały jego koniec 3–4 px za ramkę (zgłoszenie 29.09, „łączę z kapslem"). */
+  .live-rail .pose3d-axis{font-size:11px;right:calc(var(--card-x-sm) + 10px);top:calc(var(--card-y-sm) + 8px)}
+  .live-rail .legend .chip{padding:2px 7px;font-size:11px}
+
+  /* 3D axis calibration panel.
+     DWIE KOLUMNY, nie jedna. Wiersze „Mapy kanałów" są wąskie z natury (etykieta + „CH0" +
+     „odwróć"), więc na pełnej szerokości panelu jej prawa połowa stała PUSTA, a „Zachowanie
+     filtra 3D" wisiało całą szerokością pod spodem — pół panelu na nic i dwa razy tyle
+     przewijania. Teraz obie karty stoją obok siebie, wyrównane górą.
+     Liczbę kolumn wybiera SZEROKOŚĆ PANELU, nie okna (`auto-fit`): ta sama sekcja bywa w węższym
+     Czujniku i w oknie nakładki, a dwie kolumny po 200 px zgniotłyby selecty. Poniżej ~810 px
+     panel sam wraca do jednej kolumny.
+     Dostrajanie sygnału (`.pcal-adv`), stopka i podgląd `config:` idą przez CAŁĄ szerokość — mają
+     własne siatki pól i wykresy, które w połówce zrobiłyby się nieczytelne. */
+  .posecal{padding:10px var(--card-x);display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));
+    gap:9px;align-items:start}
+  .posecal>.pcal-adv,.posecal>.pcal-foot,.posecal>.pcal-cfg{grid-column:1/-1}
+  /* UX 261120 B5b (D19): po zwinięciu mapy kanałów w zwijak każdy blok idzie przez całą szerokość
+     (karta filtra została sama, a w połówce zostawiała pustą drugą kolumnę). */
+  .posecal>*{grid-column:1/-1}
+  .posecal>.cardfold>summary{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+  .posecal>.cardfold>summary .ra-ic{font-size:16px}
+  .posecal>.cardfold>summary .cardfold-sum{margin-left:4px}
+  .pcal-flip .pcal-row.pcal-flip-row{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;max-width:none;min-height:40px}
+  .pcal-flip .pcal-flip-row>.pcal-lab{flex:1 1 320px;color:var(--ink);font-size:14px}
+  /* A row is a GRID, not a flex line. As flex the label took `flex:1` and shoved the control to the
+     far right of a 1400 px panel — a metre of empty felt between a name and the slider it names,
+     and no way to tell which value belonged to which row. Capped so a wide screen makes the panel
+     roomier, never wider. */
+  .pcal-row{display:grid;grid-template-columns:minmax(150px,240px) minmax(120px,1fr) auto;
+    align-items:center;gap:10px;max-width:840px}
+  .pcal-lab{font-size:13px;color:var(--muted);min-width:0}
+  /* rows whose control is a picker or a pair of checkboxes: no reason to stretch a "CH0" dropdown
+     across half the panel, so those columns size to their content instead */
+  .pcal-row.pcal-map{grid-template-columns:minmax(150px,240px) 118px auto}
+  /* `.pcal-two` i `.pcal-resp` przechodzą niżej na układ „etykieta nad kontrolką" — patrz komentarz
+     przy suwakach. Siatki dla nich już tu nie ma, bo w połówkowej karcie łamała długie etykiety. */
+  .pcal-row.pcal-two .pcal-inv{margin-right:14px}
+  /* The three blocks of this panel — signal tuning, the channel map, the filter's shared
+     behaviour — wear ONE shape, and it is the app's OWN card: stitched dashed edge, head with the
+     emoji + title on the left and the description on the right (same as the REST API tab). They
+     used to be two bare underlined captions and one banner of its own invention, which read as one
+     feature and two footnotes. Nested inside the „Konfiguracja osi 3D" fold, so: no second shadow
+     and no second felt layer — just the stitched edge. The `.cardfold .card` reset in
+     06-connect-midi-pads.css squares off nested cards, hence the longer selector here. */
+  .pcal-sec{display:flex;flex-direction:column}
+  /* Odstęp między kartami robi teraz `gap` siatki `.posecal`. Margines zostawiony tutaj zsuwałby
+     drugą kartę o 9 px w dół i rozjeżdżał wyrównanie górą, po którym poznaje się parę kart. */
+  .posecal>.card,.cardfold .posecal>.card{border:0;border-radius:16px;box-shadow:none;
+    background:transparent;background-image:none}
+  .posecal>.card::before{border-radius:12px}
+  .posecal>.card>.head{padding:11px var(--card-x-sm) 9px;flex-wrap:wrap;gap:9px}
+  .posecal>.card>.head h2{font-size:15px}
+  .posecal>.card>.head h2 .ra-ic{font-size:16px;margin-right:5px;vertical-align:-1px}
+  .posecal>.card>.head .hint{margin-left:auto;text-align:right}
+  .pcal-chips{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .pcal-body{padding:11px var(--card-x-sm) 13px;display:flex;flex-direction:column;gap:12px}
+  /* the map / filter bodies hold plain rows, not cards — 12px between a slider and the next label
+     is a gap you have to cross with your eyes */
+  .pcal-body-rows{gap:7px}
+  .pcal-body-rows>.pcal-hint{margin-top:4px;padding-top:8px;border-top:1.5px dashed var(--stitch)}
+  .posecal select{font:inherit;color:var(--ink);background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  /* Dźwignia (`.rf-swi` w 10-icons-controls.css) sama wnosi swój rozmiar i rysunek, więc zostaje tu
+     tylko ustawienie jej w wierszu razem z napisem. Stała tu wcześniej reguła nadająca polu wyboru
+     15×15 px i `accent-color` — po przejściu na dźwignię byłaby regułą, która ją rozjeżdża, i to
+     wygrywającą specyficznością (`.pcal-inv input` bije `.rf-swi`). */
+  .pcal-inv{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer}
+  .pcal-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:2px}
+  /* Odczyt na żywo i wartości suwaków to TEKST, nie rysunek — jadą więc na --warn-ink, nie na
+     --az (bursztyn wykresów miał na kremie 2,2:1). Sam suwak, jego `accent-color` i obrys pola
+     zostają bursztynowe: tam kolor jest linią, a nie literą.
+     WHY: these are read as words/numbers, so they use the text-grade amber (--warn-ink); the
+     slider fill and the field outline keep --az, where the amber is a drawing. */
+  .pcal-live{font-family:var(--mono);font-size:12px;color:var(--warn-ink);margin-left:auto}
+  .pcal-cfg{font-family:var(--mono);font-size:11px;color:var(--dim);word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 8px}
+  .pcal-hint{font-size:12px;color:var(--dim);line-height:1.5}
+  /* ===== SIGNAL TUNING (per axis + per raw channel) =====
+     This used to be a thin outlined strip with four grey text lines under it, and it read as a
+     caption nobody could tell was clickable. It is one of the most powerful things in the app, so
+     it now sits in a card of its own (see .pcal-sec above) holding real axis cards — each with a
+     colour, a switch you can flip without unfolding it, and its fields laid out in a grid instead
+     of a 1400 px ladder.
+     The block NO LONGER folds — a block you have to discover is a block nobody uses, and it is the
+     first thing in this panel. Only the axis cards inside it fold. */
+  .pcal-ax>summary{cursor:pointer;list-style:none;user-select:none;display:flex;align-items:center;gap:9px}
+  .pcal-ax>summary::-webkit-details-marker{display:none}
+  /* -- the live chips in a block head: what this block is set to, without opening anything -- */
+  .paxchip{font-style:normal;font-size:11px;font-weight:600;letter-spacing:.2px;padding:2px 8px;border-radius:999px;
+    color:var(--axc,var(--az));background:color-mix(in srgb,var(--axc,var(--az)) 14%,transparent);
+    border:1.5px solid color-mix(in srgb,var(--axc,var(--az)) 45%,transparent);white-space:nowrap}
+  .paxchip-off{color:var(--dim);background:var(--bg2);border-color:var(--line)}
+  .paxchip-warn{color:var(--bad);background:color-mix(in srgb,var(--bad) 13%,transparent);
+    border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+  .paxgrp{display:flex;flex-direction:column;gap:8px}
+  .paxgrp-h{margin:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-weight:800}
+  .paxgrp-t{font-size:11px;letter-spacing:.55px;text-transform:uppercase;color:var(--muted)}
+  .paxgrp-s{font-size:11px;font-weight:600;color:var(--dim);text-transform:none;letter-spacing:0}
+  .paxgrp-h::after{content:"";flex:1;border-top:1.5px dashed var(--stitch);align-self:center}
+  .paxgrp-n{font-size:11px;font-weight:500;color:var(--dim);white-space:nowrap}
+  .paxgrp-b{display:flex;flex-direction:column;gap:7px}
+  /* -- one axis card -- */
+  /* SAM BOX ROZWIJALNY TEŻ OBSZYTY (2026-08-31). Obwódka na krawędzi zostaje — ona
+     niesie STAN osi (kolor osi, gdy tor jest włączony, i podświetlenie pod kursorem). Ścieg jest
+     czym innym: fakturą, po której w tej aplikacji poznaje się rzecz naszytą na filc. Biegnie więc
+     4 px w środku, o promieniu mniejszym dokładnie o tyle (12 − 4 = 8), i obejmuje CAŁY box — także
+     rozwinięty, razem z wykresami. Nitka delikatnie zabarwiona kolorem osi, gdy tor jest włączony:
+     to samo, co robi obwódka, tylko ciszej, żeby dwie linie nie krzyczały tego samego. */
+  .pcal-ax{border:1.5px solid var(--line);border-radius:12px;background:var(--bg2);overflow:hidden;
+    position:relative;transition:border-color .14s,background .14s}
+  .pcal-ax::before{content:"";position:absolute;inset:4px;pointer-events:none;z-index:0;
+    border:1.5px dashed var(--stitch);border-radius:8px;transition:border-color .14s}
+  .pcal-ax.is-on::before{border-color:color-mix(in srgb,var(--axc,var(--az)) 38%,var(--stitch))}
+  /* Treść nad ściegiem — ten sam zabieg, co `.card>*` w 07-felt-core.css. */
+  .pcal-ax>summary,.pcal-ax>.pcal-axbody{position:relative;z-index:1}
+  .pcal-ax>summary{padding:9px 11px;font-size:13px;color:var(--ink)}
+  .pcal-ax:hover{border-color:color-mix(in srgb,var(--axc,var(--az)) 55%,var(--line))}
+  .pcal-ax.is-on{border-color:color-mix(in srgb,var(--axc,var(--az)) 60%,transparent);background:var(--panel)}
+  .pcal-ax[open]{background:var(--panel);box-shadow:0 2px 0 rgba(120,90,40,.10)}
+  .pcal-axdot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--axc,var(--az));
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--axc,var(--az)) 20%,transparent);opacity:.45;transition:opacity .14s}
+  .pcal-ax.is-on .pcal-axdot{opacity:1}
+  .pcal-axname{font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap}
+  .pcal-ax.is-off .pcal-axname{color:var(--muted)}
+  .pcal-axsum{font-size:11px;color:var(--dim);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcal-ax.is-on .pcal-axsum{color:var(--muted)}
+  /* what the axis reports RIGHT NOW — ten of these side by side is how you find the one that moves */
+  .pcal-axnow{flex:none;min-width:62px;text-align:right;font-family:var(--mono);font-size:12px;
+    font-weight:500;color:var(--dim);font-variant-numeric:tabular-nums}
+  .pcal-ax.is-on .pcal-axnow{color:var(--axc,var(--az))}
+  /* GROT ROZWIJANIA OSI = GROT ZWIJANIA PANELU. W czujnikach strzałki
+     mają wyglądać jak ten grot. Były trzy różnice naraz — 24 px
+     zamiast 32, szare tło zamiast białego z filcowym cieniem, brak ściegu — a do tego znak z fontu
+     zamiast ikony SVG. Wszystkie cztery zdjęte: to jest ten sam przycisk, co `.rf-ptog` w paskach
+     paneli (20-cols.css), więc ma te same liczby. Promień mniejszy o wcięcie: 10 − 4 = 6. */
+  .pcal-axchev{margin-left:2px;flex:none;width:32px;height:32px;position:relative;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:10px;background:#fff;border:1px solid var(--line);color:var(--muted);
+    box-shadow:var(--felt-shadow-sm);transition:background .14s,border-color .14s,color .14s}
+  .pcal-axchev::after{content:"";position:absolute;inset:4px;pointer-events:none;
+    border:1.5px dashed var(--stitch);border-radius:6px;transition:border-color .12s ease}
+  .pcal-axchev .rfx-chev{width:15px;height:15px;display:block;
+    transition:transform var(--rf-d-panel,.32s) var(--rf-ez-snap,cubic-bezier(.2,.7,.2,1))}
+  .pcal-ax>summary:hover .pcal-axchev{background:#f1e9d6;border-color:var(--axc,var(--az));color:var(--ink)}
+  .pcal-ax>summary:hover .pcal-axchev::after{border-color:#bcab8d}
+  /* Obraca się SAMA IKONA — pudełko ze ściegiem i cieniem zostaje na miejscu. */
+  .pcal-ax[open] .pcal-axchev .rfx-chev{transform:rotate(180deg)}
+  .pcal-axbody{padding:2px 11px 11px;display:flex;flex-direction:column;gap:10px}
+  .pcal-ax.is-off .pcal-axbody{opacity:.55}
+  .paxrow-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .paxunit{font-size:11px;color:var(--dim);font-family:var(--mono)}
+  .pcal-axreset{margin-left:auto;font-size:11px}
+  .paxfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:3px;border-top:1px dashed var(--stitch)}
+  .paxfoot-n{font-size:11px;color:var(--dim);flex:1;min-width:160px}
+  /* -- the ON/OFF switch that lives in the card header --
+     WYGLĄD PRZYJEŻDŻA Z 10-icons-controls.css (`.rf-swi, .paxsw`) — od 2026-08-31 to ta sama
+     dźwignia, co przy modułach. Stał tu wcześniej WŁASNY, rysowany CSS-em przełącznik (kremowa
+     pigułka 44×24 z okrągłym uchwytem, zielona po włączeniu) i to on był trzecim wyglądem włącznika
+     w jednej aplikacji: filcowa dźwignia w nagłówkach kart, systemowy kwadracik przy „odwróć"
+     i ta pigułka — wszystkie trzy w zakładce Czujnik, dwa pierwsze w odległości jednego ekranu.
+     Zostaje tu WYŁĄCZNIE to, czego wspólny wygląd nie wie: że ten konkretny przełącznik jest
+     dopychany do prawej krawędzi nagłówka karty osi — a to stoi razem ze wspólnym wyglądem,
+     bo tamten zeruje marginesy i tutaj przegrałoby kolejnością arkuszy. */
+  /* Uchwyt był kółkiem RYSOWANYM w środku pigułki; nowa dźwignia niesie uchwyt w swoim rysunku,
+     więc `.paxsw-k` zostaje w znacznikach (jest w rf-33b i ma swoje testy), ale nie ma już nic
+     do narysowania. */
+  .paxsw .paxsw-k{display:none}
+  @media (prefers-reduced-motion:reduce){.pcal-axchev,.pcal-axchev .rfx-chev{transition:none}}
+  /* -- the field grid: label above, slider + typeable number below; 2-3 per row instead of one
+        ladder with the value a screen away from its name -- */
+  .paxgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:9px 14px}
+  .paxf{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .paxf-l{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.4px;
+    text-transform:uppercase;color:var(--muted)}
+  .paxf-l>span{white-space:nowrap}
+  .paxf-c{display:flex;align-items:center;gap:9px}
+  .paxf-c input[type=range]{flex:1;min-width:80px}
+  /* segmented "steady / adaptive" — a two-item dropdown was a mystery box at this size */
+  /* UX 261120 B5b (F-G6-08): wspólny segment `.seg.seg-sm` (D5, czarny filc dla wybranego) zamiast
+     własnego bursztynowego paska 18 px. Tu tylko położenie i zdjęcie wersalików etykiety pola. */
+  .paxseg{margin-left:auto;display:inline-flex;overflow:hidden;text-transform:none;letter-spacing:0}
+  .paxseg .paxsegb{min-height:28px;padding:0 10px;font-size:12px;border:0;cursor:pointer}
+  .paxseg .paxsegb:focus-visible{outline:2px solid var(--pink);outline-offset:-2px}
+  /* Two views of the same axis: LEFT the shape of the chain (lean in → reported out, capsule riding
+     on it), RIGHT the same axis over time. Side by side on purpose — the shape says what the tuning
+     would do, the trace says what it IS doing, and only the trace can show smoothing. */
+  .pcal-plotwrap{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:7px 9px 5px}
+  .pcal-plotgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pcal-plotcell{min-width:0}
+  .pcal-plotcap{display:flex;align-items:center;flex-wrap:wrap;gap:2px;font-size:10px;font-weight:500;
+    color:var(--muted);letter-spacing:.02em;padding:0 0 3px 2px}
+  .pcal-lg{font-style:normal;display:inline-flex;align-items:center;gap:3px;margin-left:7px;font-weight:600}
+  .pcal-lg::before{content:"";width:12px;height:2.5px;border-radius:2px;background:currentColor}
+  .pcal-lg-pre,.pcal-lg-ref{color:var(--dim)}
+  .pcal-lg-ref::before{background:repeating-linear-gradient(90deg,currentColor 0 3px,transparent 3px 6px)}
+  .pcal-lg-out{color:var(--axc,var(--az))}
+  canvas.pcal-plot,canvas.pcal-trace{display:block;width:100%;height:134px}
+  .pcal-plotread{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;padding-top:5px}
+  .pcal-plotread b{font-size:13px}
+  /* narrow panel (or a side rail): stack instead of squeezing both into unreadable slivers */
+  @media (max-width:760px){.pcal-plotgrid{grid-template-columns:1fr}}
+  /* slider + the value next to it; the value is click-to-type (num-editable) */
+  .posecal input.pcal-rng{accent-color:var(--axc,var(--az));flex:1;min-width:80px}
+  .posecal .pcal-numv{flex:none;min-width:74px;text-align:center;font-family:var(--mono);font-size:12px;
+    font-weight:500;color:var(--axc,var(--az));padding:2px 7px;border-radius:7px;background:var(--bg2);
+    border:1px solid var(--line);border-bottom-style:dashed}
+  .posecal .pcal-numv:hover{border-color:var(--axc,var(--az));background:#fffdf7}
+  .posecal .pcal-numv .num-edit-inp{width:62px}
+  /* SUWAKI TEJ SEKCJI BYŁY MALUTKIE — 140 px w karcie na 425 px. Powód: 02-base.css daje
+     `input[type=range]{width:120px}`, a szerokość podana WPROST wyłącza rozciąganie w siatce
+     (stretch działa tylko przy `width:auto`). Stojące tu `flex:1` było martwe, bo `.pcal-row` to
+     grid, nie flex — zostawało samo `min-width`, czyli 140 px.
+     Wiersz suwaka układa się więc tak jak pola strojenia obok: etykieta bierze własną linię, a pod
+     nią suwak na CAŁĄ szerokość karty, z wartością przy krawędzi. Przy bardzo wąskiej karcie
+     wartość zawija się pod suwak, zamiast go ściskać. */
+  .posecal input[type=range]{accent-color:var(--az);width:auto;flex:1;min-width:140px}
+  .pcal-row.pcal-resp{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px}
+  .pcal-row.pcal-resp>.pcal-lab{flex:1 0 100%}
+  .posecal .pcal-row.pcal-resp input[type=range]{flex:1 1 240px;min-width:240px}
+  .pcal-resp .num{flex:none;min-width:38px;text-align:right;color:var(--warn-ink)}
+  /* Te same długie etykiety w wierszach z parą checkboxów: w połówkowej karcie kolumna 150 px
+     łamała „Odwróć kierunek przechyłu…" na cztery linie obok dwóch pól. Etykieta bierze linię,
+     pola stają pod nią w rzędzie. */
+  .pcal-row.pcal-two{display:flex;flex-wrap:wrap;align-items:center;gap:3px 10px}
+  .pcal-row.pcal-two>.pcal-lab{flex:1 0 100%}
+  /* editable slider value (click = type manually) */
+  .num-editable{cursor:text;border-bottom:1px dashed var(--line);transition:border-color .12s,color .12s}
+  .num-editable:hover{border-bottom-color:var(--az);color:var(--warn-ink)}
+  .num-edit-inp{width:62px;font:inherit;font-family:var(--mono);color:var(--ink);background:var(--bg);
+    border:1px solid var(--az);border-radius:5px;padding:1px 4px;text-align:right}
+  /* 3D axis config presets row (separate from trigger presets) */
+  .pose-presets{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px var(--card-x);border-top:1px solid var(--line)}
+  .pose-presets-lbl{font-size:12px;color:var(--muted)}
+  #posePresetSelect,#posePresetName{font:inherit;color:var(--ink);background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:4px 8px}
+  #posePresetName{width:150px}
+  .pose-help{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
+    border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;user-select:none;background:var(--bg2)}
+  .pose-help:hover{border-color:var(--az);color:var(--az)}
+  /* 3D preview "?" popover */
+  #poseHelpBox{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;background:rgba(6,8,14,.6)}
+  #poseHelpBox .phb-card{position:relative;max-width:768px;width:calc(100% - 40px);max-height:80vh;overflow:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:0 18px 60px -20px #000;
+    font-size:13px;line-height:1.6;color:var(--muted)}
+  #poseHelpBox h3{margin:0 0 8px;color:var(--ink);font-size:15px}
+  #poseHelpBox h4{margin:13px 0 4px;color:var(--ink);font-size:13px}
+  #poseHelpBox b{color:var(--ink)}
+  #poseHelpBox ul{margin:4px 0;padding-left:20px}
+  #poseHelpBox .phb-x{position:absolute;top:10px;right:12px;width:26px;height:26px;border-radius:8px;cursor:pointer;
+    background:var(--bg2);border:1px solid var(--line);color:var(--muted);font-size:16px;font-weight:700}
+  #poseHelpBox .phb-x:hover{border-color:var(--bad);color:var(--bad)}
+  #poseHelpBox .phb-grid{display:grid;grid-template-columns:238px 1fr;gap:24px;align-items:start}
+  #poseHelpBox .phb-art{display:flex;flex-direction:column;align-items:center;gap:14px;position:sticky;top:0}
+  #poseHelpBox .phb-orb{width:224px;height:224px;background:var(--ic-atom) center/contain no-repeat;filter:drop-shadow(0 10px 18px rgba(0,0,0,.30))}
+  #poseHelpBox .phb-body>h3{margin-top:0}
+  @media(max-width:640px){#poseHelpBox .phb-grid{grid-template-columns:1fr}#poseHelpBox .phb-art{position:static}#poseHelpBox .phb-orb{width:168px;height:168px}}
+  /* „X/N warunków" — LICZNIK W NAGŁÓWKU SEKCJI „Warunki", czyli przy tym, co liczy.
+     Do 2026-09-02 był `position:fixed; left:16px; bottom:16px`: po drugiej stronie ekranu niż
+     edytor, który go wypełnia, nad nawigacją — i dokładnie w tym rogu, w którym odzywa się
+     maskotka (`rfSkullNote`, rf-06), więc dwie rzeczy siadały jedna na drugiej. Poradnik przy tym
+     obiecywał go „w prawym dolnym rogu", czyli w jeszcze trzecim miejscu.
+     `text-transform:none` i wyzerowane odstępy, bo nagłówek sekcji jest wersalikowy — liczba
+     i słowo mają zostać zwykłym tekstem. */
+  .cond-toast{display:none;align-items:center;gap:7px;margin-left:2px;
+    padding:3px 11px;border-radius:999px;font-size:12px;font-weight:600;
+    text-transform:none;letter-spacing:0;word-spacing:normal;white-space:nowrap;
+    border:1px solid var(--line);background:var(--panel2);pointer-events:none}
+  .cond-toast::before{content:"";width:9px;height:9px;flex:0 0 auto;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+  .cond-toast.none{background:var(--panel2);color:var(--muted);border-color:var(--line)}
+  .cond-toast.some{background:var(--panel2);background:color-mix(in srgb,var(--warn) 20%,var(--panel2));color:var(--warn);border-color:var(--warn)}
+  .cond-toast.all{background:var(--panel2);background:color-mix(in srgb,var(--ok) 20%,var(--panel2));color:var(--ok);border-color:var(--ok)}
+  .live-rail #pose3dCard .head select{color:var(--ink);background:var(--bg2);border:1px solid var(--line);border-radius:7px}
+  /* mapping guide (wiki) */
+  .mapwiki{margin-bottom:2px}
+  .mapwiki>summary{cursor:pointer;list-style:none;padding:11px var(--card-x);font-size:13px;font-weight:500;letter-spacing:.3px;
+    text-transform:uppercase;color:var(--muted);background:linear-gradient(180deg,#171c2b,#141826);border:1px solid var(--line);border-radius:12px;user-select:none}
+  .mapwiki[open]>summary{border-radius:12px 12px 0 0}
+  .mapwiki>summary::-webkit-details-marker{display:none}
+  .mapwiki>summary::before{content:"▸";color:var(--az);display:inline-block;margin-right:.35em;transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+  .mapwiki[open]>summary::before{transform:rotate(90deg)}
+  .mapwiki-body{border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;background:var(--panel);padding:12px var(--card-x);line-height:1.6;font-size:13px;color:var(--muted)}
+  .mapwiki-body h4{margin:13px 0 4px;color:var(--ink);font-size:13px}
+  .mapwiki-body h4:first-child{margin-top:2px}
+  .mapwiki-body b{color:var(--ink)}
+  .mapwiki-body code{font-family:var(--mono);background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px;color:var(--az)}
+  .mapwiki-body ul{margin:4px 0;padding-left:20px}
+  /* PORADNIK PISANIA MAKR (macroGuideHtml, rf-12) — ten sam blok stoi w edytorze wyzwalacza
+     i w karcie koła wyboru, więc jego style siedzą tutaj, przy .mapwiki, a nie przy którymś
+     z tych dwóch miejsc. Nagłówki h5 są o stopień niżej niż h4 poradników zakładek: to podrozdziały
+     wewnątrz jednego bloku, nie osobne tematy. */
+  .mapwiki-body h5{margin:13px 0 3px;color:var(--ink);font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+  .mapwiki-body h5:first-child{margin-top:2px}
+  .mapwiki-body p{margin:3px 0}
+
+  /* ======================================================= PORADNIKI: NAWIGACJA I RYSUNKI
+     Wymaganie (2026-09-20): „przejdź przez poradniki (…) czy możesz zrobić je
+     bardziej interesującymi i zrozumiałymi. może jakieś infografiki i diagramki (…) możesz też
+     dodać tam jakieś formatowanie i coś, żeby łatwo się po tym poruszać".
+
+     Poradniki mają od 2,7 do 18 tys. znaków, bo opisują MODUŁ, a nie ekran — i to się nie zmieni.
+     Zmienia się droga do konkretnego rozdziału: spis chipów u góry (rf-39b składa go z nagłówków,
+     które już tam stoją), wyróżnienia dla ostrzeżeń i wskazówek oraz miejsce na rysunek. */
+  /* ⚠️ SPIS NIE JEST PRZYKLEJONY — i to jest decyzja po sprawdzeniu na żywo. `position:sticky`
+     wygląda kusząco, ale strona ma własny przyklejony nagłówek wysoki na 77 px, więc spis chował
+     się pod nim, a przy ośmiu rozdziałach (poradnik koła) zawija się na trzy rzędy i zjadałby
+     ćwiartkę ekranu przez cały czas czytania. Stoi więc na górze poradnika: widać go w chwili,
+     w której się wchodzi, czyli wtedy, kiedy się wybiera rozdział. */
+  /* ⚠️ PIGUŁKI ODRZUCONE (2026-09-20): pigułki do nawigacji
+     w pomocy były niezgodne z dobrymi praktykami UI i UX: rząd ośmiu owalnych
+     przycisków z pełnymi zdaniami w środku („Czyje jest koło i co nosi kapsel") zawijał się na trzy
+     rzędy, każdy innej szerokości, bez numeracji i bez żadnej hierarchii: wyglądał jak filtry, a nie
+     jak spis treści, i nie dało się z niego odczytać ANI ile jest rozdziałów, ANI w jakiej kolejności
+     idą. To jest spis treści długiego dokumentu, więc wygląda jak spis treści: numerowana lista
+     w kolumnach, numery zgodne z numerami, które rozdziały noszą w tekście (licznik CSS niżej). */
+  .mapwiki-body{counter-reset:g-rozdz}
+  .mapwiki-body .g-toc{margin:0 0 12px;padding:0 0 11px;border-bottom:1.5px dashed var(--stitch);
+    scroll-margin-top:78px}
+  .mapwiki-body .g-toc-tyt{font:700 10.5px var(--display);text-transform:uppercase;letter-spacing:.6px;
+    color:var(--dim);margin:0 0 5px}
+  /* `auto-fill` zamiast stałej liczby kolumn: ten sam spis stoi w wąskiej kolumnie modułu i na
+     szerokiej karcie, a rozdziałów bywa od trzech do dwunastu. Jedna reguła obsługuje oba końce. */
+  .mapwiki-body .g-toc-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));
+    gap:0 22px;list-style:none;margin:0;padding:0}
+  .mapwiki-body .g-toc-poz{display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;
+    background:transparent;border:0;border-radius:6px;padding:3px 4px 3px 0;cursor:pointer;
+    font:inherit;color:var(--muted);transition:color .12s ease}
+  .mapwiki-body .g-toc-poz:hover{color:var(--ink)}
+  .mapwiki-body .g-toc-poz:hover .g-toc-nr{color:var(--pink)}
+  .mapwiki-body .g-toc-nr{flex:0 0 auto;min-width:15px;text-align:right;color:var(--dim);
+    font:700 11px var(--display);font-variant-numeric:tabular-nums}
+  .mapwiki-body .g-toc-tx{font-size:12.5px;line-height:1.45}
+  .mapwiki-body .g-toc-poz:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+  /* Powrót do spisu stoi RAZ, na końcu poradnika — nie po każdym rozdziale. Dziesięć takich
+     odnośników w tekście to dziesięć razy ta sama informacja i dziesięć przerwań lektury. */
+  .mapwiki-body .g-toc-wroc{margin:14px 0 0;padding-top:9px;border-top:1.5px dashed var(--stitch)}
+  .mapwiki-body .g-toc-wroc button{background:transparent;border:0;padding:2px 0;cursor:pointer;
+    font:700 11px var(--display);color:var(--muted);transition:color .12s ease}
+  .mapwiki-body .g-toc-wroc button:hover{color:var(--pink)}
+  .mapwiki-body .g-toc-wroc button:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:6px}
+  /* Nagłówek nie może schować się pod paskiem górnym, gdy skacze do niego pozycja spisu. */
+  .mapwiki-body h4{scroll-margin-top:78px}
+  /* Numer rozdziału w SAMYM tekście, tym samym licznikiem co spis: bez tego „przejdź do 7"
+     nie ma jak się sprawdzić po wylądowaniu. Tylko bezpośrednie dzieci — nagłówek zagnieżdżony
+     w karcie środka poradnika nie jest rozdziałem i nie może przesuwać numeracji. */
+  .mapwiki-body > h4::before{counter-increment:g-rozdz;content:counter(g-rozdz) ". ";color:var(--dim);
+    font-variant-numeric:tabular-nums}
+  .mapwiki-body h4.g-blysk{animation:gBlysk 1.1s ease-out}
+  @keyframes gBlysk{from{background:color-mix(in srgb,var(--pink) 20%,transparent)}to{background:transparent}}
+
+  /* Ostrzeżenie i wskazówka: to samo, co w panelu mówią ⚠️ i 💡, tylko widoczne z odległości
+     jednego spojrzenia — w ścianie tekstu emoji na początku akapitu ginie. */
+  .mapwiki-body .g-uwaga,.mapwiki-body .g-tip{display:block;margin:8px 0;padding:8px 11px;
+    border-radius:10px;border:1.5px dashed var(--stitch);background:var(--bg2)}
+  .mapwiki-body .g-uwaga{border-color:color-mix(in srgb,var(--warn) 55%,var(--stitch))}
+  .mapwiki-body .g-tip{border-color:color-mix(in srgb,var(--green) 45%,var(--stitch))}
+
+  /* RYSUNEK. SVG rysowane wprost w poradniku (bez plików i bez pobierania), więc skaluje się
+     z kolumną i bierze kolory z motywu — także w trybie ciemnym i przy dużym powiększeniu. */
+  .mapwiki-body .g-fig{margin:10px 0;padding:10px 10px 8px;border:1.5px dashed var(--stitch);
+    border-radius:12px;background:var(--bg2)}
+  .mapwiki-body .g-fig svg{display:block;width:100%;height:auto;max-width:640px;margin:0 auto}
+  .mapwiki-body .g-fig figcaption{margin-top:7px;font-size:11.5px;color:var(--muted);text-align:center}
+  .mapwiki-body .g-fig .g-box{fill:var(--panel);stroke:var(--ink);stroke-width:1.6;rx:10}
+  .mapwiki-body .g-fig .g-box.g-akcent{fill:color-mix(in srgb,var(--pink) 12%,var(--panel));stroke:var(--pink)}
+  .mapwiki-body .g-fig .g-box.g-cicho{fill:transparent;stroke:var(--stitch);stroke-dasharray:5 4}
+  .mapwiki-body .g-fig .g-txt{fill:var(--ink);font:700 12.5px var(--display);text-anchor:middle}
+  .mapwiki-body .g-fig .g-sub{fill:var(--muted);font:500 11px var(--body);text-anchor:middle}
+  .mapwiki-body .g-fig .g-strzalka{stroke:var(--muted);stroke-width:1.8;fill:none}
+  .mapwiki-body .g-fig .g-grot{fill:var(--muted)}
+  /* Kolory skanerów na rysunku: te same trzy, od których zaczyna się paleta pigułek w module
+     Skaner (rf-50-scan-model.js), żeby rysunek i panel mówiły jednym językiem.
+     ⚠️ `var()` NIE DZIAŁA w atrybucie prezentacji SVG (stroke="var(--pink)") — musi być klasa. */
+  .mapwiki-body .g-fig .g-s1{fill:none;stroke:var(--pink);stroke-width:2}
+  .mapwiki-body .g-fig .g-s2{fill:none;stroke:var(--green);stroke-width:2}
+  .mapwiki-body .g-fig .g-s3{fill:none;stroke:var(--amber);stroke-width:2}
+  .mapwiki-body .g-fig .g-kropkowana{stroke-dasharray:5 4}
+
+  /* ZDANIE OTWIERAJĄCE. Pierwszy akapit poradnika odpowiada na „co to w ogóle jest" i jako jedyny
+     bywa czytany przez kogoś, kto jeszcze nie wie, czy ten moduł jest dla niego — więc ma stopień
+     większy i atrament tekstu głównego zamiast szarości. Reszta zostaje taka, jaka była: gdyby
+     powiększyć wszystko, nie powiększyłoby się nic. */
+  .mapwiki-body .g-lead{font-size:14.5px;line-height:1.55;color:var(--ink);margin:2px 0 10px}
+
+  /* TABELA. Zestawienie „który tryb co robi" czytane z listy każe trzymać w głowie cztery rzeczy
+     naraz i porównywać je z pamięci; w tabeli każda kolumna odpowiada na jedno pytanie, a oko
+     porównuje wiersze samo. ⚠️ Bez `white-space:nowrap` w pierwszej kolumnie — poradnik stoi
+     w wąskiej kolumnie modułu i nazwa trybu MUSI mieć prawo się złamać, zamiast rozpychać tabelę
+     poza kartę (tak psuła się `.mg-tab`, gdy trafiła do węższego układu). */
+  .mapwiki-body .g-tab{border-collapse:collapse;width:100%;margin:8px 0 6px;font-size:12.5px}
+  .mapwiki-body .g-tab th{text-align:left;font:700 11px var(--display);text-transform:uppercase;
+    letter-spacing:.4px;color:var(--muted);padding:0 10px 6px 0;vertical-align:bottom;
+    border-bottom:1.5px solid var(--line)}
+  .mapwiki-body .g-tab td{border-top:1px solid var(--line);padding:6px 10px 6px 0;vertical-align:top}
+  .mapwiki-body .g-tab tbody th{color:var(--ink);font:700 12.5px var(--body);text-transform:none;
+    letter-spacing:0;border-bottom:0;border-top:1px solid var(--line);padding:6px 10px 6px 0}
+  .mapwiki-body .g-tab th:last-child,.mapwiki-body .g-tab td:last-child{padding-right:0}
+
+  /* ⚠️ I 💡 JAKO PUNKT LISTY. Większość ostrzeżeń w poradnikach nie jest osobnym akapitem, tylko
+     punktem wśród innych punktów — a tam emoji na początku ginie dokładnie tak samo. Klasę dokłada
+     rf-39b (rfGuideCallouts) po pierwszym znaku treści, więc piszący poradnik nie musi o niej
+     pamiętać ani jej wpisywać, a tłumaczenie nie ma o co zahaczyć: zmienia się element, nie tekst. */
+  .mapwiki-body li.g-uwaga,.mapwiki-body li.g-tip{list-style:none;margin:7px 0 7px -20px;
+    padding:7px 11px;border-radius:10px;border:1.5px dashed var(--stitch);background:var(--bg2)}
+  .mapwiki-body li.g-uwaga > ul,.mapwiki-body li.g-tip > ul{margin-bottom:0}
+
+  /* ========== ŻYWY RYSUNEK: PIĘĆ SPOSOBÓW STEROWANIA KOŁEM ==========
+     Wymaganie (2026-09-20): „w kole wyboru dodaj animowane pokazania jak działa koło
+     przy każdej z metod aktywacji, żeby wyjaśnić jak to działa w sposób wyraźny dla użytkownika".
+
+     Pięć sposobów różni się WYŁĄCZNIE tym, co koło otwiera i co je zatwierdza — czyli różnicą
+     w CZASIE, nie w wyglądzie. Nieruchomy rysunek może o niej tylko napisać; tu koło naprawdę się
+     otwiera, wskazanie jedzie na wycinek, a przycisk i przechył robią to, co ma zrobić ręka.
+     Napisy kroków stoją pełnym atramentem przez cały cykl i wędruje sama ramka — gdyby przygasały,
+     dwie trzecie rysunku byłoby nieczytelne przez dwie trzecie czasu.
+     ⚠️ `transform-origin` MUSI iść w parze z `transform-box:view-box`: bez tego przeglądarka obraca
+     wskazanie wokół środka CAŁEGO rysunku, a nie wokół środka koła. */
+  /* ⚠️ NIE `var(--stitch)` NA KRESKACH KOŁA. Kolor ściegu to jasny krem (#d8cdb8) na jasnym kremie
+     tła rysunku — sprawdzone w przeglądarce: promienie były narysowane i niewidoczne, a koło
+     wyglądało na puste. Linie, które mają być czytane, biorą atrament tekstu pomocniczego. */
+  .mapwiki-body .g-fig .g-anim .g-kolo-tlo{fill:none;stroke:var(--muted);stroke-width:1.6;
+    stroke-dasharray:5 4;opacity:.45}
+  .mapwiki-body .g-fig .g-anim .g-kolo-on{opacity:0}
+  .mapwiki-body .g-fig .g-anim .g-kolo-on circle{fill:none;stroke:var(--ink);stroke-width:1.6}
+  .mapwiki-body .g-fig .g-anim .g-kolo-on path{fill:none;stroke:var(--muted);stroke-width:1.2}
+  .mapwiki-body .g-fig .g-anim .g-wsk{opacity:0;transform-box:view-box;transform-origin:76px 66px}
+  .mapwiki-body .g-fig .g-anim .g-klin{fill:var(--pink);fill-opacity:.18;stroke:var(--pink);stroke-width:1.6}
+  .mapwiki-body .g-fig .g-anim .g-igla{fill:none;stroke:var(--pink);stroke-width:2}
+  .mapwiki-body .g-fig .g-anim .g-btn-ob{fill:var(--panel);stroke:var(--ink);stroke-width:1.6}
+  .mapwiki-body .g-fig .g-anim .g-btn-in{fill:var(--pink);opacity:0}
+  .mapwiki-body .g-fig .g-anim .g-kaps{transform-box:view-box;transform-origin:76px 140px}
+  .mapwiki-body .g-fig .g-anim .g-kaps rect{fill:var(--panel);stroke:var(--ink);stroke-width:1.6}
+  .mapwiki-body .g-fig .g-anim .g-podloga{stroke:var(--muted);stroke-width:1.4;opacity:.5}
+  .mapwiki-body .g-fig .g-anim .g-odlicz{fill:none;stroke:var(--green);stroke-width:3;
+    stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100}
+  .mapwiki-body .g-fig .g-anim .g-iskra{opacity:0;transform-box:view-box}
+  .mapwiki-body .g-fig .g-anim .g-iskra rect{fill:color-mix(in srgb,var(--green) 22%,var(--panel));
+    stroke:var(--green);stroke-width:1.4}
+  .mapwiki-body .g-fig .g-anim .g-iskra text{fill:var(--ink);font:700 11px var(--display);text-anchor:middle}
+  .mapwiki-body .g-fig .g-anim .g-ramka{opacity:0;fill:none;stroke:var(--pink);stroke-width:2}
+  /* Wspólne dla trzech sposobów, które mają trzy kroki po 2 s: koło się otwiera, wskazanie jedzie
+     na wycinek, po zatwierdzeniu wyskakuje plakietka „akcja". Różni je tylko to, CO pada w kroku
+     pierwszym i trzecim — i to jest jedyne, co każdy z nich animuje u siebie. */
+  @keyframes gaOtw{0%,9%{opacity:0}14%,78%{opacity:1}84%,100%{opacity:0}}
+  @keyframes gaWsk{0%,34%{opacity:0;transform:rotate(-6deg)}
+    40%{opacity:1;transform:rotate(-46deg)}46%,76%{opacity:1;transform:rotate(-60deg)}
+    82%,100%{opacity:0;transform:rotate(-60deg)}}
+  @keyframes gaIskra{0%,68%{opacity:0;transform:scale(.7)}74%,86%{opacity:1;transform:scale(1)}
+    92%,100%{opacity:0;transform:scale(1)}}
+  @keyframes gaFaza3{0%{opacity:0}3%,30%{opacity:1}33%,100%{opacity:0}}
+  @keyframes gaFaza4{0%{opacity:0}2%,23%{opacity:1}25%,100%{opacity:0}}
+  @keyframes gaTrzym{0%,5%{opacity:0}8%,68%{opacity:1}72%,100%{opacity:0}}   /* przycisk wciśnięty przez cały wybór */
+  @keyframes gaKlikKon{0%,69%{opacity:0}72%,78%{opacity:1}81%,100%{opacity:0}}  /* jedno kliknięcie na koniec */
+  @keyframes gaKlik2{0%,5%{opacity:0}8%,15%{opacity:1}18%,69%{opacity:0}72%,79%{opacity:1}82%,100%{opacity:0}}
+  @keyframes gaPochyl{0%,4%{transform:rotate(0)}12%,76%{transform:rotate(19deg)}84%,100%{transform:rotate(0)}}
+  @keyframes gaPochyl4{0%,32%{transform:rotate(0)}40%,58%{transform:rotate(19deg)}66%,100%{transform:rotate(0)}}
+  @keyframes gaOdlicz{0%,58%{stroke-dashoffset:100}72%,100%{stroke-dashoffset:0}}
+  .mapwiki-body .g-fig .g-anim .g-kolo-on{animation:gaOtw 6s linear infinite}
+  .mapwiki-body .g-fig .g-anim .g-wsk{animation:gaWsk 6s linear infinite}
+  .mapwiki-body .g-fig .g-anim .g-iskra{animation:gaIskra 6s linear infinite}
+  .mapwiki-body .g-fig .g-anim .g-ramka{animation:gaFaza3 6s linear infinite}
+  .mapwiki-body .g-fig .g-a1 .g-btn-in{animation:gaTrzym 6s linear infinite}
+  .mapwiki-body .g-fig .g-a2 .g-kaps{animation:gaPochyl 6s linear infinite}
+  .mapwiki-body .g-fig .g-a2 .g-odlicz{animation:gaOdlicz 6s linear infinite}
+  .mapwiki-body .g-fig .g-a3 .g-kaps{animation:gaPochyl 6s linear infinite}
+  .mapwiki-body .g-fig .g-a3 .g-btn-in{animation:gaKlikKon 6s linear infinite}
+  .mapwiki-body .g-fig .g-a4 .g-kaps{animation:gaPochyl4 6s linear infinite}
+  .mapwiki-body .g-fig .g-a4 .g-btn-in{animation:gaKlik2 6s linear infinite}
+  /* PRZEŁĄCZAJ KLIKNIĘCIAMI ma cztery kroki i własny rytm 8 s: pierwsze kliknięcie tylko BUDZI koło
+     i niczego nie wybiera, następne przechodzą po wycinkach, odczekanie wysyła, a przytrzymanie
+     usypia. Pochylenie nie animuje się tu wcale i to jest treść rysunku — ten tryb go nie czyta. */
+  @keyframes ga5Otw{0%,6%{opacity:.35}11%,86%{opacity:1}92%,100%{opacity:.35}}
+  @keyframes ga5Wsk{0%,26%{opacity:0;transform:rotate(-60deg)}
+    30%,39%{opacity:1;transform:rotate(-60deg)}40%,84%{opacity:1;transform:rotate(0)}
+    90%,100%{opacity:0;transform:rotate(0)}}
+  @keyframes ga5Klik{0%,5%{opacity:0}8%,14%{opacity:1}17%,26%{opacity:0}29%,35%{opacity:1}
+    38%,39%{opacity:0}41%,47%{opacity:1}50%,78%{opacity:0}82%,90%{opacity:1}93%,100%{opacity:0}}
+  @keyframes ga5Odlicz{0%,52%{stroke-dashoffset:100}66%,74%{stroke-dashoffset:0}75%,100%{stroke-dashoffset:100}}
+  @keyframes ga5Iskra{0%,64%{opacity:0;transform:scale(.7)}70%,80%{opacity:1;transform:scale(1)}
+    86%,100%{opacity:0;transform:scale(1)}}
+  .mapwiki-body .g-fig .g-a5 .g-kolo-on{animation:ga5Otw 8s linear infinite}
+  .mapwiki-body .g-fig .g-a5 .g-wsk{animation:ga5Wsk 8s linear infinite}
+  .mapwiki-body .g-fig .g-a5 .g-btn-in{animation:ga5Klik 8s linear infinite}
+  .mapwiki-body .g-fig .g-a5 .g-odlicz{animation:ga5Odlicz 8s linear infinite}
+  .mapwiki-body .g-fig .g-a5 .g-iskra{animation:ga5Iskra 8s linear infinite}
+  .mapwiki-body .g-fig .g-a5 .g-ramka{animation:gaFaza4 8s linear infinite}
+
+  /* BEZ RUCHU: rysunek zostaje w chwili, która mówi najwięcej — koło otwarte, wskazanie na wycinku,
+     przycisk wciśnięty, odliczanie w połowie. Żadna ramka kroku się nie zapala, więc nic nie sugeruje
+     etapu, na którym ruch akurat stanął. */
+  @media (prefers-reduced-motion:reduce){
+    .mapwiki-body h4.g-blysk{animation:none}
+    .mapwiki-body .g-fig .g-anim *{animation:none}
+    .mapwiki-body .g-fig .g-anim .g-kolo-on,.mapwiki-body .g-fig .g-anim .g-wsk,
+    .mapwiki-body .g-fig .g-anim .g-btn-in,.mapwiki-body .g-fig .g-anim .g-iskra{opacity:1}
+    .mapwiki-body .g-fig .g-anim .g-wsk{transform:rotate(-60deg)}
+    .mapwiki-body .g-fig .g-anim .g-kaps{transform:rotate(19deg)}
+    .mapwiki-body .g-fig .g-anim .g-odlicz{stroke-dashoffset:45}
+  }
+  .mg-tab{border-collapse:collapse;margin:6px 0 2px;width:100%}
+  .mg-tab td{border-top:1px solid var(--line);padding:5px 10px 5px 0;vertical-align:top;font-size:12.5px}
+  .mg-tab td:first-child{white-space:nowrap;color:var(--ink)}
+  /* Druga kolumna to same próbki składni — monospace i luźniejsza interlinia, bo <code> mają
+     ramki i zbite w jednej linijce zlewają się w płot. */
+  .mg-tab td:nth-child(2){line-height:2}
+
+  /* ===== "What is what": setup vs preset, drawn as a graph (rf-39k) =====
+     Lives in the same fold shape as the guides above, because it answers the same kind of question.
+     What it does NOT do is answer it in prose: the thing being explained is a relation (which file
+     contains which parts of your configuration), and a relation is a picture, not a paragraph. */
+  .wi-body{display:flex;flex-direction:column;gap:12px}
+  .wi-lede{margin:0;font-size:14px;line-height:1.6;color:var(--muted)}
+  .wi-sub{margin:0;font-size:13px;line-height:1.55;color:var(--dim)}
+  .wi-note{margin:0;font-size:13px;line-height:1.55;color:var(--dim)}
+  .wi-body h4{margin:6px 0 2px}
+  .wi-body h5{font-family:var(--display);font-weight:600;font-size:13px;margin:0 0 6px;color:var(--ink)}
+
+  .wi-picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .wi-pick{font:inherit;font-family:var(--display);font-weight:600;font-size:13px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border:none;border-radius:999px;
+    background:#fff;color:var(--muted);box-shadow:0 0 0 2px var(--stitch),0 2px 0 rgba(120,90,40,.12);
+    transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1)),
+      color 95ms,background 95ms,box-shadow 95ms}
+  .wi-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+  .wi-pick:hover{transform:translateY(-1px)}
+  .wi-pick[aria-pressed="true"]{color:#fff;background:var(--wi-c,var(--ink));
+    box-shadow:0 0 0 2px var(--ink),0 2px 0 rgba(120,90,40,.12)}
+  .wi-pick:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+  .wi-reset{margin-left:auto}
+
+  /* The graph keeps a minimum width and scrolls sideways instead of shrinking its labels into
+     illegibility on a narrow window. It also stops GROWING past the size it was drawn at: on a wide
+     screen `width:100%` blew a 1120-wide drawing up to 1600 and 830 px tall, which is more than a
+     screen — the whole point of a picture is that you take it in at once. */
+  .wi-stage{background:var(--panel2);border-radius:14px;box-shadow:inset 0 0 0 2px var(--stitch);
+    padding:6px;overflow-x:auto;display:flex;justify-content:center}
+  .wi-graph{display:block;width:100%;min-width:820px;max-width:1120px;height:auto;
+    max-height:min(58vh,580px)}
+
+  /* „Why" sections, folded: the drawing is the card, these are the footnotes. */
+  .wi-more{margin:2px 0 0;border-radius:12px;background:rgba(120,90,40,.05);
+    box-shadow:0 0 0 1.5px var(--stitch)}
+  .wi-more>summary{cursor:pointer;list-style:none;padding:9px 13px;
+    font-family:var(--display);font-weight:600;font-size:13px;color:var(--muted)}
+  .wi-more>summary::-webkit-details-marker{display:none}
+  .wi-more>summary::before{content:"▸";display:inline-block;margin-right:8px;color:var(--pink);
+    transition:transform .14s ease}
+  .wi-more[open]>summary{color:var(--ink)}
+  .wi-more[open]>summary::before{transform:rotate(90deg)}
+  .wi-more>summary:hover{color:var(--ink)}
+  .wi-more>summary:focus-visible{outline:3px solid var(--lime);outline-offset:2px;border-radius:12px}
+  .wi-more-body{padding:0 13px 11px}
+  .wi-more-body>h4:first-child{margin-top:0}
+  @media (prefers-reduced-motion:reduce){.wi-more>summary::before{transition:none}}
+
+  .wi-frame{fill:none;stroke:var(--stitch);stroke-width:2;stroke-dasharray:7 6}
+  .wi-cap{font-family:var(--display);font-weight:600;font-size:12px;fill:var(--muted);letter-spacing:.4px}
+  .wi-cap-s{font-family:var(--sans);font-weight:600;font-size:12px;fill:var(--dim)}
+  .wi-blk{fill:#fff;stroke:var(--stitch);stroke-width:2;transition:opacity .16s ease}
+  .wi-blk.dim{opacity:.34}
+  .wi-blk-t{font-family:var(--display);font-weight:800;font-size:14px;fill:var(--ink)}
+  .wi-blk-s{font-family:var(--sans);font-weight:600;font-size:12px;fill:var(--dim)}
+  .wi-blk-t.dim,.wi-blk-s.dim{opacity:.4}
+  .wi-out{fill:none;stroke:var(--idle);stroke-width:2;stroke-dasharray:6 5}
+  .wi-out-s{font-family:var(--sans);font-weight:600;font-size:12px;fill:var(--idle)}
+
+  .wi-file{cursor:pointer}
+  .wi-file-box{stroke-width:3;transition:opacity .16s ease}
+  .wi-file-t{font-family:var(--display);font-weight:800;font-size:16px;fill:var(--ink)}
+  .wi-file-s{font-family:var(--sans);font-weight:500;font-size:12px;fill:var(--dim)}
+  .wi-file-p{font-family:var(--mono);font-weight:600;font-size:11px;fill:var(--muted)}
+  .wi-tally{font-family:var(--display);font-weight:600;font-size:13px;fill:#fff}
+  .wi-file.dim{opacity:.32}
+  .wi-file:focus-visible{outline:none}
+  .wi-file:focus-visible .wi-file-box{stroke:var(--ink);stroke-width:4}
+
+  .wi-edge{fill:none;stroke-width:2.5;opacity:.18;
+    transition:opacity .16s ease,stroke-width .16s ease}
+  .wi-edge.on{opacity:1;stroke-width:3.5}
+  .wi-edge.off{opacity:.07}
+
+  .wi-verdict{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .wi-v{border-radius:13px;padding:11px 13px;background:#fff;
+    box-shadow:0 0 0 2px var(--stitch),0 2px 0 rgba(120,90,40,.12)}
+  .wi-v p{margin:0;font-size:13px;line-height:1.55;color:var(--muted)}
+  .wi-v.change h5{color:var(--pink-d)}
+  .wi-v.keep h5{color:var(--green-d)}
+
+  .wi-lanes{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:4px}
+  .wi-lane{border-radius:14px;padding:12px 14px;background:#fff;
+    box-shadow:0 0 0 2px var(--stitch),0 2px 0 rgba(120,90,40,.12)}
+  .wi-lane.bad{box-shadow:0 0 0 2px rgba(216,58,92,.4),0 2px 0 rgba(120,90,40,.12)}
+  .wi-lane.good{box-shadow:0 0 0 2px rgba(108,179,63,.5),0 2px 0 rgba(120,90,40,.12)}
+  .wi-lane.bad h5{color:var(--bad)}
+  .wi-lane.good h5{color:var(--green-d)}
+  .wi-lane ol{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:6px}
+  .wi-lane li{font-size:13px;line-height:1.5;color:var(--muted)}
+  .wi-lane li::marker{color:var(--dim);font-weight:800}
+  .wi-out-bad,.wi-out-good{margin:10px 0 0;padding:8px 11px;border-radius:10px;
+    font-size:13px;font-weight:500;line-height:1.5;color:var(--ink)}
+  .wi-out-bad{background:rgba(216,58,92,.10)}
+  .wi-out-good{background:rgba(166,216,97,.34)}
+  .wi-moral{margin:11px 0 0;padding:11px 14px;border-radius:12px;background:rgba(166,216,97,.26);
+    font-size:13px;line-height:1.6;color:var(--ink)}
+
+  .wi-nevers{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .wi-never{border-radius:13px;padding:11px 13px;background:#fff;
+    box-shadow:0 0 0 2px var(--stitch),0 2px 0 rgba(120,90,40,.12)}
+  .wi-never p{margin:0;font-size:13px;line-height:1.55;color:var(--muted)}
+
+  @media (max-width:860px){
+    .wi-verdict,.wi-lanes,.wi-nevers{grid-template-columns:1fr}
+    .wi-reset{margin-left:0}
+  }
+
+
+/* ===== UX 261120 L4a: Czujnik na piętrach (rf-34-tabs.js, rf-33-posecal.js) ===== */
+/* Piętro 1: kula w swojej szynie (reguły `.live-rail #pose3dCard` z góry działają dalej) i karta
+   „Kula kręci się odwrotnie?” jako pełna karta filcowa. Pauza stoi w nagłówku kuli. */
+.cz-ball{padding:0}
+#pose3dCard .head .cz-pause{margin-left:auto;min-height:28px}
+.cz-flip>.pcal-flip{margin:0}
+/* Piętro 2: blok „Osie 3D” to otwarty pojemnik na zwinięte zwijaki, presety osi też są zwijakiem. */
+#poseCalFold>.pose-preset-fold{margin:0 var(--card-x) 12px}
+.pose-preset-fold>summary{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+.pose-preset-fold>.cardfold-body>.pose-presets{margin:0}
+/* Piętro 3: w „Zaawansowanych” wykresy z paskiem zakresu, sześć kanałów, status, strumień i `config:`. */
+#czAdvFold>.cardfold-body{display:flex;flex-direction:column;gap:14px}
+.cz-charts-h{margin:0 0 8px;font-family:var(--display);font-size:14px;font-weight:700;color:var(--muted)}
+.cz-charts-h .hd-ic{width:22px;height:22px;vertical-align:-6px;margin-right:6px}
+.cz-charts>.rail-ctrls{margin:0 0 10px}
+.cz-charts>.live-rail{padding:0}
+.cz-cfg{display:flex;flex-direction:column;gap:8px}
+/* (koniec sekcji L4a) */

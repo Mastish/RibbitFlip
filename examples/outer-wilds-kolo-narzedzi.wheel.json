@@ -1,0 +1,76 @@
+{
+ "app": "ribbitflip",
+ "kind": "wheel-preset",
+ "appVersion": "1.0.0",
+ "name": "Outer Wilds koło narzędzi",
+ "category": "Gry",
+ "desc": "Osiem rzadszych akcji Outer Wilds pod jednym przyciskiem trzeciego kapsla: trzymasz, przechylasz w stronę wycinka, puszczasz.",
+ "config": {
+  "holdMs": 260.0,
+  "confirm": "release",
+  "confirmMs": 600.0,
+  "deadzone": 0.34,
+  "submenuMode": "replace",
+  "subOpenMs": 300.0,
+  "iconChips": false,
+  "trigger": "button",
+  "triggerAxis": "any",
+  "triggerMag": 0.55,
+  "alwaysOn": true,
+  "look": {
+   "size": 420.0,
+   "gapDeg": 3.0,
+   "corner": 10.0
+  },
+  "slices": [
+   {
+    "label": "Mapa",
+    "icon": "🗺",
+    "spec": "pad:back",
+    "sequence": ""
+   },
+   {
+    "label": "Latarka",
+    "icon": "🔦",
+    "spec": "pad:rs",
+    "sequence": ""
+   },
+   {
+    "label": "Tryb obrotu",
+    "icon": "🔄",
+    "spec": "pad:lb",
+    "sequence": ""
+   },
+   {
+    "label": "Autopilot",
+    "icon": "🛰",
+    "spec": "pad:up",
+    "sequence": ""
+   },
+   {
+    "label": "Rozglądanie",
+    "icon": "👀",
+    "spec": "pad:down",
+    "sequence": ""
+   },
+   {
+    "label": "Namierz",
+    "icon": "🎯",
+    "spec": "pad:ls",
+    "sequence": ""
+   },
+   {
+    "label": "Kamera lądowania",
+    "icon": "📷",
+    "spec": "pad:x",
+    "sequence": ""
+   },
+   {
+    "label": "Pauza",
+    "icon": "⏸",
+    "spec": "pad:start",
+    "sequence": ""
+   }
+  ]
+ }
+}

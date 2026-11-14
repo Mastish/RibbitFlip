@@ -1,0 +1,73 @@
+{
+  "app": "ribbitflip",
+  "kind": "setup",
+  "version": 1,
+  "appVersion": "1.0.0",
+  "name": "Pad na jeden kapsel (start)",
+  "description": "Uniwersalny punkt wyjścia na jeden kapsel: pochylenie steruje lewym drążkiem pada Xbox (ruch postaci), a przycisk kapsla wciska A. Po wczytaniu włącz sterowanie w zakładce Kontroler oraz grupę Mapowanie. Wymaga sterownika ViGEmBus. Czułość i martwą strefę dostroisz klikając lewy drążek na rysunku pada; kolejne przyciski dokładasz klikając je na rysunku.",
+  "cassette": 8,
+  "forApp": "dowolna gra (pad Xbox)",
+  "author": "RibbitFlip",
+  "rev": 1,
+  "config": {
+    "trigEnabled": true,
+    "rules": [
+      {
+        "id": "start-a",
+        "label": "Przycisk kapsla = A",
+        "enabled": true,
+        "source": {
+          "kind": "button",
+          "any": true,
+          "byte": 1,
+          "bit": 0,
+          "holdMs": 120
+        },
+        "abs": false,
+        "cmp": ">",
+        "threshold": 0,
+        "thresholdHi": null,
+        "neg": false,
+        "extraConditions": [],
+        "match": "all",
+        "behavior": "hold",
+        "intervalMs": 100,
+        "dwellMs": 500,
+        "crossings": 2,
+        "windowMs": 600,
+        "layer": 0,
+        "keySpec": "pad:a",
+        "noAction": false,
+        "sequence": "",
+        "glow": true,
+        "led": {
+          "on": false,
+          "ms": 300
+        },
+        "toast": {
+          "on": false,
+          "mode": "fire",
+          "silent": true,
+          "text": ""
+        }
+      }
+    ],
+    "mouse": {
+      "enabled": true,
+      "mode": "stick",
+      "padShare": "own",
+      "stickBackend": "gamepad",
+      "stickWhich": "left",
+      "stickSource": "filter",
+      "stickMetricX": "roll",
+      "stickMetricY": "pitch",
+      "stickFilterScale": 35,
+      "stickExpo": 1.5,
+      "stickInner": 0.08,
+      "stickOuter": 0.05,
+      "stickAccel": 0.7,
+      "stickInvertX": false,
+      "stickInvertY": false
+    }
+  }
+}

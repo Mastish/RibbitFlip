@@ -1,0 +1,518 @@
+/* ============================================================================
+   THE CONTROLLER, LIT — a picture of the pad RibbitFlip presses for you.
+
+   Two questions this answers that a list of rules cannot: WHICH buttons a setup
+   actually uses (the ones with a stitched ring around them), and WHICH one is
+   going down right now. Mid-game that is the difference between "it is not
+   working" and "it is working, the output group is just off".
+
+   ARTWORK: the eight SVGs under /web/assets/gamepad/ are third-party, MIT, by
+   Michaël "e7d" Ferrand (https://github.com/e7d/gamepad-viewer), themselves
+   reworked from mrmcpowned's originals for gamepadviewer.com. The geometry
+   below — the 750x630 canvas and every offset and sprite position in it — is
+   ported from that project's templates/xbox-one/template.css, which is what
+   makes the parts land on the drawing. Licence text:
+   third_party_licenses/gamepad-viewer-LICENSE.txt · credits: docs/CREDITS.md.
+   The artwork's own palette was moved onto this app's by tools/gamepad_art.py.
+
+   Two deliberate departures from upstream:
+   * upstream styles ONE pad, addressed by #gamepad, and lays the parts out with
+     floats. Here there is one per capsule, so everything is a class and every
+     part is placed absolutely (float offsets folded into left/top by hand).
+   * the artwork lives in ::before and RibbitFlip's own state marks in ::after.
+     Upstream toggles `opacity` on the part itself, which would have taken the
+     "this button is mapped" ring down with it.
+
+   Loaded as 14b, between 14-motion and 15-overlay, NOT as 16: 15 has to stay
+   last (see the note in the HTML head), and nothing here needs to beat it.
+   ============================================================================ */
+
+/* The strip in a cheat-sheet column. The drawing is CAPPED rather than given the
+   full column width: at 600 px the pad came out half a metre tall on screen and
+   swallowed the card it was supposed to be one row of. Roughly the height of the
+   motion widget above it is the right weight for it. */
+.ov-padbox{display:none;padding:7px 0 3px;background:#f6f1e5;
+  border-bottom:2px dashed var(--stitch)}
+.ov-padbox.on{display:block}
+.ov-pad{position:relative;width:min(100%,var(--gpvMax,250px));margin:0 auto;
+  aspect-ratio:750/630;overflow:hidden}
+
+.gpv{position:absolute;left:0;top:0;width:750px;height:630px;
+  transform:scale(var(--gpvK,1));transform-origin:top left;
+  background:url(/web/assets/gamepad/base-black.svg) 0 0/750px 630px no-repeat}
+/* The dark pad would disappear into a dark overlay: on the two dark looks the pale twin
+   (same drawing, light end of the same ramp) takes over. */
+html.rf-ovl[data-theme="dark"] .gpv,
+html.rf-ovl[data-theme="bare"] .gpv{background-image:url(/web/assets/gamepad/base-white.svg)}
+/* The lit overlays are one set of files for both bodies, and mid-amber on the pale twin is
+   almost the same brightness as the pad under it. Darkened here rather than by shipping a
+   second set of sprites for the sake of one theme. */
+html.rf-ovl[data-theme="dark"] .gpv span::before,
+html.rf-ovl[data-theme="bare"] .gpv span::before{filter:brightness(.72) saturate(1.3)}
+/* Nothing is mapped to the pad at all: the drawing stays, faded, because in an
+   overlay a box that comes and goes under the player's eyes is worse than a
+   quiet one. (In the panel the widget is simply not shown — see rf-42.) */
+.ov-padbox.empty .gpv{opacity:.4}
+
+/* Every part: the artwork in ::before, our own marks in ::after. */
+.gpv span{position:absolute;display:block}
+.gpv span::before{content:"";position:absolute;inset:0;opacity:0;
+  background-repeat:no-repeat;transition:opacity .06s linear}
+.gpv span[data-pressed="true"]::before{opacity:1}
+
+/* THE SHAPE OF A PART, once, for every mark that rings it — the dashed "mapped" seam
+   below, the hover ring and the selection glow in 14c. A part's box is a rectangle,
+   but almost nothing drawn in it is: a rounded-square seam around a round Start button
+   reads as a stray box on the artwork rather than as that button being in play, which
+   is the whole job of the mark. Kept in ONE custom property because the three marks are
+   in two files — the ring shapes drifted apart the moment they were written out twice.
+   Values are corner radii at the artwork's own 750-px scale (TL TR BR BL):
+   * round parts (face buttons, sticks, Guide, Start/Back) — circles, plainly;
+   * bumper — a bar that climbs from its bottom-left corner to its top-right one, so
+     the two corners it never reaches (TL, BR) are rounded away and the two it fills
+     stay tight;
+   * trigger — a fin: narrow and rounded at the top, widening to a squared-off bottom
+     where the pad body cuts it;
+   * d-pad face — small, and tucked INSIDE the face (see its own rule below). */
+.gpv span{--gpv-ring:10px}
+.gpv .gf,.gpv .gk,.gpv .gg,.gpv .gs{--gpv-ring:50%}
+.gpv .gb{--gpv-ring:44px 14px 44px 14px}
+.gpv .gt{--gpv-ring:46px 18px 10px 10px}
+.gpv .gd{--gpv-ring:5px}
+
+/* MAPPED: this button is used by at least one rule of this capsule. Stitched, like
+   every other seam in this app, and in the capsule's own colour so two overlays side
+   by side stay tellable apart. Drawn at the artwork's 750-px scale, so the strokes
+   come out ~1 px once the whole drawing is scaled down. */
+.gpv span.mapped::after{content:"";position:absolute;inset:-7px;border-radius:var(--gpv-ring);
+  border:4px dashed var(--dcol,#8aa0b5);opacity:.75;pointer-events:none}
+/* DOWN — a flash per activation (300 ms, the same the cheat-sheet LEDs use) or a held
+   button for as long as its rule holds. ONE colour for both, and the same amber the
+   artwork lights up in: a second colour here only asked which of two "on"s was meant,
+   and the Guide button — the one part with no artwork of its own — needs the ring to
+   say it at all. */
+.gpv span.fired::after,.gpv span.live::after{border-style:solid;opacity:1;
+  border-color:var(--amber,#eaa32b)}
+/* BLOCKED: the rule fired and nothing left the app — output group off, capsule
+   paused, or no ViGEmBus. Red instead of amber, because "I pressed it and the game
+   did not see it" is the whole question this widget exists to answer. */
+.gpv span.blocked::after{border-style:solid;border-color:var(--bad,#d83a5c);opacity:1;
+  box-shadow:0 0 0 7px color-mix(in srgb,var(--bad,#d83a5c) 26%,transparent)}
+
+/* --- the parts, geometry ported from upstream template.css ---------------- */
+/* triggers: analog, so they are clipped from the bottom by --v (0..1). */
+.gpv .gt{width:89px;height:122px;top:0}
+.gpv .gt::before{background-image:url(/web/assets/gamepad/trigger.svg);
+  clip-path:inset(calc(100% - var(--v,0) * 100%) 0 0 0)}
+.gpv .gt.l{left:151px}
+.gpv .gt.r{left:510px;transform:rotateY(180deg)}
+
+.gpv .gb{width:170px;height:61px;top:129px}
+.gpv .gb::before{background-image:url(/web/assets/gamepad/bumper.svg)}
+.gpv .gb.l{left:107px}
+.gpv .gb.r{left:473px;transform:rotateY(180deg)}
+
+/* Guide: upstream ships no separate part for it, so this box is measured off the body art —
+   the disc there is centred on (375, 196.4) with a radius of 32.6. A ring, never a logo:
+   the maker's mark that the disc originally carried was taken out of both base SVGs. */
+.gpv .gg{width:65px;height:65px;left:342px;top:164px}
+/* WHICH controller this is, written where the Xbox logo would be — the one element of the
+   artwork with no drawing of its own. Two capsules sharing a pad show the same digit, which
+   is exactly the thing the picture could not say before. */
+.gpv .gg .gpv-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:800;font-size:34px;line-height:1;color:#f4f1e8;
+  text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;letter-spacing:-.02em}
+/* The pale twin of the pad body takes over on the two dark looks (see base-white above), and
+   a light digit on a light pad is no digit at all. */
+html.rf-ovl[data-theme="dark"] .gpv .gg .gpv-num,
+html.rf-ovl[data-theme="bare"] .gpv .gg .gpv-num{color:#31302c;text-shadow:0 1px 2px rgba(255,255,255,.65)}
+/* Shared: the digit belongs to somebody else's controller, so it is ringed rather than left
+   to look like a coincidence that two drawings show the same number. */
+.ov-padbox.shared .gpv .gg .gpv-num{border-radius:50%;box-shadow:inset 0 0 0 2px currentColor}
+
+.gpv .gs{width:33px;height:33px;top:264px}
+.gpv .gs::before{background-image:url(/web/assets/gamepad/start-select.svg)}
+.gpv .gs.back{left:306px}
+.gpv .gs.start{left:414px}
+.gpv .gs.start::before{background-position:-33px 0}
+
+.gpv .gf{width:53px;height:53px}
+.gpv .gf::before{background-image:url(/web/assets/gamepad/buttons.svg);opacity:1}
+.gpv .gf[data-pressed="true"]::before{background-position-y:-53px}
+.gpv .gf.a{left:540px;top:303px}
+.gpv .gf.b{left:590px;top:253px}
+.gpv .gf.x{left:490px;top:253px}
+.gpv .gf.y{left:540px;top:202px}
+.gpv .gf.a::before{background-position-x:0}
+.gpv .gf.b::before{background-position-x:-53px}
+.gpv .gf.x::before{background-position-x:-106px}
+.gpv .gf.y::before{background-position-x:-159px}
+
+/* sticks: the sprite says pressed/released, the offset says which way it is pushed */
+.gpv .gk{width:83px;height:83px;transition:translate .05s linear}
+.gpv .gk::before{background-image:url(/web/assets/gamepad/stick.svg);background-position:-85px 0;opacity:1}
+.gpv .gk[data-pressed="true"]::before{background-position:0 0}
+.gpv .gk.l{left:144px;top:239px}
+.gpv .gk.r{left:432px;top:352px}
+
+.gpv .gd::before{background-image:url(/web/assets/gamepad/dpad.svg)}
+.gpv .gd.up{left:261px;top:346px;width:34px;height:56px}
+.gpv .gd.up::before{background-position:35px 0}
+.gpv .gd.down{left:261px;top:400px;width:34px;height:56px}
+.gpv .gd.left{left:223px;top:384px;width:56px;height:34px}
+.gpv .gd.left::before{background-position:0 -93px}
+.gpv .gd.right{left:277px;top:384px;width:56px;height:34px}
+.gpv .gd.right::before{background-position:0 -57px}
+/* The four faces sit edge to edge, so rings around them would draw a grid over the cross —
+   and with all four mapped, which is the usual case, that grid IS the whole d-pad. Tucked
+   inside and dotted instead, so it reads as "these are in play" rather than as a second
+   drawing on top of the first. */
+.gpv .gd.mapped::after{inset:3px;border-radius:var(--gpv-ring);border-style:dotted;border-width:3px}
+
+/* The caption under the drawing: what fired, and — when nothing came out — why.
+   Fixed height so the column does not twitch every time a rule fires. */
+.ov-pad-cap{display:flex;align-items:center;justify-content:center;gap:6px;min-height:17px;
+  padding:3px 8px 0;font:11px var(--mono,ui-monospace,monospace);color:var(--dim,#8a8375);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ov-pad-cap.blocked{color:var(--bad,#d83a5c);font-weight:700}
+/* The plate belongs to the DARK CARD, so it goes with the card: in "content only" there is nothing
+   for it to be part of, and a plate over a cut-out background is a black brick floating on the
+   game — it was by far the biggest thing on screen there. (The transparent rule lives with the rest
+   of that look, in 15-overlay.css.) */
+html.rf-ovl[data-theme="dark"] .ov-padbox{background:#101318}
+html.rf-ovl[data-theme="dark"] .ov-pad-cap,html.rf-ovl[data-theme="bare"] .ov-pad-cap{color:#b8b0a0}
+
+/* KTO NA NIM GRA — chipy kapsli pod rysunkiem pada scalonego (2026-09-11). Kolor kropki jest
+   DOKŁADNIE tym samym kolorem, którym obwiedziony jest przycisk tego kapsla na rysunku wyżej:
+   to jedna legenda, nie dwie. Pusty wiersz znika sam, bo wypełnia go wyłącznie malowanie pada
+   scalonego (gpvPaintMerged w rf-42) — w panelu i na mapie w zakładce „Kontroler" zostaje pusty. */
+.ov-pad-who:empty{display:none}
+.ov-pad-who{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;
+  padding:2px 8px 1px}
+.ov-pad-chip{display:inline-flex;align-items:center;gap:4px;
+  font:11px var(--sans,var(--body,system-ui));color:var(--dim,#8a8375);white-space:nowrap}
+.ov-pad-chip-dot{width:7px;height:7px;border-radius:50%;background:var(--dcol,#8a8375);flex:0 0 auto}
+html.rf-ovl[data-theme="dark"] .ov-pad-chip,html.rf-ovl[data-theme="bare"] .ov-pad-chip{color:#b8b0a0}
+.ovl-no-padwho .ov-pad-who{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  .gpv span::before{transition:none}
+  .gpv .gk{transition:none}
+}
+
+/* WHICH CONTROLLER this drawing is of. Three kinds, three bodies now, so the picture says it by
+   itself — but the badge stays, because it answers something the picture cannot: which ROAD the
+   controller goes out by. Two of them are devices Windows holds; the Wii one is a protocol on a
+   socket, and a drawing that looks exactly like hardware is the place to mention that.
+   `data-kind` on .ov-padbox is what picks the body. */
+.gpv-kind{position:absolute;top:2px;left:4px;z-index:3;pointer-events:none;
+  font-size:10px;font-weight:600;letter-spacing:.2px;color:var(--dim);
+  padding:1px 5px;border:1px solid var(--line);border-radius:7px;
+  background:color-mix(in srgb,var(--panel) 78%,transparent)}
+.ov-padbox{position:relative}
+/* Nazwa rodzaju pada to napis — --warn-ink zamiast --az; obrys bierze currentColor.
+   WHY: the kind label is text, so it uses the text-grade amber. */
+.ov-padbox[data-kind="wii"] .gpv-kind{color:var(--warn-ink);border-color:currentColor}
+
+/* ============================================================================
+   THE DUALSHOCK BODY — the second skin, for the `ds4` controller.
+   ============================================================================
+   Same provenance as the Xbox one above: upstream's `templates/ds4/`, put through
+   tools/gamepad_art.py (palette remapped, the maker's mark deleted). The drawing is
+   806 x 599 instead of 750 x 630, so the box, the aspect ratio and the scale factor
+   all change with it — `--gpvK` is set in JS and reads the width off the kind.
+
+   This block used to serve `wii` as well, on the argument that DSU describes a
+   DualShock-shaped device. It does — on the WIRE. On the screen it meant picking
+   "Wii" and being shown a DualShock, so the Wii kind has a body of its own now (its
+   block is at the foot of this file) and every selector here names `ds4` alone.
+
+   Every coordinate below is ported from upstream's own template.css. The SPRITE
+   offsets are not: upstream's are inconsistent in sign and do not match the files it
+   ships, so the cells were measured off the rendered artwork instead (alpha profile
+   per column and row) and are written here in CSS's own convention — a cell starting
+   at image x becomes `-x`. How the d-pad's four directions were told apart is its
+   own story — see the note above that block; a centre of mass gets it backwards. */
+.ov-padbox[data-kind="ds4"] .ov-pad{aspect-ratio:806/599}
+.ov-padbox[data-kind="ds4"] .gpv{width:806px;height:599px;
+  background-image:url(/web/assets/gamepad/ds4/base-black.svg);background-size:806px 599px}
+html.rf-ovl[data-theme="dark"] .ov-padbox[data-kind="ds4"] .gpv,
+html.rf-ovl[data-theme="bare"] .ov-padbox[data-kind="ds4"] .gpv{
+  background-image:url(/web/assets/gamepad/ds4/base-white.svg)}
+
+.ov-padbox[data-kind="ds4"] .gpv .gt{
+  width:99px;height:90px;top:0}
+.ov-padbox[data-kind="ds4"] .gpv .gt::before{
+  background-image:url(/web/assets/gamepad/ds4/triggers.svg)}
+.ov-padbox[data-kind="ds4"] .gpv .gt.l{left:109px}
+/* each trigger is its own cell here, so the right one is NOT the left one mirrored */
+.ov-padbox[data-kind="ds4"] .gpv .gt.r{
+  left:598px;transform:none}
+.ov-padbox[data-kind="ds4"] .gpv .gt.r::before{
+  background-position:-100px 0}
+
+.ov-padbox[data-kind="ds4"] .gpv .gb{
+  width:99px;height:23px;top:94px}
+.ov-padbox[data-kind="ds4"] .gpv .gb::before{
+  background-image:url(/web/assets/gamepad/ds4/bumper.svg)}
+.ov-padbox[data-kind="ds4"] .gpv .gb.l{left:109px}
+.ov-padbox[data-kind="ds4"] .gpv .gb.r{
+  left:598px;transform:rotateY(180deg)}
+
+/* PS button — where the controller's number goes, the mark having been deleted */
+.ov-padbox[data-kind="ds4"] .gpv .gg{
+  width:42px;height:42px;left:382px;top:340px}
+.ov-padbox[data-kind="ds4"] .gpv .gg .gpv-num{
+  font-size:24px}
+
+/* Share and Options: one cell, the right one mirrored */
+.ov-padbox[data-kind="ds4"] .gpv .gs{
+  width:28px;height:47px;top:142px}
+.ov-padbox[data-kind="ds4"] .gpv .gs::before{
+  background-image:url(/web/assets/gamepad/ds4/start.svg);background-position:0 0}
+.ov-padbox[data-kind="ds4"] .gpv .gs.back{left:227px}
+.ov-padbox[data-kind="ds4"] .gpv .gs.start{
+  left:551px;transform:rotateY(180deg)}
+
+/* face buttons: cells measured by glyph colour — cross blue, circle red, square pink, triangle green */
+.ov-padbox[data-kind="ds4"] .gpv .gf{width:56px;height:56px}
+.ov-padbox[data-kind="ds4"] .gpv .gf::before{
+  background-image:url(/web/assets/gamepad/ds4/buttons.svg)}
+.ov-padbox[data-kind="ds4"] .gpv .gf[data-pressed="true"]::before{background-position-y:-56px}
+.ov-padbox[data-kind="ds4"] .gpv .gf.a{left:623px;top:273px}
+.ov-padbox[data-kind="ds4"] .gpv .gf.b{left:681px;top:215px}
+.ov-padbox[data-kind="ds4"] .gpv .gf.x{left:567px;top:215px}
+.ov-padbox[data-kind="ds4"] .gpv .gf.y{left:623px;top:159px}
+.ov-padbox[data-kind="ds4"] .gpv .gf.a::before{background-position-x:0}
+.ov-padbox[data-kind="ds4"] .gpv .gf.b::before{background-position-x:-56px}
+.ov-padbox[data-kind="ds4"] .gpv .gf.x::before{background-position-x:-112px}
+.ov-padbox[data-kind="ds4"] .gpv .gf.y::before{background-position-x:-168px}
+
+/* sticks: three cells — released, then the pressed left and the pressed right */
+.ov-padbox[data-kind="ds4"] .gpv .gk{width:94px;height:94px}
+.ov-padbox[data-kind="ds4"] .gpv .gk::before{
+  background-image:url(/web/assets/gamepad/ds4/sticks.svg);background-position:0 0}
+.ov-padbox[data-kind="ds4"] .gpv .gk.l{left:228px;top:308px}
+.ov-padbox[data-kind="ds4"] .gpv .gk.r{left:484px;top:308px}
+.ov-padbox[data-kind="ds4"] .gpv .gk.l[data-pressed="true"]::before{background-position:-96px 0}
+.ov-padbox[data-kind="ds4"] .gpv .gk.r[data-pressed="true"]::before{background-position:-192px 0}
+
+/* THE D-PAD — a CROSS, drawn at rest, not four specks that only appear when pressed.
+   ---------------------------------------------------------------------------------------------
+   The DualShock body art has no d-pad on it. It draws a round dish (a circle of r=94.3 centred on
+   153.65, 244.767) and four small arrow markings out near its rim — measured: a scanline straight
+   through the middle of that dish is ONE tone from edge to edge, with no arms anywhere. The arms
+   are in `dpad.svg`, which carries BOTH states the way `buttons.svg` does for the face buttons:
+   a dark arm on the top row, a light (pressed) one underneath.
+
+   So it is drawn like the face buttons — always, `opacity:1`, second row on press — and NOT as a
+   lit overlay. Drawn only-when-pressed, the pad sat there as a bare disc with four specks, which
+   is exactly what it was reported as ("small buttons that are only arrows").
+
+   GEOMETRY: upstream's arms, centred on the dish and scaled up by 1.27. (The earlier reading of
+   this file put the four faces on the ARROW MARKINGS at a radius of 79 and shrank them to 24x34 —
+   the markings are decoration in the ring OUTSIDE the cross, not the buttons.)
+
+   The scale is not a taste call, it is measured against the pad being drawn. On a real DualShock
+   the cross very nearly reaches its own arrow markings, so THOSE are the fence: their inner edges
+   sit at radii 76.8 (up) · 75.7 (left) · 75.4 (right) · 74.2 (down), and the tightest of them, the
+   bottom one, is what sets the size. Tips at a radius of 72 leave every marking 2.2 px or more of
+   clearance and put the cross at 144 px across a 188.6 px dish — the proportion the owner's own
+   reference photo shows. Upstream's own 125x126 box left the tips at 63 AND a 21 px hole in the
+   middle, which read as four small buttons adrift on the disc and was reported as exactly that.
+
+   Arms 48 x 68 (mirrored for left/right), inner ends 4 from the centre — the wedge ends are narrow,
+   so the four can converge into a groove instead of leaving a hole. Everything below is one factor
+   applied: the sprite is 178.5 x 104 scaled by 1.333, and every cell offset with it.
+
+   THE CELLS are at x 0 / 37 / 74 / 128, measured off the file (upstream's CSS still says 52 and 104
+   for the two horizontal ones — stale, the sheet predates a re-lay-out of the sprite).
+
+   WHICH CELL IS WHICH DIRECTION is settled by the shape of its two ends, and it needs settling,
+   because every cheaper test gets it wrong. Each arm has a ROUNDED CAP at the outer end and a
+   TAPERED WEDGE at the inner one, where the four converge into a narrow groove. The two are told
+   apart by how FAST the width changes: a cap rounds over in about five pixels (22 -> 34), a wedge
+   narrows gradually over fifteen or more (16 -> 6). Reading it that way agrees on all four cells
+   and with upstream's own up/down pairing:
+       x 0 = DOWN · x 37 = UP · x 74 = LEFT · x 128 = RIGHT
+   Two tests that look reasonable and are BOTH wrong: a centre of mass (the mass sits at the wide
+   end, so it names the outer end and not the direction), and "the tapered end is the tip" (it is
+   the end that meets the other three, not the one pointing away).
+   Rows: at rest y 0..50, pressed y 53..103. */
+/* `background-position-y:0` is not redundant: the Xbox block above sets the SHORTHAND
+   `background-position` on `.gd.left` / `.gd.right`, and a shorthand there survives an
+   `-x`-only override here — the two arms came out reading the wrong row of the sprite. */
+.ov-padbox[data-kind="ds4"] .gpv .gd::before{
+  background-image:url(/web/assets/gamepad/ds4/dpad.svg);background-size:238px 138.7px;
+  background-position-y:0;opacity:1}
+.ov-padbox[data-kind="ds4"] .gpv .gd[data-pressed="true"]::before{background-position-y:-70.7px}
+.ov-padbox[data-kind="ds4"] .gpv .gd.up{
+  left:129.7px;top:172.8px;width:48px;height:68px}
+.ov-padbox[data-kind="ds4"] .gpv .gd.up::before{
+  background-position-x:-49.3px}
+.ov-padbox[data-kind="ds4"] .gpv .gd.down{
+  left:129.7px;top:248.8px;width:48px;height:68px}
+.ov-padbox[data-kind="ds4"] .gpv .gd.down::before{
+  background-position-x:0}
+.ov-padbox[data-kind="ds4"] .gpv .gd.left{
+  left:81.7px;top:220.8px;width:68px;height:48px}
+.ov-padbox[data-kind="ds4"] .gpv .gd.left::before{
+  background-position-x:-98.7px}
+.ov-padbox[data-kind="ds4"] .gpv .gd.right{
+  left:157.7px;top:220.8px;width:68px;height:48px}
+.ov-padbox[data-kind="ds4"] .gpv .gd.right::before{
+  background-position-x:-170.7px}
+/* The four arms meet in the middle, so a ring around each one would draw a box over the joint.
+   Tucked inside and dotted, like the Xbox skin's — same reason, different shape. */
+.ov-padbox[data-kind="ds4"] .gpv .gd.mapped::after{inset:4px;border-radius:8px}
+
+/* THE TOUCHPAD. Two things share this rectangle and they are not the same thing: the CLICK is an
+   ordinary mapped button (`pad:touchpad`), and the SURFACE is a finger at a place on the glass.
+   On a real pad you can rest a finger without clicking and click without sliding — so the click
+   lights the whole plate (the artwork's own lit overlay) and the finger is a dot on top of it.
+
+   WHERE it goes was measured, not copied. Upstream's `.touchpad` says left:272 top:122 in a 262x151
+   box with the image CENTRED in it, which works out at (271.05, 121.9) — near enough, but "near
+   enough" is what put the d-pad's hotspots in the middle of a disc. The three paths that draw the
+   touchpad in `touchpad.svg` are ALSO in the body art, so the offset between them is the answer and
+   it is exact: all three agree on (271.001, 122.367), to a thousandth of a pixel. The size is the
+   file's own, 263.9 x 151.2, so nothing is scaled and nothing is centred.
+
+   An Xbox pad has none, hence display:none by default — the drawing must not offer a part the
+   device does not have, the same way `pad:touchpad` refuses to press one. */
+.gpv .gtp{display:none}
+.ov-padbox[data-kind="ds4"] .gpv .gtp{
+  display:block;left:271px;top:122.4px;width:263.9px;height:151.2px;--gpv-ring:14px}
+.ov-padbox[data-kind="ds4"] .gpv .gtp::before{
+  background-image:url(/web/assets/gamepad/ds4/touchpad.svg);background-size:263.9px 151.2px}
+/* The ring for a MAPPED touchpad is tucked inside rather than around it: the plate reaches almost
+   the full width of the pad's upper half, so a seam 7 px outside it would cross the two shoulder
+   buttons and read as those being in play. */
+.ov-padbox[data-kind="ds4"] .gpv .gtp.mapped::after{inset:4px}
+
+/* THE FINGER. Placed by --tx/--ty (0..1 across the plate, written by rf-42 from the engine's own
+   numbers) and shown only while `has-touch` says a finger is actually down — a dot parked in the
+   middle whenever nobody is touching anything would be the one thing this widget must never do,
+   since the whole point of the dead zone is that the finger LIFTS. */
+.gpv .gtp .gtp-dot{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;
+  left:calc(var(--tx,.5) * 100%);top:calc(var(--ty,.5) * 100%);
+  border-radius:50%;background:var(--dcol,#8aa0b5);opacity:0;pointer-events:none;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--dcol,#8aa0b5) 30%,transparent);
+  transition:left .05s linear,top .05s linear,opacity .09s linear}
+.gpv .gtp.has-touch .gtp-dot{opacity:.92}
+@media (prefers-reduced-motion:reduce){.gpv .gtp .gtp-dot{transition:none}}
+
+/* ============================================================================
+   THE WII CONTROLLER — the third body, and the only one this project drew itself.
+   ============================================================================
+   It used to be drawn with the DualShock skin, on the argument that DSU describes a
+   DualShock-shaped device. That is true of the WIRE and false of the picture: you
+   picked "Wii" and were shown a DualShock, which the owner reported twice before it
+   was fixed. Three kinds of controller now mean three distinct drawings.
+
+   The artwork is generated by tools/wii_art.py, which also PRINTS the box of every
+   part — the numbers below are that output, pasted rather than re-measured. Same
+   canvas as the DualShock, 806 x 599, so --gpvK and GPV_ART_W need nothing new.
+
+   EVERY BOX ON THE REMOTE MOVED ON 2026-08-25, and none of them by hand: the remote is
+   traced off an outline the owner supplied, the way the Nunchuk always was. The shell
+   took the reference's ratio (144 x 552 rather than 120 x 550), POWER went to the top
+   left, minus/HOME/plus became circles and the speaker moved above 1 and 2. B did not
+   move — it is the trigger underneath, drawn as a tab, and it deliberately
+   stays put. If these numbers ever look wrong again, change tools/wii_art.py and paste
+   its printout here; editing them here alone is how the drawing and its hotspots drift.
+
+   WHAT IS IN IT. A Wii Remote (d-pad, A, B underneath, 1, 2, minus, HOME, plus) and
+   a Nunchuk (stick, C, Z) — the Nunchuk because a bare remote has no analog stick
+   and DSU carries one, so the app's stick would otherwise point at nothing at all.
+   Then a small strip on the right, marked DSU, for the four inputs the protocol
+   carries and this hardware has not: R1, R2, R3 and the touch surface. They stay
+   clickable because they stay mappable: hiding them would leave four mappings that
+   work and cannot be reached, and drawing them on the remote would be a lie.
+
+   THE LIT STATE is a plain amber shape here, not a sprite. The other two skins get
+   their pressed look from upstream's artwork; this drawing is ours and every part of
+   it is a circle or a rounded rectangle, so a fill and a radius say it exactly. */
+.ov-padbox[data-kind="wii"] .ov-pad{aspect-ratio:806/599}
+.ov-padbox[data-kind="wii"] .gpv{width:806px;height:599px;
+  background-image:url(/web/assets/gamepad/wii/base-black.svg);background-size:806px 599px}
+html.rf-ovl[data-theme="dark"] .ov-padbox[data-kind="wii"] .gpv,
+html.rf-ovl[data-theme="bare"] .ov-padbox[data-kind="wii"] .gpv{
+  background-image:url(/web/assets/gamepad/wii/base-white.svg)}
+
+/* one fill for every part; the shape comes from the radius each one sets below */
+.ov-padbox[data-kind="wii"] .gpv span::before{background-image:none;
+  background-color:var(--amber,#eaa32b);opacity:0}
+/* …and it has to be turned back ON for a press, in a selector at least as specific as the one
+   above. ⚠ THE BUG THIS FIXES: the other two skins draw their face buttons and sticks from
+   upstream's sprite ALWAYS (`.gpv .gf::before`, `.gpv .gk::before` carry opacity:1, because
+   there the sprite IS the button). This block only swapped the image for a colour, so on the
+   Wii drawing A, B, 1, 2 and both sticks sat lit amber the whole time — a pad map showing five
+   buttons held down that nobody was touching. Found 2026-08-25 while making the EDITED part
+   pulse: with a third of the drawing already amber, no new mark could have been read. */
+.ov-padbox[data-kind="wii"] .gpv span[data-pressed="true"]::before{opacity:1}
+/* nothing here is a mirrored copy of anything — unlike the shoulder pairs on the other
+   two skins, every part is its own shape in its own place */
+.ov-padbox[data-kind="wii"] .gpv .gt.r{transform:none}
+.ov-padbox[data-kind="wii"] .gpv .gb.r{transform:none}
+
+/* --- the remote: the d-pad ------------------------------------------------- */
+.ov-padbox[data-kind="wii"] .gpv .gd{--gpv-ring:5px}
+.ov-padbox[data-kind="wii"] .gpv .gd::before{border-radius:4px}
+.ov-padbox[data-kind="wii"] .gpv .gd.up{left:208px;top:80px;width:28px;height:23px}
+.ov-padbox[data-kind="wii"] .gpv .gd.down{left:208px;top:130px;width:28px;height:23px}
+.ov-padbox[data-kind="wii"] .gpv .gd.left{left:186px;top:102px;width:23px;height:28px}
+.ov-padbox[data-kind="wii"] .gpv .gd.right{left:236px;top:102px;width:23px;height:28px}
+
+/* --- the remote: A / 1 / 2, round; and B, the trigger underneath ------------ */
+.ov-padbox[data-kind="wii"] .gpv .gf::before{border-radius:50%}
+.ov-padbox[data-kind="wii"] .gpv .gf.a{left:200px;top:177px;width:44px;height:44px}
+.ov-padbox[data-kind="wii"] .gpv .gf.x{left:206px;top:416px;width:32px;height:32px}
+.ov-padbox[data-kind="wii"] .gpv .gf.y{left:206px;top:464px;width:32px;height:32px}
+/* B is not a face button on this hardware. It is the trigger under the remote, drawn as
+   a tab on the left edge — the way a schematic shows a thing you cannot see from here. */
+.ov-padbox[data-kind="wii"] .gpv .gf.b{left:126px;top:168px;width:32px;height:64px;--gpv-ring:12px}
+.ov-padbox[data-kind="wii"] .gpv .gf.b::before{border-radius:12px 4px 4px 12px}
+
+/* --- the remote: minus / HOME / plus ---------------------------------------- */
+/* All three are CIRCLES, and that is the reference's word against mine: they were a pair of
+   pills flanking a disc here until the traced outline said otherwise. */
+.ov-padbox[data-kind="wii"] .gpv .gs{--gpv-ring:8px;top:277px;width:24px;height:24px}
+.ov-padbox[data-kind="wii"] .gpv .gs::before{border-radius:50%}
+.ov-padbox[data-kind="wii"] .gpv .gs.back{left:173px}
+.ov-padbox[data-kind="wii"] .gpv .gs.start{left:247px;transform:none}
+.ov-padbox[data-kind="wii"] .gpv .gg{left:207px;top:274px;width:30px;height:30px}
+.ov-padbox[data-kind="wii"] .gpv .gg::before{border-radius:50%}
+/* THE CONTROLLER'S NUMBER goes to the player strip at the foot of the remote, not into
+   HOME. On a real Wii those four lamps say which player you are, which is the very thing
+   this digit says — so it is the one place a Wii player already looks for it. Placed out
+   of .gg's box (its parent) by the difference between the two: the strip sits at 181,508
+   and .gg at 207,274, hence -26 and 234. */
+.ov-padbox[data-kind="wii"] .gpv .gg .gpv-num{inset:auto;left:-26px;top:234px;
+  width:82px;height:22px;font-size:15px}
+
+/* --- the nunchuk: the stick, C and Z ---------------------------------------- */
+/* the stick's box is the whole mushroom, stalk and cap — computed in wii_art.py from the two
+   measurements the drawing itself uses, so the hotspot cannot drift off the shape again */
+.ov-padbox[data-kind="wii"] .gpv .gk.l{left:494px;top:201px;width:47px;height:53px;--gpv-ring:16px}
+.ov-padbox[data-kind="wii"] .gpv .gk.l::before{border-radius:16px}
+.ov-padbox[data-kind="wii"] .gpv .gb.l{left:384px;top:162px;width:32px;height:28px;--gpv-ring:12px}
+.ov-padbox[data-kind="wii"] .gpv .gt.l{left:350px;top:193px;width:40px;height:60px;--gpv-ring:14px}
+.ov-padbox[data-kind="wii"] .gpv .gb.l::before{border-radius:12px}
+.ov-padbox[data-kind="wii"] .gpv .gt.l::before{border-radius:14px}
+
+/* --- what DSU carries and a remote-and-nunchuk has not ---------------------- */
+/* Deliberately uniform and off to one side: they are one idea, not four buttons of the
+   controller you picked, and the drawing has to keep saying so at a glance. */
+.ov-padbox[data-kind="wii"] .gpv .gb.r{left:630px;top:220px;width:120px;height:44px;--gpv-ring:10px}
+.ov-padbox[data-kind="wii"] .gpv .gt.r{left:630px;top:285px;width:120px;height:44px;--gpv-ring:10px}
+.ov-padbox[data-kind="wii"] .gpv .gk.r{left:630px;top:350px;width:120px;height:44px;--gpv-ring:10px}
+.ov-padbox[data-kind="wii"] .gpv .gtp{display:block;left:630px;top:415px;width:120px;height:44px;
+  --gpv-ring:10px;background:none}
+.ov-padbox[data-kind="wii"] .gpv .gb.r::before{border-radius:10px}
+.ov-padbox[data-kind="wii"] .gpv .gt.r::before{border-radius:10px}
+.ov-padbox[data-kind="wii"] .gpv .gk.r::before{border-radius:10px}
+.ov-padbox[data-kind="wii"] .gpv .gtp::before{border-radius:10px;
+  background-image:none;background-color:var(--amber,#eaa32b)}
+/* the finger, on a chip rather than on a plate: it still has somewhere to be */
+.ov-padbox[data-kind="wii"] .gpv .gtp .gtp-dot{width:14px;height:14px;margin:-7px 0 0 -7px}

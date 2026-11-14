@@ -1,0 +1,113 @@
+{
+  "name": "Example Platformer",
+  "rules": [
+    {
+      "id": "plat-right",
+      "label": "Move right -> D",
+      "enabled": true,
+      "source": {
+        "kind": "filter",
+        "metric": "roll"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 8.0,
+      "thresholdHi": null,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 0,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "d",
+      "sequence": "",
+      "glow": true,
+      "led": {
+        "on": false,
+        "ms": 300
+      }
+    },
+    {
+      "id": "plat-left",
+      "label": "Move left -> A",
+      "enabled": true,
+      "source": {
+        "kind": "filter",
+        "metric": "roll"
+      },
+      "abs": false,
+      "cmp": "<",
+      "threshold": -8.0,
+      "thresholdHi": null,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 0,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "a",
+      "sequence": "",
+      "glow": true,
+      "led": {
+        "on": false,
+        "ms": 300
+      }
+    },
+    {
+      "id": "plat-jump",
+      "label": "Tilt forward -> Space",
+      "enabled": true,
+      "source": {
+        "kind": "filter",
+        "metric": "pitch"
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 10.0,
+      "thresholdHi": null,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 0,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "space",
+      "sequence": "",
+      "glow": true,
+      "led": {
+        "on": false,
+        "ms": 300
+      }
+    },
+    {
+      "id": "plat-crouch",
+      "label": "Tilt back -> Ctrl",
+      "enabled": true,
+      "source": {
+        "kind": "filter",
+        "metric": "pitch"
+      },
+      "abs": false,
+      "cmp": "<",
+      "threshold": -10.0,
+      "thresholdHi": null,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 0,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "ctrl",
+      "sequence": "",
+      "glow": true,
+      "led": {
+        "on": false,
+        "ms": 300
+      }
+    }
+  ]
+}

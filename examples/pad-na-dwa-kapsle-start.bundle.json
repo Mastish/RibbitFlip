@@ -1,0 +1,148 @@
+{
+  "app": "ribbitflip",
+  "kind": "bundle",
+  "version": 1,
+  "appVersion": "1.0.0",
+  "name": "Pad na dwa kapsle (start)",
+  "description": "Uniwersalny punkt wyjścia: DWA kapsle jako JEDEN pad Xbox. Lewa ręka prowadzi lewym drążkiem (ruch postaci), prawa prawym (kamera). Przycisk lewego kapsla wciska LB, przycisk prawego A. Kapsel prawej ręki ma ustawione „Gra na padzie” pierwszego, więc gra widzi jednego gracza, nie dwa pady. Po wczytaniu włącz sterowanie w zakładce Kontroler na obu kapslach oraz grupę Mapowanie. Wymaga sterownika ViGEmBus. Czułości i martwe strefy dostroisz klikając drążki na rysunku pada.",
+  "cassette": 2,
+  "forApp": "dowolna gra (pad Xbox)",
+  "author": "RibbitFlip",
+  "rev": 1,
+  "devices": [
+    {
+      "slot": "d0",
+      "name": "Lewa ręka",
+      "role": {
+        "name": "Lewa ręka (ruch postaci)",
+        "note": "Pochylasz kapsel, postać idzie. To lewy drążek pada. Przycisk kapsla wciska LB."
+      },
+      "setup": {
+        "trigEnabled": true,
+        "rules": [
+          {
+            "id": "start-lb",
+            "label": "Przycisk kapsla = LB",
+            "enabled": true,
+            "source": {
+              "kind": "button",
+              "any": true,
+              "byte": 1,
+              "bit": 0,
+              "holdMs": 120
+            },
+            "abs": false,
+            "cmp": ">",
+            "threshold": 0,
+            "thresholdHi": null,
+            "neg": false,
+            "extraConditions": [],
+            "match": "all",
+            "behavior": "hold",
+            "intervalMs": 100,
+            "dwellMs": 500,
+            "crossings": 2,
+            "windowMs": 600,
+            "keySpec": "pad:lb",
+            "sequence": "",
+            "glow": true,
+            "led": {
+              "on": false,
+              "ms": 300
+            },
+            "toast": {
+              "on": false,
+              "mode": "fire",
+              "silent": true,
+              "text": ""
+            }
+          }
+        ],
+        "mouse": {
+          "enabled": true,
+          "mode": "stick",
+          "padShare": "own",
+          "stickBackend": "gamepad",
+          "stickWhich": "left",
+          "stickSource": "filter",
+          "stickMetricX": "roll",
+          "stickMetricY": "pitch",
+          "stickFilterScale": 35,
+          "stickExpo": 1.5,
+          "stickInner": 0.08,
+          "stickOuter": 0.05,
+          "stickAccel": 0.7,
+          "stickInvertX": false,
+          "stickInvertY": false
+        }
+      }
+    },
+    {
+      "slot": "d1",
+      "name": "Prawa ręka",
+      "role": {
+        "name": "Prawa ręka (kamera i akcja)",
+        "note": "Pochylasz kapsel, kamera się obraca. To prawy drążek pada. Przycisk kapsla wciska A."
+      },
+      "setup": {
+        "trigEnabled": true,
+        "rules": [
+          {
+            "id": "start-a",
+            "label": "Przycisk kapsla = A",
+            "enabled": true,
+            "source": {
+              "kind": "button",
+              "any": true,
+              "byte": 1,
+              "bit": 0,
+              "holdMs": 120
+            },
+            "abs": false,
+            "cmp": ">",
+            "threshold": 0,
+            "thresholdHi": null,
+            "neg": false,
+            "extraConditions": [],
+            "match": "all",
+            "behavior": "hold",
+            "intervalMs": 100,
+            "dwellMs": 500,
+            "crossings": 2,
+            "windowMs": 600,
+            "keySpec": "pad:a",
+            "sequence": "",
+            "glow": true,
+            "led": {
+              "on": false,
+              "ms": 300
+            },
+            "toast": {
+              "on": false,
+              "mode": "fire",
+              "silent": true,
+              "text": ""
+            }
+          }
+        ],
+        "mouse": {
+          "enabled": true,
+          "mode": "stick",
+          "padShare": "d0",
+          "stickBackend": "gamepad",
+          "stickWhich": "right",
+          "stickSource": "filter",
+          "stickMetricX": "roll",
+          "stickMetricY": "pitch",
+          "stickFilterScale": 50,
+          "stickExpo": 1.8,
+          "stickInner": 0.14,
+          "stickOuter": 0.0,
+          "stickAccel": 0.55,
+          "stickInvertX": false,
+          "stickInvertY": false
+        }
+      }
+    }
+  ]
+}

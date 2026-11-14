@@ -1,0 +1,335 @@
+/* Felt skin, part 2 — the components 07 does not cover: trigger list and rule editor, tabs,
+   collapsible cards, device pills, power saving, commands, the XY pad and the sound dropdown. */
+
+  /* — triggers (rules) — */
+  .trigbar{border-bottom:none;position:relative}
+  .trigbar::after{content:"";position:absolute;left:7px;right:7px;bottom:0;border-top:1.5px dashed var(--stitch)}
+  /* — hub konfiguracji (19-cfghub.css): filcowe wersje powierzchni „nic tu jeszcze nie ma".
+     Zastąpiły filcowe reguły usuniętego rzędu presetów. Ścieg zamiast zwykłej kreski, tak jak
+     w .rules-empty — to ten sam komunikat, więc ma być ta sama kreska. — */
+  .cfh{border-bottom:none}
+  .cfh-tile{background:#fff;border:none;box-shadow:0 3px 0 rgba(120,90,40,.08)}
+  .cfh-tile.is-gone{background:transparent;border:2px dashed var(--stitch);box-shadow:none}
+  .cfh-free,.cfh-add-wrap{border:2px dashed var(--stitch)}
+  .cfh-chip{background:#fff;border-color:var(--line)}
+  .cfh-pick{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:9px}
+  .rule-wrap{background:#fff;border:none;border-radius:13px;box-shadow:0 3px 0 rgba(120,90,40,.08)}
+  .rule-wrap.dragging{box-shadow:0 12px 20px -8px rgba(120,90,40,.4)}
+  .rule{background:transparent;border-left:4px solid transparent}
+  .rules-empty{background:#fff;border:2px dashed var(--stitch);color:var(--dim)}
+  .rtop b{color:var(--ink)}
+  .rkey{color:#3a2c08;background:var(--amber);border:none;border-radius:7px;box-shadow:0 2px 0 rgba(0,0,0,.14);font-weight:700}
+  .rsub{color:var(--muted)}
+  .rstat .rcur{color:var(--ink)}.rstat .rfires{color:var(--dim)}
+  #armBtn{font-family:var(--display);border-radius:12px}
+  /* WSTRZYMANE = przygaszone, nie kolorowe. Trzy stany tego przycisku to: uzbrojony (zielony),
+     uzbrojony i naprawdę wysyłający (bursztyn, pulsuje — `live`, patrz updateKeysNote) oraz
+     wstrzymany. Ten trzeci nie może być kolejnym jaskrawym kolorem: to jest stan, w którym z
+     aplikacji nic nie wychodzi, a jaskrawe w tym panelu znaczy „działa". Ta sama zasada, co przy
+     wyłączonym przełączniku modułu (--ic-off-tint) i zgaszonej lampce w nawigacji (--ic-dot-off). */
+  #armBtn:not(.on){color:var(--dim);box-shadow:0 3px 0 rgba(120,90,40,.14)}
+  #armBtn.on{background:var(--green);color:#123006;box-shadow:0 4px 0 var(--green-d)}
+  #armBtn.on:active{box-shadow:0 1px 0 var(--green-d)}
+  #armBtn.live{background:var(--amber);color:#3a2c08;box-shadow:0 4px 0 rgba(0,0,0,.18);animation:pulse 1.4s infinite}
+  /* group-enable buttons ON state — was faint mint on cream (low contrast); now solid green like the arm
+     toggle. `button.grp-enable.on` (+#mEnable.on) beats `button.btn.on` (pink) so ALL group toggles match. */
+  button.grp-enable.on,#mEnable.on{background:var(--green);border:none;color:#123006;box-shadow:0 3px 0 var(--green-d)}
+  button.grp-enable.on:hover,#mEnable.on:hover{background:var(--green)}
+  button.grp-enable.on:active,#mEnable.on:active{box-shadow:0 1px 0 var(--green-d)}
+  button.grp-enable.live,#mEnable.live{background:var(--amber);border:none;color:#3a2c08;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+  .trigmsg{color:var(--green-d)}
+  .trignote,.mstate{color:var(--dim)}
+
+  /* — rule editor — */
+  .ruleeditor{background:#fbf6ec;border-bottom:none;position:relative}
+  .ruleeditor::after{content:"";position:absolute;left:7px;right:7px;bottom:0;border-top:1.5px dashed var(--stitch)}
+  .ed-grid input[type=text],.ed-grid input[type=number],.ed-grid select,
+  .ed-cond-params select,.ed-cond-params input,.ed-cond-foot select,.ed-extra-head select,
+  .ed-btn-adv select,#edSeq,#cmdHex,#cmdUuid,#cmdUuidCustom,#pwWake,#pwIdle,#pwBatt,
+  #mAxisX,#mAxisY,#mDead,#mMouseSource,#mMax,#posePresetSelect,#posePresetName{
+    background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px}
+  .ed-grid input[type=checkbox]{accent-color:var(--pink)}
+  input[type=range]{accent-color:var(--pink)}
+  input[type=checkbox]{accent-color:var(--pink)}
+  .seg{border:2px solid var(--stitch);border-radius:11px;background:#fff}
+  /* `word-spacing` jak przy nagłówkach sekcji (03-triggers `.ed-sec-h`): spacja w Baloo 2 jest
+     wąska, więc „Filtr 3D" na przełączniku segmentowym zlewało się w „Filtr3D". */
+  .seg button{background:transparent;color:var(--muted);font-family:var(--display);font-weight:700;word-spacing:.12em;
+    position:relative;min-height:28px}
+  /* WYBRANY SEGMENT = CZARNY FILC (decyzja D5, makieta M04): kremowy napis, kremowy ścieg kilka
+     pikseli w środku i twardy cień. Róż w tej aplikacji znaczy „naciśnij mnie" (akcja główna),
+     więc stan „to jest teraz wybrane" nie może mieć tego samego koloru. Ten sam wygląd nosi
+     `.sk-seg-wybrany` (Skaner, 26-scan.css). Cień wewnętrzny, bo `.seg` przycina dzieci
+     (`overflow:hidden`) i cień pod spodem byłby ucięty. */
+  .seg button.on{background:var(--felt-ink);background-image:var(--felt-tex-dark);color:var(--panel);
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.3)}
+  .seg button.on::after{content:"";position:absolute;inset:3px;
+    border:1.5px dashed color-mix(in srgb,var(--panel) 50%,transparent);border-radius:6px;pointer-events:none}
+  .ed-extra{border:2px dashed var(--stitch)}
+  .ed-cond-card{background:#fbf6ec;border:1px solid var(--line);border-radius:11px}
+  .ed-cond-n{color:var(--muted)}
+  .ed-cond-op{background:rgba(234,163,43,.18);color:var(--warn-ink);border:none}
+  .ed-cond-neg,.ed-cond-ophint,.ed-cond-head{color:var(--dim)}
+  .edcur,.edspec{color:var(--dim)}.edcur b{color:var(--ink)}.edspec b{color:var(--pink-d)}
+  #edCap.on{background:var(--green);color:#123006;box-shadow:0 3px 0 var(--green-d)}
+
+  /* — tabs / live-rail / folds — */
+  /* one row on wide screens (orientation · channels 0-2 · channels 3-5 · filter) — 2×2 only when narrow */
+  /* Kafle siedzą W PANELU zwijaka (`.rail-fold` ma tu własne tło i cień), więc płacą ten sam
+     gutter co każda inna treść karty — inaczej ich ściegi dotykały zaokrąglonej krawędzi panelu,
+     a podpis nad nimi stał w innym miejscu niż one. */
+  .live-rail{display:grid;grid-template-columns:minmax(186px,.72fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+    gap:14px;padding:0 var(--card-x) var(--card-x)}
+  @media(max-width:1280px){.live-rail{grid-template-columns:1fr 1fr}}
+  @media(max-width:860px){.live-rail{grid-template-columns:1fr}}
+  .rail-fold>summary{color:var(--muted);font-family:var(--display);font-weight:700;font-size:14px}
+  /* Recessed "screen" surfaces (dashed) must sit INSIDE the card's stitched frame, and far
+     enough inside that the two dashed lines do not read as one doubled border: --card-x for the
+     full-width cards, --card-x-sm for the narrow tiles of the live rail (01-assets-tokens.css).
+     These used to be 13/14 px, i.e. 8-9 px from a stitch that is itself 5 px in — from arm's
+     length the screen looked glued to the frame.
+     Ta sama zasada W PIONIE (--card-y): nagłówek i pasek narzędzi kończą się ściegiem na całą
+     szerokość, więc pudełko dziennika i lista reguł muszą zejść mu z kreski. `.log`/`.feed` nie
+     miały górnego marginesu, a `.ruleslist` górnej wyściółki — siadały na niej zero w zero. */
+  .live-rail .scopewrap{padding:var(--card-y-sm) var(--card-x-sm) 12px}
+  .live-rail .btnlane-wrap{margin:0 var(--card-x-sm) 8px}
+  .feed,.cmd-log,.log{margin:var(--card-y) var(--card-x) var(--card-x)}
+  .ruleslist{padding:var(--card-y) var(--card-x) 0}
+  .tabbar{display:flex;gap:10px;position:sticky;top:calc(var(--topbar-h,64px) + 8px);z-index:30;padding:4px 0 6px;margin-bottom:10px}
+  /* Waga 500, nie 700: rozmiar 15px z tego bloku i tak przegrywa z .tabbar .tab-btn{font-size:12px}
+     w 10-icons-controls.css, więc realnie to drobny tekst i obowiązuje go ta sama waga co resztę
+     drobnego tekstu (patrz CHANGELOG 2026-08-25, ostrość). Rozmiar zostaje 15px dla starych .tabbtn. */
+  .tabbar .tabbtn,.tabbar button{font-family:var(--display);font-weight:500;font-size:15px;
+    background:#faf6ee;background-image:var(--felt-tex-soft);color:var(--muted);border:none;border-radius:13px;
+    padding:11px 20px;box-shadow:var(--felt-shadow-sm);cursor:pointer;
+    transition:transform .1s var(--rf-ez-snap),box-shadow .1s,color .1s}
+  .tabbar .tabbtn:hover,.tabbar button:hover{transform:translateY(-2px);color:var(--ink)}
+  .tabbar .tabbtn.on,.tabbar button.on,.tabbar [aria-selected=true]{
+    background:var(--pink-btn);color:#fff;box-shadow:0 4px 0 var(--pink-d)}
+  .tab-panel{gap:16px}
+  .tabgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:1150px){.tabgrid{grid-template-columns:1fr}}
+  .cardfold,.mapwiki,.rail-fold{background:var(--panel);background-image:var(--felt-tex-soft);
+    border:none;border-radius:18px;box-shadow:var(--felt-shadow);position:relative;overflow:hidden}
+  .cardfold::before,.mapwiki::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:15px;pointer-events:none;z-index:0;opacity:.8}
+  /* `border:none` — the dark skin frames the summary with a 1px rounded rectangle at inset 0. Here
+     the fold is framed by the dashed stitch at inset 5px, so that rectangle survived as a second,
+     solid outline running between the card edge and the stitch. */
+  .cardfold>summary,.mapwiki>summary{position:relative;z-index:1;font-family:var(--display);
+    font-weight:700;color:var(--ink);background:transparent;text-transform:none;
+    letter-spacing:0;font-size:15px;padding:13px var(--card-x);border:none}
+  .cardfold[open]>summary,.mapwiki[open]>summary{border-bottom:none}
+  .cardfold[open]>summary::after,.mapwiki[open]>summary::after{content:"";position:absolute;left:7px;right:7px;bottom:0;border-top:1.5px dashed var(--stitch)}
+  .cardfold>summary::before,.mapwiki>summary::before,
+  .stnote-fold>summary::before,.rail-fold>summary::before,
+  .mouse-adv>summary::before,.ed-btn-adv>summary::before{color:var(--pink)}
+  .setup-details>summary{color:var(--muted)}
+  .cardfold>.card,.cardfold .posecal,.cardfold .pose-presets{position:relative;z-index:1}
+  .cardfold>.card{box-shadow:none;background:transparent}
+  .cardfold>.card::before{display:none}
+  .mapwiki-body{position:relative;z-index:1;color:var(--muted);background:transparent;border:none}
+  .mapwiki-body h4{color:var(--ink)}
+  .mapwiki-body code,.mapwiki-body small{color:var(--pink-d)}
+  .mapwiki-body code{background:#efe6d3;border:none;border-radius:5px;padding:1px 5px}
+  .pose-presets-lbl{color:var(--muted)}
+  .posecal,.pose-presets{color:var(--muted)}
+
+  /* — device selector pills — */
+  .devsel,.devpill{font-family:var(--display)}
+  /* Colours and layout of the pills themselves come from `.devices-panel .devpill` (07). */
+
+  /* — power saving — */
+  .pw-state,.pw-msg,.pw-auto{color:var(--muted)}
+  /* „● Aktywny — strumieniuje” i „Uśpiony” to NAPISY, więc niosą atramenty do tekstu:
+     --green-d (4,9:1) i --warn-ink (5,2:1) zamiast rysunkowych --ok / --warn (3,2 i 2,4:1).
+     WHY: this line is read, not looked at, so it uses the text greens/ambers. */
+  .pw-state.is-on{color:var(--green-d)}
+  .pw-state.is-parked{color:var(--warn-ink)}
+  #powerCard input[type=number]{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px}
+
+  /* — commands — */
+  .cmd-note{color:var(--muted)}
+  .cmd-note code{background:#efe6d3;color:var(--pink-d)}
+
+  /* — full-width prose/toolbars kept clear of the stitched frame — */
+  /* The 2px quote-bar belongs to the dark skin, where the note is indented by 9px and the bar reads
+     as its left margin. Here the note takes the card gutter instead, so the bar was left stranded on
+     the card's outer edge — a dark slab OUTSIDE the stitch, cutting across it at the rounded
+     corners. The indent alone marks the note, and it lines the text up with `.setuplbl`. */
+  .setup-note{padding:3px var(--card-x) 5px;text-align:left;border-left:none}
+  .setupbar{padding-left:var(--card-x);padding-right:var(--card-x)}   /* the library / save-as rows would otherwise start at x=0, under the stitch */
+  /* A `.setuplbl` normally rides inside a `.setupbar` and takes its gutter. Used on its own as a
+     section heading (`.gs-defs` in rf-39o) it started at x=0 — the words hung outside the stitch. */
+  .gs-defs .setuplbl{padding-left:var(--card-x);padding-right:var(--card-x)}
+  .cmd-note{padding-left:var(--card-x);padding-right:var(--card-x)}
+  /* `.pcal-hint` keeps its own 16px: it does NOT sit in a card, it sits in `.pcal-body`, which
+     already pays the gutter — the number here is an indent inside that body, not a card inset. */
+  .pcal-hint{padding-left:16px;padding-right:16px}
+  .mapwiki-body{padding-left:var(--card-x);padding-right:var(--card-x)}
+  .stnote{padding-left:var(--card-x);padding-right:var(--card-x)}
+  .trignote,.mt-hint{max-width:100%}
+  .cmd-result{background:#f6f1e5;border:2px dashed #d3c7ae;border-radius:10px;color:var(--muted)}
+  .cmd-result.ok{color:var(--green-d)}.cmd-result.bad{color:var(--pink-d)}
+
+  /* — XY pad — */
+  .pad-wrap{background:var(--panel);border-radius:16px}
+  .pad-wrap.fs{background:#efe9dd}
+  .pad-note{color:var(--ink)}
+  /* — 3D orientation gear + controls popover, restyled from dark to felt — */
+  .pose3d-gear{background:#faf6ee;background-image:var(--felt-tex-soft);border:none;color:var(--muted);
+    box-shadow:0 2px 0 rgba(120,90,40,.16)}
+  #pose3dCard:hover .pose3d-gear{color:var(--pink-d)}
+  .pose3d-gear:hover,.pose3d-controls.pinned ~ .pose3d-gear,#pose3dCard .pose3d-gear.on{color:var(--pink-d);border:none}
+  .pose3d-controls{background:var(--panel);background-image:var(--felt-tex-soft);border:none;
+    box-shadow:0 10px 0 rgba(120,90,40,.16),0 0 0 1.5px var(--stitch);backdrop-filter:none}
+  .pose3d-controls select{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px;font-weight:600}
+  .pose3d-controls .fld{color:var(--muted);font-weight:700}
+  .pose3d-controls .fld input{accent-color:var(--pink)}
+  /* — sound as a dropdown (room for many + custom sounds) — */
+  .pad-sounds{border:none;background:none;padding:0}
+  .pad-sounds select{font-size:13px;padding:7px 11px;border:1px solid var(--line);border-radius:11px;
+    background:#fff;color:var(--ink);font-weight:500;min-width:158px;cursor:pointer}
+
+/* „Brakuje czegoś spoza aplikacji" (rf-28b rfNeedHtml): sterownik, program, port.
+   Ten komunikat ma się WYRÓŻNIAĆ spośród podpowiedzi, więc ma własną okrągłą ikonę i przyciski
+   działania. Filcowy jak linia gotowości niżej (F-G3-04): tło z tokenów, tekstura i przeszyta
+   krawędź zamiast płaskiej wstawki z kolorami na sztywno. Grafitowy tekst na bursztynie. */
+.rf-need{position:relative;display:flex;gap:12px;align-items:flex-start;margin:10px 0;padding:14px 16px 14px 14px;
+  border-radius:14px;border:none;background:color-mix(in srgb,var(--warn) 16%,var(--panel));
+  background-image:var(--felt-tex-soft);box-shadow:var(--felt-shadow-sm);
+  color:var(--ink);font-size:13px;line-height:1.5;text-align:left}
+.rf-need::before{content:"";position:absolute;inset:5px;border:1.5px dashed color-mix(in srgb,var(--warn) 70%,var(--stitch));
+  border-radius:10px;pointer-events:none}
+.rf-need>*{position:relative;z-index:1}
+.rf-need.block{background-color:color-mix(in srgb,var(--bad) 12%,var(--panel))}
+.rf-need.block::before{border-color:color-mix(in srgb,var(--bad) 60%,var(--stitch))}
+.rf-need-ic{flex:none;width:30px;height:30px;margin-left:4px;border-radius:50%;background:var(--warn);
+  color:var(--felt-ink);font:900 18px/30px system-ui,sans-serif;text-align:center}
+.rf-need.block .rf-need-ic{background:var(--bad);color:#fff}
+.rf-need-body{flex:1;min-width:0}
+.rf-need-t{font-weight:800;font-size:14.5px;line-height:1.35;color:var(--ink)}
+.rf-need-why{margin-top:3px;color:var(--ink)}
+.rf-need-fix{margin-top:6px;color:var(--ink)}
+.rf-need a:not(.btn){color:var(--pink-d);font-weight:700}
+.rf-need code{background:var(--bg2);color:var(--pink-d);padding:1px 5px;border-radius:4px}
+.rf-need-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rf-need-act .btn{text-decoration:none}
+/* „Pobierz" jest odnośnikiem (<a>), a różowe wypełnienie felt-core daje tylko button.btn.primary. */
+.rf-need a.btn.primary{background:var(--pink-btn);color:#fff;border-color:var(--pink-d);box-shadow:0 4px 0 var(--pink-d)}
+.rf-need a.btn.primary:hover{background:var(--pink-btn);color:#fff}
+.rf-need a.btn.primary:active{box-shadow:0 1px 0 var(--pink-d);transform:translateY(3px)}
+
+/* LINIA GOTOWOŚCI (rf-28c): pod nagłówkiem modułu, warunki po kolei w pigułkach.
+   Filcowa (F-G3-04): bursztyn z tokenów przemyty teksturą, przeszyta krawędź jak w kartach,
+   pigułki na kremie. Stany pigułki: ok (zielony znak), no (bursztynowa krawędź, przycisk naprawy),
+   wait (⏳, przerywana krawędź: aplikacja sama nad tym pracuje), info (ℹ, bez wezwania).
+   Przyciski naprawy mają 28 px, bo to cel dla osoby, która klika z trudem.
+   Gdy wszystko gra: jedno spokojne zielone zdanie w samym ściegu, bez wypełnienia. */
+.rf-ready{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:8px 0 12px;padding:11px 15px;
+  border-radius:14px;font-size:13px;line-height:1.45;color:var(--ink);text-align:left}
+.rf-ready::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);border-radius:10px;pointer-events:none}
+.rf-ready>*{position:relative;z-index:1}
+/* UX 261120 B4: `display:flex` wyżej wygrywa z regułą przeglądarki dla `hidden`, więc linia z `empty()` stała dalej */
+.rf-ready[hidden]{display:none}
+.rf-ready.todo{background:color-mix(in srgb,var(--warn) 16%,var(--panel));background-image:var(--felt-tex-soft);
+  box-shadow:var(--felt-shadow-sm)}
+.rf-ready.todo::before{border-color:color-mix(in srgb,var(--warn) 70%,var(--stitch))}
+.rf-ready.ok{padding:9px 16px}
+.rf-ready-all{display:inline-flex;align-items:center;gap:6px;color:var(--green-d);font-weight:700}
+.rf-ready-lead{font-family:var(--display);font-weight:700;font-size:14px}
+.rf-ready-it{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:1px 2px 1px 10px;border-radius:999px;
+  background:var(--panel);border:1.5px solid var(--stitch);box-shadow:0 2px 0 rgba(120,90,40,.10)}
+.rf-ready-it.ok,.rf-ready-it.info{padding-right:12px}
+.rf-ready-it.ok{color:var(--green-d);background:color-mix(in srgb,var(--green) 14%,var(--panel));
+  border-color:color-mix(in srgb,var(--green) 55%,var(--stitch))}
+.rf-ready-it.no{font-weight:700;border-color:var(--warn)}
+.rf-ready-it.wait{color:var(--warn-ink);font-weight:700;border-style:dashed;border-color:var(--warn)}
+.rf-ready-it.info{color:var(--muted);box-shadow:none}
+.rf-ready-ic{font-weight:900;font-size:15px;line-height:1}
+.rf-ready-it.no .rf-ready-ic{color:var(--bad)}
+.rf-ready .rf-ready-fix.btn{min-height:28px;height:28px;padding:0 12px;font-size:12px;margin-left:2px}
+.rf-ready-steps{flex-basis:100%;margin:4px 0 0;padding-left:22px}
+.rf-ready-steps li{margin:2px 0}
+/* Cel naprawy „Pokaż" / „Ustaw sygnał": po przewinięciu krótko obrysowany, żeby oko wiedziało, gdzie. */
+.rf-ready-target{outline:3px solid var(--pink);outline-offset:4px;border-radius:12px;transition:outline-color .4s ease}
+@media (prefers-reduced-motion:reduce){.rf-ready-target{transition:none}}
+
+/* Stan auto-wczytywania przy polu „gra.exe” (rf-39o `_gsExeHint`). Wyłączone = bursztyn z przyciskiem,
+   włączone = spokojna zieleń: to tylko potwierdzenie, nie wezwanie. */
+.gs-exe-hint{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:2px 4px 2px 8px;
+  border-radius:999px;border:1px solid var(--warn);background:#fcefcf;color:#5a4300;white-space:nowrap}
+.gs-exe-hint[hidden]{display:none}
+.gs-exe-hint.on{border-color:transparent;background:transparent;color:var(--green-d);padding:2px 6px}
+.gs-exe-hint .btn{padding:1px 8px;font-size:11px}
+
+/* ===== UX 261120 A1: wspólne wzorce filcowe ===== */
+/* ZWIJAK (synteza 3.6): jedna filcowa definicja `details.cardfold` dla całej aplikacji. Wygląd karty
+   (tekstura, przeszyta krawędź, cień) stoi wyżej przy `.cardfold`; tu jego nagłówek: cel co najmniej
+   32 px, grot ▸ (font filcowy rysuje go jako `rozwin.png`) obracany przy otwarciu, a obok nazwy
+   tematu `.cardfold-sum` z bieżącymi wartościami, żeby zwinięty blok mówił, co w nim siedzi
+   („Filtr 3D · krzywa 1,0"). Stan otwarcia pamięta `rfFold` (rf-06-modals.js).
+   Nagłówek zostaje blokiem, nie flexem: flex zjadłby spacje między słowem a pogrubieniem.
+   `.cardfold.inset` = zwijak WEWNĄTRZ karty: bez drugiej warstwy filcu (tło i cień), sam ścieg. */
+details.cardfold>summary{cursor:pointer;list-style:none;min-height:32px;user-select:none}
+details.cardfold>summary::-webkit-details-marker{display:none}
+details.cardfold>summary::before{content:"▸";display:inline-block;margin-right:.4em;font-size:15px;line-height:1;
+  transition:transform var(--rf-d-press,95ms) var(--rf-ez-snap,cubic-bezier(0.2,0.7,0.2,1))}
+details.cardfold[open]>summary::before{transform:rotate(90deg)}
+.cardfold-sum{margin-left:10px;font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
+.cardfold-body{position:relative;z-index:1;padding:6px var(--card-x) var(--card-y)}
+.cardfold.inset{background:transparent;box-shadow:none;border-radius:12px}
+.cardfold.inset::before{inset:0;border-radius:12px}
+.cardfold.inset>summary{font-size:14px;padding:9px 14px}
+.cardfold.inset>.cardfold-body{padding:4px 14px 12px}
+@media (prefers-reduced-motion:reduce){details.cardfold>summary::before{transition:none}}
+
+/* POTWIERDZENIE PRZY PRZYCISKU (`rfSay(…, {at})`, rf-06-modals.js): krótki napis tuż za kontrolką,
+   którą kliknięto („Wyśrodkowano"), bo tam patrzy opiekun; czaszka w rogu mówi to samo pełnym
+   zdaniem. Gaśnie sam po 2 s. */
+.rf-said{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:12px;font-weight:700;
+  color:var(--green-d);vertical-align:middle;animation:rfSaidIn .18s var(--rf-ez-snap,ease-out)}
+.rf-said.bad{color:var(--bad-ink)}
+.rf-said.out{opacity:0;transition:opacity .25s ease}
+@keyframes rfSaidIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rf-said{animation:none}.rf-said.out{transition:none}}
+/* (koniec sekcji A1) */
+
+/* ===== UX 261120 L1: mechanizm pięter (rf-28d-tiers.js) ===== */
+/* PIĘTRO 2: licznik „zmienione: N” w nagłówku zwiniętego zwijaka. Musztarda z grafitem (na żółtym
+   nigdy biały), bo to jedyne miejsce, które mówi, że w schowanym bloku coś odbiega od domyślnych. */
+.cardfold-chg{display:inline-block;margin-left:8px;padding:1px 9px;border-radius:999px;background:var(--amber);
+  color:var(--ink);font-family:var(--body);font-weight:800;font-size:12px;line-height:1.5;letter-spacing:0;vertical-align:1px}
+.cardfold-chg[hidden],.cardfold-sum[hidden]{display:none}
+.cardfold-foot{display:flex;justify-content:flex-end;margin-top:10px}
+/* Pierwsze wejście w sesji na ekran ze zmienionym, zwiniętym blokiem: licznik raz pulsuje. */
+.rf-tier-ping>summary>.cardfold-chg{animation:rfTierPing .8s var(--rf-ez-snap,ease-out) 3}
+@keyframes rfTierPing{0%{box-shadow:0 0 0 0 rgba(234,163,43,.75)}100%{box-shadow:0 0 0 8px rgba(234,163,43,0)}}
+@media (prefers-reduced-motion:reduce){.rf-tier-ping>summary>.cardfold-chg{animation:none;outline:2px solid var(--ink);outline-offset:1px}}
+/* PIĘTRO 3: „Zaawansowane”, sam nagłówek bez karty (bez tła, cienia i ściegu), na dole ekranu. */
+details.cardfold.adv{background:transparent;background-image:none;box-shadow:none;border-radius:0;
+  border-top:1.5px dashed var(--stitch);overflow:visible}
+details.cardfold.adv::before{display:none}
+details.cardfold.adv>summary{font-size:14px;color:var(--muted);padding:9px 4px}
+details.cardfold.adv[open]>summary::after{display:none}
+details.cardfold.adv>.cardfold-body{padding:4px 4px 12px}
+.tab-panel>details.cardfold.adv,.rfpc-pane>details.cardfold.adv{order:99}
+/* PIĘTRO 1: jedna akcja główna na ekran. Różowy filc, cel co najmniej 40 px. */
+button.btn.rf-cta,a.btn.rf-cta{min-height:40px;padding:8px 18px;font-size:15px;font-weight:700}
+button.btn.rf-cta:not(:disabled),a.btn.rf-cta{background:var(--pink-btn);color:#fff;box-shadow:0 4px 0 var(--pink-d);--rf-stitch:rgba(255,255,255,.46)}
+button.btn.rf-cta:not(:disabled):hover,a.btn.rf-cta:hover{background:var(--pink-btn);color:#fff}
+button.btn.rf-cta:not(:disabled):active,a.btn.rf-cta:active{box-shadow:0 1px 0 var(--pink-d)}
+/* Akcja główna, która wyłącza (Stop awaryjny): rozmiar `rf-cta`, ale czerwień `btn danger` (wzór M13),
+   bo róż znaczy „zrób to”, a czerwień „wyłącz wszystko”. */
+button.btn.danger.rf-cta:not(:disabled),button.btn.danger.rf-cta:not(:disabled):hover{background:var(--bad);color:#fff;box-shadow:0 4px 0 #8f2036}
+button.btn.danger.rf-cta:not(:disabled):active{box-shadow:0 1px 0 #8f2036}
+/* Ustawienia › Wygląd panelu */
+.ui-look-body{padding:8px var(--card-x) 14px}
+/* (koniec sekcji L1) */
+
+/* Zwijak „inset” wstawiony WPROST w kartę (np. Połączenie: „Nazwa i dioda”, „Oszczędzanie baterii”)
+   stał na krawędzi karty, więc jego ścieg nachodził na przeszytą krawędź samej karty. Odsuwamy go
+   o margines karty i dajemy oddech między kolejnymi zwijakami i nad dolną krawędzią. */
+.card>details.cardfold.inset{margin:0 var(--card-x) 0}
+.card>details.cardfold.inset+details.cardfold.inset{margin-top:8px}
+.card>details.cardfold.inset:last-child{margin-bottom:var(--card-y,16px)}

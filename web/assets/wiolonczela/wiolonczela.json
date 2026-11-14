@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Strings/Cello Section/susvib"
+ },
+ "probki": [
+  {
+   "plik": "wiolonczela-1.wav",
+   "nazwa": "susvib_D2_v3_1.wav",
+   "nuta": 50,
+   "root": 49.991,
+   "petla": [
+    1.1625,
+    1.8846
+   ]
+  },
+  {
+   "plik": "wiolonczela-2.wav",
+   "nazwa": "susvib_A2_v3_1.wav",
+   "nuta": 57,
+   "root": 56.951,
+   "petla": [
+    0.7215,
+    1.3238
+   ]
+  },
+  {
+   "plik": "wiolonczela-3.wav",
+   "nazwa": "susvib_E3_v3_1.wav",
+   "nuta": 64,
+   "root": 63.689,
+   "petla": [
+    1.3781,
+    2.287
+   ]
+  }
+ ]
+}

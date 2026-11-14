@@ -1,0 +1,43 @@
+{
+ "sr": 22050,
+ "strefy": true,
+ "zrodlo": {
+  "nazwa": "VSCO 2 Community Edition",
+  "autor": "Versilian Studios LLC (Sam Gossner)",
+  "adres": "https://github.com/sgossner/VSCO-2-CE",
+  "licencja": "CC0-1.0",
+  "katalog": "Woodwinds/Clarinet/susLong"
+ },
+ "probki": [
+  {
+   "plik": "klarnet-1.wav",
+   "nazwa": "DCClar_susLong_D3_v2_rr1_sum.wav",
+   "nuta": 62,
+   "root": 61.996,
+   "petla": [
+    1.2758,
+    1.7321
+   ]
+  },
+  {
+   "plik": "klarnet-2.wav",
+   "nazwa": "DCClar_susLong_A#3_v2_rr1_sum.wav",
+   "nuta": 70,
+   "root": 70.017,
+   "petla": [
+    0.9147,
+    1.2703
+   ]
+  },
+  {
+   "plik": "klarnet-3.wav",
+   "nazwa": "DCClar_susLong_F4_v2_rr1_sum.wav",
+   "nuta": 77,
+   "root": 77.019,
+   "petla": [
+    1.3936,
+    1.7525
+   ]
+  }
+ ]
+}

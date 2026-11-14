@@ -1,0 +1,7 @@
+# Włącza przycisk „Sponsor" GitHuba na stronie repozytorium — to jedyny sposób, żeby prośba
+# o kawę pojawiła się w NAGŁÓWKU repo, obok Watch/Fork/Star. Wszystko poza tym plikiem
+# (przycisk Ko-fi w README, kubek w rogu aplikacji i na stronie projektu) jest naszą grafiką
+# i naszym linkiem; ten przycisk rysuje sam GitHub i bierze adres stąd.
+#
+# Wartością jest NAZWA użytkownika Ko-fi, nie kod z generatora przycisków.
+ko_fi: mastish

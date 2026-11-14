@@ -1,0 +1,161 @@
+{
+ "app": "ribbitflip",
+ "kind": "bundle",
+ "version": 1,
+ "appVersion": "1.0.0",
+ "name": "Egging On (2 kapsle)",
+ "description": "Dwa kapsle jako JEDEN pad Xbox. Lewa ręka toczy jajko lewym drążkiem i hamuje przyciskiem (w Egging On hamowanie siedzi pod kliknięciem lewego drążka), prawa trzyma kamerę i skacze przyciskiem (RT). NOWE: kamera ma przycięty pion (czułość osi Y 0,65×). Zmierzone: pełny przechył w pionie to 0,39 wychylenia drążka, połowiczny 0,06. Na boki zostaje szybko, pion przestaje uciekać przy odruchach.",
+ "cassette": 3,
+ "howto": [
+  "Wczytaj zestaw i rozdaj kapsle do ról: „Toczenie i hamowanie (lewa ręka)” oraz „Skok i kamera (prawa ręka)”.",
+  "Zaznacz „Wczytaj i od razu aktywuj zestaw”. Bez tego konfiguracja wejdzie, ale wyjścia zostaną wyłączone i do gry nie pojedzie nic.",
+  "W grze: lewy kapsel toczy jajko, jego przycisk hamuje. Prawy kręci kamerą, a jego przycisk skacze.",
+  "Przycisków nie musisz sprawdzać: są odczytane z plików samej gry, nie zgadnięte."
+ ],
+ "forApp": "Egging On (Steam)",
+ "author": "RibbitFlip",
+ "rev": 3,
+ "exe": [
+  "egging on.exe"
+ ],
+ "devices": [
+  {
+   "slot": "d0",
+   "name": "Toczenie i hamowanie",
+   "role": {
+    "name": "Toczenie i hamowanie (lewa ręka)",
+    "note": "Przechylasz kapsel, jajko toczy się w tę stronę. Przycisk hamuje."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "egg-brake",
+      "label": "Hamowanie (trzymaj przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 150
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:ls",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "own",
+     "stickBackend": "gamepad",
+     "stickWhich": "left",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 35,
+     "stickExpo": 1.5,
+     "stickInner": 0.08,
+     "stickOuter": 0.05,
+     "stickAccel": 0.7,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 1.0
+    }
+   }
+  },
+  {
+   "slot": "d1",
+   "name": "Skok i kamera",
+   "role": {
+    "name": "Skok i kamera (prawa ręka)",
+    "note": "Przycisk skacze. Przechył kręci kamerą, pion przycięty do 0,65× (pełny = 0,39)."
+   },
+   "setup": {
+    "trigEnabled": true,
+    "rules": [
+     {
+      "id": "egg-jump",
+      "label": "Skok (przycisk)",
+      "enabled": true,
+      "source": {
+       "kind": "button",
+       "any": true,
+       "byte": 1,
+       "bit": 0,
+       "holdMs": 120
+      },
+      "abs": false,
+      "cmp": ">",
+      "threshold": 0,
+      "thresholdHi": null,
+      "neg": false,
+      "extraConditions": [],
+      "match": "all",
+      "behavior": "hold",
+      "intervalMs": 100,
+      "dwellMs": 500,
+      "crossings": 2,
+      "windowMs": 600,
+      "keySpec": "pad:rt",
+      "sequence": "",
+      "glow": true,
+      "led": {
+       "on": false,
+       "ms": 300
+      },
+      "toast": {
+       "on": false,
+       "mode": "fire",
+       "silent": true,
+       "text": ""
+      }
+     }
+    ],
+    "mouse": {
+     "enabled": true,
+     "mode": "stick",
+     "padShare": "d0",
+     "stickBackend": "gamepad",
+     "stickWhich": "right",
+     "stickSource": "filter",
+     "stickMetricX": "roll",
+     "stickMetricY": "pitch",
+     "stickFilterScale": 50,
+     "stickExpo": 1.8,
+     "stickInner": 0.14,
+     "stickOuter": 0.0,
+     "stickAccel": 0.55,
+     "stickInvertX": false,
+     "stickInvertY": false,
+     "stickSensX": 1.0,
+     "stickSensY": 0.65
+    }
+   }
+  }
+ ]
+}

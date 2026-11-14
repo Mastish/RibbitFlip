@@ -1,0 +1,6 @@
+# RibbitFlip: zależności TYLKO deweloperskie (nie trafiają do .exe ani do requirements.txt).
+# Install:  py -m pip install -r requirements-dev.txt
+#
+# tools/build_song_manifests.py — budowanie manifestów pakietów MIDI RibbitBeat (packs/*.json) przy wydaniu:
+pyarrow>=19        # odczyt metadanych i kolumn Parquet zbiorów TiMauzi/imslp-midi-* (Apache-2.0)
+huggingface_hub>=1 # HfApi (lista plików przypiętej rewizji) i HfFileSystem (odczyt zakresowy) (Apache-2.0)

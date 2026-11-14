@@ -1,0 +1,393 @@
+  /* ==================================================================
+     ░░░  FELT SKIN OVERRIDE  ░░░
+     Repaints the app chrome — page, app bar, cards, buttons, dialogs,
+     toasts, device pills — in the light felt / punk / hand-stitched
+     look. The dark-theme rules in 02-06 are left intact; this layer
+     wins purely on source order, so it MUST load after them.
+     ================================================================== */
+
+  /* — base — */
+  html,body{background:var(--bg)}
+  body{background-color:var(--bg);background-image:var(--felt-tex-page);background-repeat:repeat;
+    color:var(--ink);font-family:var(--sans);font-weight:600}
+  h1,h2,h3,h4,h5{font-family:var(--display)}
+  /* The patch face (--rebel) is NOT assigned wholesale to h2/h3, only to specific roles:
+     card title, section title, dialog title — the headings that sit at 15 px or more. Headings
+     inside the guides and the help stay on Baloo 2: they go down to 12.5-15 px, and
+     single-weight Titan One smears at those sizes. */
+  ::selection{background:var(--pink);color:#fff}
+  a{color:var(--pink-d);font-weight:700}a:hover{color:var(--pink)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#d3c7ae;border-radius:8px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* — app bar (dark ink felt) — */
+  header{background:#211f1d;background-image:var(--felt-tex-dark);border-bottom:none;
+    box-shadow:0 6px 0 rgba(0,0,0,.20);padding:11px 18px 14px;gap:13px;z-index:60;
+    padding-inline:max(18px,calc((100% - 1780px)/2 + 18px))}
+  /* BRAND I PRZYCISKI RÓWNO Z TREŚCIĄ. `.rf-app` kończy się na 1780 px i jest wyśrodkowana
+     (20-cols.css), więc na monitorze 1920+ pasek górny stał do 370 px na prawo od wszystkiego,
+     co jest pod nim. `100%`, NIE `100vw`: header jest elementem blokowym, więc 100 % to szerokość
+     body BEZ paska przewijania — dokładnie ta sama miara, po której `margin:0 auto` środkuje
+     `.rf-app`. Tło i ścieg `header::after` zostają na całą szerokość okna. Poniżej 1816 px
+     `max()` wybiera dawne 18 px, a media ≤620 px (10-icons-controls.css) nadal to nadpisuje.
+     WHY: the app bar lined its content up with the window while everything below lines up with
+     the 1780 px content column. */
+  /* The bar is sewn onto the panel with the same stitch the project page uses
+     (docs/index.html): a dashed line just above the bottom edge. Bottom padding raised from
+     11 to 14 px so the stitching does not run under the buttons. */
+  header::after{content:"";position:absolute;left:0;right:0;bottom:4px;pointer-events:none;
+    border-top:2px dashed rgba(255,248,236,.4)}
+  .brand{color:#fff8ec;font-family:var(--display);font-weight:700;font-size:20px;gap:11px;letter-spacing:.3px}
+  .brand .rf-frog{width:38px;height:38px;flex:0 0 auto;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+  .brand .dot{display:none}
+  .brand .rf-word{line-height:1}
+  .brand .rf-word b{color:#fff8ec}.brand .rf-word b .fl{color:var(--pink)}
+  .brand small{display:block;font-family:var(--mono);font-weight:500;font-size:11px;color:var(--lime);margin-top:2px;letter-spacing:.2px}
+  header .fld{color:#cfc6b4}
+  header .ctrl .num,header .fld .num{color:#fff8ec}
+  header input[type=range]{accent-color:var(--pink)}
+  /* app-bar buttons: cream felt chips on the dark strip */
+  header .btn{background:#f4efe4;color:#211f1d;border:none;border-radius:11px;
+    box-shadow:0 4px 0 rgba(0,0,0,.32);font-family:var(--display);font-weight:700}
+  header .btn:hover{background:#fff;transform:translateY(-1px)}
+  header .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.32)}
+  header #recToggle.on{background:var(--bad);color:#fff;box-shadow:0 4px 0 #8f2036}
+  header #langToggle.on{background:var(--pink-btn);color:#fff;box-shadow:0 4px 0 var(--pink-d)}
+  header #langToggle{display:inline-flex;align-items:center;gap:6px}
+  /* PASEK MA ZOSTAĆ JEDNOWIERSZOWY. Poniżej ~1040-1060 px zawijał się na dwa wiersze (77 → 128 px)
+     i „EN" spadało pod logo — a `--topbar-h` to wysokość paska, więc razem z nim schodziła w dół
+     cała reszta strony. Najtańsze 150 px zapasu to etykiety dwóch linków: ikona zostaje, nazwa
+     idzie na `title` (i tak jest tam ustawiona), więc przycisk nadal wiadomo, do czego prowadzi.
+     WHY: dropping two labels buys ~150 px and keeps the app bar on one row down to 960 px. */
+  /* BUDŻET PASKA (UX 261120, F-G0-09). Stan aplikacji (sterowanie, LIVE/Symulacja) ma napis
+     zawsze. Pomoc i linki społeczności („Przewodnik”, „Strona projektu”, „Discord”) mają napis
+     dopiero od 1440 px, niżej samą ikonę z dymkiem: przy 1280 px w pasku zostaje ok. 190 px
+     wolnego miejsca, a trzy napisy zabierają ok. 300. Nazwa dostępna stoi w `aria-label`, więc
+     schowany napis jej nie zabiera. Każdy nowy element paska musi zmieścić się w tym budżecie.
+     WHY: state keeps its words at every width; help and community links go icon-only below 1440 px. */
+  /* UX 261120 L23: „Strona projektu” i „Discord” stoją w okienku „Pomoc i społeczność” (rf-34h),
+     więc tu chowa napis sam przycisk okienka; odnośniki w okienku mają napis zawsze. */
+  @media (max-width:1439px){
+    header #helpBtn .btn-lbl,header #tourBtn .btn-lbl{display:none}
+    header #helpBtn .bic,header #tourBtn .bic{margin-right:0}
+    header #helpBtn,header #tourBtn{padding-left:10px;padding-right:10px}
+  }
+  /* STEROWANIE WSTRZYMANE = MUSZTARDA (UX 261120). Kremowy przycisk przy wstrzymaniu wyglądał jak
+     zwykły przycisk paska, a to stan, który wymaga uwagi: nic nie wychodzi z żadnego modułu.
+     Ciemny tekst na `--amber`, ta sama para, co `#armBtn.live` (08-felt-components.css). Selektor
+     z `header button`, żeby wygrać z `#armBtn:not(.on)` z 08 (ładowanego później).
+     Brak połączenia z aplikacją (rf-08 `rfOfflineSet`) wygasza przycisk: płaski krem bez cienia. */
+  header button#armBtn:not(.on):not(:disabled){background:var(--amber);color:#3a2c08;
+    box-shadow:0 4px 0 rgba(120,80,0,.38);--rf-stitch:rgba(0,0,0,.24)}
+  header button#armBtn:disabled{background:var(--line);background-image:none;color:var(--muted);box-shadow:none;cursor:not-allowed;transform:none;opacity:1}
+  /* live ↔ simulation mode switch — segmented control with a sliding thumb */
+  header #modeToggle.modesw{position:relative;display:inline-flex;align-items:stretch;gap:0;padding:4px;
+    border:none;border-radius:13px;background:#efe6d3;cursor:pointer;font-family:inherit;line-height:1;
+    user-select:none;box-shadow:inset 0 2px 0 rgba(0,0,0,.14),0 2px 0 rgba(0,0,0,.10);transition:background .2s}
+  header #modeToggle.modesw .modesw-seg{position:relative;z-index:2;flex:1 1 0;display:inline-flex;
+    align-items:center;justify-content:center;gap:6px;min-width:94px;padding:6px 12px;border-radius:10px;
+    font-weight:600;font-size:13px;color:#6f6857;white-space:nowrap;transition:color .22s ease}
+  header #modeToggle.modesw .modesw-ic{font-size:14px;filter:grayscale(.45) opacity(.7);transition:filter .22s ease}
+  header #modeToggle.modesw .modesw-thumb{position:absolute;z-index:1;top:4px;bottom:4px;left:4px;
+    width:calc(50% - 4px);border-radius:10px;background:#fff8ec;box-shadow:0 3px 0 rgba(0,0,0,.20);
+    transition:transform .30s var(--rf-ez-overshoot,cubic-bezier(0.34,1.56,0.64,1)),background .22s ease,box-shadow .22s ease}
+  /* live mode active (aria-checked=false) */
+  header #modeToggle.modesw[aria-checked="false"] .modesw-seg.real{color:#1e6f3a}
+  header #modeToggle.modesw[aria-checked="false"] .modesw-seg.real .modesw-ic{filter:none}
+  /* simulation active (aria-checked=true) — thumb slides right and turns amber */
+  header #modeToggle.modesw[aria-checked="true"] .modesw-thumb{transform:translateX(100%);background:#f5a524;box-shadow:0 3px 0 #b9781a}
+  header #modeToggle.modesw[aria-checked="true"] .modesw-seg.sim{color:#5a3d00}
+  header #modeToggle.modesw[aria-checked="true"] .modesw-seg.sim .modesw-ic{filter:none}
+  header #modeToggle.modesw:hover{background:#e7dcc6}
+  header #modeToggle.modesw:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+  header #modeToggle.modesw.busy{opacity:.7;pointer-events:none}
+  @media (prefers-reduced-motion:reduce){header #modeToggle.modesw .modesw-thumb{transition:background .1s,box-shadow .1s}}
+
+  /* ===== In-app dialogs + toasts (used instead of native confirm/alert) ===== */
+  .rfm-backdrop{position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:rgba(24,20,16,.55);backdrop-filter:blur(3px);
+    animation:rfm-fade .18s ease both}
+  @keyframes rfm-fade{from{opacity:0}to{opacity:1}}
+  @keyframes rfm-pop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+  .rfm-card{width:min(440px,100%);background:#faf5ea;background-image:var(--felt-tex-soft,none);
+    border-radius:20px;border:1px solid rgba(0,0,0,.10);
+    box-shadow:0 18px 44px rgba(0,0,0,.36),0 3px 0 rgba(0,0,0,.14);
+    padding:24px 24px 20px;text-align:center;color:#211f1d;font-family:var(--display,inherit);
+    animation:rfm-pop var(--rf-d-pop,220ms) var(--rf-ez-overshoot,cubic-bezier(0.34,1.56,0.64,1)) both}
+  .rfm-ic{width:56px;height:56px;margin:2px auto 12px;border-radius:16px;display:flex;align-items:center;
+    justify-content:center;font-size:28px;background:#efe6d3;box-shadow:inset 0 2px 0 rgba(0,0,0,.10)}
+  .rfm-card.danger .rfm-ic{background:#fbe0dc}
+  .rfm-ic .rfm-bin{width:48px;height:48px;background:var(--ic-bin) center/contain no-repeat;display:inline-block}
+  .rfm-ic:has(.rfm-bin){width:68px;height:68px}   /* delete dialogs (device / profile / axis preset) — bigger, clearer bin */
+  .rfm-card.sim .rfm-ic{background:#fdedcf}
+  .rfm-title{margin:0 0 6px;font-size:19px;font-weight:800;letter-spacing:.2px}
+  .rfm-msg{margin:0 0 18px;font-size:14px;line-height:1.5;color:#4a453d;font-family:var(--body,inherit)}
+  /* Pole nazwy w dialogu (rfModal({input:…})) — dla „Zapisz jako…". Wyrównane do lewej, choć karta
+     jest wyśrodkowana: podpis nad polem, który skacze na środek, czyta się jak nagłówek, a nie jak
+     etykieta tego, co się zaraz wpisze. */
+  .rfm-inrow{display:block;margin:0 0 18px;text-align:left}
+  .rfm-inlbl{display:block;font-size:12px;font-weight:700;color:#6b6459;margin:0 0 5px;font-family:var(--body,inherit)}
+  .rfm-in{width:100%;box-sizing:border-box;font:inherit;font-family:var(--body,inherit);font-size:14px;
+    color:#211f1d;background:#fffdf7;border:2px solid #d8cdb6;border-radius:10px;padding:9px 11px}
+  .rfm-in:focus-visible{outline:2px solid var(--pink-btn,#d4433f);outline-offset:1px;border-color:#c8bb9f}
+  /* Opis obok nazwy (rfModal({textarea:…})) — to samo pole, tylko wyższe i rozciągane w pionie.
+     Poziomo NIE, bo szersze od karty wyszłoby poza dialog. */
+  .rfm-ta{resize:vertical;min-height:64px;line-height:1.45;font-family:var(--body,inherit)}
+  .rfm-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+  .rfm-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .rfm-btn{appearance:none;border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:14px;
+    padding:11px 20px;border-radius:12px;transition:transform .12s ease,background .18s ease,box-shadow .12s ease}
+  .rfm-btn:active{transform:translateY(2px)}
+  .rfm-btn.ghost{background:#e9e0cf;color:#3a352d;box-shadow:0 3px 0 rgba(0,0,0,.14)}
+  .rfm-btn.ghost:hover{background:#efe7d8}
+  .rfm-btn.primary{background:var(--pink-btn);color:#fff;box-shadow:0 4px 0 var(--pink-d)}
+  .rfm-btn.primary:hover{filter:brightness(1.05)}
+  .rfm-btn.danger{background:var(--bad,#d42b28);color:#fff;box-shadow:0 4px 0 #8f2036}
+  .rfm-btn.danger:hover{filter:brightness(1.06)}
+  .rfm-btn:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+  .rfm-btn.primary:focus-visible,.rfm-btn.danger:focus-visible{outline-color:#211f1d}
+  /* restart overlay — full-screen message shown while switching mode */
+  .rfm-restart{position:fixed;inset:0;z-index:9100;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:18px;background:rgba(24,20,16,.72);backdrop-filter:blur(4px);
+    color:#fff8ec;font-family:var(--display,inherit);animation:rfm-fade .2s ease both}
+  .rfm-restart .rfm-spin{width:52px;height:52px;border-radius:50%;border:5px solid rgba(255,248,236,.25);
+    border-top-color:var(--lime,#7dc242);animation:rfm-spin 0.9s linear infinite}
+  @keyframes rfm-spin{to{transform:rotate(360deg)}}
+  .rfm-restart .rfm-rmsg{font-size:18px;font-weight:800;letter-spacing:.3px}
+  .rfm-restart .rfm-rsub{font-size:13px;color:rgba(255,248,236,.7);font-family:var(--body,inherit)}
+  @media (prefers-reduced-motion:reduce){.rfm-card,.rfm-backdrop,.rfm-restart{animation:none}.rfm-restart .rfm-spin{animation-duration:1.6s}}
+  /* The top-right toasts are gone (2026-08-21). They stacked over the app bar, so a line about one
+     thing sat on top of a control you might be reaching for. Everything the app says now comes out
+     of the skull's mouth in the bottom-left corner — see #rfSkullSay.corner in 11-felt-forms-devices.
+     `rfToast()` still exists as a name and forwards there, so no caller had to change. */
+  header #langToggle::before{content:"";width:18px;height:18px;flex:0 0 auto;background:var(--ic-planet) center/contain no-repeat}
+  .pad-sec-h .pad-kill{display:inline-flex;align-items:center;gap:6px}
+  .pad-sec-h .pad-kill .pad-kill-ic{width:18px;height:18px;flex:0 0 auto;background:var(--ic-skull) center/contain no-repeat}
+  .pad-sec-h .pad-kill:hover{color:var(--bad);border-color:var(--bad)}
+  .ov-map-ic{width:18px;height:18px;background-image:var(--ic-axes);vertical-align:-4px;margin-right:5px}
+  .brand .rf-word{display:inline-flex;flex-direction:column;justify-content:center;gap:2px;line-height:1}
+  .brand .rf-wordmark{display:block;height:24px;width:104px;background:var(--ic-wordmark) left center/contain no-repeat}
+
+  /* — badges / pills — */
+  .badge{background:#141312;background-image:var(--felt-tex);border:1px solid #33302a;color:#e7dfcf;
+    border-radius:999px;font-weight:700;padding:7px 13px}
+  .badge .led{background:var(--idle)}
+  .badge.live .led{background:var(--lime);box-shadow:0 0 10px rgba(166,216,97,.8)}
+  .badge.off .led{background:var(--bad);box-shadow:0 0 10px rgba(216,58,92,.7)}
+  .badge.scan .led{background:var(--amber);box-shadow:0 0 10px rgba(234,163,43,.7)}
+  .badge.sim{background:var(--amber);background-image:var(--felt-tex);border:none;color:#3a2c08;
+    box-shadow:0 3px 0 rgba(0,0,0,.18);transform:rotate(-1.5deg);font-weight:800}
+  .badge.mode.seek{background:#141312;border-color:var(--gx);color:#bfe6fb}
+  .badge.mode.volume{background:#141312;border-color:var(--amber);color:#f3dca0}
+
+  /* — buttons (pop out, press in) — */
+  /* `word-spacing:.12em` — spacja w Baloo 2 jest węższa niż w tekście strony, więc dwuwyrazowe
+     napisy na przyciskach („Steruj ręcznie", „Zmień nazwę") sklejały się w jedno słowo. To samo
+     .12em, co przy nagłówkach sekcji (03-triggers `.ed-sec-h`) i przełączniku segmentowym. */
+  button.btn{background:#fff;background-image:var(--felt-tex-soft);color:var(--felt-ink);border:none;
+    border-radius:12px;padding:8px 14px;font-family:var(--display);font-weight:700;word-spacing:.12em;
+    box-shadow:var(--felt-shadow-sm);transition:transform .08s var(--rf-ez-snap),box-shadow .08s,background .12s}
+  button.btn:hover{background:#fff;border-color:transparent}
+  button.btn:active{box-shadow:0 1px 0 rgba(120,90,40,.14)}
+  button.btn.on,button.btn.primary{background:var(--pink-btn);color:#fff;box-shadow:0 4px 0 var(--pink-d)}
+  button.btn.on:hover,button.btn.primary:hover{background:var(--pink-btn)}
+  button.btn.primary:active,button.btn.on:active{box-shadow:0 1px 0 var(--pink-d)}
+  #recToggle.on{background:var(--bad);color:#fff;box-shadow:0 4px 0 #8f2036;animation:pulse 1.2s infinite}
+  button.btn.sm{border-radius:9px;box-shadow:0 3px 0 rgba(120,90,40,.14)}
+  button.btn.sm:active{box-shadow:0 1px 0 rgba(120,90,40,.14)}
+  button.btn.xs{border-radius:8px;box-shadow:0 2px 0 rgba(120,90,40,.14)}
+  .btn.sm.cmd-preset{background:#fff}
+  .btn.sm.cmd-preset.warn{background:var(--amber);color:#3a2c08;box-shadow:0 3px 0 rgba(0,0,0,.14)}
+  /* Links wearing the button skin (#siteLink in the app bar). Everything above is scoped to
+     button.btn, so an <a> has to spell out its own box: inline-flex for the icon, the padding
+     buttons get, and no underline. It must stay AFTER `header .btn` (line ~42) — same
+     specificity, so source order is what decides which background wins. */
+  a.btn{display:inline-flex;align-items:center;text-decoration:none;
+    background:#fff;background-image:var(--felt-tex-soft);color:var(--felt-ink);border:none;
+    border-radius:12px;padding:8px 14px;font-family:var(--display);font-weight:700;font-size:14px;
+    box-shadow:var(--felt-shadow-sm);transition:transform .08s var(--rf-ez-snap),box-shadow .08s,background .12s}
+  a.btn:hover{background:#fff;transform:translateY(-1px)}
+  a.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(120,90,40,.14)}
+  a.btn:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+
+  /* — cards: cream felt + stitched edge + hard shadow — */
+  .wrap{padding:18px 24px;gap:16px}   /* more breathing room around the whole content (esp. left/right) */
+  .card{background:var(--panel);background-image:var(--felt-tex-soft);border:none;border-radius:20px;
+    box-shadow:var(--felt-shadow);position:relative}
+  /* stitched edge hugs the card border (inset 5px) so it never floats across interior text */
+  .card::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:16px;pointer-events:none;z-index:0;opacity:.8}
+  .card>*{position:relative;z-index:1}
+  /* header divider as an INSET pseudo-line: it stops at the vertical stitch (≈7px) instead of running
+     to the card edge, and leaves a clean gap from the box edge (absolute → not a flex item). */
+  .card>.head{background:transparent;border-bottom:none;padding:14px 20px 12px;gap:11px}
+  .card>.head::after{content:"";position:absolute;left:7px;right:7px;bottom:0;border-top:1.5px dashed var(--stitch)}
+  /* Card titles in the patch face — font-weight:400, because Titan One has one weight; 16.5
+     instead of 17.5 px, because its caps are taller than Baloo 2's and at an equal size it
+     reads a whole step larger */
+  .card>.head h2{font-family:var(--rebel);font-size:17px;font-weight:400;letter-spacing:.1px;
+    text-transform:none;color:var(--ink)}
+  /* Exception: in the live-preview rail the card titles are 11 px (05-macro-tabs.css) —
+     Baloo 2 comes back there, because single-weight Titan One smears at that size */
+  .live-rail .card>.head h2{font-family:var(--display);font-weight:700}
+  .card>.head .hint{color:var(--dim);font-weight:600}
+  .card>.head.sub{background:transparent}
+
+  /* — play-pad section — mirrors .card so it reads as one of the group cards:
+       felt paper, stitched edge, header divider. — */
+  .pad-sec{background:var(--panel);background-image:var(--felt-tex-soft);border-radius:20px;
+    box-shadow:var(--felt-shadow);position:relative;margin:0;overflow:hidden;padding-bottom:14px}
+  .pad-sec::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:16px;pointer-events:none;z-index:0;opacity:.8}
+  .pad-sec>*{position:relative;z-index:1}
+  .pad-sec-h{padding:14px 20px 12px;margin:0 0 12px;position:relative}
+  .pad-sec-h::after{content:"";position:absolute;left:7px;right:7px;bottom:0;border-top:1.5px dashed var(--stitch)}
+  .pad-sec-h>b{font-family:var(--rebel);font-size:17px;font-weight:400;letter-spacing:.1px;color:var(--ink)}
+  .pad-sec>.playpads,.pad-sec>.pad-adder,.pad-sec>.sound-editor{margin-left:18px;margin-right:18px}
+
+  /* — Devices hub (single panel above the live preview) — */
+  .devices-panel{background:var(--panel);background-image:var(--felt-tex-soft);border-radius:18px;
+    box-shadow:var(--felt-shadow);position:relative;padding:12px 16px 14px}
+  .devices-panel::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:14px;pointer-events:none;opacity:.75}
+  .devices-panel>*{position:relative;z-index:1}
+  .devices-h{display:flex;align-items:center;gap:9px;margin:0 0 10px}
+  .devices-h b{font-family:var(--rebel);font-size:16px;font-weight:400;color:var(--ink)}
+  .devices-hint{font-size:12px;color:var(--dim);font-weight:600;margin-left:auto}
+  /* the relocated #deviceSel keeps its .devpill styling; here it just wraps as a roomy list */
+  .devices-panel .devsel{display:flex!important;gap:9px;flex-wrap:wrap;align-items:center}
+  /* Single source of truth for device-pill layout: a switch zone (.dp-main) plus full-height
+     action buttons (.dp-act), restyled from the dark bar to this cream felt panel. */
+  .devices-panel .devpill{background:#fff;border:none;color:var(--ink);
+    font-family:var(--display);font-weight:700;font-size:14px;user-select:none;-webkit-user-select:none;
+    border-radius:999px;box-shadow:0 2px 0 rgba(120,90,40,.13);transition:transform .1s,box-shadow .1s,border-color .1s}
+  .devices-panel .devpill:hover{transform:translateY(-1px);--rf-stitch:var(--ink)}
+  /* real device pills: zero the pill padding so the action buttons reach full height + the rounded right edge */
+  .devices-panel .devpill:not(.add){padding:0;gap:0;overflow:hidden;min-height:36px}
+  .devices-panel .devpill .dp-main{display:inline-flex;align-items:center;gap:8px;align-self:stretch;
+    padding:4px 5px 4px 11px;cursor:pointer}
+  .devices-panel .devpill .dp-name{color:var(--ink);font-weight:700;max-width:none}
+  .devices-panel .devpill .dp-act{display:inline-flex;align-items:center;justify-content:center;align-self:stretch;
+    min-width:28px;padding:0 7px;border:none;border-left:1px solid var(--line);background:transparent;color:var(--ink);
+    opacity:.78;cursor:pointer;transition:background .12s,opacity .12s}
+  .devices-panel .devpill .dp-act:hover{opacity:1;background:rgba(0,0,0,.06)}
+  /* THE capsule being configured. Everything in the tabs below belongs to it, so it is not merely
+     "selected" — it is lit: the capsule's own colour, a ring around the whole pill and a chip that
+     says so in words. A tint alone read as "slightly different", which is not enough for a choice
+     that decides where your next click is saved. */
+  /* NO box-shadow ring here: `.devpill.online` carries its own box-shadow (the connection ring,
+     13-dialogs-overview.css), so a second ring would fight it on a connected capsule.
+     The tint, the capsule-coloured border and the EDYTOWANY chip carry the state instead. */
+  /* Nić w kolorze kapsla, nie obwódka: „obszyć" w tym programie znaczy ŚCIEG kilka pikseli
+     w środku (`.card::before`, 14d-buttons.css), a pigułki kapsli jako jedyne w prawej kolumnie
+     nosiły zamiast niego pełną kreskę na krawędzi — obok obszytego panelu, obszytego „Dodaj
+     urządzenie" i obszytych przycisków wyglądały jak wklejone z innego programu. */
+  .devices-panel .devpill.active{background:color-mix(in srgb,var(--dcol) 34%,#fff);
+    --rf-stitch:var(--dcol)}
+  .devices-panel .devpill.active .dp-name{font-weight:800}
+  .devices-panel .devpill.active .dp-act{border-left-color:color-mix(in srgb,var(--dcol) 40%,var(--line))}
+  .dp-edited{display:none}
+  .devices-panel .devpill.active .dp-edited{display:inline-flex;align-items:center;
+    margin-left:2px;padding:2px 7px;border-radius:999px;
+    background:color-mix(in srgb,var(--dcol) 62%,#fff);border:1px solid var(--dcol);
+    font-family:var(--display);font-size:10px;font-weight:600;letter-spacing:.03em;
+    text-transform:uppercase;color:var(--ink);white-space:nowrap}
+  /* Pasek „Aktualnie edytowany" (`.tab-owner`) usunięty 2026-08-30 razem z kodem w rf-11: kapsle
+     przeprowadziły się do przyklejonej prawej kolumny, więc świecąca pigułka jest widoczna zawsze
+     i pasek mówił to samo drugi raz, na najlepszym miejscu ekranu. Reguły w kopii
+     `_backups/260830-plakietka-i-kula/07-felt-core.css`. */
+  /* Faded = inert. An unpaired slot has no capsule behind it, and a capsule on hold sends nothing,
+     so both step back. A MUTED capsule does NOT: it only lost the app's own sound and still drives
+     keys, mouse and MIDI, so greying it out would be a lie about what it is doing. */
+  .devices-panel .devpill.idle,.devices-panel .devpill.paused{opacity:.62}
+  .devices-panel .devpill.paused{filter:grayscale(.55)}
+  .devices-panel .devpill .dp-cap{width:30px;height:30px}
+  .devices-panel .devpill.add{min-height:36px}
+
+  /* — connection cells / stats — */
+  .conngrid{background:transparent;gap:10px;padding:14px var(--card-x)}
+  .cell{background:#fff;background-image:var(--felt-tex-soft);border-radius:13px;padding:11px 13px;
+    box-shadow:0 3px 0 rgba(120,90,40,.07)}
+  .cell .k{color:var(--muted);font-weight:700}
+  .cell .v{color:var(--ink)}
+  .cell .v small{color:var(--dim)}
+  .batt .shell{border-color:var(--green-d)}
+  .batt .shell::after{background:var(--green-d)}
+  .batt .lvl{background:var(--green)}
+  .bars i.on{background:var(--green)}
+
+  /* — recessed "screen" surfaces (canvases and log panes) — */
+  canvas.scope,canvas.btnlane,.mscope,canvas.pose3d,.pad-canvas{
+    background:#f6f1e5;background-image:none;border:2px dashed #d3c7ae;border-radius:12px;
+    box-shadow:inset 0 2px 6px rgba(120,100,60,.10)}
+  .feed,.cmd-log,.log{background:#f6f1e5;border:2px dashed #d3c7ae;border-radius:12px;
+    box-shadow:inset 0 2px 6px rgba(120,100,60,.08)}
+  .raw-last{background:#f6f1e5;border-bottom:none;border-radius:10px;margin:var(--card-y) var(--card-x) 0;
+    border:2px dashed #d3c7ae;color:var(--pink-d)}
+  .raw-last .lbl{color:var(--dim)}
+
+  /* — 6-axis readouts — */
+  .axes{background:transparent;gap:10px;padding:12px var(--card-x)}
+  .axis{background:#fff;background-image:var(--felt-tex-soft);border-radius:13px;padding:11px 13px;
+    box-shadow:0 3px 0 rgba(120,90,40,.07)}
+  .axis .nm{color:var(--ink)}
+  .axis .grp{color:var(--dim)}
+  .axis .raw{color:var(--ink)}
+  .axis .cv{color:var(--muted)}
+  .axis .meter{background:#efe6d3;border:1px solid #d3c7ae}
+  .axis .meter .mid{background:rgba(120,100,60,.28)}
+
+  /* — chips / legend — */
+  .chip{background:#fff;background-image:var(--felt-tex-soft);border:none;border-radius:9px;
+    color:var(--ink);font-weight:700;box-shadow:0 2px 0 rgba(120,90,40,.10)}
+  .chip.off{opacity:.4;filter:grayscale(.5)}
+  .legend .chip{box-shadow:0 2px 0 rgba(120,90,40,.10)}
+
+  /* — status bytes — */
+  .bytes{padding:14px var(--card-x)}
+  .byte{background:#fff;background-image:var(--felt-tex-soft);border:none;border-radius:11px;
+    box-shadow:0 3px 0 rgba(120,90,40,.08)}
+  .byte .bi{color:var(--dim)}
+  .byte .hx{color:var(--ink)}
+  .byte .dec{color:var(--muted)}
+  .byte .bit{background:#e2d8c2}
+  .byte .bit.one{background:var(--c-seek);box-shadow:0 0 6px rgba(31,147,201,.5)}
+  .stnote{color:var(--dim)}.stnote b{color:var(--muted)}
+
+  /* — raw feed rows — */
+  .row .t{color:var(--dim)}
+  .row .hex{color:var(--ink)}
+  /* Tag na własnym zielonym talerzyku: --green-d na tym tle to dopiero 4,15:1, więc atrament
+     schodzi o krok w --ink. Bez nowego tokenu — to jedno miejsce, nie paleta; mieszanie dwóch
+     istniejących tokenów zamiast czwartej wartości szesnastkowej w arkuszu. Udział 60 %, nie 70:
+     przy 70 % wychodzi rgb(59,93,30) i 5,7:1 — mniej, niż daje sam krok ku --ink (6,1). 60 % to
+     rgb(55,84,30) i 6,4:1, czyli ten sam odcień, o który chodziło, tylko faktycznie ciemniejszy.
+     WHY: on its own green wash --green-d only reaches 4.15:1; 60% toward --ink gives 6.4:1
+     (70% stopped at 5.7:1, short of the step this rule is here to make). */
+  .row .tag.imu{background:rgba(47,158,87,.16);
+    color:color-mix(in srgb,var(--green-d) 60%,var(--ink))}
+  .row .tag.stat{background:rgba(234,163,43,.20);color:var(--warn-ink)}
+  .row .tag.unk{background:rgba(216,58,92,.16);color:var(--pink-d)}
+
+  /* — gestures / counters — */
+  .lastact{background:#fff;border:none;box-shadow:0 3px 0 rgba(120,90,40,.08)}
+  .lastact.flash{background:rgba(236,26,131,.08);box-shadow:0 3px 0 rgba(236,26,131,.18)}
+  .cnt{background:#fff;border:none;box-shadow:0 2px 0 rgba(120,90,40,.08)}
+  .cnt .n{color:var(--muted)}
+
+  /* — footer — */
+  footer{background:transparent;border-top:2px dashed var(--stitch);color:var(--dim);
+    font-family:var(--mono);text-align:center}
+  footer b{color:var(--muted)}
+  /* „Zgłoś problem" — a patch, like the tab buttons: felt paper and a hard shadow it presses into.
+     Quiet on purpose. It has to be findable from every tab without behaving like a call to action. */
+  .foot-help{border:none;border-radius:999px;background:#faf6ee;background-image:var(--felt-tex-soft);
+    box-shadow:var(--felt-shadow-sm);font-family:var(--display);font-weight:500;font-size:12px;
+    color:var(--muted);transition:transform .1s var(--rf-ez-snap),box-shadow .1s,color .1s}
+  .foot-help:hover{color:var(--ink);transform:translateY(-1px)}
+  .foot-help:active{transform:translateY(1px);box-shadow:none}
+  @media (prefers-reduced-motion:reduce){.foot-help{transition:none}
+    .foot-help:hover,.foot-help:active{transform:none}}
+  .tt{background:#fff8ecf5;border:2px dashed #d3c7ae;color:var(--ink);box-shadow:0 8px 0 rgba(120,90,40,.12)}
+

@@ -1,0 +1,15 @@
+{
+ "wersja": 1,
+ "uklady": [
+  {
+   "id": "moj_bas",
+   "nazwa": "Sam bas",
+   "melodia_gracza": "spiew",
+   "zrodla": {
+    "bass": 1,
+    "drums": 0.5,
+    "midi_bass": 0
+   }
+  }
+ ]
+}

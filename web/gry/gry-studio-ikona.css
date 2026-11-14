@@ -1,0 +1,87 @@
+/* RibbitBeat: ikona Studia instrumentów (js/studio-ikona.js), 10-18.
+   Pulpit z czarnego filcu w holograficznej obwódce sekretnej karty (.rz-sekretny w gry-nagrody.css): ekran kineskopu z widmem
+   (płótno), dwie filcowe gałki ze Studia, trzy suwaki, klawiatura i naklejka „Sekret”. Wymiary w em: rozmiar ustawia font-size
+   korzenia (.sti-duza 10px = 300×210 na karcie koła, .sti-mala w przycisku menu liczona od fontu przycisku).
+   Płótno, gałki, suwaki i klawisze rusza jedna pętla JS (transformacje, bez zmian układu); CSS kręci tylko obwódką i połyskiem
+   naklejki, i to wyłącznie na karcie koła i w widocznym menu, nigdy przy ograniczonym ruchu, w menu .statyczne ani z klasą
+   .stoi (grafika „wydajność”). */
+@property --holo{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes studioHolo{to{--holo:360deg}}
+@keyframes stiNaklejka{to{background-position:220% 0}}
+
+.sti{position:relative;width:30em;height:21em;font-size:10px;isolation:isolate;flex:none;pointer-events:none;user-select:none;
+  text-align:left;text-shadow:none;letter-spacing:normal}
+.sti-pulpit{position:absolute;left:1.2em;right:1.2em;top:2.1em;bottom:1.2em;border-radius:1.8em;padding:1.4em 1.5em 1.35em;
+  display:grid;grid-template-columns:minmax(0,1fr) 7.4em;grid-template-rows:minmax(0,1fr) 4.4em;gap:1.1em 1.2em;
+  grid-template-areas:"ekran kontrolki" "klawisze klawisze";
+  background-color:#171615;background-image:linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)),var(--felt);
+  box-shadow:inset 0 .12em 0 rgba(255,255,255,.08)}
+/* holograficzna obwódka = brzeg naklejki (pod filcem, bo .sti izoluje warstwy), pod nią twardy cień i niebieska poświata sekretu */
+.sti-pulpit::before{content:"";position:absolute;inset:-.6em;z-index:-1;border-radius:2.4em;
+  background:conic-gradient(from var(--holo,0deg),#ff7ad9,#ffd84a,#7dffb0,#6ad1ff,#b48cff,#ff7ad9);
+  box-shadow:0 .55em 0 rgba(0,0,0,.45),0 0 2em .35em rgba(154,214,255,.55)}
+.sti-pulpit::after{content:"";position:absolute;inset:.55em;border:.17em dashed rgba(255,122,217,.8);border-radius:1.3em;pointer-events:none}
+
+/* ekran kineskopu: zielonkawa czerń, ramka, szkło z odblaskiem, liniami i winietą nad płótnem */
+.sti-ekran{grid-area:ekran;position:relative;min-height:0;border-radius:1.1em;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 42%,#14281c 0%,#0a150e 62%,#040805 100%);
+  box-shadow:0 0 0 .32em #2b2825,0 0 0 .5em #0b0a0a}
+.sti-widmo{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sti-szklo{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(ellipse 60% 48% at 26% 14%,rgba(255,255,255,.2),rgba(255,255,255,0) 70%),
+    repeating-linear-gradient(to bottom,rgba(0,0,0,.26) 0 1px,rgba(0,0,0,0) 1px 3px),
+    radial-gradient(ellipse at center,rgba(0,0,0,0) 56%,rgba(0,0,0,.6) 100%);
+  box-shadow:inset 0 0 1.2em rgba(0,0,0,.8),inset 0 0 0 .12em rgba(255,255,255,.07)}
+
+/* gałki = te same filcowe pokrętła co w Studiu (assets/knobs); suwaki z filcowym kapturkiem */
+.sti-kontrolki{grid-area:kontrolki;display:flex;flex-direction:column;align-items:center;gap:1em;min-height:0}
+.sti-galki{display:flex;gap:.6em}
+.sti-galka{width:3.4em;height:3.4em;border-radius:50%;background:#0b0a0a;box-shadow:0 .28em 0 rgba(0,0,0,.6),0 0 0 .14em #2b2825}
+.sti-galka i{display:block;width:100%;height:100%;background:center/contain no-repeat;transform:rotate(-135deg)}
+.sti-suwaki{flex:1 1 auto;min-height:0;display:flex;gap:.8em;justify-content:center;align-self:stretch}
+.sti-suwak{position:relative;width:1.25em;border-radius:.62em;background:#0b0a0a;box-shadow:inset 0 0 0 .13em #34302c}
+.sti-suwak::before{content:"";position:absolute;left:50%;top:.55em;bottom:.55em;width:.16em;margin-left:-.08em;border-radius:.08em;background:#4a443d}
+.sti-suwak i{position:absolute;left:-.38em;right:-.38em;top:0;height:1.25em;border-radius:.34em;background:var(--k,#ec1a83);
+  box-shadow:0 .2em 0 rgba(0,0,0,.55),inset 0 0 0 .1em rgba(0,0,0,.28)}
+.sti-suwak i::after{content:"";position:absolute;left:.24em;right:.24em;top:50%;height:.16em;margin-top:-.08em;border-radius:.08em;background:#fff7e6}
+
+/* klawiatura: 14 białych z filcu, czarne nad szczelinami; grany klawisz świeci limonką */
+.sti-klawisze{grid-area:klawisze;position:relative;display:flex;gap:.16em;padding:.28em;border-radius:.65em;background:#0b0a0a;box-shadow:inset 0 0 0 .13em #34302c}
+.sti-klawisze>i{flex:1 1 0;border-radius:.12em .12em .4em .4em;background-color:#f3ecdf;background-image:var(--felt-soft);
+  box-shadow:inset 0 -.3em 0 rgba(0,0,0,.16);transition:background-color .06s}
+.sti-klawisze>i.on{background-color:var(--lime);transform:translateY(.12em);box-shadow:inset 0 -.15em 0 rgba(0,0,0,.2),0 0 .9em .1em rgba(166,216,97,.75)}
+.sti-klawisze>b{position:absolute;top:.28em;height:56%;width:calc((100% - .56em) / 14 * .56);
+  left:calc(.28em + (100% - .56em) / 14 * var(--x) - (100% - .56em) / 14 * .28);
+  border-radius:0 0 .26em .26em;background:#262321;box-shadow:0 .16em 0 rgba(0,0,0,.6),inset 0 0 0 .08em #3d3833}
+
+/* naklejka „Sekret”: holograficzna folia jak sekretna karta, ciemny napis (kontrast > 10:1 na każdym kolorze folii) */
+.sti-naklejka{position:absolute;top:.1em;right:0;z-index:2;transform:rotate(8deg);padding:.42em .78em .34em;border-radius:.6em;
+  font:400 1.6em/1 var(--rebel);letter-spacing:.07em;text-transform:uppercase;color:#141414;white-space:nowrap;
+  background:linear-gradient(110deg,#ff9ad9,#ffe58a 25%,#9effc9 50%,#9ad6ff 75%,#ff9ad9) 0 0/220% 100%;
+  box-shadow:0 0 0 .14em #141414,0 0 0 .3em #fff,0 .35em 0 .3em rgba(0,0,0,.4)}
+.sti-naklejka::before{content:attr(data-napis)}
+
+/* mała (przycisk w menu): sam ekran i dwie gałki jedna nad drugą */
+.sti-mala{height:18em}
+.sti-mala .sti-pulpit{top:1.8em;padding:1.35em 1.4em;grid-template-columns:minmax(0,1fr) 4.4em;grid-template-rows:minmax(0,1fr);
+  grid-template-areas:"ekran kontrolki"}
+.sti-mala .sti-pulpit::after{border-width:1px}
+.sti-mala .sti-galki{flex-direction:column;gap:.9em}
+.sti-mala .sti-galka{width:4.4em;height:4.4em}
+.sti-mala .sti-naklejka{font-size:2.1em;top:-.6em;right:-.7em}   /* nad obwódką, nie na górnej gałce */
+
+/* karta koła: szersze pole ikony; przy dublu (dwie karty) mniejsza */
+.kolo-ikona:has(>.sti){width:300px;height:210px;max-width:100%}
+.kolo-wyniki:has(.drugi) .kolo-ikona:has(>.sti){width:180px;height:126px}
+.kolo-wyniki:has(.drugi) .kolo-ikona>.sti{font-size:6px}
+
+/* przycisk w menu: ikona to naklejka wystająca za prawą krawędź; padding-right (em przycisku) trzyma tekst z dala od niej */
+#btnStudio.ma-ikone{padding-right:3.4em}
+#btnStudio .sti{position:absolute;z-index:1;top:50%;right:-11em;font-size:.17em;transform:translateY(-50%) rotate(5deg)}   /* z-index: nad szwem ::after przycisku */
+
+@media (prefers-reduced-motion:no-preference){
+  .kolo-wynik .sti:not(.stoi) .sti-pulpit::before,
+  #lobby[data-ekran="menu"] .menu:not(.statyczne) #btnStudio .sti:not(.stoi) .sti-pulpit::before{animation:studioHolo 4s linear infinite}
+  .kolo-wynik .sti:not(.stoi) .sti-naklejka,
+  #lobby[data-ekran="menu"] .menu:not(.statyczne) #btnStudio .sti:not(.stoi) .sti-naklejka{animation:stiNaklejka 3.2s linear infinite}
+}

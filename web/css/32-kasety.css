@@ -1,0 +1,168 @@
+/* KASETY ZESTAWÓW (rf-28e, 2026-11-22): zestaw wygląda jak filcowa kaseta magnetofonowa.
+   Cztery miejsca: przycisk i okienko wyboru przy zapisie (+ siatka w kreatorze posta), kaseta na
+   liście Biblioteki, duża kaseta z opisem od twórcy i „Co robi" w panelu opisu, kaseta w oknie
+   importu oraz scena wczytania (kaseta wsuwa się do filcowej kieszeni, szpule kręcą się, „Wczytane").
+   Kasety to obrazki (web/assets/kasety/N-160.png i N-360.png); tu jest tylko ich oprawa i ruch. */
+
+/* ---------- wspólne ---------- */
+.rf-kaseta{display:block;height:auto;user-select:none;-webkit-user-drag:none}
+
+/* ---------- przycisk w pasku zapisu ---------- */
+/* sama miniatura, bez napisu (rf-28e `_kasSaveRowButton`): przycisk z napisem spychał „Wymianę"
+   do drugiego wiersza przy oknie 1100 px */
+.setupbar .kas-btn{display:inline-flex;align-items:center;justify-content:center;padding-left:7px;padding-right:7px}
+/* znak zerowej szerokości (rf-28e) trzyma wysokość linii tekstu, więc przycisk ma wysokość sąsiadów.
+   Prawdziwy węzeł, nie ::after — pseudoelementy przycisku rysują jego ścieg (14d-buttons.css). */
+.setupbar .kas-btn .kas-btn-strut{display:inline-block;width:0;overflow:hidden}
+.setupbar .kas-btn .kas-btn-img{width:32px;margin:-4px 0;flex:0 0 auto;
+  filter:drop-shadow(0 1px 1px rgba(40,25,10,.28));transform:rotate(-4deg);
+  transition:transform .18s cubic-bezier(.2,1.3,.4,1)}
+.setupbar .kas-btn:hover .kas-btn-img,.setupbar .kas-btn[aria-expanded="true"] .kas-btn-img{transform:rotate(0) scale(1.08)}
+
+/* ---------- okienko wyboru ---------- */
+.kas-pop{position:fixed;z-index:9500;width:404px;max-width:calc(100vw - 16px);padding:14px 14px 12px;
+  border-radius:18px;background:var(--panel);background-image:var(--felt-tex-soft);
+  box-shadow:0 6px 0 rgba(120,90,40,.16),0 18px 40px rgba(43,39,35,.22)}
+.kas-pop::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);border-radius:13px;pointer-events:none}
+.kas-pop-h{position:relative;font-family:var(--rebel);font-weight:400;font-size:15px;line-height:1.2;color:var(--ink);margin:2px 6px 3px}
+.kas-pop-s{position:relative;font-size:12px;font-weight:600;line-height:1.4;color:var(--dim);margin:0 6px 10px}
+@media (prefers-reduced-motion:no-preference){
+  .kas-pop{animation:kas-pop-in .2s cubic-bezier(.2,1.3,.4,1) both}
+}
+@keyframes kas-pop-in{from{opacity:0;transform:translateY(-6px) scale(.96)}to{opacity:1;transform:none}}
+
+/* ---------- siatka ośmiu kaset (okienko i kreator posta) ---------- */
+.kas-grid{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.kas-opt{position:relative;display:block;margin:0;padding:5px;border:2px solid transparent;border-radius:12px;
+  background:transparent;cursor:pointer;min-width:0;
+  transition:transform .16s cubic-bezier(.2,1.3,.4,1),background-color .14s,border-color .14s}
+.kas-opt img{width:100%;filter:drop-shadow(0 2px 1px rgba(60,40,20,.22))}
+.kas-opt:hover{transform:translateY(-2px) rotate(-1.5deg);background:var(--panel2)}
+.kas-opt:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+.kas-opt.on{border-color:var(--pink);background:rgba(236,26,131,.08)}
+/* wybrana: filcowy znacznik z zaznaczeniem (ta sama ikona, co zaznaczone pole w panelu) */
+.kas-opt.on::after{content:"";position:absolute;top:-9px;right:-9px;width:24px;height:24px;
+  background:var(--ic-cbon) center/contain no-repeat;filter:drop-shadow(0 1px 1px rgba(60,40,20,.3))}
+@media (prefers-reduced-motion:reduce){.kas-opt{transition:none}.kas-opt:hover{transform:none}}
+/* kreator posta: jedna linia ośmiu mniejszych kaset pod opisem i instrukcją */
+.kas-rfs .kas-grid{grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;margin-top:4px;max-width:600px}
+.kas-rfs .kas-opt{padding:3px;border-radius:10px}
+.kas-rfs .kas-opt.on::after{width:19px;height:19px;top:-7px;right:-7px}
+
+/* ---------- lista Biblioteki: kaseta w miejscu ikony modułu ---------- */
+.lib-row .lib-kaseta{width:54px;flex:0 0 auto;margin-top:1px;transform:rotate(-2deg);
+  filter:drop-shadow(0 2px 1px rgba(60,40,20,.22));transition:transform .18s cubic-bezier(.2,1.3,.4,1)}
+.lib-row:hover .lib-kaseta,.lib-row.sel .lib-kaseta{transform:rotate(0) scale(1.04)}
+@media (prefers-reduced-motion:reduce){.lib-row .lib-kaseta{transition:none}}
+
+/* ---------- szpule: okrągłe wycinki obrazka kasety (rf-28e `_kasReels`, położenie w procentach) ---------- */
+.kas-reel{position:absolute;aspect-ratio:1;border-radius:50%;background-repeat:no-repeat;pointer-events:none;
+  -webkit-mask:radial-gradient(circle closest-side,#000 84%,transparent 100%);
+          mask:radial-gradient(circle closest-side,#000 84%,transparent 100%)}
+@keyframes kas-spin-loop{to{transform:rotate(360deg)}}
+
+/* ---------- panel opisu: duża kaseta + opis od twórcy ---------- */
+.kas-hero{display:grid;grid-template-columns:minmax(112px,150px) minmax(0,1fr);gap:14px;align-items:start;margin:10px 0 2px}
+.kas-hero-fig{position:relative;display:block;width:100%;margin:0;padding:2px 0 0 2px;border:0;background:none;
+  font:inherit;color:inherit;text-align:left;border-radius:12px}
+.kas-hero-tape{position:relative;transform:rotate(-2deg);transition:transform .22s cubic-bezier(.2,1.3,.4,1)}
+.kas-hero-img{width:100%;filter:drop-shadow(0 4px 2px rgba(60,40,20,.22))}
+/* najechanie: kaseta prostuje się, a szpule kręcą się jak w magnetofonie */
+.kas-hero-fig:hover .kas-hero-tape,.kas-hero-fig:focus-visible .kas-hero-tape{transform:rotate(0) scale(1.03)}
+.kas-hero-fig:hover .kas-reel,.kas-hero-fig:focus-visible .kas-reel{animation:kas-spin-loop 1.4s linear infinite}
+/* kaseta własnego zestawu = przycisk „Zmień kasetę": łatka pojawia się przy najechaniu i fokusie */
+.kas-hero-btn{cursor:pointer}
+.kas-hero-btn:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+.kas-hero-chip{position:absolute;left:50%;bottom:9%;transform:translate(-50%,4px);opacity:0;white-space:nowrap;
+  padding:3px 9px;border-radius:999px;background:var(--pink-btn);color:var(--panel);
+  font-family:var(--display);font-weight:800;font-size:11px;line-height:1.3;box-shadow:0 2px 0 var(--pink-d);
+  transition:opacity .16s,transform .2s cubic-bezier(.2,1.3,.4,1);pointer-events:none}
+.kas-hero-btn:hover .kas-hero-chip,.kas-hero-btn:focus-visible .kas-hero-chip,
+.kas-hero-btn[aria-expanded="true"] .kas-hero-chip{opacity:1;transform:translate(-50%,0)}
+/* po zmianie kasety nowa wyskakuje sprężyście */
+.kas-hero-new .kas-hero-tape{animation:kas-hero-pop .55s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes kas-hero-pop{0%{transform:rotate(-8deg) scale(.82);opacity:.4}60%{transform:rotate(1.5deg) scale(1.05);opacity:1}100%{transform:rotate(-2deg) scale(1)}}
+@media (prefers-reduced-motion:reduce){
+  .kas-hero-tape,.kas-hero-chip{transition:none}
+  .kas-hero-fig:hover .kas-reel,.kas-hero-fig:focus-visible .kas-reel,.kas-hero-new .kas-hero-tape{animation:none}
+}
+.kas-hero-t{min-width:0}
+.kas-hero-h{padding-top:0}
+.kas-hero .lib-ddesc{margin-top:2px}
+.kas-hero-who{margin-top:6px;font-size:11.5px;font-weight:700;color:var(--dim)}
+.kas-none{font-style:italic}
+
+/* ---------- panel opisu: „Co robi" ---------- */
+.kas-co-body{margin-top:2px}
+.kas-co-wait{font-size:12.5px;font-weight:600;color:var(--dim);font-style:italic;padding:2px 2px 4px}
+.kas-co-cap+.kas-co-cap{margin-top:10px;padding-top:8px;border-top:1.5px dashed var(--line)}
+.kas-co .ts-role{margin:4px 0 2px;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2)}
+.kas-co .ts-role-n{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--ink)}
+.kas-co .ts-role-ic{flex:0 0 auto;font-size:14px;line-height:1}
+.kas-co .ts-role-d{font-size:12px;line-height:1.45;color:var(--dim);margin-top:2px;padding-left:21px}
+.kas-co .ts-role-m{font-size:12px;line-height:1.45;color:var(--ink);margin-top:3px}
+.kas-co .ts-role-n~.ts-role-m{padding-left:21px}
+.kas-co .ts-norule{font-size:12px;color:var(--dim);font-style:italic;padding:4px 2px 0}
+/* reguła z nazwą od autora: nazwa na górze, warunek i akcja drobniej pod nią */
+.kas-rule{flex-direction:column;align-items:stretch;gap:2px}
+.kas-rule-n{font-size:12.5px;font-weight:800;color:var(--ink);line-height:1.3}
+.kas-rule-d{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--dim)}
+.kas-rule-d b{font-size:10.5px;font-weight:600;color:var(--dim)}
+
+/* ---------- okno importu: kaseta obok słów autora ---------- */
+#rfSafe .ts-kasabout{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;align-items:start;
+  margin:8px 18px 2px;flex:0 0 auto}
+#rfSafe .ts-kasabout .ts-kas-img{width:118px;margin-top:6px;transform:rotate(-2deg);filter:drop-shadow(0 3px 2px rgba(60,40,20,.22))}
+#rfSafe .ts-kasabout .ts-about{margin:0}
+#rfSafe .ts-kasabout .kas-none{color:var(--dim)}
+
+/* ---------- scena wczytania ----------
+   Kolejność: kieszeń wjeżdża (0–0,2 s) → kaseta zagląda do kieszeni, cofa się (antycypacja),
+   wskakuje z przestrzałem i dosiada sprężyście (0,12–0,9 s) → szpule kręcą się (0,74–1,7 s) →
+   „Wczytane" wyskakuje (od 1,08 s) → całość odpływa w górę (1,9–2,14 s). Nic tu nie łapie myszy. */
+.kas-load{position:fixed;left:50%;top:86px;z-index:9300;pointer-events:none;transform:translateX(-50%)}
+.kas-deck{position:relative;display:flex;align-items:center;gap:16px;padding:11px 20px 11px 11px;border-radius:20px;
+  background-color:#211f1d;background-image:var(--felt-tex-dark);color:#ede6da;
+  box-shadow:0 7px 0 rgba(0,0,0,.2),0 16px 34px rgba(0,0,0,.28);
+  animation:kas-deck-in .22s cubic-bezier(.2,1.3,.4,1) both,kas-deck-out .24s ease-in 1.9s forwards}
+.kas-deck::before{content:"";position:absolute;inset:5px;border:1.5px dashed rgba(237,230,218,.5);border-radius:15px;pointer-events:none}
+.kas-slot{position:relative;display:flex;align-items:center;justify-content:center;width:166px;height:128px;
+  border-radius:12px;overflow:hidden;background:rgba(0,0,0,.4);
+  box-shadow:inset 0 3px 9px rgba(0,0,0,.6),inset 0 -1px 0 rgba(255,255,255,.07);
+  animation:kas-seat .22s ease-out .6s both}   /* „klik" dosiadania: kieszeń drga, gdy kaseta wchodzi na miejsce */
+@keyframes kas-seat{0%{transform:none}35%{transform:translateX(2px)}70%{transform:translateX(-1px)}100%{transform:none}}
+.kas-tape{position:relative;flex:0 0 auto;width:150px;transform-origin:50% 60%;animation:kas-tape-in .8s .12s both}
+.kas-tape-img{width:150px;filter:drop-shadow(0 3px 2px rgba(0,0,0,.5))}
+.kas-tape .kas-reel{animation:kas-spin .96s cubic-bezier(.45,0,.25,1) .74s both}
+.kas-txt{position:relative;min-width:132px}
+.kas-done{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:21px;line-height:1.1;color:#ede6da;
+  transform-origin:20% 50%;animation:kas-pop .46s 1.08s both}
+/* „✓" rysuje filcowy font ikon panelu (01-assets-tokens.css) — bez tła, żeby ikona miała czym oddychać */
+.kas-check{display:inline-block;font-size:27px;line-height:1;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+.kas-name{margin-top:6px;max-width:210px;font-size:12.5px;font-weight:700;color:rgba(237,230,218,.8);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:kas-fade .3s 1.22s both}
+@keyframes kas-deck-in{from{opacity:0;transform:translateY(-12px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes kas-deck-out{to{opacity:0;transform:translateY(-10px) scale(.97)}}
+@keyframes kas-tape-in{
+  0%  {transform:translateX(-108%) rotate(-4deg);animation-timing-function:cubic-bezier(.3,.7,.4,1)}
+  20% {transform:translateX(-80%) rotate(-4deg);animation-timing-function:cubic-bezier(.45,0,.55,1)}
+  34% {transform:translateX(-90%) rotate(-7deg);animation-timing-function:cubic-bezier(.6,0,.2,1)}
+  62% {transform:translateX(6%) rotate(2.2deg);animation-timing-function:cubic-bezier(.4,0,.6,1)}
+  77% {transform:translateX(-2.6%) rotate(-.9deg);animation-timing-function:cubic-bezier(.4,0,.6,1)}
+  89% {transform:translateX(.9%) rotate(.3deg);animation-timing-function:cubic-bezier(.4,0,.6,1)}
+  100%{transform:none}}
+@keyframes kas-spin{from{transform:rotate(0)}to{transform:rotate(620deg)}}
+@keyframes kas-pop{
+  0%  {opacity:0;transform:scale(.5) rotate(-6deg);animation-timing-function:cubic-bezier(.3,.7,.4,1)}
+  55% {opacity:1;transform:scale(1.12) rotate(2deg);animation-timing-function:cubic-bezier(.4,0,.6,1)}
+  78% {transform:scale(.95) rotate(-1deg);animation-timing-function:cubic-bezier(.4,0,.6,1)}
+  100%{opacity:1;transform:none}}
+@keyframes kas-fade{from{opacity:0}to{opacity:1}}
+@keyframes kas-fadeout{to{opacity:0}}
+/* Ograniczony ruch: kaseta stoi od razu w kieszeni, scena tylko łagodnie się pojawia i znika. */
+.kas-still .kas-deck{animation:kas-fade .25s both,kas-fadeout .3s ease-in 1.75s forwards}
+.kas-still .kas-tape,.kas-still .kas-reel,.kas-still .kas-done,.kas-still .kas-name,.kas-still .kas-slot{animation:none}
+@media (prefers-reduced-motion:reduce){
+  .kas-deck{animation:kas-fade .25s both,kas-fadeout .3s ease-in 1.75s forwards}
+  .kas-tape,.kas-tape .kas-reel,.kas-done,.kas-name,.kas-slot{animation:none}
+}

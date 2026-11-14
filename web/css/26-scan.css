@@ -1,0 +1,914 @@
+/* ==================================================================================================
+   SKANER EKRANU — wygląd modułu.
+
+   Trzy warstwy, bo skaner rysuje w trzech miejscach naraz:
+     1. KARTA — dwie kolumny: po lewej ramka podglądu z piaskownicą i paskami narzędzi, po prawej
+        zestawy i pokrętła. Tokeny i ścieg jak w każdej innej karcie (07-felt-core).
+     2. SCENA — warstwa NAD całą stroną (`position:fixed`), na której lądują paski, pola, radar
+        i ślady po kliknięciach. Leży nad wszystkim, ale maluje wyłącznie wewnątrz prostokąta
+        ramki podglądu, bo całą geometrię bierze z `ekran`. `pointer-events:none`, więc nigdy
+        nie zjada kliknięcia — a to jest w tym module ważniejsze niż gdzie indziej.
+     3. PIASKOWNICA — udawany pulpit. Świadomie NIE wygląda jak RibbitFlip: ma wyglądać jak
+        Windows, bo to w Windows skaner ma docelowo klikać.
+   ================================================================================================== */
+
+/* ------------------------------------------------------------------ karta */
+.sk-card .sk-body { display: flex; gap: 14px; padding: var(--card-y) var(--card-x) 16px; align-items: flex-start; }
+.sk-lewa { flex: 1 1 auto; min-width: 0; }
+/* 400 px, nie 340 (16.09): kolumna pokręteł jest kolumną SUWAKÓW, a te im szersze, tym łatwiej
+   nimi trafić. Ramka podglądu oddaje te 60 px bez szkody, bo od tej samej
+   zmiany bierze proporcje ekranu i tak czy inaczej dobiera sobie wysokość. */
+.sk-prawa { flex: 0 0 400px; max-width: 400px; }
+
+/* ---------------------------------------------------------------- PODGLĄD JEDZIE ZE STRONĄ
+   Podgląd ekranu jedzie ze stroną w dół (tak jak przy konfiguracji koła wyboru), więc jest cały
+   czas widoczny.
+
+   ⚠️ `position:sticky` STAŁO TU OD POCZĄTKU I NIE DZIAŁAŁO — ta sama cicha pułapka, co przy scenie
+   koła (03-triggers.css) i przy mapie Kontrolera (14c): `.card{overflow:hidden}` z 02-base robi
+   z karty POJEMNIK PRZEWIJANIA, a lepki element trzyma się najbliższego takiego pojemnika. Ten
+   nigdy się nie przewija, więc lepkość nie ma względem czego zadziałać. Nic tego nie zgłasza:
+   reguła jest poprawna, klasa się nalicza, efektu nie ma. Lekarstwo to `overflow:clip` NA TEJ
+   JEDNEJ KARCIE — przycina tak samo, ale pojemnika przewijania nie tworzy.
+
+   Drugi powód, dla którego to nie działało: lepka kolumna była WYŻSZA OD OKNA (mieściła zestawy,
+   dziennik i raport treningu), a kolumna wyższa od okna nie ma jak stać w oknie. Dlatego po lewej
+   został sam podgląd z paskami przycisków, a reszta pojechała na prawo.
+
+   `top` liczy się od dolnej krawędzi WSZYSTKICH lepkich pasków nad kartą — `--rf-sticky-top`
+   z 22-modtabs.css, ta sama zmienna, co w kole, myszy i kontrolerze. Bez media query: podgląd ma
+   być widoczny zawsze, a nie tylko na wysokim oknie.
+   ⚠️ Stało tu `calc(var(--topbar-h) + 46px)`, czyli ZGADYWANA wysokość paska modułu. Pasek ma
+   75 px, więc podgląd parkował pod nim, a pasek stanu skanera malował po nazwie modułu
+   i nieładnie na nią nachodził. Wysokość jest
+   teraz mierzona raz dla całej aplikacji, a nie wpisywana z pamięci w każdym arkuszu osobno. */
+#scanCard { overflow: clip; }
+.sk-lewa { position: sticky; top: var(--rf-sticky-top, 166px); align-self: flex-start; }
+
+.sk-stage {
+  /* Wyższa niż 420 px (do 11.09): w niskiej ramce pasek przebiega całą wysokość w ułamku
+     sekundy i nie da się na niej niczego wyćwiczyć — a to jest główne zastosowanie tej ramki. */
+  position: relative; height: 520px; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--line); background: #171c25;
+  /* Ramka bierze proporcje ekranu, który udaje (rf-50l). Gdy przez sufit wysokości wychodzi
+     węższa niż kolumna, ma stać na jej środku, a nie przy lewej krawędzi. */
+  margin-inline: auto;
+  /* ⚠️ SUFIT SZEROKOŚCI, BEZ KTÓREGO RAMKA WYCHODZI NAD KOLUMNĘ POKRĘTEŁ (21.09).
+     Błąd: skaner otwarty ze schowanymi bocznymi panelami po ich rozwinięciu zawijał interfejs,
+     a ekran wchodził NAD UI po jego prawej.
+
+     Skąd się to bierze: przy obciętej sufitem wysokości rf-50l nadaje ramce JAWNĄ szerokość
+     w pikselach (`stage.style.width`), policzoną pod ówczesną szerokość kolumny. Rozwinięcie
+     paneli bocznych zwęża `.sk-lewa`, ale liczba w stylu zostaje — a `.sk-lewa` ma `min-width: 0`,
+     więc kolumna kurczy się pod nią i ramka wystaje w prawo. Ponieważ jest POZYCJONOWANA
+     (`position: relative`), maluje się przy tym NAD niepozycjonowaną `.sk-prawa`, czyli nad
+     pokrętłami i chipami plansz.
+
+     Ta jedna linijka jest pasem: procenty liczą się od kolumny, więc jawna szerokość nigdy jej
+     nie przekroczy, a skurczenie ramki budzi `ResizeObserver` i wysokość przelicza się pod nową
+     szerokość. Szelkami jest obserwowanie RODZICA ramki w rf-50l — patrz tam. */
+  max-width: 100%;
+}
+/* Wysokość ramki liczy rf-50l (`_sktloSufit`): ramka bierze szerokość kolumny, a przyklejona
+   kolumna po przewinięciu mieści ją razem z SYGNAŁ i Stop (od 720 px w dół do 160 px).
+   Przy bardzo niskim oknie (1280×720) pasek stanu mówi jednym wierszem: faza i opis obok siebie,
+   opis ucięty wielokropkiem. Każde 16 px pod ramką to 16 px ramki więcej. */
+@media (max-height: 780px) {
+  .sk-hud { padding: 4px 12px; min-height: 30px; }
+  .sk-hud .hud-lewo { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  .sk-hud .hud-opis { margin-top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .sk-hud .hud-faza { white-space: nowrap; }
+  .sk-hud .hud-srodek { flex: 0 0 auto; }
+  .sk-hud .hud-prawo { flex: 0 1 auto; min-width: 0; }
+  .sk-hud .hud-skroty { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+.sk-sandbox { position: absolute; inset: 0; }
+/* ZRZUT EKRANU GRY POD PODGLĄDEM (14.09, rf-50l). Leży NAD piaskownicą i ją zakrywa, bo udawany
+   pulpit pod obrazem gry byłby tylko szumem — a razem z nim znikają jego ikony jako cele
+   dociągania (patrz `_scanOdswiezCele`). Położenie i rozmiar ustawia JS: warstwa kryje BAZĘ
+   obszaru, czyli cały pulpit albo wycinek jednego monitora w ramce podglądu.
+   `100% 100%`, nie `contain`: zrzut całego ekranu ma te same proporcje co ekran, więc rozciągnięcie
+   „na styk" jest tym, co utrzymuje zgodność obrazka z liczbami obszaru. */
+.sk-tlo {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 1;
+  background-repeat: no-repeat; background-position: center; background-size: 100% 100%;
+  display: none; pointer-events: none;
+}
+.sk-stage.sk-ma-tlo .sk-tlo { display: block; }
+/* ⚠️ `.pu-pulpit`, a nie `.sk-sandbox`: piaskownica PODMIENIA klasę swojego korzenia przy budowie
+   (`korzen.className = 'pu-pulpit'` w rf-50e), więc klasa z HTML-a karty żyje tylko do pierwszego
+   `zbuduj()`. Selektor po `#scanSandbox` byłby odporny, ale nie zadziałałby w piaskownicy katalogu
+   prac, gdzie ten element nazywa się inaczej. Obie klasy dla pewności. */
+.sk-stage.sk-ma-tlo .sk-sandbox,
+.sk-stage.sk-ma-tlo .pu-pulpit { visibility: hidden; }
+/* Plik nad podglądem — ta sama ramka, co przy upuszczaniu zestawu na okno. */
+.sk-stage.sk-tlo-celuje { outline: 3px dashed var(--pink-btn); outline-offset: -4px; }
+/* Gumka: prostokąt wyciągany myszą po zrzucie. Rysuje się TYLKO w trakcie przeciągania — gotowy
+   obszar pokazuje scena (`sc-obszar`), żeby w podglądzie i nad pulpitem był jeden i ten sam. */
+.sk-gumka {
+  position: absolute; z-index: 6; display: none; pointer-events: none;
+  border: 2px solid var(--pink-btn); background: color-mix(in srgb, var(--pink-btn) 18%, transparent);
+  border-radius: 4px;
+}
+/* POZOSTAŁE SKANERY TEJ KONFIGURACJI (16.09, rf-50k). Obszar sekcji, którą się właśnie edytuje,
+   rysuje scena — pełnym obrysem i z wypełnieniem. Te tutaj są tylko tłem decyzji („gdzie pracują
+   pozostałe"), więc idą cieńszą kreską i w kolorze swojej pigułki. Warstwa leży W RAMCE, nad
+   zrzutem (z-index 1), pod gumką (6) — i przycina ją `overflow:hidden` samej ramki, więc żaden
+   prostokąt nie wyjdzie na pokrętła obok. */
+.sk-cienie { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.sk-cien {
+  position: absolute; border: 1.5px dashed var(--sek, var(--pink)); border-radius: 4px;
+  background: color-mix(in srgb, var(--sek, var(--pink)) 7%, transparent);
+}
+/* Podpis W ŚRODKU prostokąta, nie nad nim: sekcja przyklejona do górnej krawędzi ekranu miałaby
+   podpis poza ramką, czyli niewidoczny dokładnie wtedy, gdy prostokątów jest kilka. Ciemne tło
+   z białym napisem, bo na bursztynie i zieleni biały tekst byłby nie do odczytania — barwę niesie
+   kreska z lewej i sam obrys. */
+.sk-cien-lbl {
+  position: absolute; left: 0; top: 0; max-width: 100%; box-sizing: border-box;
+  font: 800 10px/1.25 var(--mono); padding: 3px 6px 3px 5px;
+  border-radius: 3px 0 5px 0; border-left: 3px solid var(--sek, var(--pink));
+  background: rgba(16, 14, 12, .78); color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* ZDANIA „Naciśnij SYGNAŁ…" NAD OBRAZEM JUŻ NIE MA (16.09) — mówi je pasek stanu pod ramką.
+   Dwie ramki zasłaniały podgląd. Pudełko siedziało 62 px nad dolną krawędzią podglądu i zakrywało pas wgranego zrzutu gry
+   dokładnie wtedy, gdy się na nim wyznacza obszar skanowania. */
+
+.sk-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.sk-rozpychacz { flex: 1; }
+.sk-bar-tytul { font-family: var(--display); font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+/* Grupka = podpis razem ze swoimi przyciskami. Zawijanie paska łamie wtedy CAŁE grupy, a nie
+   zostawia napisu „Podgląd obszaru" nad pustym miejscem, z przyciskami wiersz niżej. */
+.sk-grupka { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+/* ============================================================ PLANSZE (WIDOKI GRY)
+   Pasek na dole do zarządzania ekranami był nieczytelny, a przyciski wyglądały inaczej
+   w zależności od aktywnego ekranu.
+
+   CO BYŁO NIE TAK. Jeden rząd niósł cztery sprawy naraz (spis, nazwa, zrzut, miejsce skanera)
+   w kolumnie szerokiej na 636 px. Przyciski są elastyczne, więc zamiast się zawinąć — KURCZYŁY
+   SIĘ, łamiąc napis „Wgraj zrzut…" na dwie linie; sąsiad obok zostawał jednolinijkowy i rząd
+   stawał się schodkami. Do tego połowa kontrolek miała `display:none`, dopóki nie wybrano ekranu,
+   więc każde kliknięcie w spis przestawiało szerokości i przesuwało przyciski pod kursorem.
+
+   CO JEST TERAZ. Trzy krótkie rzędy zamiast jednego długiego, każdy o jednym temacie: nagłówek
+   (co to jest + gdzie pracuje skaner), spis plansz, wybrana plansza. Nic się nie kurczy
+   (`flex: 0 0 auto` + `white-space: nowrap`), a kontrolki bez zastosowania są WYGASZONE, nie
+   chowane — rząd ma zawsze tę samą wysokość i te same przyciski w tych samych miejscach. */
+.sk-plansze { border-top: 1px dashed var(--stitch); margin-top: 8px; padding-top: 8px;
+  display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+/* ⚠️ `nowrap` W NAGŁÓWKU, a nie `wrap`: zawijanie we flexie decyduje się PRZED kurczeniem, więc
+   rząd z jednym długim zdaniem łamał się na dwie linie, choć zdanie umie się skrócić. Tu ma się
+   skrócić właśnie ono — reszta nagłówka to tytuł i przełącznik, których uciąć nie wolno. */
+.sk-pl-glowa { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; min-width: 0; }
+/* Jedno zdanie o tym, czym jest plansza — stoi przy tytule, bo tu pada pierwsze pytanie
+   („ekran? przecież mam jeden"). Przy wąskim oknie ucina się wielokropkiem zamiast zawijać. */
+.sk-pl-lead { font-size: 11px; color: var(--muted); min-width: 0; flex: 0 1 auto;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-pl-glowa .sk-grupka { flex: 0 0 auto; }
+.sk-pl-rzad { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.sk-plansze .sk-zrz-pigulki { flex: 1 1 auto; }
+.sk-pl-akcje { flex: 0 0 auto; gap: 6px; }
+/* ⚠️ TU MIESZKA CAŁA POPRAWKA „przyciski wyglądają inaczej": bez `flex: 0 0 auto` przycisk
+   oddaje szerokość sąsiadom i łamie własny napis. */
+.sk-pl-btn { flex: 0 0 auto; white-space: nowrap; min-height: 28px; }
+/* JEDNA WYSOKOŚĆ DLA WSZYSTKIEGO W RZĘDZIE. Pole tekstowe rośnie od `padding` plus 2 px ramki
+   z arkusza filcowego, przycisk od swojego `padding` — bez tej linijki rząd ma trzy wysokości
+   (30 / 29 / 27 px) i wygląda na poskładany z dwóch różnych pasków. */
+.sk-plansze .sk-zrz-nazwa, .sk-plansze .sk-pl-num { height: 28px; padding-top: 0; padding-bottom: 0; }
+/* Wygaszone przyciski rysuje wspólny styl `button.btn:disabled` (14d), bez lokalnego `opacity`. */
+.sk-pl-lbl { font: 800 10px var(--display); letter-spacing: .3px; text-transform: uppercase;
+  color: var(--muted); flex: 0 0 auto; }
+/* Rozdzielczość ekranu, z którego pochodzi plansza. Dwa wąskie pola i znak mnożenia — czytelne
+   jako jedna liczba („1920×1080"), a nie jako dwa niezależne ustawienia. */
+.sk-pl-wym { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.sk-pl-num { width: 66px; flex: 0 0 auto; font-family: var(--mono); font-size: 11.5px;
+  padding: 5px 6px; text-align: right; }
+.sk-pl-num::-webkit-outer-spin-button, .sk-pl-num::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0; }
+.sk-pl-num { -moz-appearance: textfield; appearance: textfield; }
+/* Liczba wzięta z monitora, a nie wpisana przez człowieka — bledsza, bo to podpowiedź, nie wybór. */
+.sk-pl-num.sk-pl-auto { color: var(--muted); }
+.sk-pl-x, .sk-pl-px { font-size: 11px; color: var(--muted); flex: 0 0 auto; }
+/* Podpis pod rzędami: co jest na podglądzie i czego się od człowieka oczekuje. Wolno mu się
+   zawinąć — to jedyne miejsce w tym pasku, które ma coś do powiedzenia zdaniem. */
+.sk-pl-opis { margin: 0; font-size: 11px; line-height: 1.45; color: var(--muted); }
+/* Segment w pasku, nie w kolumnie pokręteł: nie rozpycha się na całą szerokość i nie zawija. */
+.sk-segment-sm { flex-wrap: nowrap; }
+.sk-segment-sm .sk-seg { flex: 0 0 auto; min-width: 0; padding: 5px 10px; }
+.sk-sig { font-weight: 800; letter-spacing: .4px; }
+/* SYGNAŁ (UX 261120 L4d): czarny filc jak wybrany segment (D5). To udawany przycisk kapsla, a nie
+   akcja główna, więc nie jest różowy; róż ma tylko „Uruchom nad pulpitem” (`.rf-cta`). */
+.sk-card button.btn.sk-sig, .sk-card button.btn.sk-sig:hover {
+  min-height: 40px; padding: 8px 18px; font-size: 15px;
+  background: var(--felt-ink); background-image: var(--felt-tex-dark); color: var(--panel);
+  --rf-stitch: color-mix(in srgb, var(--panel) 50%, transparent);
+}
+.sk-est { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+/* W pasku z SYGNAŁEM szacunek ustępuje miejsca akcji głównej: skraca się, zamiast zrzucać
+   „Uruchom nad pulpitem” do drugiego rzędu (L4d, 1280×720). Pełne zdanie jest w `title`. */
+.sk-bar > .sk-est { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-count { font-family: var(--display); font-size: 12px; padding: 5px 6px; border-radius: 8px; border: 1.5px solid var(--line); }
+/* WYBÓR PLANSZY pod SYGNAŁEM (L4d): podpis, pigułki, „Wgraj planszę…” i „Wyśrodkuj kapsel”. */
+.sk-pl-pasek .sk-pl-wybor { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.sk-pl-pasek .sk-zrz-pigulki { flex: 1 1 auto; min-width: 0; }
+
+/* PIĘTRA 2 I 3 (L4d). Sekcje pól i blok sygnału to filcowe `cardfold inset` (08); tu tylko odstępy.
+   „Zaawansowane” na dole karty dzieli się na bloki z małym nagłówkiem, bez drugiego zwijania. */
+.sk-prawa > .cardfold.inset, #scanFields > .cardfold.inset { margin-bottom: 8px; }
+.sk-sek-tytul { font: inherit; }
+.sk-zaaw-tytul { font-family: var(--display); font-size: 11px; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .4px; margin: 4px 0 6px; }
+.sk-zaaw-blok, .sk-zaaw-grupa { margin-bottom: 12px; }
+.sk-zaaw-grupa[hidden] { display: none; }
+.sk-zaaw .sk-plansze { margin-bottom: 12px; }
+.sk-zaaw .sk-bar { margin-top: 0; }
+
+/* ============================================================ SKANER JEST NA PULPICIE
+   Tryby »na pulpicie« i »na zrzucie / w symulacji« są rozdzielone: widać jeden albo drugi,
+   a UI przestawia się tak, żeby wynagrodzić to, że lewy panel »podglądu« jest wtedy nieaktywny.
+
+   Nieaktywna ramka podglądu nie jest tylko brzydka — jest KŁAMLIWA. Piaskownica z ikonami wygląda
+   identycznie wtedy, gdy pasek po niej jedzie, i wtedy, gdy skanuje się coś zupełnie innego nad
+   pulpitem. Dlatego ramka nie zostaje „wygaszona na szaro": SCHODZI, a jej miejsce dostają dwie
+   rzeczy — zdanie o tym, co stoi nad pulpitem (z wyłącznikiem), i pokrętła, które rozsypują się
+   na tyle kolumn, ile się zmieści.
+
+   ⚠️ KLASA SIEDZI NA KARCIE (`#scanCard.sk-na-pulpicie`), nie na kolumnie — bo przestawia OBIE
+   kolumny naraz, a jedna nie może zmienić szerokości drugiej. Nadaje ją `_sktloUklad` w rf-50l. */
+.sk-pilot { display: none; }
+.sk-na-pulpicie .sk-stage { display: none; }
+/* Pasek stanu schodzi RAZEM z ramką: jest jej podpisem, a nad pulpitem opisywałby podgląd,
+   którego nie ma (stan tamtego skanera mówi panel pilota). */
+.sk-na-pulpicie .sk-hud { display: none; }
+.sk-na-pulpicie .sk-tylko-symulacja { display: none; }
+/* Lepkość zdejmujemy razem z ramką: przyklejała się kolumna, w której stał PODGLĄD (żeby jechał
+   ze stroną w dół). Panel pilota ma kilka wierszy i nie ma po co podróżować, a przyklejony
+   zostawiałby pod sobą pustą kolumnę na całą wysokość pokręteł. */
+.sk-na-pulpicie .sk-lewa { position: static; flex: 0 0 300px; max-width: 300px; }
+/* Miejsce po ramce idzie do pokręteł — inaczej „przestawienie układu" znaczyłoby tylko tyle, że
+   po lewej jest teraz dziura. */
+.sk-na-pulpicie .sk-prawa { flex: 1 1 auto; max-width: none; }
+/* Pokrętła w tyle kolumnach, ile się zmieści. Każda sekcja (`.sk-fold`) to całość, więc siatka
+   nie ma czego złamać w środku; `align-items:start` trzyma je przy górnej krawędzi, bo zwinięta
+   sekcja ma trzy razy mniej wysokości niż rozwinięta. */
+.sk-na-pulpicie #scanFields {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 0 10px; align-items: start;
+}
+.sk-na-pulpicie .sk-pilot { display: block; }
+/* Panel pilota — ten sam ścieg, co karty pokręteł, i kropka stanu jak w pigułkach modułów. */
+.sk-pilot {
+  border: 1.5px dashed var(--stitch); border-radius: 12px; background: var(--panel2);
+  padding: 12px 14px;
+}
+.sk-pilot-glowa { display: flex; align-items: center; gap: 8px; }
+.sk-pilot-tytul { font-family: var(--display); font-weight: 800; font-size: 13px; }
+/* Kropka pulsuje TYLKO wtedy, gdy ruch coś znaczy — a znaczy „nad pulpitem stoi okno". Przy
+   `prefers-reduced-motion` zostaje sama kropka, bez pulsu (reguła niżej). */
+.sk-pilot-kropka {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--amber); flex: 0 0 auto;
+  box-shadow: 0 0 0 3px rgba(234, 163, 43, .2); animation: sk-pilot-puls 2.4s ease-in-out infinite;
+}
+@keyframes sk-pilot-puls {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(234, 163, 43, .2); }
+  50% { box-shadow: 0 0 0 6px rgba(234, 163, 43, .06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-pilot-kropka { animation: none; }
+}
+.sk-pilot-stan { font-size: 12px; font-weight: 700; margin: 8px 0 0; line-height: 1.45; }
+.sk-pilot-opis { font-size: 11px; color: var(--muted); margin: 6px 0 10px; line-height: 1.5; }
+
+/* ------------------------------------------------------- pasek stanu skanera */
+/* PODPIS POD RAMKĄ, NIE PŁACHTA NA OBRAZIE (16.09). Pasek leżał na własnej warstwie `fixed`,
+   dosuwanej co klatkę do górnej krawędzi podglądu — czyli zjadał pas obrazu tam, gdzie wyznacza
+   się obszar na wgranym zrzucie gry („te dwie ramki zasłaniają mi preview"). Teraz jest zwykłym
+   elementem karty tuż pod ramką: nie ma czego zasłaniać, jedzie z lepką kolumną i nie trzeba go
+   ani pozycjonować, ani chować przy przewijaniu. Scena skanera go nie dosięgnie — `_scanPrzytnij`
+   tnie ją do prostokąta ramki. Nad pulpitem pasek stoi NA obrazie (własne `#hud`
+   w skaner-nakladka.html), bo tam nie ma pod czym stanąć. */
+.sk-hud {
+  pointer-events: none; display: flex; align-items: center; gap: 14px; padding: 7px 12px;
+  margin-top: 6px; border-radius: 10px; background: #171c25; color: #efe9dd;
+  border: 1px solid var(--line); min-height: 34px;
+}
+.sk-hud .hud-lewo { min-width: 220px; }
+.sk-hud .hud-faza { font-weight: 800; font-size: 13px; }
+.sk-hud .hud-opis { font-size: 11px; color: #9aa2ad; margin-top: 1px; }
+.sk-hud[data-faza="biegnie"] .hud-faza { color: var(--amber); }
+.sk-hud[data-faza="gotowe"] .hud-faza { color: var(--green); }
+.sk-hud[data-faza="odpoczywa"] .hud-faza { color: #9aa2ad; }
+.sk-hud .hud-srodek { flex: 1; display: flex; align-items: center; gap: 10px; }
+.sk-hud .hud-kropki { display: flex; gap: 5px; }
+.sk-hud .hud-kropka { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #4a505a; }
+.sk-hud .hud-k-zrobiona { background: var(--green); border-color: var(--green); }
+.sk-hud .hud-k-teraz { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(234, 163, 43, .22); }
+.sk-hud .hud-nawrot { font-size: 10.5px; color: #9aa2ad; font-family: var(--mono); }
+.sk-hud .hud-prawo { display: flex; align-items: center; gap: 10px; }
+.sk-hud .hud-skroty { font-size: 10.5px; color: #8b939e; }
+.sk-hud .hud-skroty b { color: #efe9dd; font-family: var(--mono); }
+.sk-hud .hud-lampka { width: 12px; height: 12px; border-radius: 50%; background: #333840; transition: background .12s; }
+.sk-hud .hud-l-sygnal { background: var(--amber); box-shadow: 0 0 12px var(--amber); }
+.sk-hud .hud-l-ok { background: var(--green); box-shadow: 0 0 12px var(--green); }
+.sk-hud .hud-l-zle { background: var(--bad); box-shadow: 0 0 12px var(--bad); }
+.sk-hud .hud-l-cofniecie { background: var(--gx); box-shadow: 0 0 12px var(--gx); }
+
+/* ---------------------------------------------------------------- pola ustawień */
+/* Sekcje się ZWIJAJĄ — jak w karcie koła. Dwadzieścia pięć pokręteł jedno pod drugim dawało kartę
+   na 2582 px, przez którą trzeba było przewinąć całą dostępność, żeby dojść do dźwięku. */
+/* Stary wygląd sekcji zostaje tylko tam, gdzie panel rysuje się bez pięter (okno nad pulpitem). */
+.sk-fold:not(.cardfold) { border: 1.5px dashed var(--stitch); border-radius: 10px; margin-bottom: 8px; background: var(--panel); }
+.sk-fold:not(.cardfold)[open] { background: var(--panel2); }
+.sk-fold-body { padding: 10px 12px 4px; }
+.sk-sekcja, .sk-sek {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer;
+  list-style: none; border-radius: 9px;
+}
+.sk-sekcja::-webkit-details-marker { display: none; }
+.sk-sekcja:hover { background: #efe6d2; }
+.sk-sekcja::after {
+  content: "›"; margin-left: auto; font-size: 15px; color: var(--muted);
+  transform: rotate(90deg); transition: transform .16s;
+}
+.sk-fold[open] > .sk-sekcja::after { transform: rotate(-90deg); }
+.sk-sek { cursor: default; }
+.sk-sek-ikona { font-size: 14px; }
+.sk-sek-ikona-obraz { display: inline-block; width: 18px; height: 18px; background: center / contain no-repeat; vertical-align: -4px; }
+.sk-sek-nazwa { font-weight: 800; font-size: 11px; letter-spacing: .3px; text-transform: uppercase; color: var(--muted); }
+.sk-wiersz { margin-bottom: 12px; }
+.sk-wiersz.sk-ukryte { display: none; }
+.sk-gora { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+.sk-nazwa { font-size: 12px; font-weight: 700; flex: 1; }
+.sk-odczyt { font-size: 11px; font-family: var(--mono); color: var(--pink); font-weight: 700;
+  display: flex; align-items: baseline; gap: 3px; }
+/* POLE DO WPISANIA WARTOŚCI SPOZA SUWAKA (16.09) — wygląda jak dotychczasowy odczyt, bo nim jest;
+   różnica polega na tym, że da się w nie wpisać. Strzałki chowamy: liczba zmienia się suwakiem
+   albo z klawiatury (↑/↓ działają i bez nich), a dwa mikroskopijne trójkąty przy każdym z ponad
+   dwudziestu pokręteł byłyby ścianą szumu. */
+/* POLE DO WPISANIA WARTOŚCI SPOZA SUWAKA (16.09). Wygląda jak każde inne pole w aplikacji — i tak
+   ma być: pudełko z ramką mówi „tu można wpisać", a o to właśnie chodziło w zgłoszeniu.
+   ⚠️ DWIE PUŁAPKI SPECYFICZNOŚCI, obie kosztowały po kwadransie:
+     • `11-felt-forms-devices.css` styluje wszystkie pola przez selektor z `!important`, więc tło,
+       kolor i ramki BIORĄ SIĘ STAMTĄD — nie ma sensu ich tu powtarzać (przegrają).
+     • `02-base.css` i `10-icons-controls.css` stylują suwaki przez `input[type="range"]`, czyli
+       selektorem MOCNIEJSZYM od pojedynczej klasy. Dlatego `.sk-suwak { width:100% }` przegrywało
+       z `width:120px` z bazy i suwaki skanera od zawsze miały 120 px zamiast całej kolumny —
+       stąd zgłoszenie „zrób szersze". Selektor z typem to naprawia. */
+input[type="number"].sk-odczyt-pole {
+  width: 5.2em; min-width: 0; text-align: right; font: 700 11px var(--mono);
+  padding: 2px 5px; -moz-appearance: textfield;
+}
+/* Strzałki chowamy: liczbę zmienia się suwakiem albo z klawiatury (↑/↓ działają i bez nich),
+   a dwa mikroskopijne trójkąty przy każdym z dwudziestu czterech pokręteł to ściana szumu. */
+input[type="number"].sk-odczyt-pole::-webkit-outer-spin-button,
+input[type="number"].sk-odczyt-pole::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.sk-odczyt-jed { font-size: 11px; font-family: var(--mono); color: var(--pink); font-weight: 700; }
+.sk-opis { font-size: 10.5px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+/* SUWAK SZEROKI I WYSOKI — szerszych suwaków łatwiej się używa. Szerokość daje kolumna (`.sk-prawa` poszerzona do 400 px), a wysokość
+   `input[type=range]` to POLE TRAFIENIA: sam tor zostaje cienki, ale chwyta się go z dwa razy
+   większego pasa. Tandem: `accent-color` zostawia rysowanie gałki przeglądarce, więc nie psujemy
+   ani wyglądu w trybie ciemnym, ani obwódki skupienia. */
+input[type="range"].sk-suwak { width: 100%; accent-color: var(--pink); height: 32px; cursor: pointer; }
+.sk-segment { display: flex; gap: 5px; flex-wrap: wrap; }
+.sk-seg {
+  position: relative;
+  flex: 1; min-width: 62px; font-family: var(--display); font-size: 11px; font-weight: 700; padding: 6px 8px;
+  border-radius: 8px; border: 1.5px dashed var(--stitch); background: var(--panel2); cursor: pointer; color: var(--muted);
+  transition: background .12s, color .12s, box-shadow .08s;
+}
+.sk-seg:hover { background: #efe6d2; }
+/* WYBRANY = CZARNY FILC ZE ŚCIEGIEM, jak każdy segment aplikacji (decyzja D5, wzór w
+   08-felt-components.css `.seg button.on`). Od 14.09 do 20.11 stał tu róż, ale róż znaczy w tej
+   aplikacji „naciśnij mnie" (akcja główna), więc wybrana pozycja i najważniejszy przycisk ekranu
+   wyglądały tak samo. Kremowy napis, kremowa nić i twardy cień odróżniają ją od wygaszonego pola.
+   Ścieg jest PSEUDOELEMENTEM kilka pikseli WEWNĄTRZ krawędzi, nie obwódką na niej — tak samo jak
+   w całej rodzinie `.btn`, i z tego samego powodu: linia na samej krawędzi czyta się jak ramka
+   dorysowana wokół napisu. Promień 5 px to promień przycisku (8) minus wcięcie (3). */
+.sk-seg::after {
+  content: ""; position: absolute; inset: 3px; border-radius: 5px; pointer-events: none;
+  border: 1.5px dashed transparent; transition: border-color .12s ease;
+}
+.sk-seg-wybrany, .sk-seg-wybrany:hover {
+  background: var(--felt-ink); background-image: var(--felt-tex-dark); color: var(--panel);
+  border-color: var(--felt-ink); border-style: solid; box-shadow: 0 3px 0 rgba(0, 0, 0, .3);
+}
+.sk-seg-wybrany::after { border-color: color-mix(in srgb, var(--panel) 50%, transparent); }
+.sk-seg-wybrany:active { box-shadow: 0 1px 0 rgba(0, 0, 0, .3); transform: translateY(2px); }
+.sk-wybor { width: 100%; font-family: inherit; font-size: 12px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: #fff; }
+.sk-kolor {
+  width: 100%; height: 34px; padding: 2px; border: 1.5px solid var(--line); border-radius: 8px;
+  background: #fff; cursor: pointer;
+}
+.sk-kolor::-webkit-color-swatch-wrapper { padding: 0; }
+.sk-kolor::-webkit-color-swatch { border: 0; border-radius: 5px; }
+.sk-przel { width: 48px; height: 25px; border-radius: 13px; background: #ddd2bb; border: 0; position: relative; cursor: pointer; transition: background .18s; }
+.sk-przel.sk-wl { background: var(--green); }
+.sk-przel-galka { position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: #fff; transition: transform .18s; }
+.sk-wl .sk-przel-galka { transform: translateX(23px); }
+
+/* Edytor menu akcji: kafelek w menu albo poza nim. */
+.sk-akcje { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.sk-akcja {
+  display: flex; align-items: center; gap: 6px; text-align: left; font-family: var(--display); font-size: 11px;
+  padding: 6px 8px; border-radius: 8px; border: 1.5px dashed var(--stitch); background: var(--panel2);
+  color: var(--muted); cursor: pointer;
+}
+.sk-akcja:hover { background: #efe6d2; }
+.sk-akcja-wl { background: #e8f5df; border-color: var(--green); border-style: solid; color: var(--ink); font-weight: 700; }
+.sk-akcja-nazwa { flex: 1; }
+.sk-akcja-skrot { font: 700 9px var(--mono); opacity: .55; }
+
+/* ----------------------------------------------------------------- zestawy
+   W KARCIE ICH JUŻ NIE MA (11.09) — zestawy są pozycjami biblioteki modułu. Wygląd zostaje,
+   bo `RFScan.ui.zestawy` żyje dalej w piaskownicy z katalogu prac (`260910-skanowanie`), która
+   biblioteki nie ma i pasek jest tam jedyną drogą do zmiany profilu. */
+.sk-zestawy { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+.ui-zestaw {
+  font-family: var(--display); text-align: left; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+  border: 1.5px dashed var(--stitch); background: var(--panel2);
+}
+.ui-zestaw:hover { background: #efe6d2; }
+.ui-zestaw.ui-wybrany { border-color: var(--pink); border-style: solid; background: #fde8f2; }
+.ui-zestaw-nazwa { font-weight: 800; font-size: 11.5px; }
+.ui-zestaw-opis { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+
+/* ----------------------------------------------------- czym sterujesz skanerem (rf-50i)
+   Sekcja wyzwalaczy nie miała do 12.09 ANI JEDNEJ własnej reguły — jechała na `.sk-wybor`
+   (`width:100%`) i na przełączniku 48×25 px, więc wiersz rozjeżdżał się na trzy linijki.
+   Układ: trzy pudełka ról (sygnał · cofnij · zatrzymaj), w każdym lista wyzwalaczy i jeden
+   przycisk rozwijający panel z trzema drzwiami. */
+.sk-wyzw { margin-bottom: 10px; }
+/* Blok sygnału od UX 261120 (P-G2-02): jedno zdanie z „Wyśrodkuj kapsel", a dawne akapity
+   w zwijaku „Jak to działa?". */
+.sk-wyzw-lead { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 0 0 10px; font-size: 13px; color: var(--ink); }
+.sk-wyzw-lead p { margin: 0; flex: 1 1 240px; line-height: 1.45; }
+.sk-wyzw-jak { margin: 0 0 12px; }
+.sk-wyzw-wstep { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 0 9px; }
+.sk-wyzw-jak > .sk-wyzw-wstep { margin: 0; }
+.sk-wyzw-wstep p { margin: 0 0 6px; }
+.sk-wyzw-wstep p:last-child { margin-bottom: 0; }
+.sk-wyzw-uwaga { color: var(--ink); opacity: .72; }
+.sk-wyzw-brama {
+  font-size: 10.5px; line-height: 1.45; padding: 7px 9px; margin-bottom: 9px;
+  border: 1.5px solid var(--amber); border-radius: 9px; background: #fdf3dd; color: var(--ink);
+}
+
+.sk-rola { border: 1.5px dashed var(--stitch); border-radius: 10px; padding: 9px 10px; margin-bottom: 8px; background: var(--panel); }
+.sk-rola-glowa { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-bottom: 7px; }
+.sk-rola-ikona { font-size: 13px; }
+.sk-rola-nazwa { font-weight: 800; font-size: 11.5px; }
+.sk-rola-cel { font-size: 10px; color: var(--muted); }
+.sk-rola-lista { display: flex; flex-direction: column; gap: 5px; margin-bottom: 7px; }
+.sk-rola-pusto { font-size: 10.5px; color: var(--muted); line-height: 1.45; margin-bottom: 7px; }
+.sk-rola-dodaj { width: 100%; }
+
+/* Wiersz wyzwalacza: przełącznik · nazwa i warunek · edycja · kosz. Tekst dostaje `min-width:0`,
+   bo bez tego długi warunek („🧭 Przechylenie in 25..65° · po 1500 ms spełnienia") rozpycha
+   kolumnę 340 px i wypycha oba przyciski poza kartę. */
+.sk-sygnal { display: flex; align-items: center; gap: 7px; }
+.sk-sygnal-off { opacity: .5; }
+.sk-sygnal-tekst { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sk-sygnal-zrodlo { font-size: 11.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-sygnal-jak { font-size: 9.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-sygnal-edyt, .sk-sygnal-usun { flex: 0 0 auto; padding: 4px 7px; }
+.sk-przel-maly { flex: 0 0 auto; width: 34px; height: 19px; border-radius: 10px; }
+.sk-przel-maly .sk-przel-galka { top: 2px; left: 2px; width: 15px; height: 15px; }
+.sk-przel-maly.sk-wl .sk-przel-galka { transform: translateX(15px); }
+
+/* Trzy drzwi. Każde ma nagłówek z numerem, jeden rząd kontrolek i zdanie o tym, co się stanie —
+   zdanie jest tu treścią, nie ozdobą: to ono odróżnia „połącz" od „zrób nowy". */
+.sk-dodaj { margin-top: 8px; border-top: 1.5px dashed var(--stitch); padding-top: 8px; }
+.sk-drzwi { margin-bottom: 10px; }
+.sk-drzwi:last-child { margin-bottom: 0; }
+.sk-drzwi-nazwa { font-size: 10px; font-weight: 800; letter-spacing: .2px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.sk-drzwi-rzad { display: flex; gap: 5px; align-items: center; }
+.sk-drzwi-rzad .sk-wybor { flex: 1; min-width: 0; }
+.sk-drzwi-szeroki { width: 100%; }
+.sk-drzwi-opis { font-size: 10px; color: var(--muted); line-height: 1.45; margin-top: 5px; }
+.sk-wyzw-stopka { display: flex; justify-content: flex-end; }
+
+/* ------------------------------------------------------- raport, historia, dziennik */
+#scanReport:empty, #scanHistory:empty { display: none; }
+.ui-raport-jest { margin-top: 10px; border: 1.5px dashed var(--stitch); border-radius: 10px; padding: 10px; background: var(--panel2); }
+.ui-rap-glowa { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.ui-rap-tytul { font-weight: 800; font-size: 12.5px; flex: 1; }
+.ui-rap-kiedy { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+.ui-rap-kafle { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ui-rap-kafel { background: #fff; border-radius: 9px; padding: 7px 9px; border: 1px solid var(--line); }
+.ui-rap-kafel.ui-mocny { grid-column: span 3; background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.ui-rap-w { font: 800 18px var(--mono); }
+.ui-rap-n { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; opacity: .75; }
+.ui-rap-d { font-size: 10px; opacity: .6; margin-top: 2px; }
+.ui-sug { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding-top: 8px; border-top: 1.5px dashed var(--stitch); }
+.ui-sug-tekst { flex: 1; font-size: 11.5px; line-height: 1.45; }
+.ui-sug-btn { font-family: inherit; font-size: 11px; font-weight: 800; padding: 5px 10px; border-radius: 8px; border: 0; background: var(--pink); color: #fff; cursor: pointer; white-space: nowrap; }
+.ui-sug-btn:disabled { background: var(--green); }
+.ui-hist { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+.ui-hist th { text-align: left; color: var(--muted); font-weight: 700; padding: 3px 5px; border-bottom: 1.5px dashed var(--stitch); }
+.ui-hist td { padding: 3px 5px; border-bottom: 1px solid #eee6d6; font-family: var(--mono); }
+.ui-dz-lista { max-height: 180px; overflow-y: auto; }
+.ui-dz-wpis { display: flex; gap: 7px; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee6d6; font-size: 11.5px; }
+.ui-dz-skad { font: 700 9px var(--mono); padding: 2px 5px; border-radius: 5px; text-transform: uppercase; }
+.ui-dz-skaner { background: var(--pink); color: #fff; }
+.ui-dz-mysz { background: #ddd2bb; color: var(--muted); }
+.ui-dz-cel { flex: 1; }
+.ui-dz-czas { font-family: var(--mono); color: var(--muted); font-size: 10px; }
+
+/* ============================================================== SCENA (nad stroną) */
+.sk-scene-layer { position: fixed; inset: 0; pointer-events: none; z-index: 7; }
+.sk-scene-layer > * { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.sk-scene-layer .sc-obszar { border: 1px dashed rgba(255, 255, 255, .35); border-radius: 3px; }
+/* PODGLĄD OBSZARU na postoju — grubszy obrys, bo mówi o czymś innym niż obrys w ruchu: to jest
+   „tu skaner będzie pracować", a nie „tu właśnie szuka". Kolor i wypełnienie ustawia scena
+   (kolor paska poziomego + suwak „Podgląd obszaru"), więc arkusz trzyma sam kształt. */
+.sk-scene-layer .sc-obszar.sc-obszar-podglad { border-width: 2px; border-style: dashed; border-radius: 5px; }
+.sk-scene-layer .sc-obszar.sc-obszar-blysk { animation: skObszarBlysk .5s ease-out 3; }
+@keyframes skObszarBlysk { 50% { filter: brightness(1.5); } }
+@media (prefers-reduced-motion: reduce) { .sk-scene-layer .sc-obszar.sc-obszar-blysk { animation: none; } }
+.sk-scene-layer .sc-pasmo { border-radius: 3px; }
+.sk-scene-layer .sc-pasmo.sc-czeka { opacity: .55; }
+.sk-scene-layer .sc-pasmo.sc-stoi { animation: skStoi 1s ease-in-out infinite; }
+@keyframes skStoi { 50% { filter: brightness(1.45); } }
+.sk-scene-layer .sc-krawedz { position: absolute; opacity: .95; }
+.sk-scene-layer .sc-kres { background: rgba(255, 255, 255, .5); box-shadow: 0 0 8px rgba(255, 255, 255, .35); }
+.sk-scene-layer .sc-etykieta {
+  font: 700 11px/1 var(--mono); padding: 4px 7px; border: 1.5px solid; border-radius: 6px;
+  background: rgba(12, 14, 18, .82); white-space: nowrap;
+}
+/* ⚠️ POZYCJONOWANIE WNUKÓW SCENY — BŁĄD ZŁAPANY 11.09, ZGŁOSZONY JAKO „ćwiartki działają tylko
+   na lewym górnym rogu i prawym dolnym".
+   Reguła wyżej (`.sk-scene-layer > *`) wyjmuje z układu wyłącznie DZIECI warstwy — a pola ćwiartek,
+   elementy i ślady kliknięć są jej WNUKAMI (leżą w `.sc-bloki` / `.sc-elementy` / `.sc-slady`).
+   Zostawały więc w normalnym układzie i stawały jedno POD drugim, a `transform` z `ustawProstokat`
+   dokładał się do tej pozycji. Zmierzone na ramce 706×520: silnik dawał ćwiartki [0,0] [353,0]
+   [0,260] [353,260] (czyli jak czytanie — poprawnie), a na ekranie lądowały [0,0] [353,260]
+   [0,780] [353,1040]. Druga trafiała w prawy dolny róg, dwie ostatnie spadały POD ramkę i były
+   niewidoczne — stąd „działa tylko lewy górny i prawy dolny".
+   Naprawa jest w arkuszu, nie w silniku: silnik liczył dobrze przez cały czas. */
+.sk-scene-layer .sc-bloki > *,
+.sk-scene-layer .sc-elementy > *,
+.sk-scene-layer .sc-slady > * { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.sk-scene-layer .sc-blok, .sk-scene-layer .sc-elem { border: 2px solid; border-radius: 6px; transition: background .09s linear; }
+.sk-scene-layer .sc-blok-nr { position: absolute; left: 8px; top: 6px; font: 800 13px var(--mono); color: rgba(255, 255, 255, .45); }
+.sk-scene-layer .sc-blok.sc-aktywny .sc-blok-nr { color: #fff; }
+.sk-scene-layer .sc-punkt {
+  width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--amber);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, .5), 0 0 20px var(--amber);
+}
+.sk-scene-layer .sc-punkt.sc-dociagniety { border-color: var(--green); box-shadow: 0 0 0 2px rgba(0, 0, 0, .5), 0 0 20px var(--green); }
+.sk-scene-layer .sc-radar { width: 0; height: 0; }
+.sk-scene-layer .sc-promien { position: absolute; height: 3px; transform-origin: 0 50%; top: -1.5px; }
+.sk-scene-layer .sc-kropka { position: absolute; width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 14px currentColor; }
+.sk-scene-layer .sc-menu {
+  width: 252px; background: rgba(18, 20, 24, .95); border: 1px solid #3a4049; border-radius: 10px;
+  padding: 5px; box-shadow: 0 14px 40px rgba(0, 0, 0, .6);
+}
+.sk-scene-layer .sc-mpoz { display: flex; align-items: center; gap: 9px; padding: 6px 10px; border-radius: 7px; color: #cfd5dd; font-size: 12.5px; }
+.sk-scene-layer .sc-mpoz-nazwa { flex: 1; }
+.sk-scene-layer .sc-mpoz-skrot { font: 700 9px var(--mono); opacity: .6; }
+.sk-scene-layer .sc-mpoz.sc-aktywny { background: var(--amber); color: #14161a; font-weight: 800; }
+.sk-scene-layer .sc-slad {
+  width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--pink);
+  animation: skSlad .3s cubic-bezier(.2, 1.4, .4, 1); transition: opacity .9s;
+}
+.sk-scene-layer .sc-slad.sc-gasnie { opacity: 0; }
+/* `scale`, a NIE `transform: scale(…)`: miejsce śladu jest zapisane w `transform`, więc klatka
+   kluczowa ruszająca ten sam zapis przerzucała ślad na czas animacji do rogu warstwy. Osobna
+   właściwość `scale` składa się z `transform` zamiast go zastępować. */
+@keyframes skSlad { from { scale: .35; opacity: 0; } }
+.sk-scene-layer .sc-slad-opis {
+  position: absolute; left: 56px; top: 13px; white-space: nowrap; font: 700 11.5px var(--sans);
+  color: #fff; background: var(--pink); padding: 3px 9px; border-radius: 7px;
+}
+.sk-scene-layer .sc-slad-opis.sc-z-lewej { left: auto; right: 56px; }
+
+/* cele treningowe */
+.sk-scene-layer .tr-cel {
+  position: absolute; border-radius: 50%; border: 4px solid var(--pink);
+  background: radial-gradient(circle, rgba(236, 26, 131, .32), rgba(236, 26, 131, .06));
+  display: grid; place-items: center; animation: skCel .35s cubic-bezier(.2, 1.4, .4, 1);
+}
+@keyframes skCel { from { transform: scale(.4); opacity: 0; } }
+.sk-scene-layer .tr-cel-nr { font: 800 12px var(--mono); color: #fff; text-shadow: 0 1px 4px #000; }
+.sk-scene-layer .tr-kreska { position: absolute; left: 0; right: 0; height: 4px; background: var(--pink); box-shadow: 0 0 18px var(--pink); }
+.sk-scene-layer .tr-kreska-opis {
+  position: absolute; left: 50%; transform: translate(-50%, -28px); white-space: nowrap;
+  font: 700 11.5px var(--sans); color: #fff; background: var(--pink); padding: 4px 12px; border-radius: 8px;
+}
+
+/* ========================================================== PIASKOWNICA (udawany pulpit) */
+/* SKALA UDAWANEGO PULPITU (UX 261120). Pulpit narysowano pod ramkę ok. 818×511 px; w niższej
+   ramce (niskie okno, 1280×720) wszystko liczy się od `--pu-k`, które rf-50e ustawia z rozmiaru
+   ramki. Zwykłe przeliczenie wymiarów, a nie `transform: scale`: cele skanera, dociąganie
+   i kliknięcia czytają prawdziwe prostokąty elementów, a tekst zostaje ostry. Ramki 1 px i cienie
+   się nie skalują, żeby nie rozmywały się przy małej skali. */
+.sk-card .pu-pulpit {
+  position: absolute; inset: 0; font-size: calc(12px * var(--pu-k, 1)); user-select: none; color: #eef2f7;
+  background: radial-gradient(120% 120% at 20% 10%, #3b4a63 0%, #202733 55%, #171c25 100%);
+}
+.sk-card.sk-trening .pu-pulpit { filter: grayscale(.7) brightness(.45); }
+.sk-card .pu-ikony { position: absolute; left: calc(12px * var(--pu-k, 1)); top: calc(12px * var(--pu-k, 1)); width: calc(150px * var(--pu-k, 1)); display: grid; grid-template-columns: repeat(2, 1fr); gap: calc(4px * var(--pu-k, 1)); }
+.sk-card .pu-ikona { padding: calc(6px * var(--pu-k, 1)) calc(3px * var(--pu-k, 1)); border-radius: calc(7px * var(--pu-k, 1)); text-align: center; cursor: pointer; }
+.sk-card .pu-ikona:hover { background: rgba(255, 255, 255, .08); }
+.sk-card .pu-ikona-obraz { font-size: calc(20px * var(--pu-k, 1)); line-height: 1.1; }
+.sk-card .pu-ikona-napis { font-size: calc(9.5px * var(--pu-k, 1)); margin-top: calc(2px * var(--pu-k, 1)); text-shadow: 0 calc(1px * var(--pu-k, 1)) calc(3px * var(--pu-k, 1)) #000; }
+.sk-card .pu-okno {
+  position: absolute; left: calc(176px * var(--pu-k, 1)); top: calc(26px * var(--pu-k, 1)); width: calc(420px * var(--pu-k, 1)); color: #1b2430; background: #f4f6f9;
+  border-radius: calc(8px * var(--pu-k, 1)); overflow: hidden; box-shadow: 0 20px 44px rgba(0, 0, 0, .5); transition: opacity .2s, transform .2s;
+}
+.sk-card .pu-okno.pu-schowane { opacity: 0; transform: scale(.96) translateY(calc(12px * var(--pu-k, 1))); }
+.sk-card .pu-belka { display: flex; align-items: center; background: #e6eaf0; border-bottom: 1px solid #d3d9e2; padding-left: calc(10px * var(--pu-k, 1)); }
+.sk-card .pu-tytul { flex: 1; font-size: calc(11px * var(--pu-k, 1)); font-weight: 700; padding: calc(7px * var(--pu-k, 1)) 0; }
+.sk-card .pu-belka-btn { display: flex; }
+.sk-card .pu-bx { width: calc(34px * var(--pu-k, 1)); height: calc(26px * var(--pu-k, 1)); display: grid; place-items: center; cursor: pointer; font-size: calc(10px * var(--pu-k, 1)); }
+.sk-card .pu-bx:hover { background: #d5dbe4; }
+.sk-card .pu-bx-zamknij:hover { background: var(--bad); color: #fff; }
+.sk-card .pu-menu { display: flex; gap: calc(2px * var(--pu-k, 1)); padding: calc(3px * var(--pu-k, 1)) calc(6px * var(--pu-k, 1)); border-bottom: 1px solid #e2e7ee; }
+.sk-card .pu-menu-poz { padding: calc(3px * var(--pu-k, 1)) calc(8px * var(--pu-k, 1)); border-radius: calc(5px * var(--pu-k, 1)); font-size: calc(11px * var(--pu-k, 1)); cursor: pointer; }
+.sk-card .pu-menu-poz:hover { background: #e2e7ee; }
+.sk-card .pu-tresc { display: flex; min-height: calc(176px * var(--pu-k, 1)); }
+.sk-card .pu-lewa { width: calc(110px * var(--pu-k, 1)); border-right: 1px solid #e2e7ee; padding: calc(6px * var(--pu-k, 1)) calc(5px * var(--pu-k, 1)); background: #eef1f6; }
+.sk-card .pu-poz { padding: calc(5px * var(--pu-k, 1)) calc(8px * var(--pu-k, 1)); border-radius: calc(5px * var(--pu-k, 1)); cursor: pointer; font-size: calc(11px * var(--pu-k, 1)); }
+.sk-card .pu-poz:hover { background: #dfe5ee; }
+.sk-card .pu-poz.pu-wybrana { background: #d5e4f7; font-weight: 700; }
+.sk-card .pu-prawa { flex: 1; padding: calc(10px * var(--pu-k, 1)) calc(12px * var(--pu-k, 1)); }
+.sk-card .pu-naglowek { font-size: calc(14px * var(--pu-k, 1)); font-weight: 800; margin-bottom: calc(9px * var(--pu-k, 1)); }
+.sk-card .pu-wiersz { display: flex; align-items: center; gap: calc(10px * var(--pu-k, 1)); margin-bottom: calc(9px * var(--pu-k, 1)); }
+.sk-card .pu-etykieta { flex: 1; font-size: calc(11px * var(--pu-k, 1)); }
+.sk-card .pu-przelacznik { width: calc(38px * var(--pu-k, 1)); height: calc(21px * var(--pu-k, 1)); border-radius: calc(11px * var(--pu-k, 1)); background: #c3ccd8; position: relative; cursor: pointer; transition: background .18s; }
+.sk-card .pu-przelacznik.pu-wl { background: #2f9e57; }
+.sk-card .pu-galka { position: absolute; top: calc(3px * var(--pu-k, 1)); left: calc(3px * var(--pu-k, 1)); width: calc(15px * var(--pu-k, 1)); height: calc(15px * var(--pu-k, 1)); border-radius: 50%; background: #fff; transition: transform .18s; }
+.sk-card .pu-wl .pu-galka { transform: translateX(calc(17px * var(--pu-k, 1))); }
+.sk-card .pu-ptaszek { width: calc(19px * var(--pu-k, 1)); height: calc(19px * var(--pu-k, 1)); border: 2px solid #7d8899; border-radius: calc(4px * var(--pu-k, 1)); display: grid; place-items: center; cursor: pointer; font-size: calc(12px * var(--pu-k, 1)); color: #2f9e57; font-weight: 900; }
+.sk-card .pu-pole { width: calc(150px * var(--pu-k, 1)); padding: calc(5px * var(--pu-k, 1)) calc(8px * var(--pu-k, 1)); border: 1px solid #b9c3d1; border-radius: calc(5px * var(--pu-k, 1)); background: #fff; font-size: calc(11px * var(--pu-k, 1)); cursor: text; min-height: calc(24px * var(--pu-k, 1)); }
+.sk-card .pu-lista { margin-top: calc(9px * var(--pu-k, 1)); border: 1px solid #dde3ec; border-radius: calc(6px * var(--pu-k, 1)); overflow: hidden; }
+.sk-card .pu-siec { display: flex; gap: calc(8px * var(--pu-k, 1)); padding: calc(6px * var(--pu-k, 1)) calc(9px * var(--pu-k, 1)); border-bottom: 1px solid #edf1f6; cursor: pointer; font-size: calc(11px * var(--pu-k, 1)); }
+.sk-card .pu-siec:last-child { border-bottom: 0; }
+.sk-card .pu-siec:hover { background: #f0f4fa; }
+.sk-card .pu-siec.pu-wybrana { background: #d5e4f7; }
+.sk-card .pu-sygnal { color: #5b6878; font-family: var(--mono); }
+.sk-card .pu-sn { flex: 1; }
+.sk-card .pu-stopka { display: flex; justify-content: flex-end; gap: calc(6px * var(--pu-k, 1)); padding: calc(9px * var(--pu-k, 1)) calc(11px * var(--pu-k, 1)); background: #eaeef4; border-top: 1px solid #dde3ec; }
+.sk-card .pu-btn { padding: calc(5px * var(--pu-k, 1)) calc(13px * var(--pu-k, 1)); border-radius: calc(5px * var(--pu-k, 1)); border: 1px solid #b9c3d1; background: #fff; font-size: calc(11px * var(--pu-k, 1)); cursor: pointer; font-family: inherit; }
+.sk-card .pu-btn-glowny { background: #2f6fd0; border-color: #2f6fd0; color: #fff; font-weight: 700; }
+.sk-card .pu-pasek { position: absolute; left: 0; right: 0; bottom: 0; height: calc(36px * var(--pu-k, 1)); background: rgba(14, 18, 25, .93); display: flex; align-items: center; gap: calc(6px * var(--pu-k, 1)); padding: 0 calc(10px * var(--pu-k, 1)); border-top: 1px solid #2a313d; }
+.sk-card .pu-start { width: calc(32px * var(--pu-k, 1)); height: calc(26px * var(--pu-k, 1)); display: grid; place-items: center; border-radius: calc(5px * var(--pu-k, 1)); font-size: calc(14px * var(--pu-k, 1)); cursor: pointer; }
+.sk-card .pu-apki { display: flex; gap: calc(4px * var(--pu-k, 1)); flex: 1; }
+.sk-card .pu-apka { padding: calc(5px * var(--pu-k, 1)) calc(10px * var(--pu-k, 1)); border-radius: calc(5px * var(--pu-k, 1)); font-size: calc(10.5px * var(--pu-k, 1)); background: rgba(255, 255, 255, .07); cursor: pointer; }
+.sk-card .pu-apka:hover { background: rgba(255, 255, 255, .16); }
+.sk-card .pu-zasobnik { display: flex; align-items: center; gap: calc(7px * var(--pu-k, 1)); }
+.sk-card .pu-zas { padding: calc(4px * var(--pu-k, 1)); cursor: pointer; border-radius: calc(4px * var(--pu-k, 1)); }
+.sk-card .pu-zegar { font-size: calc(10.5px * var(--pu-k, 1)); font-family: var(--mono); padding: calc(4px * var(--pu-k, 1)) calc(6px * var(--pu-k, 1)); }
+.sk-card .pu-blysk { animation: skBlysk .55s ease-out; }
+@keyframes skBlysk {
+  0% { box-shadow: 0 0 0 0 rgba(236, 26, 131, .95); }
+  100% { box-shadow: 0 0 0 20px rgba(236, 26, 131, 0); }
+}
+/* Klawiatura ekranowa — klawisze duże celowo: w skanowaniu każdy piksel celu to ułamek sekundy
+   mniej i jedno chybienie mniej. */
+.sk-card .pu-klawiatura {
+  position: absolute; left: 50%; bottom: calc(44px * var(--pu-k, 1)); transform: translateX(-50%); padding: calc(6px * var(--pu-k, 1));
+  background: rgba(16, 20, 27, .96); border: 1px solid #2f3742; border-radius: calc(10px * var(--pu-k, 1));
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .55); transition: opacity .2s, transform .2s;
+}
+.sk-card .pu-klawiatura.pu-schowana { opacity: 0; transform: translate(-50%, calc(18px * var(--pu-k, 1))); pointer-events: none; }
+.sk-card .pu-klaw-pasek { font-size: calc(9.5px * var(--pu-k, 1)); color: #8b939e; padding: calc(1px * var(--pu-k, 1)) calc(3px * var(--pu-k, 1)) calc(6px * var(--pu-k, 1)); }
+.sk-card .pu-klaw-wiersz { display: flex; gap: calc(4px * var(--pu-k, 1)); margin-bottom: calc(4px * var(--pu-k, 1)); }
+.sk-card .pu-klaw {
+  width: calc(34px * var(--pu-k, 1)); height: calc(30px * var(--pu-k, 1)); display: grid; place-items: center; border-radius: calc(6px * var(--pu-k, 1));
+  background: #262d38; color: #e8edf4; font-size: calc(12px * var(--pu-k, 1)); cursor: pointer; border: 1px solid #333c49;
+}
+.sk-card .pu-klaw:hover { background: #34404f; }
+.sk-card .pu-klaw-szeroki { background: #303a47; }
+
+/* ------------------------------------------------------------------- wąskie okno */
+/* SŁUPEK LICZONY OD KARTY, NIE OD OKNA (2026-11-17). Sama media query patrzyła na szerokość okna,
+   a o miejscu na dwie kolumny decyduje szerokość KARTY: przy rozwiniętych panelach bocznych szerokie
+   okno dawało wąską kartę, w której lewa kolumna kurczyła się pod sztywne 400 px prawej. Kontener
+   na karcie rozstrzyga to tam, gdzie naprawdę brakuje miejsca; media query zostaje dla przeglądarek
+   bez zapytań kontenerowych.
+   Próg 1180 px (2026-11-21, było 860): dwie kolumny dopiero wtedy, gdy obok 400 px pokręteł zostaje
+   podglądowi ok. 780 px. Węższa karta stawia podgląd na całą szerokość, a pokrętła pod nim:
+   przy 1707 px okna z panelami bocznymi podgląd ma ok. 1090×680 zamiast 673×421. */
+.sk-card { container: skcard / inline-size; }
+@container skcard (max-width: 1180px) {
+  .sk-card .sk-body { flex-direction: column; }
+  .sk-prawa { flex: 1 1 auto; max-width: none; width: 100%; }
+  .sk-lewa { position: static; width: 100%; }
+  .sk-na-pulpicie .sk-lewa { flex: 0 0 auto; max-width: none; width: 100%; }
+}
+@media (max-width: 1180px) {
+  .sk-card .sk-body { flex-direction: column; }
+  .sk-prawa { flex: 1 1 auto; max-width: none; width: 100%; }
+  /* LEPKA KOLUMNA W SŁUPKU ZASŁANIAŁA PRAWĄ. Przyklejanie podglądu ma sens tylko obok pokręteł;
+     gdy kolumny stoją jedna pod drugą, przyklejony podgląd wisiał u góry, a prawa kolumna
+     (sygnały, „+ Dodaj", plansze) przewijała się POD nim i teksty nachodziły na siebie. */
+  .sk-lewa { position: static; width: 100%; }
+  /* ⚠️ W UŁOŻENIU W SŁUPEK `flex-basis` MIERZY WYSOKOŚĆ, nie szerokość. Zwężenie kolumny dla
+     skanera na pulpicie (`flex: 0 0 300px` wyżej) znaczyłoby tu „panel pilota na 300 px WYSOKI
+     i 300 px wąski", a nie „wąska kolumna z boku" — bo z boku już nic nie stoi. */
+  .sk-na-pulpicie .sk-lewa { flex: 0 0 auto; max-width: none; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-scene-layer *, .sk-card .pu-blysk { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ── OBSZAR SKANERA I SEKCJE (2026-09-13) ──────────────────────────────────────────────────
+   Dwa nowe rodzaje pól i pasek nad pokrętłami. Styl wprost z sąsiadów wyżej: te same ściegi,
+   te same promienie i ta sama paleta — to są pola tej samej karty, a nie osobny widget. */
+
+/* „od → do" i „kolumny × wiersze": dwie liczby w jednym wierszu, bo opisują JEDNĄ rzecz. */
+.sk-liczby { display: flex; align-items: center; gap: 8px; }
+.sk-liczba {
+  flex: 1; min-width: 0; font-family: var(--mono); font-size: 12px; font-weight: 700;
+  padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+}
+.sk-liczba:focus { outline: 2px solid var(--pink); outline-offset: 1px; }
+.sk-liczby-do { font: 700 12px var(--mono); color: var(--muted); flex: 0 0 auto; }
+
+/* Gotowe kształty obszaru — jedno kliknięcie zamiast czterech liczb. */
+.sk-ksztalty { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.sk-ksztalt {
+  font-family: var(--display); font-size: 11px; font-weight: 700; padding: 6px 8px; text-align: left;
+  border-radius: 8px; border: 1.5px dashed var(--stitch); background: var(--panel2); color: var(--muted); cursor: pointer;
+}
+.sk-ksztalt:hover { background: #efe6d2; }
+.sk-ksztalt-wl { background: #e8f5df; border-color: var(--green); border-style: solid; color: var(--ink); }
+
+/* PASEK SEKCJI — nad pokrętłami, bo odpowiada na pytanie zadawane PRZED kręceniem: „który
+   z zapisanych skanerów właśnie ustawiam?". */
+.sk-sekcje {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  padding: 8px 10px; margin-bottom: 12px;
+  border: 1.5px dashed var(--stitch); border-radius: 10px; background: var(--panel2);
+}
+.sk-sekcje-lbl { font: 800 10.5px var(--display); letter-spacing: .3px; text-transform: uppercase; color: var(--muted); }
+/* PIGUŁKI ZAMIAST LISTY ROZWIJANEJ (16.09). Cały spis widać naraz, przełączenie to jedno
+   kliknięcie, a kolor pigułki jest tym samym kolorem, którym ta sekcja rysuje się w podglądzie
+   (patrz `.sk-cien` i `scanKolorSekcji` w rf-50k). Kolor wchodzi zmienną `--sek` ustawianą na
+   elemencie, więc arkusz nie musi znać ośmiu barw. */
+/* Pigułki dostają CAŁY wiersz (`flex-basis:100%`), a nie resztkę obok podpisu: prawa kolumna ma
+   ok. 340 px, więc po odjęciu napisu „Edytujesz skaner" zostawało 210 px i każda nazwa lądowała
+   w osobnym rzędzie — spis wyglądał wtedy jak lista rozwijana, tylko rozwinięta na stałe. */
+.sk-sek-pigulki { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; flex: 1 0 100%; min-width: 0; }
+.sk-sek-pill {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 190px; min-width: 0;
+  padding: 4px 10px 4px 7px; border-radius: 999px; cursor: pointer;
+  font: 700 11.5px var(--display); color: var(--ink); text-align: left;
+  border: 1.5px solid var(--line); background: #fff;
+  transition: transform .14s var(--rf-ez-snap, cubic-bezier(.2, .7, .2, 1)), border-color .14s ease, background-color .14s ease;
+}
+.sk-sek-pill:hover { transform: translateY(-1px); border-color: var(--sek); }
+.sk-sek-pill:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
+/* Sekcja edytowana: obwódka i tło w jej kolorze. Nie WYPEŁNIENIE kolorem — biały napis na
+   bursztynie (#eaa32b) nie przechodzi żadnego progu kontrastu, a pigułek jest osiem i muszą
+   wyglądać tak samo. */
+.sk-sek-pill.on {
+  border-color: var(--sek); background: color-mix(in srgb, var(--sek) 14%, #fff);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--sek) 45%, transparent);
+}
+.sk-sek-kropka {
+  width: 9px; height: 9px; flex: 0 0 auto; border-radius: 50%; background: var(--sek);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--sek) 30%, transparent);
+}
+.sk-sek-nr { font: 800 10px var(--mono); color: var(--muted); flex: 0 0 auto; }
+.sk-sek-pill.on .sk-sek-nr { color: var(--sek); }
+.sk-sek-nazwa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* PLANSZE (16.09, rf-50n) — pigułki pod podglądem. Ten sam kształt, co pigułki skanerów,
+   bo odpowiadają na sąsiednie pytania („na czym pracuję" / „czym pracuję"); różnica jest w treści:
+   tu nazwa planszy, rozdzielczość jej ekranu i kropki skanerów, które są do niej przypisane. */
+.sk-zrz-pigulki { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-width: 0; }
+.sk-zrz-pill {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 240px; min-width: 0;
+  padding: 4px 9px; border-radius: 999px; cursor: pointer;
+  font: 700 11.5px var(--display); color: var(--ink);
+  border: 1.5px solid var(--line); background: #fff;
+}
+/* PULPIT TESTOWY (plansza zerowa) — rysowany ekran z ikonami, zawsze pierwszy w spisie i nie do
+   skasowania. Kreskowana obwódka mówi, że to jedyna pozycja, za którą nie stoi żaden plik. */
+.sk-zrz-pill.sk-zrz-szablon { border-style: dashed; }
+.sk-zrz-pill.sk-zrz-szablon.on { border-style: solid; }
+/* Rozdzielczość na pigułce: cyfry w kroju maszynowym, bledsze od nazwy — czyta się je wtedy,
+   gdy się ich szuka, i nie konkurują z nazwą planszy. */
+.sk-zrz-wym { font: 700 10px var(--mono); color: var(--muted); flex: 0 0 auto; }
+.sk-zrz-wym.auto { opacity: .65; }
+.sk-zrz-pill:hover { border-color: var(--pink); }
+.sk-zrz-pill:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
+.sk-zrz-pill.on { border-color: var(--pink); background: color-mix(in srgb, var(--pink) 12%, #fff); }
+.sk-zrz-nazwa-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ▣ = pulpit testowy, 🖼 = plansza ze zrzutem, ▦ = grupa bez obrazka (plansza, której zdjęcia
+   nikt nie zrobił). */
+.sk-zrz-znak { font-size: 11px; line-height: 1; flex: 0 0 auto; opacity: .75; }
+/* Kropki = skanery przypisane do tej planszy, każda w kolorze swojej pigułki. Pusta plansza
+   dostaje jedną pustą obwódkę zamiast niczego — „nie ma tu jeszcze żadnego skanera" jest
+   informacją. */
+.sk-zrz-kropki { display: inline-flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+.sk-zrz-kropki i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+.sk-zrz-kropki i.sk-zrz-pusty { background: transparent; border: 1.5px dashed var(--stitch); width: 9px; height: 9px; }
+.sk-zrz-nazwa { flex: 0 1 160px; min-width: 110px; font-family: inherit; font-size: 12px; padding: 5px 8px; }
+.sk-zrz-usun { flex: 0 0 auto; }
+/* Chipy „pracuje na planszach" w pasku skanerów: TEN skaner wolno dopisać do kilku plansz naraz,
+   więc to przełączniki, a nie wybór jednego z wielu. */
+.sk-zrz-chipy { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; flex: 1 0 100%; margin-top: 2px; }
+.sk-zrz-chipy.sk-ukryte { display: none; }
+.sk-zrz-chip-lbl { font: 800 10px var(--display); letter-spacing: .3px; text-transform: uppercase; color: var(--muted); }
+.sk-zrz-chip {
+  font: 700 10.5px var(--display); padding: 3px 8px; border-radius: 999px; cursor: pointer;
+  border: 1.5px dashed var(--stitch); background: transparent; color: var(--muted);
+  max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sk-zrz-chip:hover { border-color: var(--pink); color: var(--ink); }
+.sk-zrz-chip.on { border-style: solid; border-color: var(--pink); color: var(--ink);
+  background: color-mix(in srgb, var(--pink) 12%, #fff); }
+/* Oko: wyłącznik rysunku pozostałych skanerów. Zgaszone = widać tylko ten, który edytujesz. */
+.sk-sek-oko { flex: 0 0 auto; opacity: .5; }
+.sk-sek-oko.on { opacity: 1; }
+/* Wygaszone „Pozostałe w podglądzie" rysuje wspólny styl nieczynnego przycisku (14d); `opacity .3`
+   było nieczytelne, a powód stoi w podpowiedzi (rf-50k). */
+@media (prefers-reduced-motion: reduce) {
+  .sk-sek-pill { transition: none; }
+  .sk-sek-pill:hover { transform: none; }
+}
+.sk-sekcje-nazwa {
+  flex: 1 1 120px; min-width: 100px; font-family: inherit; font-size: 12px; padding: 6px 8px;
+  border-radius: 8px; border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+}
+.sk-sekcje-nazwa:focus { outline: 2px solid var(--pink); outline-offset: 1px; }
+.sk-sekcje-btn { flex: 0 0 auto; }
+
+/* Zapis wyzwalacza na całą szerokość paska: to jest jedyne miejsce, w którym widać, CO wpisać
+   w regułę albo na wycinek koła, żeby ten skaner się pokazał. */
+.sk-sekcje-spec { flex: 1 0 100%; font-size: 10.5px; color: var(--muted); line-height: 1.45; }
+.sk-sekcje-spec code {
+  font: 700 11px var(--mono); background: var(--ink); color: var(--panel);
+  padding: 1px 6px; border-radius: 5px;
+}
+
+/* ============================================================ ZRZUT PLANSZY SKRÓTEM (21.09)
+   Zrzuty ekranu do skanera robione skrótem klawiszowym (np. ALT+R+1 do ALT+R+9).
+
+   ZWIJANE, bo to USTAWIENIE, a nie codzienna kontrolka: włącza się je raz i wraca rzadko, a pasek
+   plansz nad nim jest tym, czego używa się cały czas. Rozwinięte na stałe odsuwałoby spis plansz
+   od podglądu o cztery rzędy.
+
+   Klawiatury (.hk-key / .hk-plus / .hk-verdict) NIE definiujemy tu drugi raz — to ten sam rysunek,
+   co w karcie „Stop awaryjny" (06-connect-midi-pads.css), i ma taki zostać: obie sekcje uczą tego
+   samego kształtu „naciśnij te klawisze". Poprawiamy tylko marginesy, bo tamte pisane są pod
+   szerokość karty, a te rzędy stoją w środku bloku plansz. */
+/* Od UX 261120 (D12) zwijak filcowy `details.cardfold.inset` (08), domyślnie zwinięty. Nagłówek
+   niesie podsumowanie: stan skrótu, klawisze i „Ustaw", żeby droga była widoczna bez rozwijania. */
+.sk-skrot { margin-top: 10px; }
+.sk-skrot > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-height: 40px; }
+.sk-skrot > summary:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
+.sk-skrot-stan { font-family: var(--body); font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px;
+  background: var(--panel2); border: 1.5px solid var(--stitch); color: var(--muted); }
+.sk-skrot-stan.ok { color: var(--green-d); border-color: color-mix(in srgb, var(--green) 55%, var(--stitch)); }
+.sk-skrot-stan.bad { color: var(--bad); border-color: var(--bad); }
+.sk-skrot-klawisze { font-family: var(--body); font-size: 12px; }
+.sk-skrot-ustaw { margin-left: auto; }
+/* Rozwinięty zwijak pokazuje to samo w treści, więc skrót w nagłówku i „Ustaw" znikają. */
+.sk-skrot[open] .sk-skrot-klawisze, .sk-skrot[open] .sk-skrot-ustaw { display: none; }
+.sk-skrot-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; padding: 4px 14px 12px; }
+.sk-skrot-lead { margin: 0 0 2px; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.sk-skrot-body .hk-verdict { margin: 0; }
+.sk-skrot-body .setup-note { margin: 2px 0 0; font-size: 10.5px; line-height: 1.5; }
+.sk-skrot-sel {
+  flex: 1 1 200px; min-width: 160px; height: 28px; font-family: inherit; font-size: 12px;
+  padding: 0 6px; border-radius: 8px; border: 1.5px solid var(--line);
+  background: #fff; color: var(--ink);
+}
+.sk-skrot-sel:focus { outline: 2px solid var(--pink); outline-offset: 1px; }
+/* Segment „Po zrzucie" to TEN SAM przełącznik, co „Gdzie jest skaner" u góry karty
+   (.sk-segment/.sk-seg), i ma nim zostać: pytanie jest to samo, więc drugi rysunek na to
+   samo tylko kazałby się go uczyć jeszcze raz. Tutaj dostaje jedynie prawo rozepchnąć się
+   na resztę rzędu, bo stoi sam, a nie obok wyboru ekranu. */
+.sk-skrot-body .sk-segment { flex: 1 1 260px; min-width: 200px; }
+.sk-skrot-kapsel { font-size: 12px; font-weight: 700; color: var(--ink); }
+/* Klawisz z ZAKRESEM („1…9") jest jednym kapslem, nie dziewięcioma: dziewięć sugerowałoby, że
+   trzeba je nacisnąć wszystkie. Szerszy od zwykłego, bo niesie trzy znaki zamiast jednego. */
+.hk-key-zakres { letter-spacing: .02em; min-width: 42px; }
+
+/* EKRAN W NAGŁÓWKU SEKCJI SKRÓTU (2026-09-26) — który monitor trafi na zdjęcie, widoczny także
+   przy zwiniętej sekcji. Zwykła grubość: to dopowiedzenie, nie druga nazwa sekcji. */
+.sk-skrot-sum-ekran { font-weight: 500; color: var(--muted); }
+
+/* „📸 ZRZUT EKRANU ▾" — LISTA MONITORÓW (2026-09-26, rf-50q). Pływa nad kartą pod przyciskiem;
+   pozycje to przyciski (strzałki i Enter), a dopisek przy ekranie panelu mówi o opóźnieniu. */
+.sk-zrz-menu {
+  position: fixed; z-index: 60; min-width: 240px; max-width: 320px;
+  display: flex; flex-direction: column; gap: 2px; padding: 6px;
+  background: var(--panel); border: 1.5px solid var(--line); border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .18);
+}
+.sk-zrz-menu-glowa { font-size: 11px; font-weight: 700; color: var(--muted); padding: 2px 6px 4px; }
+.sk-zrz-menu-poz {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left;
+  font: inherit; font-size: 12.5px; color: var(--ink); background: transparent;
+  border: 0; border-radius: 7px; padding: 6px 8px; cursor: pointer;
+}
+.sk-zrz-menu-poz small { font-size: 10.5px; color: var(--muted); }
+.sk-zrz-menu-poz:hover, .sk-zrz-menu-poz:focus-visible { background: var(--panel2); outline: none; }
+.sk-zrz-menu-poz:focus-visible { box-shadow: inset 0 0 0 2px var(--pink); }

@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<!-- `data-l="pl"` w znaczniku to stan dla kogoś z wyłączonym JavaScriptem: polski, bo w tym języku
+     napisany jest projekt (i tytuł strony w <head>). Wszystkim pozostałym język ustawia skrypt
+     kilka linii niżej, jeszcze przed pierwszą klatką. -->
+<html lang="pl" data-l="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  // Język przed pierwszą klatką: wybór użytkownika > polski w przeglądarce > angielski. Ta sama
+  // reguła, co w aplikacji (_rfDetectLang w web/js/rf-01-i18n.js), z jedną różnicą: aplikacja ma
+  // serwer, który zna język Windows, a strona ma tylko ustawienia przeglądarki.
+  //
+  // Skrypt MUSI stać tutaj, a nie na dole strony razem z resztą: stamtąd zdążyłby się namalować
+  // jeden język i przeskoczyć na drugi. Jest krótki i blokujący, więc nic nie opóźnia.
+  (function(){try{
+    var s=localStorage.getItem("ribbitflip.landing.lang");
+    var l=(s==="pl"||s==="en")?s:null;
+    if(!l){
+      var v=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||""];
+      // /^pl\b/ — trafia „pl" i „pl-PL", nie trafia innych kodów zaczynających się od tych liter.
+      l=Array.prototype.some.call(v,function(x){return /^pl\b/i.test(String(x||"").replace("_","-"));})?"pl":"en";
+    }
+    document.documentElement.setAttribute("data-l",l);
+    document.documentElement.lang=l;
+  }catch(e){}})();
+</script>
+<title>RibbitFlip: zamień ruch kapsla „Triki” w co tylko wymyślisz</title>
+<meta name="description" content="RibbitFlip to nieoficjalny projekt hobbystyczny o otwartym kodzie, który zamienia ruch kapsla „Triki” w czysty sygnał, a ten podłączysz do czego chcesz: klawiatury, myszy, pada, MIDI, OSC, wywołań REST, OBS Studio i grywalnego syntezatora. Wszystko lokalnie, bez telemetrii.">
+<link rel="icon" href="assets/icons/logo.png">
+<!-- H1 nad zgięciem jest w tym kroju, więc bez preloadu mignąłby zapasowym fontem i skoczyłby
+     układ. Subset `latin` starcza na pierwszą klatkę; polskie znaki dociąga zwykły swap. -->
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/titan-one-latin.woff2" crossorigin>
+<meta property="og:type" content="website">
+<meta property="og:title" content="RibbitFlip: zamień ruch kapsla „Triki” w co tylko wymyślisz">
+<meta property="og:description" content="Nieoficjalny projekt hobbystyczny o otwartym kodzie: wyzwalacze klawiatury i myszy, mysz w powietrzu, wirtualny pad Xbox, MIDI, OSC, wywołania REST, OBS Studio i grywalny syntezator XY. Wszystko z panelu w przeglądarce, lokalnie.">
+<!-- Karta podglądu linku: logo na filcu, 1200×630 (Messenger, Facebook, LinkedIn). Logo mieści się też w kwadratowym
+     kadrze ze środka (WhatsApp). Generowana skryptem poza repozytorium z mascot.png i felt.png. -->
+<meta property="og:image" content="https://mastish.github.io/RibbitFlip/assets/social-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Logo RibbitFlip: filcowa żaba punk na deskorolce">
+<meta property="og:url" content="https://mastish.github.io/RibbitFlip/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://mastish.github.io/RibbitFlip/assets/social-card.jpg">
+<style>
+  /* ===== RibbitFlip felt design tokens (mirrors web/css/01-assets-tokens.css) ===== */
+  :root{
+    --bg:#efe9dd; --bg2:#f0e7d4; --panel:#faf6ee; --panel2:#f5eede;
+    /* --muted i --dim pociemniałe (było #6f6857 / #746d5c). Tekst leży na tle z fakturą filcu,
+       a faktura zjada kontrast: na papierze 4,6:1 wyglądało poprawnie, na ekranie mało czytelnie.
+       Teraz ~7:1 względem tła — nadal wyraźnie ciszej niż --ink, ale litery są gęste. */
+    --line:#d8cdb8; --ink:#211f1d; --muted:#524c3e; --dim:#57503f;
+    --pink:#ec1a83; --pink-d:#a4105c; --pink-btn:#d81678;
+    --green:#6cb33f; --green-d:#46781f; --amber:#eaa32b; --lime:#a6d861;
+    --ok:#2f9e57; --warn:#c8971a; --bad:#d83a5c;
+    --felt-ink:#211f1d; --stitch:#d8cdb8;
+    --felt-shadow:0 7px 0 rgba(120,90,40,.10);
+    --felt-shadow-sm:0 4px 0 rgba(120,90,40,.12);
+    --felt-tex:url("assets/felt.png");
+    --felt-tex-soft:linear-gradient(rgba(255,255,255,.52),rgba(255,255,255,.52)),var(--felt-tex);
+    --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+    --sans:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --display:"Baloo 2","Nunito",system-ui,sans-serif;
+    /* font nagłówkowy „z łaty”: Titan One — najbliższy literom z logo (ciężkie, zaokrąglone,
+       bez kontrastu grubości). Sam krój nie ma obszycia ani ściegu: wordmark w pasku to
+       oryginalna grafika z logo (patrz .wm), a H1 i nagłówki sekcji dostają kremową łatę
+       konturem w CSS (patrz reguła z paint-order niżej). Podmiana kroju = jedna linia tutaj;
+       sprawdzone zamienniki z pełną polską diakrytyką: Modak (grubszy, bąbelkowy),
+       Bowlby One SC (kanciasty). */
+    --rebel:"Titan One","Baloo 2",system-ui,sans-serif;
+    --stitch-cream:#fff8ec;
+    --radius:20px;
+  }
+  @font-face{font-family:'Baloo 2';font-style:normal;font-weight:500 800;font-display:swap;src:url(assets/fonts/baloo2-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2191,U+2193}
+  @font-face{font-family:'Baloo 2';font-style:normal;font-weight:500 800;font-display:swap;src:url(assets/fonts/baloo2-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+1E00-1E9F}
+  @font-face{font-family:'Titan One';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/titan-one-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2191,U+2193}
+  @font-face{font-family:'Titan One';font-style:normal;font-weight:400;font-display:swap;src:url(assets/fonts/titan-one-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+1E00-1E9F}
+  @font-face{font-family:'Nunito';font-style:normal;font-weight:400 800;font-display:swap;src:url(assets/fonts/nunito-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2191,U+2193}
+  @font-face{font-family:'Nunito';font-style:normal;font-weight:400 800;font-display:swap;src:url(assets/fonts/nunito-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+1E00-1E9F}
+  @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url(assets/fonts/jetbrains-mono-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F}
+  @font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url(assets/fonts/jetbrains-mono-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+1E00-1E9F}
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  /* Odbicie naklejki (.flap) jest obrócone wokół punktu POZA obrazkiem, więc jego pole sięga ~225 px
+     w prawo od maskotki — mimo że w spoczynku ma opacity:0 i nic nie rysuje. To wystarczało, by
+     strona dostała poziomy pasek przewijania donikąd. `clip`, nie `hidden`: nie robi z korzenia
+     kontenera przewijania, więc nie psuje `position:sticky` ani kotwic. Nic tu nie wymaga jazdy
+     w bok — karuzela eksponatów, jedyny taki element, przeniosła się na Discorda. */
+  html{overflow-x:clip}
+  body{margin:0;background-color:var(--bg);background-repeat:repeat;
+    background-image:linear-gradient(rgba(239,233,221,.45),rgba(239,233,221,.45)),var(--felt-tex);
+    color:var(--ink);font-family:var(--sans);font-weight:600;line-height:1.6;
+    /* Celowo BEZ `-webkit-font-smoothing:antialiased`. Na macOS ta reguła ścieńcza kreski, a
+       Nunito jest krojem o niskim kontraście i zaokrąglonych zakończeniach — na tle z fakturą
+       filcu ścieńczony tekst zaczyna się z nim zlewać i czyta się jak rozmyty. Domyślne
+       wygładzanie subpikselowe zostawia litery gęstsze i wyraźniejsze. */
+    text-rendering:optimizeLegibility}
+  h1,h2,h3{font-family:var(--display)}
+  ::selection{background:var(--pink);color:#fff}
+  a{color:var(--pink-d);font-weight:700;text-decoration:none}
+  a:hover{color:var(--pink)}
+  img{max-width:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  /* foam-hand cursor, straight from the app — pink ring over anything clickable */
+  html.rf-cursor,html.rf-cursor *{cursor:url("assets/cursor/hand-idle-36.png") 15 3, auto !important}
+  html.rf-cursor a:hover,html.rf-cursor a:hover *,
+  html.rf-cursor button:hover,html.rf-cursor button:hover *,
+  html.rf-cursor .hiw .pill:hover,html.rf-cursor .hiw .pill:hover *,
+  html.rf-cursor .btn:hover,html.rf-cursor .btn:hover *{
+    cursor:url("assets/cursor/hand-idle-hot-38.png") 16 4, auto !important}
+  html.rf-cursor a:active,html.rf-cursor a:active *,html.rf-cursor button:active,
+  html.rf-cursor .btn:active,html.rf-cursor .btn:active *{
+    cursor:url("assets/cursor/hand-press-36.png") 15 3, auto !important}
+
+  /* ===== app bar (dark ink felt, like the app; przyszyty dołem zamiast cienia) ===== */
+  header{position:sticky;top:0;z-index:40;background:#211f1d;
+    background-image:linear-gradient(rgba(33,31,29,.5),rgba(33,31,29,.5)),var(--felt-tex)}
+  header::after{content:"";position:absolute;left:0;right:0;bottom:4px;
+    border-top:2px dashed rgba(255,248,236,.4);pointer-events:none}
+  /* 77 px (border-box: 52 px treści + 11/14 paddingu) — co do piksela tyle co pasek aplikacji */
+  .bar{display:flex;align-items:center;gap:13px;min-height:77px;padding:11px 0 14px}
+  .brand{display:flex;align-items:center;gap:11px;color:#fff8ec;font-family:var(--rebel);
+    font-weight:400;font-size:22px;letter-spacing:.3px}
+  /* wordmark = oryginalna grafika z logo (prawdziwy filc i prawdziwe przeszycie),
+     nie tekst. Plik jest przygotowany pod ciemny pasek: RIBBIT biały, FLIP różowy.
+     Podana wysokość przy pliku 152 px = zapas na ekrany do 6x.
+     Proporcje 1:1 z paskiem aplikacji (żaba 40 px, wordmark 24 px, 2 px do claimu): wordmark miał
+     tu 38 px, czyli tyle co żaba, więc kolumna tekstu wystawała nad nią i pod nią, claim dotykał
+     liter, a całość wyglądała ciaśniej niż w panelu. */
+  .wm{height:24px;width:auto;display:block;flex:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+  /* kolumna wordmark + claim — wyśrodkowana względem żaby, jak .rf-word w panelu.
+     align-items:flex-start jest tu konieczne: domyślny stretch rozciągnąłby <img> wordmarku
+     na szerokość claimu (proporcje w błoto), bo width:auto nie broni się przed stretchem. */
+  .brand > span{display:inline-flex;flex-direction:column;justify-content:center;align-items:flex-start;
+    gap:4px;line-height:1;min-width:0}   /* 4 px = 2 px gapu + 2 px marginesu, tyle co w panelu */
+  /* tylko żaba-ikonka (bezpośrednie dziecko) — wordmark w <span> ma własny rozmiar w .wm */
+  .brand > img{width:40px;height:40px;flex:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+  .brand .fl{color:var(--pink)}
+  .brand small{display:block;font-family:var(--mono);font-weight:500;font-size:11px;color:var(--lime);letter-spacing:.2px;line-height:1}
+  .spacer{flex:1}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:12px;white-space:nowrap;
+    background:#f4efe4;background-image:var(--felt-tex-soft);color:var(--felt-ink);
+    padding:9px 16px;font-family:var(--display);font-weight:700;font-size:15px;
+    box-shadow:0 4px 0 rgba(0,0,0,.18);transition:transform .1s,box-shadow .1s,background .12s}
+  .btn:hover{background:#fff;color:var(--felt-ink);transform:translateY(-1px)}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.18)}
+  header .btn{box-shadow:0 4px 0 rgba(0,0,0,.32)}
+  header .btn:active{box-shadow:0 1px 0 rgba(0,0,0,.32)}
+  .btn.pri{background:var(--pink-btn);background-image:var(--felt-tex);color:#fff;box-shadow:0 4px 0 var(--pink-d)}
+  .btn.pri:hover{background:var(--pink);color:#fff}
+  .btn.pri:active{box-shadow:0 1px 0 var(--pink-d)}
+  .btn.sm{padding:6px 12px;font-size:14px}
+  /* ŚCIEG NA PRZYCISKACH — ta sama decyzja i ta sama technika co w panelu (web/css/14d-buttons.css).
+     Filcowa skóra obszywa na tej stronie prawie wszystko: karty i zrzut ekranu dratwą kilka pikseli
+     od krawędzi, kropki galerii i kafle kanałów Discorda obwódką, pigułka „Kup mi kawę" białym
+     ściegiem po różu. Same .btn nie miały nic — kremowa łatka na kremowym tle trzymała się tylko
+     na twardym cieniu. Dostają ŚCIEG, nie ramkę: kreskowana linia kilka pikseli W ŚRODKU, tak jak
+     naszywa się łatę na materiał. Obwódka przyklejona do krawędzi czytałaby się jak pudełko
+     narysowane wokół napisu, czyli odwrotnie niż mówi ta skóra.
+     Rysowane pseudo-elementem, nie ramką i nie cieniem:
+       · `border` siedzi NA krawędzi, czyli w złym miejscu jak na ścieg, i urósłby każdy przycisk
+         o 3 px w obu osiach (padding .btn przestawia .sm i reguła dla wąskiego okna niżej),
+       · `box-shadow` w ogóle nie umie wejść kilka pikseli do środka, a do tego kasują go reguły
+         stanów, które nadpisują tę własność w całości: .btn:active, header .btn, header .btn:active,
+         .btn.pri i .btn.pri:active — ścieg gasłby po wciśnięciu.
+     Promień jest mniejszy od promienia przycisku o tyle, ile wynosi wcięcie: linia 4 px w środku
+     narożnika 12 px zakręca po łuku 8 px, nie 12.
+     Bez ściegu zostają: samotne odnośniki tekstowe (to zdania, nie przyciski) i `.shot-open`,
+     czyli cały zrzut ekranu jako przycisk — jego krawędź rysuje już dratwa .shot. */
+  .btn{position:relative}
+  .btn::after{content:"";position:absolute;inset:4px;pointer-events:none;border-radius:8px;
+    border:1.5px dashed var(--rf-stitch,var(--stitch));transition:border-color .12s ease}
+  /* Nasycone wypełnienie z białym napisem dostaje białą nitkę — dokładnie tak, jak robi to
+     pigułka „Kup mi kawę" niżej. Tan zniknąłby w różu. */
+  .btn.pri{--rf-stitch:rgba(255,255,255,.46)}
+  /* Po najechaniu nitka się napina — ta sama odpowiedź, którą daje unoszący się cień. Przycisk
+     wypełniony zostaje przy swojej białej (jest już głośny), stąd `:where(:not(.pri))`: wyklucza
+     go z dopasowania, ale nie podbija specyficzności, więc reguła zostaje przy (0,2,1). */
+  .btn:hover:where(:not(.pri)){--rf-stitch:#bcab8d}
+  @media (prefers-reduced-motion:reduce){.btn::after{transition:none}}
+
+  /* ===== hero (tekst po lewej, maskotka po prawej) ===== */
+  .hero{display:grid;grid-template-columns:minmax(0,6.5fr) minmax(0,5.5fr);gap:10px 26px;
+    align-items:center;padding:46px 0 30px;text-align:left}
+  .hero .htxt{max-width:640px}
+  .hero .cta{justify-content:flex-start}
+  .hero .shot{grid-column:1/-1;width:100%}
+  /* naklejka: nalepia się na stronę (logika sticker-peel w jedną stronę — bez odklejania, bez hovera).
+     Dolny pas jest odgięty do góry i pokazuje biały SPÓD naklejki (sylwetka = lustrzana kopia
+     z brightness(0) invert()), linia zagięcia zjeżdża w dół aż naklejka dogładzi się do strony. */
+  @property --peelc{syntax:'<percentage>';inherits:true;initial-value:-13%}
+  /* --peelp = o ile % wysokości linia zagięcia wznosi się/opada na krawędziach (znak = w którą
+     stronę przechylona), --peelth = ten sam kąt w stopniach dla lustra spodu naklejki.
+     Oba losuje skrypt przy każdym wejściu (patrz „losowy kąt naklejania”), więc naklejka
+     ląduje za każdym razem inaczej. Wartości domyślne = poprzedni, stały kąt 13.72°. */
+  .peelwrap{position:relative;justify-self:center;width:min(420px,44vw);
+    --peelc:-13%;--peelp:11%;--peelth:13.72deg}
+  /* lustro przez rotate(θ) scaleY(-1) rotate(-θ) z originem na linii = dokładne odbicie */
+  .mascot{display:block;width:100%;height:auto;
+    clip-path:polygon(0 0,100% 0,
+      100% calc(100% - var(--peelc) + var(--peelp)),
+      0 calc(100% - var(--peelc) - var(--peelp)))}
+  .flap{position:absolute;inset:0;width:100%;height:auto;pointer-events:none;opacity:0;
+    transform:rotate(var(--peelth)) scaleY(-1) rotate(calc(-1 * var(--peelth)));
+    transform-origin:50% calc(100% - var(--peelc));
+    clip-path:polygon(0 calc(100% - var(--peelc) - var(--peelp)),
+      100% calc(100% - var(--peelc) + var(--peelp)),100% 100%,0 100%);
+    filter:brightness(0) invert(.96)}
+  /* wariant „od dołu”: role odwrócone — na stronie zostaje DÓŁ naklejki, a zagięcie
+     wjeżdża w górę. Stan spoczynku ma --peelc powyżej obrazka, więc widać całość. */
+  .peelwrap.up{--peelc:113%}
+  .peelwrap.up .mascot{clip-path:polygon(0 calc(100% - var(--peelc) - var(--peelp)),
+      100% calc(100% - var(--peelc) + var(--peelp)),100% 100%,0 100%)}
+  .peelwrap.up .flap{clip-path:polygon(0 0,100% 0,
+      100% calc(100% - var(--peelc) + var(--peelp)),
+      0 calc(100% - var(--peelc) - var(--peelp)))}
+  /* Krzywa przyklepnięcia. Wcześniej jeden łagodny cubic-bezier na całą drogę czytał się
+     płasko, bo ruch NIE kończy się na wartości spoczynkowej: sylwetka jest w całości odsłonięta
+     już przy --peelc = -|--peelp| (czyli 6…13%), a reszta drogi do -13% to klatki, w których nic
+     się nie zmienia. Przy wyhamowującej krzywej ten martwy ogon zjadał ostatnie pół sekundy —
+     widoczny ruch gasł w połowie i zostawało wrażenie równego, liniowego zjazdu.
+     Teraz: krótkie zawiśnięcie → zjazd z narastającą prędkością → zagięcie dobija do krawędzi
+     PEŁNĄ PRĘDKOŚCIĄ i staje jak ucięte. Cały efekt siedzi w rozkładzie prędkości, bo naklejka
+     ma się zachowywać jak naklejka: nic nie skacze, nie sprężynuje i nie zmienia rozmiaru —
+     rusza się wyłącznie linia zagięcia, jednostronnie, więc naklejka nigdy się nie odkleja. */
+  @media(prefers-reduced-motion:no-preference){
+    .peelwrap.stick{animation:rfStick .95s .2s both}
+    .peelwrap.stick.up{animation-name:rfStickUp}
+    .peelwrap.stick .flap{animation:rfFlap .95s linear .2s both}
+  }
+  @keyframes rfFlap{0%{opacity:0}4%,94%{opacity:1}100%{opacity:0}}
+  /* start „od zera”: linia zagięcia stoi POZA obrazkiem, więc w pierwszej klatce nie ma
+     jeszcze nic — naklejka wjeżdża cała od krawędzi, a nie pojawia się z gotową głową */
+  @keyframes rfStick{
+    0%{opacity:0;--peelc:116%;animation-timing-function:cubic-bezier(.2,.74,.4,1)}
+    6%{opacity:1;--peelc:112%;animation-timing-function:cubic-bezier(.4,.03,.75,.35)}
+    100%{opacity:1;--peelc:-13%}
+  }
+  @keyframes rfStickUp{
+    0%{opacity:0;--peelc:-20%;animation-timing-function:cubic-bezier(.2,.74,.4,1)}
+    6%{opacity:1;--peelc:-15%;animation-timing-function:cubic-bezier(.4,.03,.75,.35)}
+    100%{opacity:1;--peelc:113%}
+  }
+  @media(max-width:840px){
+    .hero{grid-template-columns:1fr;text-align:center;gap:6px}
+    .hero .htxt{max-width:none}
+    .hero .cta{justify-content:center}
+    .peelwrap{order:-1;width:min(250px,56vw);margin:0 auto 10px}
+  }
+  .pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#7a5a10;font-family:var(--display);
+    border:1.5px dashed var(--warn);background:rgba(234,163,43,.14);
+    padding:6px 14px;border-radius:999px}
+  .pill img{width:20px;height:20px;flex:none}
+  .pillrow{text-align:center;margin:0 0 14px}
+  /* H1 z łaty: kremowy kontur POD literą (paint-order) + płaski filcowy cień, żeby łata
+     odcinała się od filcu tła — sam kremowy obrys na jasnym tle byłby niewidoczny.
+     Gdyby przeglądarka nie znała paint-order, obrys rysuje się na literze: robi ją
+     cieńszą, ale nadal czytelną — to świadomie wybrany fallback, nie wpadka.
+     font-weight:400, bo Titan One jest jednowagowy (bold = syntetyczne rozmycie). */
+  /* obrys w `em`, żeby łata trzymała proporcję od 24 px (nagłówek sekcji) do 49 px (H1);
+     cień jako text-shadow, nie filter — filter objąłby też różowy box frazy i podwoił
+     mu własny cień, a text-shadow da się wyłączyć dziedziczeniem (patrz .heroRot niżej) */
+  .hero h1 .blk,h2.sec{-webkit-text-stroke:.1em var(--stitch-cream);
+    paint-order:stroke fill;text-shadow:0 .06em 0 rgba(120,90,40,.17)}
+  /* fraza siedzi już we własnej różowej łacie — drugi obrys tylko by ją zabrudził */
+  .hero h1 .heroRot{-webkit-text-stroke:0;text-shadow:none}
+  .hero h1{font-family:var(--rebel);font-size:clamp(31px,5vw,49px);line-height:1.16;
+    margin:.15em auto .34em;font-weight:400;letter-spacing:0;max-width:880px}
+  .hero h1 .g{color:var(--pink)}
+  /* ── fraza = ściana naklejek (2026-08-25) ──────────────────────────────────
+     Fraza nie „pyka" już haIn/haOut (te keyframes zostają dla boxów sekcji
+     „jak to działa"): nalepia się TĄ SAMĄ mechaniką, którą na wjeździe dostaje
+     żaba (sticker-peel, patrz .peelwrap wyżej), tylko obróconą o 90° — linia
+     zagięcia wędruje od lewej do prawej z krzywą prędkości rfStick, jest losowo
+     przechylona w górę albo w dół (do 20°), a naklejka osiada na losowym skosie
+     z pełnego zakresu ±4° (strażnik różnicy pilnuje, żeby sąsiadki nie legły
+     bliźniaczo). Stare frazy NIE schodzą: zostają pod spodem jak ściana
+     naklejek — z chwilą osiadania PIĄTEJ najstarsza gaśnie powoli i subtelnie
+     (1,5 s). Warstwy są CENTROWANE, nie równane do
+     lewej: równanie czyta się jak przykładanie od linijki. Bez cienia pod
+     naklejką (płasko przyklejona nie ma spod czego go rzucać — cień ma tylko
+     uniesiony spód w ruchu). Zmierzone w laboratorium
+     prototypie (poza repozytorium): 60 FPS przy pełnej ścianie. */
+  /* kontener wiersza: stała wysokość jak dawna łata (clamp od fontu H1), więc
+     podmiany nie ruszają układu; naklejki wiszą absolutnie, kolejność DOM =
+     kolejność warstw */
+  .hero h1 .heroRot{position:relative;display:block;height:clamp(36px,5.6vw,58px);
+    margin-top:.16em;font-size:.56em;line-height:1}
+  @media(max-width:840px){.hero h1 .heroRot{font-size:.52em}}
+  /* pozycja linii zagięcia w % SZEROKOŚCI łaty; rejestracja @property jest
+     konieczna do animowania (jak --peelc żaby); start poza łatą po lewej */
+  @property --pc{syntax:'<percentage>';inherits:true;initial-value:-18%}
+  /* naklejka: skos spoczynkowy --rest NIE jest animowany — leży krzywo od
+     pierwszej klatki, rusza się wyłącznie linia zagięcia. Centrowanie przez
+     translateX W TRANSFORMIE, nie przez indywidualną właściwość `translate`
+     (tę mogłyby nadpisać przyszłe keyframes i naklejka skoczyłaby o pół
+     szerokości). Origin 42% 58% odziedziczony po dawnej łacie. */
+  .heroRot .gen{position:absolute;left:50%;top:0;height:100%;width:fit-content;
+    transform:translateX(-50%) rotate(var(--rest,0deg));transform-origin:42% 58%;
+    --pp:0%;--pth:0deg}
+  /* łata jak dawniej (filc, biały ścieg, oddech pod Titan One), ale bez cienia;
+     tekst ton w ton: --colInk = ta sama barwa co tło, ciemniej (bordo dostaje
+     jaśniejszy pastel, bo ciemniej nie ma tam kontrastu) */
+  .heroRot .stk{position:relative;display:flex;align-items:center;height:100%;
+    padding:.1em 1em .04em;border-radius:.4em;white-space:nowrap;line-height:1;
+    color:var(--colInk,#fff);
+    background-color:var(--col,var(--pink-btn));background-image:var(--felt-tex)}
+  .heroRot .stk::before{content:"";position:absolute;inset:6px;pointer-events:none;
+    border:1.5px dashed rgba(255,255,255,.55);border-radius:9px}
+  /* część przyklejona = wszystko na LEWO od przechylonej linii zagięcia
+     (u góry przecina łatę w pc-pp, u dołu w pc+pp; znak pp losuje skrypt) */
+  .heroRot .stk.base{clip-path:polygon(0 0,
+    calc(var(--pc) - var(--pp)) 0,
+    calc(var(--pc) + var(--pp)) 100%,
+    0 100%)}
+  /* spód: reszta łaty odbita lustrzanie na lewą stronę zagięcia — technika
+     żaby wokół osi pionowej: rotate(θ) scaleX(-1) rotate(-θ) z originem NA
+     linii; kąt --pth liczy skrypt z tej samej liczby co --pp (tan θ =
+     2·pp·W/(100·H)), inaczej odbicie odkleja się od linii. Papier, nie czysta
+     biel: złamana biel + ziarno filcu; tekst przezroczysty (trzyma identyczną
+     szerokość łaty), ścieg spodu nie istnieje; cień wyłącznie tutaj. */
+  .heroRot .stk.flap{position:absolute;inset:0;pointer-events:none;opacity:0;
+    color:transparent;
+    background-color:#f1ebde;
+    background-image:linear-gradient(rgba(255,255,255,.62),rgba(255,255,255,.62)),var(--felt-tex);
+    clip-path:polygon(calc(var(--pc) - var(--pp)) 0,100% 0,100% 100%,
+      calc(var(--pc) + var(--pp)) 100%);
+    transform:rotate(var(--pth)) scaleX(-1) rotate(calc(-1 * var(--pth)));
+    transform-origin:var(--pc) 50%;
+    filter:drop-shadow(0 3px 4px rgba(60,40,10,.28))}
+  .heroRot .stk.flap::before{display:none}
+  /* naklejka osiadła jest odchudzana: klip z bazy schodzi (przy 118% i tak nic
+     nie tnie), flap zdejmuje skrypt — warstwa ściany kosztuje tyle co span */
+  .heroRot .gen.set .stk.base{clip-path:none}
+  @media(prefers-reduced-motion:no-preference){
+    .heroRot .gen.on .flap{animation:rfStkFlap .9s linear both}
+    .heroRot .gen.melt{animation:rfStkMelt 1.5s ease-in-out both}
+  }
+  /* Naklejka nie pojawia się na oczach użytkownika: start linii zagięcia leży
+     tak daleko na minusie, że złożony spód jest W CAŁOŚCI za lewą krawędzią
+     ekranu — najpierw WJEŻDŻA (baza pusta), a gdy zagięcie mija lewy brzeg
+     łaty, naklejka się kładzie. Sama łata nie rusza się ani o piksel.
+     ⚠ Ruch --pc NIE ma keyframes w CSS — jedzie przez element.animate()
+     (heroStart w skrypcie). Powód: droga wjazdu zmienia się z każdą frazą
+     i szerokością okna, a sztywne procentowe keyframes dawały ciągłość
+     prędkości na spoinie faz tylko dla jednej, typowej drogi — przy innych
+     ruch „dławił się" w punkcie sklejenia. Skrypt liczy punkt sklejenia per
+     naklejka (t₁ = s₁d₁/(s₁d₁+s₂d₂)), więc prędkość zgadza się zawsze.
+     Na czas animacji warstwy dostają will-change (klip i cień spodu są
+     malowane głównym wątkiem co klatkę — bez własnej warstwy pierwsze klatki
+     potrafiły chrupnąć); po osiadaniu wskazówka znika razem z klasą .on
+     (strażnik :not(.set)) i flapem. */
+  .heroRot .gen.on:not(.set) .stk.base{will-change:clip-path}
+  .heroRot .gen.on:not(.set) .stk.flap{will-change:clip-path,transform,filter,opacity}
+  /* spód widoczny od pierwszej klatki (i tak wchodzi zza ekranu), gaśnie
+     dopiero na końcu, gdy nie zostało już nic do nalepienia */
+  @keyframes rfStkFlap{0%,94%{opacity:1}100%{opacity:0}}
+  @keyframes rfStkMelt{to{opacity:0}}
+  /* ograniczony ruch: naklejka po prostu jest (inline --pc:118% w znacznikach
+     daje to samo przy braku JS), a gasnąca znika bez animacji */
+  @media(prefers-reduced-motion:reduce){
+    .heroRot .gen{--pc:118%}
+    .heroRot .gen.melt{display:none}
+  }
+  .lead{font-size:clamp(16px,2.2vw,19.5px);color:var(--muted);max-width:760px;margin:0 auto 26px}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  /* Karuzela plakatów RibbitBeat (2026-11-15): jeden plakat naraz, strzałki, kropki, przesunięcie palcem i klawiaturą,
+     samo przewija co 6 s (stoi przy najechaniu, fokusie i przy ograniczonym ruchu). Osobna karuzela na każdy język strony. */
+  .karuzela{position:relative;max-width:1040px;margin:44px auto 0;padding:0 64px;outline:none}
+  html .karuzela[data-lang],html[data-l] .karuzela[data-lang]{display:block}
+  html:not([data-l=pl]) .karuzela[data-lang=pl],html[data-l=pl] .karuzela[data-lang=en],html:not([data-l]) .karuzela[data-lang=pl]{display:none}
+  .kar-okno{overflow:hidden;border-radius:16px;box-shadow:0 12px 30px rgba(0,0,0,.28);background:#1d1b22}
+  .kar-tor{display:flex;transition:transform .55s cubic-bezier(.4,0,.2,1)}
+  .kar-slajd{flex:0 0 100%;margin:0}
+  .kar-slajd img,.kar-slajd video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#1d1b22}
+  .kar-btn{position:absolute;top:calc(50% - 18px);transform:translateY(-50%);width:52px;height:52px;border-radius:50%;border:0;cursor:pointer;
+    font:700 26px/1 inherit;color:#fff;background:var(--pink-btn);background-image:var(--felt-tex);background-blend-mode:multiply;background-size:220px;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -3px 0 rgba(0,0,0,.2),var(--felt-shadow-sm);outline:2px dashed rgba(255,255,255,.55);outline-offset:-7px}
+  .kar-btn:hover{filter:brightness(1.08)} .kar-btn:focus-visible{outline:3px solid var(--felt-ink);outline-offset:3px}
+  .kar-prev{left:0} .kar-next{right:0}
+  .kar-dol{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px}
+  .kar-kropka{width:12px;height:12px;border-radius:50%;border:0;padding:0;cursor:pointer;background:var(--stitch);box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+  .kar-kropka[aria-current=true]{background:var(--pink);width:30px;border-radius:999px}
+  .kar-licznik{margin-left:10px;font-size:14px;font-weight:700;color:var(--felt-ink);opacity:.7;min-width:44px}
+  /* Pauza i pełny ekran: w prawym dolnym rogu, pod kadrem, żeby nie zasłaniać filmu. Pełny ekran obejmuje całą
+     karuzelę (strzałki, kropki i te przyciski działają dalej); iPhone nie umie tego dla elementu, więc tam film idzie sam. */
+  .kar-dol{position:relative;min-height:38px}
+  .kar-ster{position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;gap:8px}
+  .kar-ster button{width:38px;height:38px;border-radius:50%;border:0;padding:0;cursor:pointer;display:grid;place-items:center;color:#fff;
+    background:var(--pink-btn);background-image:var(--felt-tex);background-blend-mode:multiply;background-size:220px;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -2px 0 rgba(0,0,0,.2),var(--felt-shadow-sm)}
+  .kar-ster button:hover{filter:brightness(1.08)} .kar-ster button:focus-visible{outline:3px solid var(--felt-ink);outline-offset:3px}
+  .kar-ster svg{width:18px;height:18px;fill:currentColor}
+  html .karuzela[data-lang]:fullscreen{display:flex;flex-direction:column;justify-content:center;max-width:none;width:100%;height:100%;margin:0;padding:20px 76px;background:#141218}
+  .karuzela::backdrop{background:#141218}
+  .karuzela:fullscreen .kar-okno,.karuzela:fullscreen .kar-dol{width:min(100%,calc((100vh - 100px)*16/9));margin-left:auto;margin-right:auto}
+  .karuzela:fullscreen .kar-okno{box-shadow:none}
+  .karuzela:fullscreen .kar-licznik{color:#f4ecdc;opacity:.85}
+  .karuzela:fullscreen .kar-ster button:focus-visible{outline-color:#f4ecdc}
+  @media (max-width:700px){.karuzela{padding:0}.kar-btn{width:42px;height:42px;font-size:22px;top:auto;bottom:-6px;transform:none}.kar-prev{left:4px}.kar-next{right:4px}
+    .kar-kropka{display:none}.kar-ster{position:static;transform:none;margin-left:6px}}
+  .shot{position:relative;margin:44px auto 0;max-width:940px;background:var(--panel);
+    background-image:var(--felt-tex-soft);border-radius:var(--radius);padding:10px;
+    box-shadow:var(--felt-shadow),0 24px 50px rgba(90,70,30,.18)}
+  .shot::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:calc(var(--radius) - 6px);pointer-events:none}
+  .shot img{display:block;width:100%;height:auto;border-radius:12px}
+  /* Sekcja „Przetestuj od razu” (2026-10-10): zrzut stoi zaraz pod wstępem, a karty pod nim, więc bez
+     dużego odstępu z góry; przycisk pobrania do lewej, jak tekst nad nim. */
+  #zagraj .shot{margin:0 auto 18px}
+  #zagraj .cta{justify-content:flex-start;margin-top:16px}
+
+  /* ===== menu kotwic, linia faktów i linki w hero, przyciski modułów, zrzuty w „Od czego zacząć” ===== */
+  .kotwice{display:flex;gap:2px;margin-left:12px}
+  .kotwice a{color:#fff8ec;font-family:var(--display);font-weight:700;font-size:14px;padding:6px 9px;border-radius:9px;text-decoration:none}
+  .kotwice a:hover{background:rgba(255,248,236,.14);color:#fff}
+  .kotwice a:focus-visible{outline:2px solid var(--lime);outline-offset:1px}
+  @media(max-width:1080px){
+    .bar{flex-wrap:wrap;row-gap:4px}
+    .kotwice{order:10;flex-basis:100%;margin:0;justify-content:center;flex-wrap:wrap}
+    section{scroll-margin-top:118px}
+  }
+  .fakty{margin:-14px 0 20px;font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink)}
+  .hlinki{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 0 0;font-family:var(--display);font-weight:700;font-size:14.5px}
+  @media(max-width:840px){.hlinki{justify-content:center}}
+  .moduly{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px auto 0;max-width:940px}
+  .moduly button,.do-filmu button{border:1.5px dashed var(--stitch);background:var(--panel);background-image:var(--felt-tex-soft);
+    color:var(--ink);font-family:var(--display);font-weight:700;font-size:14px;padding:6px 12px;border-radius:999px;cursor:pointer}
+  .moduly button:hover,.do-filmu button:hover{border-color:var(--pink);color:var(--pink-d)}
+  .moduly button[aria-pressed=true]{background:var(--pink-btn);background-image:var(--felt-tex);color:#fff;border-color:rgba(255,255,255,.6)}
+  .moduly button:focus-visible,.do-filmu button:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+  .do-filmu{margin:12px 0 0}
+  .wiecej{margin:16px 0 0;font-family:var(--display);font-weight:700;font-size:15px}
+  #jak .wiecej{text-align:center}
+  .zrzuty{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin:24px 0 0}
+  .zrzuty .shot{margin:0;max-width:none}
+  .zrzuty a{display:block}
+  .zrzuty figcaption{margin:8px 4px 2px;font-size:13.5px;line-height:1.4;color:var(--muted);text-align:center}
+  /* Podgląd zrzutu (2026-11-22): klik w zrzut otwiera go w okienku nad stroną, nie w nowej karcie. Ta sama
+     filcowa łata ze ściegiem co .shot; zamyka krzyżyk, Esc i klik w przyciemnione tło. Ctrl/Shift+klik
+     i środkowy przycisk zostają przy zwykłym linku (nowa karta). */
+  .podglad{border:0;padding:0;background:transparent;max-width:min(96vw,1600px);max-height:96vh;overflow:visible}
+  .podglad::backdrop{background:rgba(20,18,24,.86)}
+  .podglad .shot{margin:0;max-width:none;padding:12px}
+  .podglad img{width:auto;max-width:100%;max-height:calc(96vh - 90px);margin:0 auto}
+  .podglad figcaption{margin:10px 6px 2px;font-size:15px;line-height:1.4;color:var(--muted);text-align:center}
+  .podglad-x{position:absolute;top:-16px;right:-16px;z-index:2}
+  @media (max-width:700px){.podglad-x{top:-12px;right:-6px}}
+  .faq-grupa{margin:26px 0 10px;font-family:var(--display);font-size:17px;font-weight:800;color:var(--ink)}
+  .faq-grupa:first-of-type{margin-top:0}
+  @media(max-width:560px){
+    .kotwice a{font-size:13px;padding:3px 7px}
+    section{scroll-margin-top:150px}
+  }
+  #podziel .share{align-items:start}
+
+  /* ===== sections ===== */
+  section{padding:52px 0 8px;scroll-margin-top:74px}
+  h2.sec{font-family:var(--rebel);font-size:clamp(24px,3.4vw,32px);font-weight:400;
+    margin:0 0 6px;display:flex;align-items:center;gap:12px}
+  h2.sec img{width:34px;height:34px}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:820px}
+  /* Dłuższy akapit prowadzący rozbity na krótkie linie — trzy zdania jedno pod drugim czytają się
+     lepiej niż ten sam tekst w jednym bloku, a odstęp mniejszy niż między akapitami trzyma je
+     razem jako jedną myśl. Blok siedzi na .ln, a nie na spanach z data-lang: tamte przełączają
+     widoczność (inline / none) i nie mogą przy okazji robić układu. */
+  .sub .ln{display:block}
+  .sub .ln + .ln{margin-top:.5em}
+  /* Klawisze skrótu jak w notce aplikacji (.rss-keys .hk-key w web/css/11-felt-forms-devices.css):
+     kremowe kapsle z grubszym dolnym brzegiem — rząd klawiszy czyta się jak „znajdź je na
+     klawiaturze", ciąg „Alt+R+F" czyta się jak konfiguracja. Kolory literalne, jak tam. Rozmiar
+     dobrany tak, by kapsel mieścił się w wysokości linii (25,6 px) i nie rozpychał akapitu. */
+  .keys{display:inline-flex;align-items:center;gap:5px;vertical-align:-4px;margin:0 1px;white-space:nowrap}
+  .keys kbd{font-family:var(--display);font-size:12px;font-weight:600;line-height:1;color:#211f1d;
+    background:#fffdf7;border:1.5px solid rgba(60,45,25,.34);border-bottom-width:3px;border-radius:6px;
+    padding:4px 8px;min-width:24px;text-align:center;box-shadow:0 1px 0 rgba(255,255,255,.7) inset}
+  .keys i{font-style:normal;color:var(--dim);font-size:12px;font-weight:600}
+
+  /* feature grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:16px}
+  /* akapit .sub stojący ZA siatką kart (sekcja #dostepnosc) dotykał ich dolnej krawędzi,
+     bo .sub ma margines tylko od dołu (2026-09-21) */
+  .grid + .sub{margin-top:26px}
+  /* `duo` = DWIE karty w rzędzie, nie „dwie karty w ogóle". Odkąd rząd ma ich cztery, samo
+     `auto-fit` z progiem 235 px upchnęłoby wszystkie cztery obok siebie (4 × 235 + przerwy mieszczą
+     się w 1040 px kolumny) i każda dostałaby słup tekstu na trzy słowa w linii. Próg 420 px łamie
+     to na 2 × 2 na biurku i na jedną kolumnę poniżej ~880 px.
+     `min(420px,100%)` zamiast samego `420px`: minimum ścieżki jest twarde, więc na telefonie
+     (335 px treści) kolumna trzymałaby 420 px i wypychała stronę w bok — zmierzone, strona robiła
+     się szeroka na 440 px. `min()` oddaje wtedy pierwszeństwo szerokości kontenera. */
+  .grid.duo{margin-top:18px;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr))}
+  .grid.duo>.card:last-child:nth-child(odd){grid-column:1/-1}   /* piąta karta (RibbitBeat) nie zostaje sama w rogu */
+  .card{position:relative;background:var(--panel);background-image:var(--felt-tex-soft);
+    border-radius:var(--radius);padding:18px 18px 16px;box-shadow:var(--felt-shadow)}
+  .card::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:calc(var(--radius) - 6px);pointer-events:none}
+  .card img.ic{width:44px;height:44px;display:block;margin-bottom:8px;filter:drop-shadow(0 3px 0 rgba(120,90,40,.14))}
+  .capfan{display:flex;margin-bottom:8px}
+  .capfan img{width:46px;height:46px;filter:drop-shadow(0 3px 0 rgba(120,90,40,.14))}
+  .capfan img + img{margin-left:-12px}
+  .capfan img:nth-child(2){transform:rotate(-8deg) translateY(2px)}
+  .capfan img:nth-child(3){transform:rotate(6deg)}
+  .capfan img:nth-child(4){transform:rotate(-4deg) translateY(1px)}
+  .card h3{margin:4px 0 4px;font-size:17px;font-weight:800}
+  .card p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+
+  /* Akapit domykający sekcję czytało się najgorzej z całej strony: najmniejszy stopień pisma
+     spośród bloków prozy, w kolorze wyciszonym, na fakturze. Stopień w górę i luźniejsza
+     interlinia — to zwykły tekst do przeczytania, nie podpis pod ilustracją. */
+  .after{color:var(--muted);font-size:16px;line-height:1.65;max-width:760px;margin:22px 0 0}
+
+  /* ===== „Od czego zacząć": numer kroku na karcie, zdanie wprowadzające i lista „kim jesteś" ===== */
+  .card .n{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;
+    background:var(--pink-btn);background-image:var(--felt-tex);color:#fff;font-family:var(--display);
+    font-weight:800;font-size:17px;box-shadow:0 3px 0 var(--pink-d);margin-bottom:10px}
+  .lead-in{color:var(--muted);margin:30px 0 12px;max-width:820px}
+  .whos{margin:0;padding:0;list-style:none;display:grid;gap:8px;max-width:820px}
+  .whos li{padding:10px 14px;border-left:3px solid var(--pink);background:rgba(255,255,255,.45);
+    border-radius:0 12px 12px 0;font-size:15px;line-height:1.5;color:var(--muted)}
+  .whos li b{display:block;color:var(--ink);font-family:var(--display);font-weight:800}
+
+  /* bilingual toggle */
+  [data-lang=pl]{display:none}
+  html[data-l=pl] [data-lang=en]{display:none}
+  html[data-l=pl] [data-lang=pl]{display:inline}
+  html[data-l=pl] [data-lang=pl].blk{display:block}
+  html[data-l=pl] [data-lang=pl].fx{display:flex}
+  /* ===== community showcase (ściana zastosowań) ===== */
+  .share{position:relative;background:var(--panel);background-image:var(--felt-tex-soft);
+    border-radius:var(--radius);padding:26px 28px;box-shadow:var(--felt-shadow);
+    display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:12px 30px;align-items:center}
+  .share::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:calc(var(--radius) - 6px);pointer-events:none}
+  .share p{margin:0 0 14px;color:var(--muted);font-size:15px;line-height:1.55}
+  .share p.tiny{font-size:13px;color:var(--dim)}
+  .share .cta{justify-content:flex-start;margin-top:2px}
+  /* Karty kanałów w prawej kolumnie — zajęły miejsce po ścianie zastosowań. To zwykłe odnośniki,
+     bo prowadzą wprost na forum: żadnego stanu, żadnego skryptu, działają z wyłączonym JS-em. */
+  .chans{display:grid;gap:11px;align-self:center}
+  .chan{position:relative;display:flex;gap:12px;align-items:flex-start;text-decoration:none;
+    background:rgba(255,255,255,.42);border:2px dashed var(--stitch);border-radius:12px;
+    padding:13px 15px;color:inherit}
+  .chan img{width:30px;height:30px;flex:0 0 auto;margin-top:2px;object-fit:contain}
+  .chan b{display:block;margin-bottom:3px;font-family:var(--display);font-weight:800;
+    font-size:14px;color:var(--pink-d)}
+  .chan > span{font-size:13px;line-height:1.45;color:var(--muted)}
+  .chan:hover{background:rgba(255,255,255,.72);border-style:solid}
+  .chan:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+  @media(prefers-reduced-motion:no-preference){.chan{transition:background .15s ease,border-color .15s ease}}
+  @media(max-width:760px){.share{grid-template-columns:minmax(0,1fr);padding:20px 18px}
+    .share .cta{justify-content:center}.share p{text-align:center}}
+
+
+  [hidden]{display:none !important}
+
+
+  /* ===== często zadawane pytania =====
+     Sekcja stoi rozwinięta, jak każda inna na stronie (2026-09-21). Do 21.09 była jedną fałdą,
+     czyli osobnym <details> wokół całości: na wejściu widać było tylko nagłówek h2
+     z wprowadzeniem i znak „+”, a pytania pojawiały się po kliknięciu (2026-09-08). Fałda
+     powstała dlatego, że rozwinięta
+     sekcja zajmowała ponad ekran i mało kto przewijał przez nią do zastrzeżenia. Ten sam problem
+     rozwiązują teraz dwie kolumny (od 760 px): trzynaście zwiniętych pytań mieści się w pionie
+     bez fałdy, a otwarte pytanie rośnie w swojej kolumnie i nie rozpycha drugiej (align-items:start).
+     Znak stanu przy pytaniu to chevron w kółku, a nie litera „+”: plus stał za tytułem i był łatwy
+     do przeoczenia, więc nie było wiadomo, że cokolwiek trzeba rozwijać.
+     Każde pytanie zostaje natywnym <details>: zwijanie za darmo, bez skryptu, z klawiatury,
+     z prawidłową semantyką dla czytnika ekranu. Żadne nie stoi otwarte na wejściu. W środku
+     zwijki, nie karty: przy paru pytaniach odpowiedź ma cztery akapity i rozwinięte naraz
+     zrobiłyby ścianę tekstu. Siatka pytań NIE ma klasy .rv (wjazd na scroll): w zamkniętym
+     <details> treść nie ma pudełka, więc obserwator przecięć mógłby jej po otwarciu nie odsłonić.
+     Pytanie o podpis ma id faq-smartscreen, bo celuje w nie notka przy pobieraniu; skrypt
+     rfFaqAnchors otwiera wtedy samo pytanie (stopka celuje w #faq, czyli w nagłówek sekcji).
+     UWAGA przy dopisywaniu pytania: `<summary>` jest kontenerem flex, więc oba warianty językowe
+     są jego dziećmi: przełącznik [data-lang] gasi jeden z nich i w rzędzie zostaje jeden napis
+     plus znak stanu. Treść odpowiedzi idzie w .qa-b, nie luzem w <details>. */
+  .faq{display:grid;gap:12px;max-width:none}
+  @media(min-width:760px){.faq{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}}
+  /* scroll-margin: pasek u góry ma 77 px (min-height .bar), więc kotwica #faq-smartscreen nie może
+     pod niego wjechać */
+  .qa{position:relative;scroll-margin-top:88px;background:var(--panel);background-image:var(--felt-tex-soft);
+    border-radius:14px;box-shadow:var(--felt-shadow-sm)}
+  .qa::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--stitch);
+    border-radius:9px;pointer-events:none}
+  .qa > summary{list-style:none;cursor:pointer;display:flex;gap:12px;align-items:flex-start;
+    padding:14px 18px;border-radius:14px;font-family:var(--display);font-weight:800;
+    font-size:16px;line-height:1.4;color:var(--ink)}
+  .qa > summary::-webkit-details-marker{display:none}
+  /* Znak stanu: chevron w kółku, wpisany w tło jako data-URI, więc nie czeka na osobny plik.
+     Siedzi w ::after, więc czytnik ekranu go nie czyta, i dobrze, bo stan zwinięcia mówi już
+     sam <details>. Kolor kreski #a4105c to var(--pink-d) wpisany na sztywno: w data-URI
+     zmienna CSS nie zadziała, więc przy zmianie palety trzeba go poprawić tutaj ręcznie. */
+  .qa > summary::after{content:"";margin-left:auto;flex:none;width:30px;height:30px;border-radius:50%;
+    background:#f4efe4 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6' fill='none' stroke='%23a4105c' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/13px 13px no-repeat;
+    box-shadow:0 3px 0 rgba(0,0,0,.16);margin-top:-2px}
+  .qa[open] > summary::after{transform:rotate(180deg)}
+  .qa > summary:hover::after{background-color:#ffe4f1}
+  .qa > summary:hover{color:var(--pink-d)}
+  .qa > summary:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+  .qa-b{padding:0 18px 16px}
+  .qa-b p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.6}
+  .qa-b p + p{margin-top:11px}
+  .qa-b code{font-family:var(--mono);font-size:12.5px;background:rgba(255,255,255,.62);
+    border:1px solid var(--stitch);border-radius:6px;padding:1px 5px;white-space:nowrap}
+  @media(prefers-reduced-motion:no-preference){
+    .qa > summary{transition:color .15s ease}
+    .qa > summary::after{transition:transform .2s ease,background-color .15s ease}
+  }
+  @media(max-width:560px){
+    .qa > summary{padding:12px 14px;font-size:15px}
+    .qa-b{padding:0 14px 14px}
+  }
+
+  /* Notka pod przyciskiem pobierania — jedno zdanie, które ma dojść do kogoś, kto właśnie kliknął
+     „Pobierz" i za chwilę zobaczy niebieskie okno SmartScreena. Bez niej odpowiedź czeka na dole
+     strony, czyli tam, gdzie ta osoba już nie zajrzy. */
+  .dlnote{margin:11px 0 0;font-size:13px;color:var(--dim)}
+
+
+  /* disclaimer */
+  .disc{position:relative;background:rgba(234,163,43,.12);background-image:var(--felt-tex-soft);
+    border-radius:var(--radius);padding:20px 24px;box-shadow:var(--felt-shadow-sm)}
+  .disc::before{content:"";position:absolute;inset:5px;border:1.5px dashed var(--amber);
+    border-radius:calc(var(--radius) - 6px);pointer-events:none}
+  .disc b{color:#7a5a10}
+  .disc p{margin:0;font-size:15px;color:#5c5341}
+
+  /* zastrzeżenie jako dymek gadającej czachy (wzorzec rfSkullSay z aplikacji) */
+  .skullsay{display:flex;align-items:flex-end}
+  .ss-skull{width:92px;height:120px;flex:none;transform-origin:50% 85%;
+    filter:drop-shadow(0 4px 0 rgba(120,90,40,.16))}
+  @media(prefers-reduced-motion:no-preference){
+    .ss-skull{animation:rssTalk .8s ease-in-out infinite alternate}
+  }
+  @keyframes rssTalk{0%{transform:rotate(-4deg)}100%{transform:rotate(4deg) translateY(-1px)}}
+  .ss-bubble{position:relative;margin-left:-6px;margin-bottom:26px;flex:1;
+    background:var(--panel);background-image:var(--felt-tex-soft);border:2px dashed var(--stitch);
+    border-radius:16px;padding:16px 20px;box-shadow:var(--felt-shadow)}
+  .ss-bubble::before{content:"";position:absolute;left:-11px;bottom:22px;width:18px;height:18px;
+    background:#f8f4e9;border-left:2px dashed var(--stitch);border-bottom:2px dashed var(--stitch);
+    transform:rotate(45deg)}
+  .ss-bubble .disc-h{margin:0 0 6px;font-size:16px;font-weight:800;color:#7a5a10}
+  .ss-bubble p{margin:0;font-size:14px;color:#5c5341}
+  @media(max-width:640px){.ss-skull{width:70px;height:91px}.ss-bubble{padding:14px 16px}}
+
+  /* ===== napiwek (#rfKofi) — kubek w prawym dolnym rogu, ten sam co w panelu aplikacji =====
+     Kształt, kolory i wahnięcie kubka przeniesione 1:1 z web/css/13-dialogs-overview.css, żeby
+     strona i aplikacja prosiły o kawę tym samym gestem. Różnica jest jedna: w panelu kubek kiwa
+     się, gdy zadziała mapowanie, a tutaj nie ma czego nasłuchiwać — więc buja się sam, w losowych
+     odstępach (skrypt na dole strony). Świadomie BEZ widgetu Ko-fi: ten dociąga skrypt z
+     ich CDN-u, a ten kubek ma nie odzywać się na zewnątrz, dopóki ktoś go nie kliknie.
+     (Od czasu, gdy ściana zastosowań przeniosła się na Discorda, strona nie pobiera z zewnątrz
+     NICZEGO, dopóki ktoś czegoś nie kliknie — nie ma już nawet miniatur eksponatów.)
+     Nie ma tu aria-label: nazwę dostępną daje widoczny napis, więc jest dwujęzyczna sama z siebie
+     i zawsze zgodna z tym, co widać (WCAG 2.5.3 — etykieta w nazwie). */
+  .rf-kofi{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;
+    align-items:flex-end;gap:9px;pointer-events:none}
+  .rf-kofi > *{pointer-events:auto}
+  /* Ostry róż brandowy z białym napisem, celowo (2026-08-20). Jedyne miejsce, gdzie
+     wypełnieniem jest --pink, a nie --pink-btn: kubek w rogu ma być najgłośniejszą rzeczą na
+     ekranie. Kompromis przyjęty świadomie: biel na #ec1a83 to 4,16:1, ciut poniżej WCAG AA dla
+     pogrubionych 13,5 px (4,5:1), ale powyżej progu 3:1; --pink-btn dałby 4,9:1, gdyby kiedyś
+     musiało przechodzić. Najechanie tylko unosi pigułkę — jaśniejsze tło kosztowałoby kontrast.
+     UWAGA na teksturę: --felt-tex, NIE --felt-tex-soft. Ta „miękka" to 52% BIAŁEJ ZASŁONY na filcu
+     (słuszna na kremowej karcie, dla której powstała) i wypłukiwała to wypełnienie do #F691C3 —
+     pastelu o kontraście 2,15:1 wobec białego napisu. Samo --felt-tex to szum o 3,4% krycia, więc
+     pigułka maluje się na #E91E83 (4,22:1) i róż brandowy zostaje różem. */
+  .rf-kofi-btn{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
+    height:46px;padding:0 16px 0 13px;border-radius:999px;text-decoration:none;color:#fff;
+    background:var(--pink);background-image:var(--felt-tex);
+    box-shadow:0 4px 0 var(--pink-d),0 0 0 1.5px var(--stitch),0 10px 24px rgba(43,39,35,.13);
+    transition:transform .18s cubic-bezier(.2,.7,.2,1),color .18s ease,background-color .18s ease}
+  .rf-kofi-btn::after{content:"";position:absolute;inset:5px;border-radius:999px;
+    border:1.5px dashed rgba(255,255,255,.42);pointer-events:none}
+  /* filcowy kubek (assets/icons/kofi_cup.png) — ten sam obrazek co w aplikacji; kubek buja się na
+     DNIE, więc oś obrotu idzie na dolny środek (rączka z kubkiem miała ją na nadgarstku, po lewej —
+     kubek obracałby się wtedy przez lewy narożnik podstawy) */
+  .rf-kofi-ic{width:27px;height:27px;flex:0 0 auto;display:block;object-fit:contain;
+    filter:drop-shadow(0 2px 0 rgba(122,8,66,.30));transform-origin:50% 92%}
+  .rf-kofi-lbl{font-family:var(--display);font-weight:800;font-size:14px;line-height:1;
+    white-space:nowrap;color:inherit}
+  .rf-kofi-btn:hover{transform:translateY(-2px)}   /* tło zostaje — patrz nota o kontraście wyżej */
+  /* Biel przybita na sztywno we WSZYSTKICH stanach: pigułka to <a>, a globalne
+     `a:hover{color:var(--pink)}` wyżej przemalowałoby etykietę dokładnie na kolor wypełnienia,
+     czyli napis znikałby po najechaniu. Klasa z pseudoklasą wygrywa z `a:hover`. */
+  .rf-kofi-btn:hover,.rf-kofi-btn:focus,.rf-kofi-btn:active,.rf-kofi-btn:visited{color:#fff}
+  .rf-kofi-btn:active{transform:translateY(2px);
+    box-shadow:0 1px 0 var(--pink-d),0 0 0 1.5px var(--stitch)}
+  .rf-kofi-btn:focus-visible{outline:3px solid var(--lime);outline-offset:3px}
+  .rf-kofi-card{position:relative;display:flex;flex-direction:column;gap:5px;text-align:left;
+    max-width:min(272px,74vw);padding:12px 15px 11px;border-radius:15px;
+    background:var(--panel);background-image:var(--felt-tex-soft);
+    box-shadow:0 6px 0 rgba(120,90,40,.16),0 10px 24px rgba(43,39,35,.14),0 0 0 1.5px var(--stitch);
+    opacity:0;visibility:hidden;transform:translateY(6px) scale(.97);
+    transition:opacity .16s ease,transform .18s cubic-bezier(.2,.7,.2,1),visibility 0s linear .18s}
+  .rf-kofi-card::before{content:"";position:absolute;inset:5px;border-radius:10px;
+    border:1.5px dashed var(--stitch);pointer-events:none}
+  .rf-kofi:hover .rf-kofi-card,.rf-kofi:focus-within .rf-kofi-card{opacity:1;visibility:visible;
+    transform:none;transition-delay:0s}
+  /* ===== scena z kubkiem — duża grafika na górze karty (przeniesiona 1:1 z aplikacji) =====
+     Żabia ręka z kubkiem stoi wprost na filcu karty, bez ramki (karta ma już swoją dratwę przy
+     krawędzi). 128 px = pełna rozdzielczość pliku, większy zacząłby się rozmywać. Para leci
+     z trzech pasemek rysowanych CSS-em, bez dodatkowego pliku graficznego. Animacje siedzą pod
+     .rf-kofi:hover/:focus-within, więc nic nie kręci się, gdy karta jest schowana. */
+  .rf-kofi-hero{position:relative;display:flex;align-items:flex-end;justify-content:center;
+    height:134px;margin:1px 0 2px;padding-bottom:2px}
+  .rf-kofi-cup{position:relative;display:block;width:128px;height:128px}
+  .rf-kofi-hero-ic{display:block;width:100%;height:100%;object-fit:contain;
+    filter:drop-shadow(0 4px 0 rgba(120,90,40,.18));
+    transform-origin:26% 86%}                      /* nadgarstek — to ręka macha, nie kubek */
+  /* Pasemka startują z linii wieczka (13% kadru od góry) i gasną, zanim dolecą do krawędzi karty:
+     nic ich nie przycina, więc dalej robiłyby smugi po jej cieniu. */
+  .rf-kofi-steam{position:absolute;left:0;right:0;bottom:87%;height:26px;pointer-events:none}
+  .rf-kofi-steam i{position:absolute;bottom:0;width:7px;height:20px;border-radius:999px;opacity:0;
+    filter:blur(1.7px);transform-origin:50% 100%;
+    background:linear-gradient(to top,rgba(120,90,40,0),rgba(120,90,40,.34) 38%,rgba(120,90,40,.04))}
+  .rf-kofi-steam i:nth-child(1){left:36%}
+  /* opóźnienia przez zmienną, nie osobną regułą: reguła spod :hover ma wyższą swoistość i i tak
+     nadpisałaby samo animation-delay, a wtedy wszystkie trzy pasemka szłyby równo jak organy */
+  .rf-kofi-steam i:nth-child(2){left:48%;width:8px;height:25px;--sd:.95s}
+  .rf-kofi-steam i:nth-child(3){left:59%;--sd:1.85s}
+  .rf-kofi-t{font-family:var(--display);font-weight:800;font-size:14px;line-height:1.25;color:var(--ink)}
+  .rf-kofi-p{font-family:var(--sans);font-weight:600;font-size:13px;line-height:1.45;color:var(--muted)}
+  /* jedno wahnięcie kubka — te same klatki co w aplikacji (rfKofiSway), odpalane klasą z JS-a */
+  .rf-kofi-btn.is-nudge .rf-kofi-ic{animation:rfKofiSway .72s cubic-bezier(.25,.85,.35,1) both}
+  @keyframes rfKofiSway{
+    0%{transform:rotate(0) translateY(0)}
+    16%{transform:rotate(-17deg) translateY(-2px)}
+    38%{transform:rotate(12deg) translateY(0)}
+    60%{transform:rotate(-7deg) translateY(-1px)}
+    80%{transform:rotate(3.5deg) translateY(0)}
+    100%{transform:rotate(0) translateY(0)}}
+  @media(prefers-reduced-motion:no-preference){
+    /* po najechaniu kubek buja się RAZ, nie w kółko — to samo zachowanie co w aplikacji.
+       Wersja bez najeżdżania chodzi z JS-a niżej, w losowych odstępach. */
+    .rf-kofi:hover .rf-kofi-ic,.rf-kofi:focus-within .rf-kofi-ic{
+      animation:rfKofiWave 1.15s cubic-bezier(.36,.07,.19,.97) 1}
+    .rf-kofi:hover .rf-kofi-hero-ic,.rf-kofi:focus-within .rf-kofi-hero-ic{
+      animation:rfKofiHeroIn .46s cubic-bezier(.2,.9,.25,1.15) both,
+                rfKofiHeroBob 3.4s ease-in-out .46s infinite}
+    .rf-kofi:hover .rf-kofi-steam i,.rf-kofi:focus-within .rf-kofi-steam i{
+      animation:rfKofiSteam 2.9s ease-in-out var(--sd,0s) infinite}
+  }
+  @keyframes rfKofiHeroIn{
+     0%{transform:translateY(14px) rotate(-9deg) scale(.86);opacity:0}
+    60%{opacity:1}
+   100%{transform:translateY(0) rotate(0) scale(1);opacity:1}}
+  @keyframes rfKofiHeroBob{
+     0%{transform:translateY(0) rotate(0)}
+    28%{transform:translateY(-5px) rotate(-3.2deg)}
+    54%{transform:translateY(-1px) rotate(1.6deg)}
+    78%{transform:translateY(-3px) rotate(-1deg)}
+   100%{transform:translateY(0) rotate(0)}}
+  @keyframes rfKofiSteam{
+     0%{transform:translate(0,6px) scaleY(.5) rotate(0);opacity:0}
+    20%{opacity:.5}
+    45%{transform:translate(3px,-2px) scaleY(1) rotate(5deg);opacity:.4}
+    70%{transform:translate(-2px,-7px) scaleY(1.08) rotate(-6deg);opacity:.2}
+    85%{opacity:0}
+   100%{transform:translate(2px,-12px) scaleY(1.15) rotate(4deg);opacity:0}}
+  @keyframes rfKofiWave{
+     0%{transform:rotate(0) translateY(0)}
+    18%{transform:rotate(-13deg) translateY(-2px)}
+    36%{transform:rotate(9deg) translateY(-1px)}
+    54%{transform:rotate(-8deg) translateY(-2px)}
+    72%{transform:rotate(5deg) translateY(0)}
+    86%{transform:rotate(-2deg) translateY(0)}
+   100%{transform:rotate(0) translateY(0)}}
+  @media(max-width:760px){
+    .rf-kofi{right:12px;bottom:12px}
+    .rf-kofi-btn{height:40px;padding:0 13px 0 11px;gap:7px}
+    .rf-kofi-lbl{font-size:13px}
+    .rf-kofi-ic{width:23px;height:23px}
+  }
+
+  footer{margin-top:56px;padding:36px 0 46px;background:#211f1d;background-image:var(--felt-tex);
+    color:#cfc6b4;font-size:14px;box-shadow:inset 0 6px 0 rgba(0,0,0,.2)}
+  footer a{color:#a6d861}
+  footer a:hover{color:#fff}
+  .footlinks{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px;font-family:var(--display);font-weight:700}
+  /* Jedno zdanie o tym, po co jest „Issues" w rzędzie wyżej — stoi TU, a nie przy kafelkach kanałów:
+     tamte są o społeczności, a to jest przypis do odnośnika obok. */
+  .footnote{margin:0 0 12px;max-width:760px;font-size:13px;color:#aca395}
+
+  @media(max-width:760px){
+    /* Trzy przyciski (język · GitHub · Discord) nie mieszczą się obok marki na wąskim telefonie.
+       Zawijanie zamiast poziomego paska przewijania: pasek przewijania na całej stronie za sześć
+       pikseli to gorsza cena niż nagłówek w dwóch liniach. */
+    .bar{gap:8px;padding:8px 0 14px;flex-wrap:wrap}
+    .brand{font-size:17px;flex:1 1 auto;min-width:0}
+    .brand > img{width:34px;height:34px}
+    .wm{height:21px}
+    .brand small{white-space:normal}
+    .btn{padding:8px 11px;font-size:13px}
+    /* Trzeci przycisk w pasku (Discord) nie mieści się na 375 px razem ze strzałkami, a strzałka
+       jest tylko ozdobą znaczącą „otworzy się w nowej karcie". Znika ona, nie nazwa: nazwa
+       dostępna przycisku ma zostać widoczna. */
+    .bar .ext{display:none}
+    section{padding:38px 0 6px}
+  }
+
+  /* Trzy przyciski z ikonami nie mieszczą się obok marki na wąskim ekranie, a samo zawijanie
+     rozrywa je w przypadkowym miejscu (język zostaje na górze, Discord spada niżej sam).
+     Rozpychamy więc odstęp do pełnej szerokości: marka bierze pierwszy rząd, wszystkie przyciski
+     drugi, równo od lewej. Próg zmierzony, nie zgadnięty: jeden rząd wraca między 531 a 548 px.
+     Zaokrąglony w górę do 560, bo pomiar jest z jednej przeglądarki i jednego renderu czcionki —
+     zapas jest tańszy niż rozjechany nagłówek u kogoś, kto ma szersze litery. */
+  @media(max-width:560px){
+    .bar .spacer{flex-basis:100%;height:0}
+  }
+
+  /* reveal on scroll (disabled under reduced motion) */
+  @media(prefers-reduced-motion:no-preference){
+    .rv{opacity:0;transform:translateY(14px);transition:opacity .5s cubic-bezier(.2,.7,.2,1),transform .5s cubic-bezier(.2,.7,.2,1)}
+    .rv.in{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <div class="brand"><img src="assets/icons/logo.png" alt="" width="128" height="128">
+    <span><img class="wm" src="assets/wordmark-ribbitflip.png" alt="RibbitFlip"
+        width="650" height="152"><small><span data-lang="en">Make your Triki go from Ribbit to Bit</span><span data-lang="pl">Skumaj swój Triki z komputerem</span></small></span></div>
+  <nav class="kotwice" aria-label="Menu"><a href="#jak"><span data-lang="en">Modules</span><span data-lang="pl">Moduły</span></a><a href="#dostepnosc"><span data-lang="en">Accessibility</span><span data-lang="pl">Dostępność</span></a><a href="#start"><span data-lang="en">Start</span><span data-lang="pl">Start</span></a><a href="#zagraj"><span data-lang="en">Game</span><span data-lang="pl">Gra</span></a><a href="#faq">FAQ</a></nav>
+  <div class="spacer"></div>
+  <button class="btn sm" id="lang" onclick="toggleLang()"><img src="assets/icons/planet.png" alt="" width="128" height="128" style="width:18px;height:18px"><span id="langTxt">EN</span></button>
+  <a class="btn sm" target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip"><img src="assets/icons/github.png" alt="" width="128" height="128" style="width:18px;height:18px">GitHub<span class="ext"> ↗</span></a>
+  <!-- Ikona osadzona tak samo jak w przełączniku języka i w przycisku „Wpadnij na Discorda":
+       prawdziwe wymiary pliku w atrybutach, docelowy rozmiar w stylu. alt="" bo nazwę dostępną
+       daje widoczny napis obok. Kod jest na GitHubie, ludzie na Discordzie — oba wejścia stoją
+       tu obok siebie, zamiast czekać na przewinięcie do stopki. -->
+  <a class="btn sm" target="_blank" rel="noopener" href="https://discord.gg/tyv2MjjVdb"><img src="assets/icons/discord.png" alt="" width="128" height="128" style="width:18px;height:18px">Discord<span class="ext"> ↗</span></a>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="htxt">
+      <!-- Startowa fraza siedzi w znacznikach jako OSIADŁA naklejka (inline
+           --pc:118% = w całości nalepiona): bez JavaScriptu i dla czytników
+           strona ma pełne zdanie w H1. Skrypt dokłada jej spód i nalepia ją
+           chwilę po żabie; kolejne frazy buduje już w całości sam. -->
+      <h1><span data-lang="en" class="blk">Turn the Triki capsule's motion into
+          <span class="g heroRot"><span class="gen set" style="--pc:118%;--rest:1.6deg;--col:#d81678;--colInk:#70073b"><span class="stk base">whatever you can think of</span></span></span></span><span data-lang="pl" class="blk">Zamień ruch kapsla Triki w
+          <span class="g heroRot"><span class="gen set" style="--pc:118%;--rest:1.6deg;--col:#d81678;--colInk:#70073b"><span class="stk base">co tylko wymyślisz</span></span></span></span></h1>
+      <p class="lead"><span data-lang="en">The Triki capsule has a motion sensor inside. RibbitFlip connects it to your
+        computer, and you decide what happens when you tilt, turn or click it: skip a track, jump in a game, play
+        a note, switch off the lamp.</span>
+        <span data-lang="pl">Kapsel Triki ma w środku czujnik ruchu. RibbitFlip łączy go z komputerem, a Ty ustalasz,
+        co ma się stać, gdy go przechylisz, obrócisz albo klikniesz: przełączyć utwór, skoczyć w grze, zagrać nutę,
+        zgasić lampę.</span></p>
+      <p class="fakty"><span data-lang="en">Windows · free · needs the Triki capsule from Żabka · runs on your computer,
+        no cloud, no account</span><span data-lang="pl">Windows · za darmo · potrzebny kapsel Triki z Żabki · działa
+        na Twoim komputerze, bez chmury i kont</span></p>
+      <div class="cta">
+        <a class="btn pri" target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/releases/latest"><span data-lang="en">⤓ Download RibbitFlip.exe</span><span data-lang="pl">⤓ Pobierz RibbitFlip.exe</span></a>
+        <a class="btn" href="#jak"><span data-lang="en">▶ See what it can do</span><span data-lang="pl">▶ Zobacz, co potrafi</span></a>
+      </div>
+      <p class="hlinki"><a href="#dostepnosc"><span data-lang="en">Accessible computer control</span><span data-lang="pl">Dostępne sterowanie komputerem</span></a>
+        <a href="#start"><span data-lang="en">Getting started</span><span data-lang="pl">Pierwsze kroki</span></a>
+        <a href="#zagraj"><span data-lang="en">Play RibbitBeat</span><span data-lang="pl">Zagraj w RibbitBeat</span></a></p>
+      <p class="dlnote"><span data-lang="en">Windows will warn you the first time you run it: the file is not
+        digitally signed. <a href="#faq-smartscreen">Why that is, and how to check the app yourself</a>.</span>
+        <span data-lang="pl">Windows ostrzeże przy pierwszym uruchomieniu: plik nie jest podpisany cyfrowo.
+        <a href="#faq-smartscreen">Dlaczego tak jest i jak samodzielnie sprawdzić aplikację</a>.</span></p>
+    </div>
+    <div class="peelwrap stick">
+      <img class="mascot" src="assets/mascot.png" alt="RibbitFlip" width="685" height="760">
+      <img class="flap" src="assets/mascot.png" alt="" aria-hidden="true" width="685" height="760">
+    </div>
+  </div>
+
+  <section id="jak">
+    <h2 class="sec"><img src="assets/icons/gear2.png" alt="" width="80" height="80"><span data-lang="en">See what it can do</span><span data-lang="pl">Zobacz, co potrafi</span></h2>
+    <!-- Wstęp w dwóch zdaniach: resztę pokazują filmy. Stop awaryjny jest w kroku 3 „Od czego zacząć” i w FAQ. -->
+    <p class="sub"><span data-lang="en">Every module in a short film: the capsule moves, a thread carries the signal, and
+      the thing at the other end reacts at that very moment. You write the rules yourself, such as “when I tilt the
+      capsule right, skip to the next track”.</span><span data-lang="pl">Każdy moduł w krótkim filmie: kapsel robi ruch,
+      nić niesie sygnał, a rzecz po drugiej stronie reaguje w tej samej chwili. Reguły piszesz sam, na przykład „gdy
+      przechylę kapsel w prawo, przełącz na następny utwór”.</span></p>
+    <!-- PLAKATY RIBBITFLIP: ta sama karuzela co plakaty RibbitBeat (.karuzela, skrypt na dole strony obsługuje
+         każdą). Każdy moduł ma swoją infografikę: filcowa scena bez okna aplikacji, w której kapsel 3D robi ruch,
+         nić niesie impuls, a przedmiot reaguje w tej samej chwili. Przedostatni pokazuje asystenta AI przez serwer MCP, ostatni to plakat „O projekcie”. -->
+    <div class="karuzela rv" data-lang="en" tabindex="0" role="region" aria-roledescription="carousel" aria-label="RibbitFlip posters" data-etykieta="Poster">
+      <div class="kar-okno"><div class="kar-tor">
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="1 / 14"><video src="assets/plakaty-rf/en-05-kontroler.mp4" poster="assets/plakaty-rf/en-05-kontroler.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Controller: the stick and trigger of a felt gamepad follow the capsule, the pad turns from Xbox into DualShock and Wii, two capsules on one pad"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="2 / 14"><video src="assets/plakaty-rf/en-03-mysz.mp4" poster="assets/plakaty-rf/en-03-mysz.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Mouse: the cursor follows the capsule's tilt across the desktop, shaking inside the dead zone does nothing, holding still clicks"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="3 / 14"><video src="assets/plakaty-rf/en-01-mapowanie.mp4" poster="assets/plakaty-rf/en-01-mapowanie.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Mapping: tilting the capsule four ways presses felt keys around a record player, the record changes track, holding changes the volume, a click pauses"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="4 / 14"><video src="assets/plakaty-rf/en-02-kolo.mp4" poster="assets/plakaty-rf/en-02-kolo.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Selection wheel: three wheels on a computer, system, music and a game wheel with a spell submenu, worked with the capsule"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="5 / 14"><video src="assets/plakaty-rf/en-04-skaner.mp4" poster="assets/plakaty-rf/en-04-skaner.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Screen scanner: a signal of your choice, then bars, blocks and radar led by clicks of the capsule, with pace settings"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="6 / 14"><video src="assets/plakaty-rf/en-06-nakladka.mp4" poster="assets/plakaty-rf/en-06-nakladka.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Overlay: see-through windows over four games with a miniature capsule and the rules that are firing"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="7 / 14"><video src="assets/plakaty-rf/en-07-midi.mp4" poster="assets/plakaty-rf/en-07-midi.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="MIDI: CC faders, a Pitch Bend wheel and notes in a scale on a keyboard, driven by the capsule's motion"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="8 / 14"><video src="assets/plakaty-rf/en-08-osc.mp4" poster="assets/plakaty-rf/en-08-osc.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="OSC: a lamp, a projector and a servo through an ESP32, each on its own OSC address"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="9 / 14"><video src="assets/plakaty-rf/en-09-uslugi.mp4" poster="assets/plakaty-rf/en-09-uslugi.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Services: capsule moves send commands to a WLED strip, Discord, OBS, a fan, a robot vacuum and a smart plug, ending with a preview of the command"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="10 / 14"><video src="assets/plakaty-rf/en-10-synth.mp4" poster="assets/plakaty-rf/en-10-synth.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Synth: three capsules are three frogs hopping across lily pad notes"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="11 / 14"><video src="assets/plakaty-rf/en-11-zestawy.mp4" poster="assets/plakaty-rf/en-11-zestawy.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Setups: a carousel of cassettes stops on a game, the setup loads into the capsule and right away walks the hiker"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="12 / 14"><video src="assets/plakaty-rf/en-12-kapsle.mp4" poster="assets/plakaty-rf/en-12-kapsle.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Several capsules: three capsules, each in its own colour, drive their own module"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="13 / 14"><video src="assets/plakaty-rf/en-13-mcp.mp4" poster="assets/plakaty-rf/en-13-mcp.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="AI assistant: switch on the MCP server, ask the assistant for a game setup, and it reads the config, checks, does a dry run and saves the capsule mapping by itself, then a game character walks and jumps with the capsule"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="14 / 14"><video src="assets/plakaty-rf/en-14-oprojekcie.mp4" poster="assets/plakaty-rf/en-14-oprojekcie.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="About: free for Windows, no cloud, Alt+R+F emergency stop, unofficial hobby project"></video></figure>
+      </div></div>
+      <button class="kar-btn kar-prev" type="button" aria-label="Previous poster">‹</button><button class="kar-btn kar-next" type="button" aria-label="Next poster">›</button>
+      <div class="kar-dol"></div>
+    </div>
+    <div class="karuzela rv" data-lang="pl" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Plakaty RibbitFlip" data-etykieta="Plakat">
+      <div class="kar-okno"><div class="kar-tor">
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="1 / 14"><video src="assets/plakaty-rf/pl-05-kontroler.mp4" poster="assets/plakaty-rf/pl-05-kontroler.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Kontroler: gałka i spust filcowego pada idą za kapslem, pad zmienia się z Xboksa w DualShocka i Wii, dwa kapsle na jednym padzie"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="2 / 14"><video src="assets/plakaty-rf/pl-03-mysz.mp4" poster="assets/plakaty-rf/pl-03-mysz.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Mysz: kursor jedzie po pulpicie za przechyłem kapsla, drżenie w martwej strefie nic nie robi, bezruch klika"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="3 / 14"><video src="assets/plakaty-rf/pl-01-mapowanie.mp4" poster="assets/plakaty-rf/pl-01-mapowanie.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Mapowanie: przechył kapsla w cztery strony wciska filcowe klawisze przy gramofonie, płyta zmienia utwór, trzymanie zmienia głośność, klik pauzuje"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="4 / 14"><video src="assets/plakaty-rf/pl-02-kolo.mp4" poster="assets/plakaty-rf/pl-02-kolo.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Koło wyboru: trzy koła na komputerze, systemowe, muzyczne i do gry z podmenu czarów, obsłużone kapslem"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="5 / 14"><video src="assets/plakaty-rf/pl-04-skaner.mp4" poster="assets/plakaty-rf/pl-04-skaner.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Skaner ekranu: sygnał do wyboru, potem pasy, ćwiartki i radar prowadzone kliknięciami kapsla, z ustawieniami tempa"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="6 / 14"><video src="assets/plakaty-rf/pl-06-nakladka.mp4" poster="assets/plakaty-rf/pl-06-nakladka.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Nakładka: półprzezroczyste okna nad czterema grami z miniaturą kapsla i regułami, które właśnie działają"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="7 / 14"><video src="assets/plakaty-rf/pl-07-midi.mp4" poster="assets/plakaty-rf/pl-07-midi.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="MIDI: fadery CC, koło Pitch Bend i nuty w skali na klawiaturze, sterowane ruchem kapsla"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="8 / 14"><video src="assets/plakaty-rf/pl-08-osc.mp4" poster="assets/plakaty-rf/pl-08-osc.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="OSC: lampa, projektor i serwo przez ESP32, każde pod swoim adresem OSC"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="9 / 14"><video src="assets/plakaty-rf/pl-09-uslugi.mp4" poster="assets/plakaty-rf/pl-09-uslugi.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Usługi: ruch kapsla wysyła polecenia do taśmy WLED, Discorda, OBS, wentylatora, robota odkurzacza i gniazdka z lampą, na końcu podgląd polecenia"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="10 / 14"><video src="assets/plakaty-rf/pl-10-synth.mp4" poster="assets/plakaty-rf/pl-10-synth.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Synth: trzy kapsle to trzy żaby skaczące po liściach-nutach"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="11 / 14"><video src="assets/plakaty-rf/pl-11-zestawy.mp4" poster="assets/plakaty-rf/pl-11-zestawy.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Zestawy: karuzela kaset staje na grze, zestaw wczytuje się do kapsla i od razu prowadzi wędrowca"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="12 / 14"><video src="assets/plakaty-rf/pl-12-kapsle.mp4" poster="assets/plakaty-rf/pl-12-kapsle.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Kilka kapsli: trzy kapsle, każdy w swoim kolorze steruje swoim modułem"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="13 / 14"><video src="assets/plakaty-rf/pl-13-mcp.mp4" poster="assets/plakaty-rf/pl-13-mcp.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Asystent AI: włączasz serwer MCP, prosisz asystenta o ustawienia do gry, a on sam czyta konfigurację, sprawdza, próbuje na sucho i zapisuje mapowanie kapsla, po czym postać w grze chodzi i skacze za kapslem"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="14 / 14"><video src="assets/plakaty-rf/pl-14-oprojekcie.mp4" poster="assets/plakaty-rf/pl-14-oprojekcie.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="O projekcie: za darmo na Windows, bez chmury, stop awaryjny Alt+R+F, nieoficjalny projekt hobbystyczny"></video></figure>
+      </div></div>
+      <button class="kar-btn kar-prev" type="button" aria-label="Poprzedni plakat">‹</button><button class="kar-btn kar-next" type="button" aria-label="Następny plakat">›</button>
+      <div class="kar-dol"></div>
+    </div>
+    <!-- Rząd nazwanych przycisków pod karuzelą: kropki nie mówią, który film jest o czym. Przycisk klika kropkę
+         karuzeli w bieżącym języku (skrypt na dole strony), więc licznik i aria-current zostają w zgodzie. -->
+    <div class="moduly rv" role="group" aria-label="Filmy / Films">
+      <button type="button" data-slajd="0"><span data-lang="en">Mapping</span><span data-lang="pl">Mapowanie</span></button>
+      <button type="button" data-slajd="1"><span data-lang="en">Selection wheel</span><span data-lang="pl">Koło wyboru</span></button>
+      <button type="button" data-slajd="2"><span data-lang="en">Mouse</span><span data-lang="pl">Mysz</span></button>
+      <button type="button" data-slajd="3"><span data-lang="en">Scanner</span><span data-lang="pl">Skaner</span></button>
+      <button type="button" data-slajd="4"><span data-lang="en">Controller</span><span data-lang="pl">Kontroler</span></button>
+      <button type="button" data-slajd="5"><span data-lang="en">Overlay</span><span data-lang="pl">Nakładka</span></button>
+      <button type="button" data-slajd="6"><span data-lang="en">MIDI</span><span data-lang="pl">MIDI</span></button>
+      <button type="button" data-slajd="7"><span data-lang="en">OSC</span><span data-lang="pl">OSC</span></button>
+      <button type="button" data-slajd="8"><span data-lang="en">Services</span><span data-lang="pl">Usługi</span></button>
+      <button type="button" data-slajd="9"><span data-lang="en">Synth</span><span data-lang="pl">Synth</span></button>
+      <button type="button" data-slajd="10"><span data-lang="en">Setups</span><span data-lang="pl">Zestawy</span></button>
+      <button type="button" data-slajd="11"><span data-lang="en">Many capsules</span><span data-lang="pl">Kilka kapsli</span></button>
+      <button type="button" data-slajd="12"><span data-lang="en">AI assistant</span><span data-lang="pl">Asystent AI</span></button>
+    </div>
+    <p class="wiecej"><a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/en/features.md" data-lang="en">All modules and settings in detail ↗</a><a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/pl/funkcje.md" data-lang="pl">Wszystkie moduły i ustawienia ↗</a></p>
+
+  </section>
+
+  <!-- DOSTĘPNOŚĆ: odpowiedź na „czy to dla mnie” dla osoby z niepełnosprawnością i jej bliskich. Krótko o całym
+       dostępnym sterowaniu, nie tylko o skanerze; szczegóły ustawień są w docs/pl/pomocna-dlon.md i docs/pl/funkcje.md.
+       Fakty z pomocna-dlon.md i docs/MCP.md, liczby sprawdzalne, bez pauz w treści. -->
+  <section id="dostepnosc">
+    <h2 class="sec"><img src="assets/icons/cap4.png" alt="" width="80" height="80"><span data-lang="en">Accessibility: one signal is enough</span><span data-lang="pl">Dostępność: jeden sygnał wystarczy</span></h2>
+    <p class="sub"><span data-lang="en">RibbitFlip was also made for people who can't use a standard mouse or keyboard,
+      whether because of a motor disability, an injury or a condition that takes away precision in the hands. The
+      capsule can stay in your hand or be clipped to the peak of a cap or a headband, and then your head drives the
+      cursor.</span>
+      <span data-lang="pl">RibbitFlip powstał także dla osób, które nie mogą korzystać ze standardowej myszy i klawiatury:
+      z powodu niepełnosprawności ruchowej, po urazie albo w chorobie, która zabiera precyzję rąk. Kapsel może zostać
+      w dłoni albo trafić na daszek czapki lub opaskę, a wtedy kursor prowadzi ruch głowy.</span></p>
+    <div class="grid">
+      <div class="card rv">
+        <h3><span data-lang="en">The whole computer with one signal</span><span data-lang="pl">Cały komputer jednym sygnałem</span></h3>
+        <p><span data-lang="en">The screen scanner: a bar sweeps across the screen and you stop it, a second one sweeps the
+          other way, and where they cross, the click lands. The signal can be the capsule's button, a nod, a tilt or
+          going still; none of them needs a press.</span>
+          <span data-lang="pl">Skaner ekranu: pasek jedzie przez ekran, zatrzymujesz go, drugi jedzie w poprzek, a na
+          przecięciu pada kliknięcie. Sygnałem może być przycisk kapsla, skinienie, przechył albo znieruchomienie;
+          żaden nie wymaga naciśnięcia.</span></p>
+        <p class="do-filmu"><button type="button" data-slajd="3"><span data-lang="en">▶ Watch the scanner film</span><span data-lang="pl">▶ Zobacz film o skanerze</span></button></p>
+      </div>
+      <div class="card rv">
+        <h3><span data-lang="en">Click without clicking</span><span data-lang="pl">Klik bez klikania</span></h3>
+        <p><span data-lang="en">Hold the cursor still for a moment and the click happens on its own. You set how long and how
+          much the cursor may shake, so a tremor still counts as standing still.</span>
+          <span data-lang="pl">Zatrzymujesz kursor na chwilę, a kliknięcie robi się samo. Czas i to, jak bardzo kursor może
+          drgać, ustawiasz pod siebie, więc drżenie ręki nadal liczy się jako bezruch.</span></p>
+      </div>
+      <div class="card rv">
+        <h3><span data-lang="en">A wheel instead of shortcuts</span><span data-lang="pl">Koło zamiast skrótów</span></h3>
+        <p><span data-lang="en">Up to sixteen actions in one place, picked with a tilt alone or by stepping through them with
+          clicks. A capsule put down on a blanket or an armrest stops controlling anything.</span>
+          <span data-lang="pl">Do szesnastu akcji w jednym miejscu, wybieranych samym pochyleniem albo kolejnymi
+          kliknięciami. Kapsel odłożony na koc czy poręcz fotela przestaje sterować.</span></p>
+      </div>
+    </div>
+    <p class="sub"><span data-lang="en">It is the same technique as Switch Control on Apple and Switch Access on Android.
+      Wearable head-controlled pointers cost several thousand złoty each; the capsule costs about 70 zł (under 20
+      dollars) and the app is free, so it is a cheap way to find out whether one-signal control works at all before
+      anyone spends money on specialist equipment. You can also tell the <a href="#faq-mcp">AI assistant</a> in your own
+      words what you cannot do, and it builds the settings around that. To be fair: this is a hobby project, not
+      a medical device, and it needs at least one controlled movement.</span>
+      <span data-lang="pl">To ta sama technika, co Switch Control w Apple i Switch Access w Androidzie. Noszone wskaźniki
+      sterowane ruchem głowy kosztują po kilka tysięcy złotych, a kapsel około 70 zł i aplikacja jest darmowa, więc to
+      tani sposób, żeby sprawdzić, czy sterowanie jednym sygnałem w ogóle się sprawdza, zanim ktoś wyda pieniądze na
+      sprzęt specjalistyczny. Możesz też powiedzieć <a href="#faq-mcp">asystentowi AI</a> własnymi słowami, czego nie
+      możesz, a on ułoży ustawienia pod Ciebie. Uczciwie: to projekt hobbystyczny, nie wyrób medyczny, i potrzebny jest
+      choć jeden kontrolowany ruch.</span></p>
+    <p class="wiecej"><a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/en/helping-hand.md" data-lang="en">More: RibbitFlip as a helping hand ↗</a><a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/pl/pomocna-dlon.md" data-lang="pl">Więcej: RibbitFlip jako pomocna dłoń ↗</a></p>
+  </section>
+
+  <!-- OD CZEGO ZACZĄĆ: trzy kroki dla laika, zrzuty panelu i odesłanie do pełnych „Pierwszych kroków”. -->
+  <section id="start">
+    <h2 class="sec"><img src="assets/icons/star2.png" alt="" width="80" height="80"><span data-lang="en">Where do I start?</span><span data-lang="pl">Od czego zacząć?</span></h2>
+    <p class="sub"><span data-lang="en">Three steps and the capsule does something useful.</span><span data-lang="pl">Trzy
+      kroki i kapsel robi coś pożytecznego.</span></p>
+    <div class="grid">
+      <div class="card rv"><span class="n" aria-hidden="true">1</span>
+        <h3><span data-lang="en">Download and connect</span><span data-lang="pl">Pobierz i połącz kapsel</span></h3>
+        <p><span data-lang="en">Download RibbitFlip.exe and run it. The first time, Windows shows a blue window:
+          click “More info”, then “Run anyway”. The panel opens by itself in your browser, and the app starts
+          looking for a capsule straight away: press its middle and hold it close to the computer. Once it is
+          connected, a coloured pill with its name appears in the panel. You add more capsules with the
+          “Add a capsule” button. If the capsule only needs to drive your computer, the lighter
+          RibbitFlip-Essential.exe is enough.</span>
+          <span data-lang="pl">Pobierz RibbitFlip.exe i uruchom go. Za pierwszym razem Windows pokaże niebieskie
+          okno: kliknij „Więcej informacji”, a potem „Uruchom mimo to”. Panel otworzy się sam w przeglądarce,
+          a aplikacja od razu zacznie szukać kapsla: naciśnij jego środek i trzymaj go blisko komputera. Po
+          połączeniu w panelu pojawi się kolorowa pigułka z jego nazwą. Kolejne kapsle dodasz przyciskiem
+          „Dodaj kapsel”. Gdy kapsel ma tylko sterować komputerem, wystarczy lżejszy RibbitFlip-Essential.exe.</span></p></div>
+      <div class="card rv"><span class="n" aria-hidden="true">2</span>
+        <h3><span data-lang="en">Set it up</span><span data-lang="pl">Skonfiguruj go</span></h3>
+        <p><span data-lang="en">The simple way: record a movement with the capsule and say what should happen when
+          the app recognizes it. Want it precise? The advanced mode lets you decide exactly what fires and when.
+          And to begin with, you can grab a ready-made setup from the Setups tab: one click and the whole
+          configuration is in place.</span>
+          <span data-lang="pl">Najprościej: nagrywasz ruch kapslem i mówisz, co ma się stać, kiedy aplikacja go
+          rozpozna. Chcesz precyzyjnie? Tryb zaawansowany pozwala ustalić dokładnie, co i kiedy się wyzwala.
+          A na początek możesz sięgnąć po gotowy zestaw z zakładki Zestawy: jedno kliknięcie i cała konfiguracja
+          jest na miejscu.</span></p></div>
+      <div class="card rv"><span class="n" aria-hidden="true">3</span>
+        <h3><span data-lang="en">Switch the module on and move</span><span data-lang="pl">Włącz moduł i ruszaj</span></h3>
+        <p><span data-lang="en">Setting things up switches nothing on by itself: you flip the module's own switch,
+          for example the one at the top of the screen with your rules, Mapping. From that moment the capsule
+          is in control. The main “Armed” switch at the top of the panel is on from the start and stops
+          everything at once, and <span class="keys"><kbd>Alt</kbd><i>+</i><kbd>R</kbd><i>+</i><kbd>F</kbd></span> switches every module off. Want something different? Open the module
+          and change one rule; the rest stays.</span>
+          <span data-lang="pl">Sama konfiguracja jeszcze nic nie włącza: przełącznik modułu przestawiasz
+          samodzielnie, na przykład ten u góry ekranu z regułami, czyli Mapowania. Od tej chwili kapsel steruje.
+          Główny przełącznik „Uzbrojone” na górze panelu jest włączony od startu i zatrzymuje wszystko naraz,
+          a <span class="keys"><kbd>Alt</kbd><i>+</i><kbd>R</kbd><i>+</i><kbd>F</kbd></span> wyłącza wszystkie moduły. Chcesz inaczej? Wchodzisz w moduł i zmieniasz jedną regułę, reszta
+          zostaje.</span></p></div>
+    </div>
+
+    <!-- Prawdziwy panel w trzech zrzutach (filmy celowo go nie pokazują); kliknięcie otwiera pełny rozmiar w okienku .podglad na tej stronie. -->
+    <div class="zrzuty rv">
+      <figure class="shot"><a href="assets/screenshots/screen-02-kontroler.jpg"><img src="assets/screenshots/screen-02-kontroler.jpg" alt="Kontroler: wirtualny pad Xbox 360 prowadzony dwoma kapslami" loading="lazy" width="1600" height="880"></a>
+        <figcaption><span data-lang="en">Controller: a virtual Xbox 360 pad driven by two capsules</span><span data-lang="pl">Kontroler: wirtualny pad Xbox 360 prowadzony dwoma kapslami</span></figcaption></figure>
+      <figure class="shot"><a href="assets/screenshots/screen-05-kolo-wyboru.jpg"><img src="assets/screenshots/screen-05-kolo-wyboru.jpg" alt="Koło wyboru: do szesnastu wycinków pod jednym przyciskiem" loading="lazy" width="1600" height="880"></a>
+        <figcaption><span data-lang="en">Selection wheel: up to sixteen slices under one button</span><span data-lang="pl">Koło wyboru: do szesnastu wycinków pod jednym przyciskiem</span></figcaption></figure>
+      <figure class="shot"><a href="assets/screenshots/screen-03-skaner.jpg"><img src="assets/screenshots/screen-03-skaner.jpg" alt="Skaner: pola zaznaczone na zrzucie ekranu gry" loading="lazy" width="1600" height="880"></a>
+        <figcaption><span data-lang="en">Scanner: fields marked on a screenshot of a game</span><span data-lang="pl">Skaner: pola zaznaczone na zrzucie ekranu gry</span></figcaption></figure>
+    </div>
+    <dialog class="podglad" id="podglad" aria-label="Podgląd zrzutu / Screenshot preview">
+      <button class="btn sm podglad-x" type="button" id="podgladX"><span data-lang="en">✕ Close</span><span data-lang="pl">✕ Zamknij</span></button>
+      <figure class="shot"><img id="podgladImg" alt="" width="1600" height="880"><figcaption id="podgladOpis"></figcaption></figure>
+    </dialog>
+    <script>
+      // Zrzuty z „Od czego zacząć” otwierają się w okienku nad stroną zamiast w nowej karcie (prośba właściciela 2026-11-22).
+      (function rfPodgladZrzutu(){
+        const d = document.getElementById("podglad");
+        if (!d || typeof d.showModal !== "function") return;           // bez <dialog> zostaje zwykły link w tym samym oknie
+        const img = document.getElementById("podgladImg"), opis = document.getElementById("podgladOpis");
+        document.querySelectorAll(".zrzuty .shot a").forEach(a => a.addEventListener("click", e => {
+          if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;   // nowa karta na życzenie
+          e.preventDefault();
+          const mini = a.querySelector("img"), fc = a.closest("figure").querySelector("figcaption");
+          img.src = a.href; img.alt = mini ? mini.alt : "";
+          opis.innerHTML = fc ? fc.innerHTML : "";
+          d.showModal();
+        }));
+        document.getElementById("podgladX").addEventListener("click", () => d.close());
+        d.addEventListener("click", e => { if (e.target === d) d.close(); });              // klik w przyciemnione tło
+      })();
+    </script>
+    <p class="after"><span data-lang="en">No capsule yet? Switch the panel to simulation (the LIVE / Simulation switch at
+      the top) and look around before you buy anything. The full guide, the SmartScreen window and troubleshooting:
+      <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/en/getting-started.md">Getting started ↗</a>.</span>
+      <span data-lang="pl">Nie masz jeszcze kapsla? Przełącz panel na symulację (przełącznik LIVE / Symulacja na górze)
+      i rozejrzyj się, zanim cokolwiek kupisz. Pełna instrukcja, okno SmartScreen i rozwiązywanie problemów:
+      <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/pl/pierwsze-kroki.md">Pierwsze kroki ↗</a>.</span></p>
+  </section>
+
+  <!-- PRZETESTUJ OD RAZU: RIBBITBEAT (2026-10-10, zrzut gry jako „przetestuj od razu").
+       Karta RibbitBeat w „Od czego zacząć?” mówi, że gra jest; ta sekcja pokazuje, jak wygląda i czemu to
+       najszybszy test kapsla. Zrzut 1600×880 jak galeria, z prawdziwej rozgrywki (trzy boty, „Oda do radości”,
+       domena publiczna); robiony skryptem poza repozytorium. Liczby sprawdzalne w kodzie gry:
+       20 utworów wbudowanych (web/gry/js/piosenki.js), do 8 graczy (ZC_MAKS_GRACZY w zabi-chor.js).
+       Zero pauz w treści, celowo. -->
+  <section id="zagraj">
+    <h2 class="sec"><img src="assets/icons/arcade.png" alt="" width="80" height="80"><span data-lang="en">Try it right away: RibbitBeat</span><span data-lang="pl">Przetestuj od razu: RibbitBeat</span></h2>
+    <p class="sub"><span data-lang="en">The quickest way to see the capsule in action is the rhythm game built into
+      the app. Nothing to set up: open the game, press the capsule's button and sing along with the frogs.</span>
+      <span data-lang="pl">Najszybciej zobaczysz kapsel w akcji we wbudowanej grze rytmicznej. Nic nie ustawiasz:
+      otwierasz grę, naciskasz przycisk kapsla i śpiewasz razem z żabami.</span>
+      <span data-lang="en">RibbitBeat is a preview for now: the look and scoring may still change.</span>
+      <span data-lang="pl">RibbitBeat jest na razie w wersji testowej: wygląd i punktacja mogą się jeszcze zmienić.</span></p>
+    <div class="karuzela rv" data-lang="en" tabindex="0" role="region" aria-roledescription="carousel" aria-label="RibbitBeat posters" data-etykieta="Poster">
+      <div class="kar-okno"><div class="kar-tor">
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="1 / 7"><img src="assets/plakaty/en-7-ogrze.jpg" alt="About: a free demo game for RibbitFlip, made with the help of AI" loading="lazy" width="1600" height="900"></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="2 / 7"><video src="assets/plakaty/en-1-gra.mp4" poster="assets/plakaty/en-1-gra.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="How to play: tilt the capsule, hit the notes and sing"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="3 / 7"><video src="assets/plakaty/en-2-gracze.mp4" poster="assets/plakaty/en-2-gracze.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Up to eight players at once, with friends or bots"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="4 / 7"><video src="assets/plakaty/en-3-muzyka.mp4" poster="assets/plakaty/en-3-muzyka.jpg" muted playsinline preload="none" width="1600" height="900" aria-label="Hundreds of songs: 19 built-in, about 530 classical pieces and your own MIDI"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="5 / 7"><video src="assets/plakaty/en-4-kolekcja.mp4" poster="assets/plakaty/en-4-kolekcja.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Collection: 101 things to unlock, 3 of them super secret"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="6 / 7"><video src="assets/plakaty/en-5-kolo.mp4" poster="assets/plakaty/en-5-kolo.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Reward wheel: hold, release and win a prize"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="7 / 7"><video src="assets/plakaty/en-6-lokalnie.mp4" poster="assets/plakaty/en-6-lokalnie.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="No cloud, no sign-up: everything stays on your computer"></video></figure>
+      </div></div>
+      <button class="kar-btn kar-prev" type="button" aria-label="Previous poster">‹</button><button class="kar-btn kar-next" type="button" aria-label="Next poster">›</button>
+      <div class="kar-dol"></div>
+    </div>
+    <div class="karuzela rv" data-lang="pl" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Plakaty RibbitBeat" data-etykieta="Plakat">
+      <div class="kar-okno"><div class="kar-tor">
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="1 / 7"><img src="assets/plakaty/pl-7-ogrze.jpg" alt="O grze: darmowa gra demonstracyjna RibbitFlipa, zrobiona z pomocą AI" loading="lazy" width="1600" height="900"></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="2 / 7"><video src="assets/plakaty/pl-1-gra.mp4" poster="assets/plakaty/pl-1-gra.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Jak się gra: pochyl kapsel, trafiaj w nuty i śpiewaj"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="3 / 7"><video src="assets/plakaty/pl-2-gracze.mp4" poster="assets/plakaty/pl-2-gracze.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Do ośmiu graczy naraz, ze znajomymi albo z botami"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="4 / 7"><video src="assets/plakaty/pl-3-muzyka.mp4" poster="assets/plakaty/pl-3-muzyka.jpg" muted playsinline preload="none" width="1600" height="900" aria-label="Setki piosenek: 19 wbudowanych, ok. 530 klasycznych i własne MIDI"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="5 / 7"><video src="assets/plakaty/pl-4-kolekcja.mp4" poster="assets/plakaty/pl-4-kolekcja.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Kolekcja: 101 rzeczy do odblokowania, w tym 3 super sekretne"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="6 / 7"><video src="assets/plakaty/pl-5-kolo.mp4" poster="assets/plakaty/pl-5-kolo.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Koło nagród: naciągnij, puść i zgarnij nagrodę"></video></figure>
+          <figure class="kar-slajd" role="group" aria-roledescription="slide" aria-label="7 / 7"><video src="assets/plakaty/pl-6-lokalnie.mp4" poster="assets/plakaty/pl-6-lokalnie.jpg" muted loop playsinline preload="none" width="1600" height="900" aria-label="Bez chmury i bez rejestracji: wszystko zostaje na Twoim komputerze"></video></figure>
+      </div></div>
+      <button class="kar-btn kar-prev" type="button" aria-label="Poprzedni plakat">‹</button><button class="kar-btn kar-next" type="button" aria-label="Następny plakat">›</button>
+      <div class="kar-dol"></div>
+    </div>
+    <p class="after"><span data-lang="en">Up to eight players at once, bots included · no capsule needed: mouse, keyboard or
+      gamepad · 19 built-in melodies and your own MIDI files. In the app, the RibbitBeat button in the Try it out group
+      opens the game; RibbitBeat.exe runs just the game, full screen.
+      <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/en/ribbitbeat.md">The full description ↗</a></span>
+      <span data-lang="pl">Do ośmiu graczy naraz, także z botami · bez kapsla zagrasz myszą, klawiaturą albo padem ·
+      19 wbudowanych melodii i własne pliki MIDI. W aplikacji grę otwiera przycisk RibbitBeat w grupie „Wypróbuj”, a
+      RibbitBeat.exe uruchamia samą grę na pełnym ekranie.
+      <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/pl/ribbitbeat.md">Pełny opis gry ↗</a></span></p>
+    <div class="cta">
+      <a class="btn pri" target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/releases/latest"><span data-lang="en">⤓ Download RibbitBeat.exe</span><span data-lang="pl">⤓ Pobierz RibbitBeat.exe</span></a>
+    </div>
+  </section>
+
+  <section id="podziel">
+    <h2 class="sec"><img src="assets/icons/mega.png" alt="" width="80" height="80"><span data-lang="en">Built something with it? The community is on Discord</span><span data-lang="pl">Masz coś ciekawego do pokazania? Społeczność siedzi na Discordzie</span></h2>
+    <p class="sub"><span data-lang="en">Clips, photos, questions and ready-made setup files: four forums, one per errand.</span>
+      <span data-lang="pl">Klipy, zdjęcia, pytania i gotowe pliki zestawów: cztery fora, po jednym na sprawę.</span></p>
+    <div class="share rv">
+      <div>
+        <p><span data-lang="en"><b>Nothing is posted automatically.</b> The app prepares the text and opens the forum;
+          you start the thread from your own account. Your own setup goes out through the wizard in the "Exchange with
+          others" card of the Setups tab: it writes the title, tags and file for you.</span>
+          <span data-lang="pl"><b>Nic nie jest wysyłane automatycznie.</b> Aplikacja przygotowuje treść i otwiera forum,
+          a wpis zakładasz ze swojego konta. Swój zestaw wyślesz kreatorem z karty „Wymiana z innymi” w zakładce
+          Zestawy: sam ułoży tytuł, tagi i plik.</span></p>
+        <div class="cta">
+          <!-- Ikona osadzona tak samo jak w przełączniku języka: prawdziwe wymiary pliku w atrybutach,
+               docelowy rozmiar w stylu — .btn jest inline-flex z gap, więc obrazek ustawia się sam. -->
+          <a class="btn pri" target="_blank" rel="noopener" href="https://discord.gg/tyv2MjjVdb"><img src="assets/icons/discord.png" alt="" width="128" height="128" style="width:20px;height:20px"><span data-lang="en">Join us on Discord</span><span data-lang="pl">Wpadnij na Discorda</span></a>
+        </div>
+      </div>
+      <!-- CZTERY FORA SERWERA, jeden kafelek na forum, jedno zdanie na kafelek. Tyle samo pozycji,
+           co w sekcji „Społeczność" obu README — to ma być ta sama lista, nie druga wersja tej samej
+           rzeczy.
+
+           TRZY ZAPROSZENIA, TRZY OSOBNE DRZWI — i tak zostaje celowo, bo każde zaproszenie Discorda
+           ma własny licznik użyć, więc podział jest jedynym sposobem, żeby wiedzieć, którymi drzwiami
+           ktoś wszedł. Każde ląduje gdzie indziej, a to jest ta połowa, która obchodzi klikającego:
+             · tyv2MjjVdb  → #start-tutaj   — nagłówek tej strony, okno „Zgłoś problem" w aplikacji
+               i oba README. Ktoś, kto nie wie, co to za serwer, dostaje najpierw oprowadzenie, dlatego
+               tym samym zaproszeniem idą tu #pomoc i #pomysły (obu szuka się potem w kategorii
+               „Wsparcie"),
+             · Wkd6UGDcPC  → #zestawy       — wszystkie drogi wymiany (kreator posta, hub „Wymiana
+               z innymi", import z odnośnika) i kafelek #zestawy niżej,
+             · 7H2gsjTe3T  → #pochwal-się   — kafelek „pochwal się" tej strony projektu; jedyne miejsce
+               w całym projekcie, które używa tego zaproszenia.
+           Zwykły odnośnik do kanału (`discord.com/channels/...`) nie prowadzi DONIKĄD kogoś, kto nie
+           jest jeszcze na serwerze — stąd wszędzie zaproszenia, nie deep-linki.
+
+           JEDNO ŹRÓDŁO PRAWDY DLA APLIKACJI to `web/js/rf-00-core.js` (RF_INVITE_HEADER /
+           RF_INVITE_SHARE / RF_INVITE_SHOWCASE, adresy kanałów i słownik tagów forum). Ta strona jest
+           statyczna i nie widzi tamtego pliku, więc adresy stoją tu w znacznikach — zmiana zaproszenia
+           znaczy zmianę w OBU miejscach. -->
+      <div class="chans">
+        <a class="chan" target="_blank" rel="noopener" href="https://discord.gg/7H2gsjTe3T">
+          <img src="assets/icons/camera.png" alt="" width="80" height="80">
+          <span><b>#pochwal-się</b>
+            <span data-lang="en">Clips and photos of what you built, tagged by field (music, gaming, making, art, accessibility, other) and by the modules you used.</span>
+            <span data-lang="pl">Klipy i zdjęcia tego, co robisz kapslem, otagowane dziedziną (muzyka, granie, majsterkowanie, sztuka, dostępność, inne) i modułami, których używasz.</span></span>
+        </a>
+        <a class="chan" target="_blank" rel="noopener" href="https://discord.gg/Wkd6UGDcPC">
+          <img src="assets/icons/vault.png" alt="" width="128" height="128">
+          <span><b>#zestawy</b>
+            <span data-lang="en">Ready-made setups and presets, tagged by field and by the modules they drive, so you can tell at a glance whether one will work on your machine.</span>
+            <span data-lang="pl">Gotowe zestawy i presety, otagowane dziedziną i modułami, których używają, więc od razu widać, czy zestaw zadziała u Ciebie.</span></span>
+        </a>
+        <a class="chan" target="_blank" rel="noopener" href="https://discord.gg/tyv2MjjVdb">
+          <img src="assets/icons/info.png" alt="" width="80" height="80">
+          <span><b>#pomoc</b>
+            <span data-lang="en">Help and problems. The app's footer button “Report a problem” builds a redacted diagnostic zip and points you here (once inside: the Support category).</span>
+            <span data-lang="pl">Pomoc i problemy. Przycisk „Zgłoś problem” w stopce aplikacji składa zredagowaną paczkę diagnostyczną i prowadzi tutaj (po wejściu: kategoria Wsparcie).</span></span>
+        </a>
+        <a class="chan" target="_blank" rel="noopener" href="https://discord.gg/tyv2MjjVdb">
+          <img src="assets/icons/star2.png" alt="" width="80" height="80">
+          <span><b>#pomysły</b>
+            <span data-lang="en">Ideas and feature requests. “It would be nice if…” gets answered by different people than “it is broken”, so it has a room of its own (once inside: the Support category).</span>
+            <span data-lang="pl">Pomysły i życzenia. Na „fajnie by było, gdyby…” odpowiadają inni ludzie niż na „to jest zepsute”, więc ma osobny pokój (po wejściu: kategoria Wsparcie).</span></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- CZĘSTO ZADAWANE PYTANIA (2026-09-06). Sekcja stoi PRZED zastrzeżeniem, bo pierwsze pytanie
+       (brak podpisu cyfrowego) i zastrzeżenie mówią o tym samym: czym ten projekt nie jest.
+       Sekcja stoi rozwinięta, a zwinięte są same pytania i leżą w dwóch kolumnach (2026-09-21).
+       Od 08.09 do 21.09 całość była jedną zwijką, bo w jednej kolumnie zajmowała ponad ekran.
+       Zwijka o certyfikacie jest
+       celowo długa: to jedyne miejsce w całym projekcie, gdzie stoi wprost, dlaczego `.exe` nie jest
+       podpisany, i ma odpowiadać zamiast prosić o zaufanie: koszt, reputacja u Microsoftu i trzy
+       sposoby sprawdzenia pliku samemu. Ma id faq-smartscreen, bo celuje w nią notka przy
+       przyciskach pobierania; skrypt rfFaqAnchors rozwija wtedy samo pytanie.
+       Kolejność pytań idzie za drogą użytkownika: najpierw to, co go zatrzymuje przy pobieraniu
+       (Windows, antywirus), potem czym to w ogóle jest (Żabka, kapsel, symulacja, system,
+       sterowniki), potem ryzyka (anty-cheat, stop awaryjny, prywatność), a na końcu sprawy
+       gospodarcze (koszt, aktualizacje).
+       Fakty NIE są tu wymyślane na nowo: pochodzą z README („Wymagania", „Bezpieczeństwo
+       i prywatność", „Budowa .exe"), z `.github/SECURITY.md` i z `RibbitFlip.spec`
+       (`codesign_identity=None`). Zmiana któregoś z nich = zmiana także tutaj. -->
+  <section id="faq">
+    <h2 class="sec"><img src="assets/icons/info.png" alt="" width="80" height="80"><span data-lang="en">Frequently asked questions</span><span data-lang="pl">Często zadawane pytania</span></h2>
+    <p class="sub"><span data-lang="en">The ones that keep coming back, from the blue Windows box on first
+      launch to whether any of this can break the capsule.</span><span data-lang="pl">Te, które wracają
+      najczęściej: od niebieskiego okna Windowsa przy pierwszym uruchomieniu po to, czy da się tym
+      zepsuć kapsel.</span></p>
+
+    <h3 class="faq-grupa"><span data-lang="en">Download and safety</span><span data-lang="pl">Pobieranie i bezpieczeństwo</span></h3>
+    <div class="faq">
+      <details class="qa" id="faq-smartscreen">
+        <summary><span data-lang="en">Windows warns me when I run it. So the app is not certified?</span><span data-lang="pl">Windows straszy przy uruchomieniu. Aplikacja nie jest certyfikowana?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">It is not, and that is not an oversight.
+            <code>RibbitFlip.exe</code> carries no digital signature, so SmartScreen greets it with the blue
+            “Windows protected your PC” box. To run it anyway: <b>More info</b> → <b>Run anyway</b>.</span>
+            <span data-lang="pl">Nie jest. I nie jest to przeoczenie. <code>RibbitFlip.exe</code> nie ma
+            podpisu cyfrowego, więc SmartScreen wita go niebieskim oknem „System Windows ochronił Twój
+            komputer”. Żeby mimo to uruchomić: <b>Więcej informacji</b> → <b>Uruchom mimo to</b>.</span></p>
+          <p><span data-lang="en">A signature is a certificate bought every year for several hundred euros, and a fresh one
+            would still have to build up reputation with Microsoft first. An unsigned program is not automatically
+            dangerous, and a signed one is not automatically safe, so here is how to check for yourself: the whole code
+            is open (MIT) on <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip">GitHub</a>,
+            you can build the same program with one command (<code>pyinstaller RibbitFlip.spec</code>), or run the app
+            straight from the Python sources.</span>
+            <span data-lang="pl">Podpis to certyfikat kupowany co roku za kilkaset euro, a świeży i tak musiałby najpierw
+            wyrobić sobie reputację u Microsoftu. Brak podpisu nie znaczy, że program jest niebezpieczny, a podpis nie
+            znaczy, że jest bezpieczny, więc zamiast prosić o zaufanie: cały kod jest otwarty (MIT) na
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip">GitHubie</a>, taki sam program
+            zbudujesz jednym poleceniem (<code>pyinstaller RibbitFlip.spec</code>) albo uruchomisz aplikację prosto ze
+            źródeł w Pythonie.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">My antivirus flags RibbitFlip. Is it a virus?</span><span data-lang="pl">Antywirus zgłasza RibbitFlipa. To wirus?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">No, but the alarm makes sense, and two things set it off. The file is packed
+            by PyInstaller into a single <code>.exe</code> that unpacks itself into a temporary folder at
+            startup, which is exactly what a share of real malware does. And the program itself, by design,
+            presses keys, moves the mouse and installs a global keyboard hook. Without that there would be no
+            control and no emergency stop. From the outside those are the same system calls a keylogger makes;
+            the difference is what they are for.</span>
+            <span data-lang="pl">Nie, ale alarm jest zrozumiały i składają się na niego dwie rzeczy. Plik jest
+            spakowany PyInstallerem w jeden <code>.exe</code>, który przy starcie rozpakowuje się do folderu
+            tymczasowego. Tak samo zachowuje się część prawdziwych szkodników. A sam program z założenia
+            wciska klawisze, rusza myszą i zakłada globalny hak na klawiaturę; bez tego nie byłoby ani
+            sterowania, ani stopu awaryjnego. Z zewnątrz to te same wywołania systemowe co u keyloggera,
+            różnica leży w tym, po co.</span></p>
+          <p><span data-lang="en">What you can do about it: drop the file on
+            <a target="_blank" rel="noopener" href="https://www.virustotal.com/">VirusTotal</a> and see whether
+            it is one engine or all of them (a lone heuristic detection is usually a false positive), report the
+            false positive to your antivirus, add an exception for the app's folder, or sidestep the whole
+            thing and run from source. Do mention it in <b>#pomoc</b> on Discord as well: it is worth knowing
+            which engine, and since which version.</span>
+            <span data-lang="pl">Co możesz z tym zrobić: wrzuć plik na
+            <a target="_blank" rel="noopener" href="https://www.virustotal.com/">VirusTotal</a> i zobacz, czy to
+            jeden silnik, czy wszystkie (pojedyncze wykrycie heurystyczne to zwykle fałszywy alarm), zgłoś
+            fałszywy alarm swojemu antywirusowi, dodaj wyjątek na folder aplikacji albo omiń temat i uruchom
+            ze źródeł. Napisz też na Discordzie w <b>#pomoc</b>: dobrze wiedzieć, który silnik i od której
+            wersji.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">What does the app send out?</span><span data-lang="pl">Co aplikacja wysyła na zewnątrz?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">There are no accounts, no telemetry and no update checks, and the panel's
+            server listens locally only, on <code>127.0.0.1</code>. The app reaches outside in six situations,
+            and you trigger all of them yourself: the network services whose addresses you type in; the connection to
+            OBS Studio; fetching somebody else's setup from a link (only from Discord and GitHub); the Ko-fi page, at
+            the moment you click the mug; OSC, only to the address you type in; and the RibbitBeat game, when it
+            downloads MIDI packs or a song from a link you paste.</span>
+            <span data-lang="pl">Nie ma kont, telemetrii ani sprawdzania aktualizacji, a serwer panelu słucha
+            wyłącznie lokalnie, pod <code>127.0.0.1</code>. Na zewnątrz aplikacja wychodzi w sześciu sytuacjach
+            i wszystkie wywołujesz Ty: usługi sieciowe, których adresy wpisujesz; połączenie z OBS Studio; pobranie
+            cudzego zestawu z odnośnika (tylko z Discorda i GitHuba); strona Ko-fi, w chwili kliknięcia kubka; OSC,
+            tylko na adres, który wpiszesz; oraz gra RibbitBeat, gdy pobiera paczki MIDI albo piosenkę z wklejonego
+            adresu.</span></p>
+          <p><span data-lang="en">Worth knowing where the boundary runs: the local server stops the internet and
+            other pages in your browser, but not other programs running on your own Windows account. The
+            diagnostic bundle from “Report a problem” is built from an allowlist, has its keys redacted, and
+            never leaves on its own: you post it. The whole model is written down in
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/.github/SECURITY.md">SECURITY.md</a>.</span>
+            <span data-lang="pl">Warto wiedzieć, gdzie biegnie granica: lokalny serwer zatrzymuje internet i inne
+            strony w przeglądarce, ale nie inne programy działające na Twoim koncie Windows. Paczka
+            diagnostyczna z „Zgłoś problem” powstaje z listy dozwolonych plików, ma zredagowane klucze i nigdy
+            nie wychodzi sama: wysyłasz ją Ty. Cały model opisuje
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/.github/SECURITY.md">SECURITY.md</a>.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">Does the app update itself?</span><span data-lang="pl">Czy aplikacja sama się aktualizuje?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">No, and it does not even check whether anything new exists. That is one of the
+            network trips it deliberately does not make. You take a new version yourself from
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/releases">Releases</a>,
+            and what changed in it is in the
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/CHANGELOG.md">changelog</a>.
+            Settings, setups and profiles live next to the file, in the app's own folder, so you swap the
+            <code>.exe</code> alone and everything else stays where it was.</span>
+            <span data-lang="pl">Nie, i nawet nie sprawdza, czy jest coś nowego. To jeden z tych ruchów
+            sieciowych, których świadomie nie robi. Nową wersję pobierasz z zakładki
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/releases">Releases</a>,
+            a co się w niej zmieniło, przeczytasz w
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/CHANGELOG.md">changelogu</a>.
+            Ustawienia, zestawy i profile leżą obok pliku, w folderze aplikacji, więc podmieniasz sam
+            <code>.exe</code>, a reszta zostaje na miejscu.</span></p>
+        </div>
+      </details>
+    </div>
+    <h3 class="faq-grupa"><span data-lang="en">The capsule and your computer</span><span data-lang="pl">Kapsel i komputer</span></h3>
+    <div class="faq">
+      <details class="qa">
+        <summary><span data-lang="en">Does the app modify the capsule? Can I break it this way?</span><span data-lang="pl">Czy aplikacja przerabia kapsel? Da się nim coś zepsuć?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">No. RibbitFlip only listens to what the capsule broadcasts over Bluetooth LE by
+            itself: motion-sensor readings, button state, battery level and signal strength. It writes nothing
+            back: no firmware flashing, no settings changed, no trace left inside. Close the app and the capsule
+            is exactly what it was. The protocol was reverse-engineered by the community; the credits are in
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/CREDITS.md">CREDITS.md</a>.</span>
+            <span data-lang="pl">Nie. RibbitFlip tylko słucha tego, co kapsel sam rozgłasza po Bluetooth LE:
+            danych z czujnika ruchu, stanu przycisku, poziomu baterii i siły sygnału. Nic do niego nie zapisuje:
+            nie wgrywa firmware'u, nie zmienia ustawień, nie zostawia w środku śladu. Zamykasz aplikację
+            i kapsel jest dokładnie tym, czym był. Protokół odtworzyła społeczność, a podziękowania są
+            w <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/CREDITS.md">CREDITS.md</a>.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">Do I need a capsule to see any of this?</span><span data-lang="pl">Muszę mieć kapsel, żeby to w ogóle zobaczyć?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">No. The app has a simulation mode, which you turn on with the LIVE / Simulation
+            switch at the top of the panel. The motion is faked and everything else is
+            real: the panel, the modules, the triggers. You can look around before you buy anything. One
+            caveat: simulation is not a safe mode, because the outputs really do fire and really will press
+            a key. That is why in simulation every module starts switched off and the first time you switch one
+            on, the app asks you to confirm.</span>
+            <span data-lang="pl">Nie. Aplikacja ma tryb symulacji, który włączasz przełącznikiem LIVE / Symulacja
+            na górze panelu. Ruch jest udawany, a cała reszta prawdziwa:
+            panel, moduły, wyzwalacze. Można się rozejrzeć, zanim cokolwiek kupisz. Jedno zastrzeżenie:
+            symulacja nie jest trybem bezpiecznym, bo wyjścia działają naprawdę i naprawdę wcisną klawisz.
+            Dlatego w symulacji wszystkie moduły startują wyłączone, a pierwsze włączenie potwierdzasz
+            w osobnym okienku.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">Does it run on a Mac or on Linux?</span><span data-lang="pl">Działa na Macu albo na Linuksie?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">No. RibbitFlip is a Windows application. Three things keep it there: the
+            Bluetooth LE stack, the virtual gamepad driver (ViGEmBus) and MIDI going out through the system's
+            <code>winmm</code>. The panel is an ordinary page in your browser, but the program behind it
+            has to run on Windows.</span>
+            <span data-lang="pl">Nie. RibbitFlip jest aplikacją windowsową. Trzymają go tam trzy rzeczy: stos
+            Bluetooth LE, sterownik wirtualnego pada (ViGEmBus) i MIDI wychodzące przez systemowe
+            <code>winmm</code>. Panel oglądasz w zwykłej przeglądarce, ale sam program musi chodzić
+            na Windowsie.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">Do I need to install any drivers?</span><span data-lang="pl">Czy potrzebuję do tego jakichś sterowników?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">For the keyboard, the mouse, OSC, network services and the synth: no, the
+            <code>.exe</code> has everything inside. Two things you add yourself, both free and only if you want
+            them: <a target="_blank" rel="noopener" href="https://github.com/nefarius/ViGEmBus/releases">ViGEmBus</a>
+            for the virtual gamepad (without it the pad module will not start) and
+            <a target="_blank" rel="noopener" href="https://www.tobias-erichsen.de/software/loopmidi.html">loopMIDI</a>
+            if MIDI is to reach a music program on the same machine.</span>
+            <span data-lang="pl">Do klawiatury, myszy, OSC, usług sieciowych i syntezatora: nie, <code>.exe</code>
+            ma wszystko w środku. Dwie rzeczy doinstalowujesz samodzielnie, obie darmowe i tylko wtedy, gdy ich chcesz:
+            <a target="_blank" rel="noopener" href="https://github.com/nefarius/ViGEmBus/releases">ViGEmBus</a>
+            dla wirtualnego pada (bez niego moduł pada nie ruszy) oraz
+            <a target="_blank" rel="noopener" href="https://www.tobias-erichsen.de/software/loopmidi.html">loopMIDI</a>,
+            jeśli MIDI ma trafić do programu muzycznego na tym samym komputerze.</span></p>
+        </div>
+      </details>
+    </div>
+    <h3 class="faq-grupa"><span data-lang="en">Games and settings</span><span data-lang="pl">Gry i ustawienia</span></h3>
+    <div class="faq">
+      <details class="qa">
+        <summary><span data-lang="en">Will an anti-cheat get me banned for this?</span><span data-lang="pl">Czy przez anty-cheat dostanę bana w grze?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">The honest answer: it depends on the game, and that is the game maker's call,
+            not mine. RibbitFlip does not inject itself into a game and does not read its memory. It sends
+            ordinary keyboard and mouse events, and plugs the pad in through the ViGEmBus driver, the same way
+            adapters and third-party pads do. To the game it looks like ordinary input.</span>
+            <span data-lang="pl">Uczciwa odpowiedź brzmi: to zależy od gry, a decyduje o tym jej twórca, nie ja.
+            RibbitFlip nie wstrzykuje się do gry i nie czyta jej pamięci. Wysyła zwykłe zdarzenia klawiatury
+            i myszy, a pada podpina sterownikiem ViGEmBus, tak samo jak robią to adaptery i pady innych firm.
+            Dla gry wygląda to jak zwykłe wejście.</span></p>
+          <p><span data-lang="en">That said, some anti-cheats in online games look askance at synthetic input and
+            at virtual pads alike, and plenty of rulebooks forbid macros outright. If you play something like
+            that, read its rules before you go anywhere near a ranked match. The risk is yours: the app is
+            provided “as is”, without any warranty.</span>
+            <span data-lang="pl">Ale część anty-cheatów w grach sieciowych patrzy krzywo i na syntetyczne
+            wejście, i na wirtualne pady, a niejeden regulamin wprost zabrania makr. Jeśli grasz w coś takiego,
+            sprawdź regulamin, zanim wejdziesz na ranking. Ryzyko jest po Twojej stronie: aplikacja jest
+            udostępniana „tak jak jest”, bez jakiejkolwiek gwarancji.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">What if the controls run away from me?</span><span data-lang="pl">Co, jeśli sterowanie ucieknie spod kontroli?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">That is what the emergency stop is for:
+            <span class="keys"><kbd>Alt</kbd><i>+</i><kbd>R</kbd><i>+</i><kbd>F</kbd></span>. It switches off
+            every module on every capsule at once (Mapping, Selection wheel, Mouse, Scanner, Controller, MIDI,
+            OSC, Services and Synth), closes the Scanner's window over the desktop, and it works globally, so you do not have to hit the panel with a runaway cursor. With
+            the modules off, nothing goes out any more. It only switches things off; you turn them back on
+            yourself, with the same switches. The combination itself can be changed in
+            <b>Configuration → Emergency stop</b>.</span>
+            <span data-lang="pl">Od tego jest stop awaryjny:
+            <span class="keys"><kbd>Alt</kbd><i>+</i><kbd>R</kbd><i>+</i><kbd>F</kbd></span>. Wyłącza naraz
+            wszystkie moduły na każdym kapslu (Mapowanie, Koło wyboru, Mysz, Skaner, Kontroler, MIDI, OSC,
+            Usługi i Synth), zamyka okno skanera nad pulpitem i działa globalnie, więc nie musisz trafiać uciekającym kursorem w panel. Z wyłączonymi modułami nic
+            już nie wychodzi. Tylko wyłącza: z powrotem włączasz je tymi samymi przełącznikami. Samą
+            kombinację zmienisz w <b>Konfiguracji → Stop awaryjny</b>.</span></p>
+        </div>
+      </details>
+      <details class="qa" id="faq-mcp">
+        <summary><span data-lang="en">Can an AI assistant set it up for me?</span><span data-lang="pl">Czy asystent AI może to ustawić za mnie?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">It can. RibbitFlip has a built-in <b>MCP server</b> on the same local address as the panel.
+            Connect an assistant that speaks it, Claude Code for instance, describe a game's controls in your own words,
+            including what you cannot do, and it reads your setup, checks it against the guide built into the app, does
+            a dry run and saves the Setup. The feature is <b>off until you switch it on</b>, the safe mode is the default,
+            and the server stays on your computer. Details:
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/MCP.md">docs/MCP.md</a>.</span>
+            <span data-lang="pl">Może. RibbitFlip ma wbudowany <b>serwer MCP</b> pod tym samym lokalnym adresem, co panel.
+            Podłączasz asystenta, który go rozumie, na przykład Claude Code, opisujesz sterowanie w grze własnymi słowami,
+            także to, czego nie możesz, a on czyta Twoje ustawienia, sprawdza je we wbudowanym przewodniku, robi próbę na
+            sucho i zapisuje zestaw. Funkcja jest <b>wyłączona, dopóki jej nie włączysz</b>, domyślny jest tryb
+            bezpieczny, a serwer działa tylko na Twoim komputerze. Szczegóły:
+            <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/docs/MCP.md">docs/MCP.md</a>.</span></p>
+        </div>
+      </details>
+    </div>
+    <h3 class="faq-grupa"><span data-lang="en">About the project</span><span data-lang="pl">O projekcie</span></h3>
+    <div class="faq">
+      <details class="qa">
+        <summary><span data-lang="en">Is this Żabka's official app?</span><span data-lang="pl">Czy to oficjalna aplikacja Żabki?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">No. RibbitFlip is independent and has nothing to do with Żabka: it is not
+            endorsed, reviewed or sponsored by them, and the “Triki” name appears here for one purpose only:
+            to say which hardware it works with. You buy the capsule in a shop; the app is made by somebody else
+            entirely. The full disclaimer is <a href="#disclaimer">at the very bottom of the page</a>, just above the footer.</span>
+            <span data-lang="pl">Nie. RibbitFlip jest niezależny i nie ma z Żabką nic wspólnego: nie jest przez
+            nią wspierany, sprawdzany ani sponsorowany, a nazwa „Triki” pada tu wyłącznie po to, żeby wskazać
+            zgodny sprzęt. Kapsel kupujesz w sklepie, aplikację robi ktoś zupełnie inny. Pełne zastrzeżenie
+            jest <a href="#disclaimer">na samym dole strony</a>, nad stopką.</span></p>
+        </div>
+      </details>
+      <details class="qa">
+        <summary><span data-lang="en">What does it cost?</span><span data-lang="pl">Ile to kosztuje?</span></summary>
+        <div class="qa-b">
+          <p><span data-lang="en">Nothing, and it stays that way. The code is MIT-licensed, so you can read it,
+            change it and build on it. The only expense is the capsule itself, if you want a physical one. The mug
+            in the corner is Ko-fi: entirely optional, no pressure. The frog hops the same either way.</span>
+            <span data-lang="pl">Nic i tak zostanie. Kod jest na licencji MIT, więc możesz go czytać, zmieniać
+            i rozwijać u siebie. Jedyny wydatek to sam kapsel, jeśli chcesz mieć fizyczny. Kubek w rogu to
+            Ko-fi: całkowicie dobrowolne i bez presji, żaba skacze tak samo.</span></p>
+        </div>
+      </details>
+    </div>
+
+    <p class="after"><span data-lang="en">Your question is not here? Have a look at the
+      <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/README.en.md">README</a>
+      (long, but concrete) or simply ask in <b>#pomoc</b> on
+      <a target="_blank" rel="noopener" href="https://discord.gg/tyv2MjjVdb">Discord</a>. It is answered by the
+      same one person who writes all of this.</span>
+      <span data-lang="pl">Nie ma tu Twojego pytania? Zajrzyj do
+      <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip#readme">README</a>
+      (jest długie, ale konkretne) albo po prostu zapytaj na
+      <a target="_blank" rel="noopener" href="https://discord.gg/tyv2MjjVdb">Discordzie</a> w <b>#pomoc</b>.
+      Odpowiada ta sama jedna osoba, która to wszystko pisze.</span></p>
+  </section>
+
+  <section id="disclaimer">
+    <div class="skullsay rv">
+      <img class="ss-skull" src="assets/icons/punkskull2.png" alt="" width="169" height="220">
+      <div class="ss-bubble">
+        <h3 class="disc-h"><span data-lang="en">Unofficial · Not affiliated with Żabka · Open-source hobby project (MIT)</span><span data-lang="pl">Nieoficjalny · Brak powiązania z Żabką · Otwarty projekt hobbystyczny (MIT)</span></h3>
+        <p data-lang="en" class="blk">RibbitFlip is an <b>independent, community-made hobby project</b>, inspired by
+          and compatible with the collectible "Triki" motion capsule from Żabka. It is <b>not affiliated with, endorsed
+          by, or sponsored by Żabka</b>; the "Triki" name is used solely to identify compatible hardware.
+          <b>Every other name</b> (of a product, company, game, application, device or service) that appears
+          anywhere on this page or in the app is a <b>trademark or property of its respective owner</b>. Each one is
+          named <b>purely as an example of something RibbitFlip can be used with</b>, and implies <b>no affiliation,
+          endorsement, partnership or recommendation</b> in either direction. The app is provided <b>"as is",
+          without warranty of any kind</b>.</p>
+        <p data-lang="pl" class="blk">RibbitFlip to <b>niezależny, tworzony hobbystycznie projekt społeczności</b>,
+          zainspirowany kolekcjonerskim kapslem „Triki” z Żabki i z nim zgodny. <b>Projekt nie jest powiązany
+          z Żabką</b> ani przez nią <b>wspierany czy sponsorowany</b>; nazwa „Triki” pojawia się wyłącznie po to,
+          by wskazać zgodny sprzęt. <b>Każda inna nazwa</b> (produktu, firmy, gry, programu, urządzenia czy usługi),
+          która pojawia się gdziekolwiek na tej stronie lub w aplikacji, jest <b>znakiem towarowym lub własnością
+          swojego właściciela</b>. Każda z nich pada tu <b>wyłącznie jako przykład tego, z czym RibbitFlip potrafi
+          współpracować</b>, i <b>nie oznacza żadnego powiązania, wsparcia, współpracy ani rekomendacji</b> w żadną
+          stronę. Aplikacja jest udostępniana <b>„tak jak jest”, bez jakiejkolwiek gwarancji</b>.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer><div class="wrap">
+  <div class="footlinks">
+    <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip">GitHub</a>
+    <a target="_blank" rel="noopener" href="https://discord.gg/tyv2MjjVdb">Discord</a>
+    <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/issues">Issues</a>
+    <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/releases">Releases</a>
+    <a target="_blank" rel="noopener" href="https://github.com/Mastish/RibbitFlip/blob/main/third_party_licenses/README.md"><span data-lang="en">Licenses</span><span data-lang="pl">Licencje</span></a>
+    <a href="#faq">FAQ</a>
+    <a href="#disclaimer" data-lang="en">Disclaimer</a><a href="#disclaimer" data-lang="pl">Zastrzeżenie</a>
+  </div>
+  <p class="footnote"><span data-lang="en"><b>Issues</b> is for reproducible bugs and code-level reports, with the
+    steps, the version and what the logs show; everything else is a room on Discord.</span>
+    <span data-lang="pl"><b>Issues</b> są od błędów powtarzalnych i zgłoszeń na poziomie kodu, z krokami
+    do odtworzenia, wersją i tym, co widać w dziennikach; reszta ma swój pokój na Discordzie.</span></p>
+  <div><span data-lang="en">Unofficial, independent hobby project. Not affiliated with Żabka. No analytics, no tracking. 🐸</span>
+    <span data-lang="pl">Nieoficjalny, niezależny projekt hobbystyczny. Bez powiązania z Żabką. Bez analityki, bez śledzenia. 🐸</span></div>
+</div></footer>
+
+<!-- Napiwek — kubek w prawym dolnym rogu, ten sam co w panelu aplikacji. Notka wyjeżdża dopiero
+     pod kursorem/fokusem, więc róg nikogo nie zaczepia. Celowo BEZ widgetu Ko-fi (dociągałby
+     skrypt z ich CDN-u) i BEZ atrybutu title — nazwę dostępną daje widoczny napis, ten sam,
+     który czyta użytkownik i na który reaguje sterowanie głosem. -->
+<div class="rf-kofi" id="rfKofi">
+  <div class="rf-kofi-card" id="rfKofiCard" role="tooltip">
+    <!-- Scena z kubkiem, ta sama co w aplikacji: żabia ręka z kubkiem na górze karty, para leci
+         z trzech pasemek rysowanych CSS-em (bez dodatkowego pliku). Całość aria-hidden — obok stoi
+         ten sam komunikat słowami, więc czytnik ekranu nie ma tu czego czytać. -->
+    <div class="rf-kofi-hero" aria-hidden="true">
+      <span class="rf-kofi-cup">
+        <span class="rf-kofi-steam"><i></i><i></i><i></i></span>
+        <img class="rf-kofi-hero-ic" src="assets/icons/kofi.png" alt="" width="128" height="128">
+      </span>
+    </div>
+    <b class="rf-kofi-t"><span data-lang="en">Having fun with RibbitFlip?</span><span data-lang="pl">Dobrze się bawisz z RibbitFlipem?</span></b>
+    <span class="rf-kofi-p"><span data-lang="en">You can buy me a coffee or pass the app link to a friend. A short video
+      posted on social media helps too, because it is the fastest way for others to discover the app. I build it
+      solo, after hours. Small gestures like that keep it alive and keep me coming back to it.</span><span data-lang="pl">Możesz
+      postawić mi kawę albo podrzucić link do apki znajomym. Pomaga też krótki film wrzucony do social mediów,
+      bo to najszybsza droga, żeby inni poznali aplikację. Projekt rozwijam sam, po godzinach. Takie drobne gesty
+      trzymają go przy życiu i sprawiają, że do niego wracam.</span></span>
+  </div>
+  <a class="rf-kofi-btn" href="https://ko-fi.com/mastish" target="_blank" rel="noopener noreferrer"
+     aria-describedby="rfKofiCard">
+    <img class="rf-kofi-ic" src="assets/icons/kofi_cup.png" alt="" aria-hidden="true" width="128" height="128">
+    <span class="rf-kofi-lbl"><span data-lang="en">Buy me a coffee</span><span data-lang="pl">Kup mi kawę</span></span>
+  </a>
+</div>
+
+<script>
+  // ── Naklejka żaby: losowy kąt naklejania przy każdym wejściu ──────────────────
+  //    Wysokość zagięcia na krawędziach (--peelp) daje przechył linii w lewo albo w prawo,
+  //    a losowana klasa `up` decyduje, czy naklejka wjeżdża od góry, czy od dołu — razem
+  //    cztery różne wejścia. Kąt lustra spodu (--peelth) MUSI wyjść z tej samej liczby,
+  //    inaczej odbicie przestaje pasować do linii zagięcia: tan θ = 2·p·H / (100·W).
+  //    Leci przed pierwszym rysowaniem klatki, więc animacja startuje już z wylosowanym kątem.
+  (function rfStickerAngle(){
+    const w = document.querySelector(".peelwrap");
+    if (!w) return;
+    const IMG_W = 685, IMG_H = 760;                       // proporcje mascot.png
+    const p = (6 + Math.random() * 7) * (Math.random() < .5 ? -1 : 1);   // ±6…13% wysokości
+    const th = Math.atan(2 * p / 100 * IMG_H / IMG_W) * 180 / Math.PI;
+    w.style.setProperty("--peelp", p.toFixed(2) + "%");
+    w.style.setProperty("--peelth", th.toFixed(2) + "deg");
+    if (Math.random() < .5) w.classList.add("up");
+  })();
+
+
+  // foam-hand cursor (skip on touch-only devices)
+  if (window.matchMedia && matchMedia("(pointer:fine)").matches)
+    document.documentElement.classList.add("rf-cursor");
+  // gentle reveal-on-scroll
+  try {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+    }), { rootMargin: "0px 0px -8% 0px" });
+    document.querySelectorAll(".rv").forEach(el => io.observe(el));
+  } catch(e){ document.querySelectorAll(".rv").forEach(el => el.classList.add("in")); }
+
+  // ===== FAQ: pytania zwinięte na wejściu, kotwica musi otworzyć swoje =====
+  // Zewnętrznej fałdy już nie ma (2026-09-21), zostały same pytania. Odnośnik do pytania
+  // (#faq-smartscreen z notki przy przyciskach pobierania, #faq-mcp) trafiłby więc w element bez
+  // wysokości. Na wejściu z hashem i przy każdej jego zmianie otwieramy zwijkę, w którą celuje
+  // kotwica, i każdą po drodze do niej, a potem sami przewijamy, bo przeglądarka przewinęła
+  // (albo nie) zanim cel dostał wysokość. Chrome od wersji 97 sam otwiera <details> przy nawigacji
+  // do fragmentu w środku; Firefox i Safari nie w każdej wersji, stąd własna kopia. Gdy
+  // przeglądarka zdążyła sama, nic tu nie zmieniamy i nie przewijamy.
+  (function rfFaqAnchors(){
+    const faq = document.getElementById("faq");
+    if (!faq) return;
+    function reveal(){
+      let id = location.hash.slice(1);
+      try { id = decodeURIComponent(id); } catch(e){}
+      const t = id && document.getElementById(id);
+      if (!t || !faq.contains(t)) return;
+      let opened = false;
+      for (let d = t.closest("details"); d && faq.contains(d);
+           d = d.parentElement && d.parentElement.closest("details")){
+        if (!d.open){ d.open = true; opened = true; }
+      }
+      if (opened) t.scrollIntoView({ block: "start" });
+    }
+    reveal();
+    addEventListener("hashchange", reveal);
+  })();
+
+  // ===== język (PL/EN) =====
+  // Wykryty już jest — zrobił to skrypt z <head>, zanim cokolwiek się namalowało. Tutaj tylko
+  // odczytujemy jego decyzję z <html data-l>, żeby nie wykrywać drugi raz i innym kodem.
+  let LANG = document.documentElement.getAttribute("data-l") === "en" ? "en" : "pl";
+  // Tytuł karty i opis w <head> nie mają wariantów `data-lang` (jeden <title> na dokument), więc
+  // przełącznik podmienia je ręcznie. Wersja polska stoi w znacznikach — to ją widzi wyszukiwarka
+  // i podgląd linku; angielska jest tu, dla osoby, która przełączyła stronę u siebie.
+  const RF_HEAD = {
+    pl: { t: "RibbitFlip: zamień ruch kapsla „Triki” w co tylko wymyślisz",
+          d: document.querySelector('meta[name=description]').content },
+    en: { t: "RibbitFlip: turn the Triki capsule's motion into anything you can imagine",
+          d: "RibbitFlip is an unofficial, open-source hobby project that turns the 'Triki' motion capsule " +
+             "into a clean signal you can plug into anything: keyboard, mouse, gamepad, MIDI, OSC, REST " +
+             "calls, OBS Studio and a playable synth. Local only, no telemetry." }
+  };
+  // remember===false: tylko zastosuj język, nie zapisuj go. Tak wchodzi język wykryty na starcie —
+  // gdyby lądował w localStorage, samo wejście na stronę zamieniałoby wykrycie w trwały wybór.
+  function setLang(l, remember){
+    LANG = l === "en" ? "en" : "pl";
+    document.documentElement.setAttribute("data-l", LANG);
+    document.documentElement.lang = LANG;
+    document.getElementById("langTxt").textContent = LANG === "pl" ? "EN" : "PL";
+    try {
+      document.title = RF_HEAD[LANG].t;
+      document.querySelector('meta[name=description]').content = RF_HEAD[LANG].d;
+    } catch(e){}
+    if (remember !== false) { try { localStorage.setItem("ribbitflip.landing.lang", LANG); } catch(e){} }
+  }
+  // Przycisk w pasku (onclick="toggleLang()") — kliknięcie to wybór, więc zapisujemy.
+  function toggleLang(){ setLang(LANG === "pl" ? "en" : "pl"); }
+
+  const RF_MOTION = matchMedia("(prefers-reduced-motion: no-preference)").matches;
+
+  // fraza w hero: losowa macierz zastosowań (indeksy PL/EN wyrównane znaczeniowo)
+  // 2026-09-21: dwie frazy o dostępności (sterowanie głową, osoby z niepełnosprawnością ruchową),
+  // słownictwo wg poradników Integracji i NCDJ.
+  const RF_HERO = {
+    pl: ["co tylko wymyślisz","air mouse","kontroler do dowolnej gry","odpalacz makr","kontroler MIDI",
+         "pilota do projektu Arduino","pilota do świateł","theremin",
+         "pilota do drona","pokrętło głośności","pilota do slajdów","przycisk quick save / quick load",
+         "wyzwalacz Alt+F4","kontroler serwomotorów","kontroler adaptacyjny",
+         "kontroler instalacji artystycznych","zewnętrzny żyroskop do pada",
+         "kontroler Xbox","kontroler do emulatorów Wii","kontroler DualShock 4","autorską sztuczkę magiczną",
+         "mysz sterowaną głową","mysz dla osób z niepełnosprawnością ruchową"],
+    en: ["whatever you can think of","an air mouse","a controller for any game","a macro launcher","a MIDI controller",
+         "an Arduino project controller","a light remote","a theremin",
+         "a drone remote","a volume knob","a slide remote","a quick save / quick load button",
+         "an Alt+F4 device","a servo controller","an adaptive controller",
+         "an art installation controller","an external controller gyro",
+         "an Xbox controller","a controller for Wii emulators","a DualShock 4 controller","a magic trick of your own",
+         "a head-controlled mouse","a mouse for people with motor disabilities"]
+  };
+  const RF_HERO_COL = ["#d81678","#eaa32b","#6cb33f","#d83a5c","#2f9e57","#a4105c"];
+  // nadruk ton w ton: TEN SAM kolor co tło łaty, tylko wyraźnie ciemniejszy;
+  // wyjątkiem bordo #a4105c — jest już ciemne, więc jego nadruk idzie w jasny
+  // pastel tej samej barwy (ciemniejszy tonalnie nie miałby kontrastu)
+  const RF_HERO_INK = ["#70073b","#7b4d05","#2c5a12","#771226","#0b3d1f","#ffc9e2"];
+  let heroDeck = [], heroPos = 0, heroFirst = true;
+  // Grupa frazy to jej pierwsze słowo po polsku. Ma znaczenie, bo osiem pozycji zaczyna się od
+  // „kontroler", a pięć od „pilota": dwie takie pod rząd czyta się jak zacięcie, choćby losowanie
+  // było najuczciwsze — a bywa, bo tasowanie potrafi zlepić sąsiadów (zmierzone: kontrolery
+  // wypadły na miejscach 11 i 12 jednej talii). Grupujemy po polskim wariancie także dla
+  // angielskiego, bo obie listy idą indeks w indeks, a po angielsku pierwszym słowem byłby
+  // rodzajnik „a"/„an" i nie odróżniłby niczego.
+  const heroGroup = i => String(RF_HERO.pl[i] || "").trim().split(/\s+/)[0].toLowerCase();
+  function heroShuffle(){
+    // Indeks 0 („co tylko wymyślisz") otwiera każdą pętlę, więc tasujemy tylko resztę.
+    const pool = RF_HERO.pl.map((_, i) => i).slice(1);
+    for (let i = pool.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    }
+    // Rozsuwanie sąsiadów z tej samej grupy. Trzy podejścia, dwa odpadły po zmierzeniu:
+    //   „pierwsza inna niż poprzednia" odkłada najliczniejszą grupę na koniec i talia kończy się
+    //     ogonem „kontroler, kontroler, kontroler" — 127 zlepień na 300 pętli,
+    //   „zawsze najliczniejsza inna" daje zero zlepień, ale układa metronom
+    //     „kontroler, pilota, kontroler, pilota", czyli wymienia jedną sztuczność na drugą,
+    //   zostaje to: losujemy grupę ważąc jej liczebnością, a najliczniejszą wymuszamy DOPIERO
+    //     wtedy, gdy zostało jej więcej niż połowa talii, bo od tego miejsca nie da się jej już
+    //     inaczej rozsunąć. Wewnątrz grupy bierzemy pierwszą pozycję z `pool`, który jest już
+    //     potasowany, więc to też jest losowe.
+    const rest = [];
+    let prev = heroGroup(0);
+    while (pool.length){
+      const cnt = {};
+      pool.forEach(i => { const g = heroGroup(i); cnt[g] = (cnt[g] || 0) + 1; });
+      const grupy = Object.keys(cnt).filter(g => g !== prev);
+      let wybor;
+      if (!grupy.length) wybor = prev;                       // została już tylko grupa poprzednia
+      else {
+        const naj = grupy.reduce((a, g) => cnt[g] > cnt[a] ? g : a, grupy[0]);
+        if (cnt[naj] * 2 > pool.length) wybor = naj;
+        else {
+          let r = Math.random() * grupy.reduce((s, g) => s + cnt[g], 0);
+          wybor = grupy[grupy.length - 1];
+          for (const g of grupy){ r -= cnt[g]; if (r <= 0){ wybor = g; break; } }
+        }
+      }
+      const pick = pool.splice(pool.findIndex(i => heroGroup(i) === wybor), 1)[0];
+      rest.push(pick); prev = heroGroup(pick);
+    }
+    // Pierwsza pętla po wejściu na stronę zaczyna się bez indeksu 0: on stoi już w znacznikach
+    // i jest na ekranie, więc otwarcie nim animacji byłoby podmianą frazy na tę samą.
+    heroDeck = heroFirst ? rest : [0].concat(rest);
+    heroFirst = false;
+    heroPos = 0;
+  }
+  heroShuffle();
+  // ── silnik ściany naklejek ─────────────────────────────────────────────────
+  //    (mechanika dopracowana w prototypie poza repozytorium)
+  const HERO_CAP = 5;      // z chwilą osiadania piątej najstarsza gaśnie
+  let heroSkos = 1.6;      // skos ostatniej naklejki (startowa ma 1.6° w znacznikach)
+  const heroLines = () => document.querySelectorAll(".hero h1 .heroRot");
+
+  // Barwy niezależnie od fraz: własna, tasowana talia indeksów RF_HERO_COL
+  // (kolor przestaje być przyspawany do frazy — ta sama fraza może wrócić
+  // w innej barwie). Dwie kolejne naklejki NIGDY nie dostają tej samej barwy:
+  // wewnątrz talii pilnuje tego tasowanie bez powtórzeń, a na szwie talii
+  // strażnik podmienia pierwszą kartę, gdyby powtórzyła ostatnio użytą.
+  // Start od 0 (róż), bo taka jest startowa naklejka w znacznikach.
+  let heroKolor = 0, heroKolorTalia = [];
+  function heroNextColor(){
+    if (!heroKolorTalia.length){
+      heroKolorTalia = RF_HERO_COL.map((_, i) => i);
+      for (let i = heroKolorTalia.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = heroKolorTalia[i]; heroKolorTalia[i] = heroKolorTalia[j]; heroKolorTalia[j] = t;
+      }
+      if (heroKolorTalia[0] === heroKolor){
+        const j = 1 + Math.floor(Math.random() * (heroKolorTalia.length - 1));
+        heroKolorTalia[0] = heroKolorTalia[j]; heroKolorTalia[j] = heroKolor;
+      }
+    }
+    heroKolor = heroKolorTalia.shift();
+    return heroKolor;
+  }
+
+  function heroFitGen(gen){   // auto-fit: zwęź font, jeśli łata szersza niż kolumna
+    const line = gen.closest(".heroRot");
+    if (!line || !line.clientWidth) return;
+    gen.style.fontSize = "";
+    void gen.offsetWidth;
+    if (gen.offsetWidth > line.clientWidth)
+      gen.style.fontSize = Math.max(13, parseFloat(getComputedStyle(gen).fontSize)
+        * (line.clientWidth - 4) / gen.offsetWidth) + "px";
+  }
+  // Spód i geometria zagięcia dokładane tuż przed animacją: --pp przeliczane
+  // per łata (proporcje zależą od długości frazy), --pth z TEJ SAMEJ liczby
+  // (inaczej lustro odkleja się od linii), a pc0 tak daleko na minusie, żeby
+  // złożony spód zaczynał w całości ZA lewą krawędzią ekranu — użytkownik widzi
+  // wjazd zza krawędzi, nie pojawienie się w miejscu.
+  function heroArm(gen, kat){
+    const flap = document.createElement("span");
+    flap.className = "stk flap";
+    flap.textContent = gen.querySelector(".base").textContent;
+    flap.setAttribute("aria-hidden", "true");
+    gen.appendChild(flap);
+    const r = gen.getBoundingClientRect();
+    const pp = Math.tan(kat * Math.PI / 180) * r.height / (2 * r.width) * 100;
+    gen.style.setProperty("--pp", pp.toFixed(3) + "%");
+    gen.style.setProperty("--pth", (-kat).toFixed(2) + "deg");
+    return { pc0: Math.min(-20, -(r.left + 60) / r.width * 100) };
+  }
+  // Ruch zagięcia przez Web Animations API zamiast keyframes w CSS — bo tylko
+  // tu da się dobrać PUNKT SKLEJENIA faz per naklejka. Wjazd (pc0 → -6%)
+  // kończy się krzywą o nachyleniu s₁, kładzenie (-6% → 118%) zaczyna z s₂;
+  // prędkość na spoinie jest RÓWNA z obu stron, gdy czas wjazdu
+  // t₁ = s₁d₁/(s₁d₁+s₂d₂) — dla każdej drogi d₁ (a ta skacze z frazą
+  // i szerokością okna), stąd rachunek w skrypcie, nie sztywne 30% w CSS.
+  // Krzywe: wjazd zaczyna w pędzie (przecina krawędź rozpędzony) i hamuje do
+  // szybowania; kładzenie przejmuje szybowanie i przyspiesza do twardego
+  // stopu rfStick. Bez martwego punktu i bez skoku prędkości — dla KAŻDEJ
+  // szerokości naklejki i viewportu.
+  function heroStart(gen, geo, delay){
+    const s1 = .6, s2 = .6, d1 = -6 - geo.pc0, d2 = 124;
+    const t1 = (s1 * d1) / (s1 * d1 + s2 * d2);
+    gen.classList.add("on");   // flap (opacity, CSS) rusza w tej samej klatce
+    return gen.animate([
+      { "--pc": geo.pc0.toFixed(1) + "%", easing: "cubic-bezier(.3,.55,.65,.79)", offset: 0 },
+      { "--pc": "-6%",                    easing: "cubic-bezier(.35,.21,.75,.35)", offset: +t1.toFixed(3) },
+      { "--pc": "118%" }
+    ], { duration: 900, delay: delay || 0, fill: "both" });
+  }
+  function heroSettle(gen, line){   // osiadanie: odchudzenie warstwy + porządek ściany
+    if (!gen.isConnected) return;
+    gen.classList.add("set");
+    gen.querySelector(".flap")?.remove();
+    const geny = [].slice.call(line.querySelectorAll(".gen:not(.melt)"));
+    // dla czytników słyszalna jest tylko najnowsza fraza; starsze to dekoracja
+    geny.forEach((g, i) => i < geny.length - 1
+      ? g.setAttribute("aria-hidden", "true") : g.removeAttribute("aria-hidden"));
+    geny.slice(0, Math.max(0, geny.length - (HERO_CAP - 1))).forEach(g => {
+      g.classList.add("melt");
+      g.addEventListener("animationend", () => g.remove());
+      setTimeout(() => g.remove(), 1700);   // > 1,5 s zaniku
+    });
+  }
+  function heroSlap(line, idx, kat, kol){
+    const gen = document.createElement("span");
+    gen.className = "gen";
+    gen.style.setProperty("--col", RF_HERO_COL[kol]);
+    gen.style.setProperty("--colInk", RF_HERO_INK[kol]);
+    gen.style.setProperty("--rest", heroSkos.toFixed(2) + "deg");
+    const lang = line.closest("[data-lang]").getAttribute("data-lang");
+    const base = document.createElement("span");
+    base.className = "stk base";
+    base.textContent = RF_HERO[lang][idx];
+    gen.appendChild(base);
+    // starsze warstwy głuchną już TERAZ, nie przy osiadaniu nowej — czytnik
+    // ekranu nie może przez sekundę słyszeć dwóch fraz naraz
+    line.querySelectorAll(".gen").forEach(g => g.setAttribute("aria-hidden", "true"));
+    line.appendChild(gen);
+    // linia drugiego języka jest schowana (display:none) — nie da się na niej
+    // niczego zmierzyć, więc dostaje warstwę od razu osiadłą; po przełączeniu
+    // języka ściana po prostu jest
+    if (!line.clientWidth){
+      gen.style.setProperty("--pc", "118%");
+      heroSettle(gen, line);
+      return;
+    }
+    heroFitGen(gen);
+    const geo = heroArm(gen, kat);
+    // dwie klatki oddechu między wstawieniem do DOM a startem ruchu: świeże
+    // warstwy zdążą się zrasteryzować i pierwsza klatka animacji nie chrupie
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const anim = heroStart(gen, geo, 0);
+      anim.finished.then(() => {
+        gen.style.setProperty("--pc", "118%"); anim.cancel();   // stan na inline, animacja precz
+        heroSettle(gen, line);
+      }).catch(() => {});
+    }));
+    setTimeout(() => heroSettle(gen, line), 1350);   // dojście, gdyby finished przepadł
+  }
+  setInterval(() => {
+    if (!RF_MOTION || document.hidden) return;
+    if (heroPos >= heroDeck.length) heroShuffle();
+    const idx = heroDeck[heroPos++];
+    // skos naprzemienny (dwie kolejne nie legną w tę samą stronę) i kąt
+    // zagięcia losowane RAZ na cykl, wspólne dla PL i EN — obie wersje
+    // językowe wyglądają „tak samo losowo"
+    // Skos: czysty rand z PEŁNEGO zakresu ±4° (wcześniej znak szedł ściśle
+    // naprzemiennie, a moduł z pasma 1,2–4° — ściana wyglądała, jakby znała
+    // tylko trzy pochyłki). Strażnik: kolejna naklejka musi różnić się od
+    // poprzedniej o ≥1,6°, inaczej dwie sąsiadki legną bliźniaczo równolegle.
+    let s; do { s = Math.random() * 8 - 4; } while (Math.abs(s - heroSkos) < 1.6);
+    heroSkos = s;
+    const kat = (7 + Math.random() * 13) * (Math.random() < .5 ? -1 : 1);
+    const kol = heroNextColor();   // wspólny dla PL i EN — to ta sama naklejka
+    heroLines().forEach(line => heroSlap(line, idx, kat, kol));
+  }, 2600);
+  // dopasowanie po zmianie rozmiaru i języka (obserwator data-l jak przy
+  // karuzeli: ta sekcja nie wie nic o setLang i żadna nie psuje drugiej)
+  const heroRefit = () => heroLines().forEach(line =>
+    line.querySelectorAll(".gen").forEach(heroFitGen));
+  window.addEventListener("resize", heroRefit);
+  new MutationObserver(heroRefit).observe(document.documentElement,
+    { attributes: true, attributeFilter: ["data-l"] });
+  heroRefit();
+  // Wjazd: startowa naklejka ze znaczników nalepia się chwilę po żabie.
+  // Opóźnienie MUSI iść też na flap (animacje gen i flapa to osobne reguły —
+  // bez tego spód gaśnie 0,55 s przed końcem nalepiania).
+  if (RF_MOTION) heroLines().forEach(line => {
+    const gen = line.querySelector(".gen");
+    if (!gen || !line.clientWidth) return;
+    const geo = heroArm(gen, (7 + Math.random() * 13) * (Math.random() < .5 ? -1 : 1));
+    // inline --pc na start wjazdu ZANIM zejdzie .set — bez tego między klatką
+    // zdjęcia klasy a startem animacji naklejka mignęłaby w całości (markup
+    // trzyma ją nalepioną na 118%)
+    gen.style.setProperty("--pc", geo.pc0.toFixed(1) + "%");
+    gen.classList.remove("set");
+    gen.querySelector(".flap").style.animationDelay = ".55s";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const anim = heroStart(gen, geo, 550);
+      anim.finished.then(() => {
+        gen.style.setProperty("--pc", "118%"); anim.cancel();
+        heroSettle(gen, line);
+      }).catch(() => {});
+    }));
+  });
+
+  // ===== naklejka: powtórka przylepienia + cichy filcowy szelest =====
+  function rfShh(){
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const c = rfShh.ctx || (rfShh.ctx = new AC());
+      if (c.state === "suspended") c.resume();
+      const t = c.currentTime;
+      const len = Math.floor(c.sampleRate * 0.35);
+      const buf = c.createBuffer(1, len, c.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 1.4);
+      const n = c.createBufferSource(); n.buffer = buf;
+      const f = c.createBiquadFilter(); f.type = "bandpass"; f.Q.value = .8;
+      f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(2600, t + .3);
+      const g = c.createGain();
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(.07, t + .05);
+      g.gain.exponentialRampToValueAtTime(.0001, t + .34);
+      n.connect(f); f.connect(g); g.connect(c.destination); n.start(t);
+      const o = c.createOscillator(); o.type = "sine";
+      o.frequency.setValueAtTime(150, t + .26); o.frequency.exponentialRampToValueAtTime(70, t + .36);
+      const g2 = c.createGain();
+      g2.gain.setValueAtTime(.0001, t + .26);
+      g2.gain.exponentialRampToValueAtTime(.05, t + .29);
+      g2.gain.exponentialRampToValueAtTime(.0001, t + .4);
+      o.connect(g2); g2.connect(c.destination); o.start(t + .26); o.stop(t + .42);
+    } catch(e){}
+  }
+  // Start zgrany z krzywą rfStick: zagięcie dobija do krawędzi w .2 s + .95 s ≈ 1150 ms, a niski
+  // „tuk” odzywa się 290 ms po starcie dźwięku — szelest zdąży pokryć rozpędzony zjazd.
+  if (document.querySelector(".peelwrap") &&
+      navigator.userActivation && navigator.userActivation.hasBeenActive) setTimeout(rfShh, 860);
+
+  // ===== start =====
+  // Sam język ustawił już skrypt z <head>; tutaj dociągamy resztę stanu, której on nie mógł ruszyć,
+  // bo jeszcze nie istniała: napis na przełączniku, tytuł karty i opis strony. Bez zapisu — to
+  // nadal jest wykrycie, nie wybór. Leci przed resztą stanu strony.
+  setLang(LANG, false);
+
+  // ===== kubek w rogu mruga sam, w losowych odstępach =====
+  //    Wcześniej robiła to pętla CSS-a (rfKofiIdle co 17 s): metronom w rogu ekranu czyta się jak
+  //    zacięta animacja, nieregularny ruch — jak coś żywego. Stąd losowy odstęp i ta sama klatka
+  //    co po najechaniu, tylko odpalana klasą. Pomijamy, gdy kursor/fokus są już na pigułce (wtedy
+  //    macha hover), gdy karta jest schowana w tle i gdy użytkownik prosi o mniej ruchu.
+  (function(){
+    const jar = document.getElementById("rfKofi");
+    const btn = jar && jar.querySelector(".rf-kofi-btn");
+    if (!btn || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const MIN = 26000, MAX = 72000;
+    let tmr = 0;
+    (function next(){
+      clearTimeout(tmr);
+      tmr = setTimeout(function(){
+        try {
+          const busy = document.hidden || jar.matches(":hover,:focus-within") ||
+                       btn.classList.contains("is-nudge");
+          if (!busy){
+            btn.classList.add("is-nudge");
+            // klasę zdejmuje timer, nie animationend: animacja w schowanej karcie może w ogóle
+            // nie wystartować, a wtedy przycisk zostałby w stanie „po mrugnięciu" na zawsze
+            setTimeout(function(){ btn.classList.remove("is-nudge"); }, 760);
+          }
+        } catch(e){}
+        next();
+      }, MIN + Math.random() * (MAX - MIN));
+    })();
+  })();
+
+
+  // ===== karuzela plakatów RibbitBeat =====
+  (function(){
+    const spokoj=matchMedia("(prefers-reduced-motion:reduce)").matches;
+    const IK={pauza:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2"/></svg>',
+      graj:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6v12.8a1 1 0 0 0 1.53.85l10.1-6.4a1 1 0 0 0 0-1.7L9.53 4.75A1 1 0 0 0 8 5.6z"/></svg>',
+      pelny:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      zamknij:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'};
+    const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement||null;
+    document.querySelectorAll(".karuzela").forEach(k=>{
+      const tor=k.querySelector(".kar-tor"),sl=[...k.querySelectorAll(".kar-slajd")],dol=k.querySelector(".kar-dol"),n=sl.length;
+      let i=0,stop=false,tm=null;
+      const kropki=sl.map((_,j)=>{const b=document.createElement("button");b.type="button";b.className="kar-kropka";b.setAttribute("aria-label",k.dataset.etykieta+" "+(j+1));b.onclick=()=>idz(j,true);dol.append(b);return b;});
+      const licz=document.createElement("span");licz.className="kar-licznik";dol.append(licz);
+      // pauza (film i samo przewijanie) i pełny ekran
+      const T=k.dataset.lang==="pl"?{p:"Pauza",o:"Odtwórz",f:"Pełny ekran",z:"Zamknij pełny ekran"}:{p:"Pause",o:"Play",f:"Full screen",z:"Exit full screen"};
+      const ster=document.createElement("div");ster.className="kar-ster";dol.append(ster);
+      const bP=document.createElement("button"),bF=document.createElement("button");bP.type=bF.type="button";ster.append(bP,bF);
+      let pauza=spokoj;
+      const ikP=()=>{bP.innerHTML=pauza?IK.graj:IK.pauza;bP.setAttribute("aria-label",pauza?T.o:T.p);};
+      const ikF=()=>{const on=fsEl()===k;bF.innerHTML=on?IK.zamknij:IK.pelny;bF.setAttribute("aria-label",on?T.z:T.f);};
+      bP.onclick=()=>{pauza=!pauza;ikP();const v=sl[i].querySelector("video");if(v){if(pauza)v.pause();else{v.preload="auto";v.play().catch(()=>{});}}plan();};
+      const moznaFS=!!(k.requestFullscreen||k.webkitRequestFullscreen);
+      bF.onclick=()=>{
+        if(fsEl()===k){const r=(document.exitFullscreen||document.webkitExitFullscreen).call(document);if(r&&r.catch)r.catch(()=>{});return;}
+        if(moznaFS){const r=(k.requestFullscreen||k.webkitRequestFullscreen).call(k);if(r&&r.catch)r.catch(()=>{});return;}
+        const v=sl[i].querySelector("video");if(v&&v.webkitEnterFullscreen)v.webkitEnterFullscreen();   // iPhone: pełny ekran tylko dla filmu
+      };
+      if(!moznaFS&&!sl.some(s=>{const v=s.querySelector("video");return v&&v.webkitEnterFullscreen;}))bF.hidden=true;
+      ["fullscreenchange","webkitfullscreenchange"].forEach(z=>document.addEventListener(z,()=>{ikF();plan();}));
+      ikP();ikF();
+      function idz(j,recznie){i=(j+n)%n;tor.style.transform=`translateX(${-100*i}%)`;
+        kropki.forEach((b,x)=>b.setAttribute("aria-current",x===i?"true":"false"));licz.textContent=(i+1)+" / "+n;
+        sl.forEach((s,x)=>{s.setAttribute("aria-hidden",x===i?"false":"true");const v=s.querySelector("video"),im=s.querySelector("img");
+          if(v){if(Math.abs(x-i)<=1&&v.preload==="none")v.preload="auto";if(x===i){v.currentTime=0;if(!pauza)v.play().catch(()=>{});}else v.pause();}
+          if(im&&im.loading==="lazy"&&Math.abs(x-i)<=1)im.loading="eager";});
+        if(recznie)plan();}
+      // w pełnym ekranie kursor zawsze jest nad karuzelą, więc najechanie i fokus nie zatrzymują wtedy przewijania; po wznowieniu liczy resztę filmu
+      function plan(){clearTimeout(tm);if(spokoj||pauza||(stop&&fsEl()!==k))return;const v=sl[i].querySelector("video"),d=v&&isFinite(v.duration)?(v.duration-(v.currentTime||0))*1000+400:0;
+        tm=setTimeout(()=>idz(i+1),d?Math.max(1500,d):(v&&/5-kolo/.test(v.src)?21000:6000));}
+      k.querySelector(".kar-prev").onclick=()=>idz(i-1,true);k.querySelector(".kar-next").onclick=()=>idz(i+1,true);
+      k.addEventListener("keydown",e=>{if(e.key==="ArrowLeft"){idz(i-1,true);e.preventDefault();}if(e.key==="ArrowRight"){idz(i+1,true);e.preventDefault();}
+        if(e.target===k&&(e.key===" "||e.key==="k")){bP.click();e.preventDefault();}if(e.target===k&&e.key==="f"&&!bF.hidden){bF.click();e.preventDefault();}});
+      k.addEventListener("mouseenter",()=>{stop=true;clearTimeout(tm);});k.addEventListener("mouseleave",()=>{stop=false;plan();});
+      k.addEventListener("focusin",()=>{stop=true;clearTimeout(tm);});k.addEventListener("focusout",()=>{stop=false;plan();});
+      let x0=null;tor.addEventListener("touchstart",e=>{x0=e.touches[0].clientX;},{passive:true});
+      tor.addEventListener("touchend",e=>{if(x0==null)return;const d=e.changedTouches[0].clientX-x0;if(Math.abs(d)>40)idz(i+(d<0?1:-1),true);x0=null;});
+      // film bieżącego slajdu gra tylko, gdy karuzela jest na ekranie (przeglądarka nie startuje go wcześniej)
+      const graj=on=>{const v=sl[i].querySelector("video");if(!v)return;if(on&&!pauza){v.preload="auto";v.play().catch(()=>{});}else v.pause();};
+      new IntersectionObserver(w=>graj(w[0].isIntersecting),{threshold:.35}).observe(k);
+      sl.forEach((s,x)=>{const v=s.querySelector("video");if(v)v.addEventListener("loadedmetadata",()=>{if(x===i)plan();});});
+      idz(0);plan();
+    });
+  })();
+
+  // ===== przyciski modułów pod karuzelą filmów i przyciski „zobacz film” =====
+  //    Klik w przycisk = klik w kropkę karuzeli w bieżącym języku (kropki ma tylko skrypt karuzeli), potem
+  //    karuzela wjeżdża na ekran. Podświetlenie przycisku idzie za aria-current kropek, więc zgadza się też
+  //    przy samoprzewijaniu i strzałkach.
+  (function(){
+    const kar = () => document.querySelector('#jak .karuzela[data-lang="' + (document.documentElement.getAttribute("data-l") === "en" ? "en" : "pl") + '"]');
+    const przyciski = [...document.querySelectorAll("#jak .moduly button")];
+    const zaznacz = () => { const k = kar(); if (!k) return;
+      const i = [...k.querySelectorAll(".kar-kropka")].findIndex(b => b.getAttribute("aria-current") === "true");
+      przyciski.forEach((b, x) => b.setAttribute("aria-pressed", x === i ? "true" : "false")); };
+    document.querySelectorAll("[data-slajd]").forEach(b => b.addEventListener("click", () => {
+      const k = kar(); if (!k) return;
+      const kropka = k.querySelectorAll(".kar-kropka")[+b.dataset.slajd]; if (kropka) kropka.click();
+      if (b.closest(".moduly") === null || k.getBoundingClientRect().top < 0) k.scrollIntoView({ behavior: RF_MOTION ? "smooth" : "auto", block: "center" });
+    }));
+    document.querySelectorAll("#jak .karuzela").forEach(k => new MutationObserver(zaznacz).observe(k.querySelector(".kar-dol"), { subtree: true, attributes: true, attributeFilter: ["aria-current"] }));
+    new MutationObserver(zaznacz).observe(document.documentElement, { attributes: true, attributeFilter: ["data-l"] });
+    zaznacz();
+  })();
+</script>
+</body>
+</html>

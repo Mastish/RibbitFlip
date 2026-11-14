@@ -1,0 +1,68 @@
+{
+ "wersja": 1,
+ "slug": "test-pakiet",
+ "tytul": "Pakiet testowy (8 nut)",
+ "utworzono": "2026-10-04T12:00:00",
+ "konwerter": {
+  "wersja": "test",
+  "wariant": "test",
+  "metoda_melodii": "test",
+  "separator": "test"
+ },
+ "zrodlo": {
+  "nazwa_pliku": "test.wav",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "sekund": 2.0,
+  "sr": 22050
+ },
+ "tempo": {
+  "zapisane_bpm": 120,
+  "wykryte_bpm": 120,
+  "uderzen_na_cwiercnute": 1
+ },
+ "metrum": "4/4",
+ "mapa_czasu": {
+  "uderzenia_s": [
+   0.0,
+   0.5,
+   1.0,
+   1.5,
+   2.0,
+   2.5
+  ],
+  "tpq": 480,
+  "wspolczynnik": 1,
+  "start_tick": 0,
+  "start_s": 0.0
+ },
+ "sciezki": [
+  {
+   "nazwa": "Vocal",
+   "kanal": 3,
+   "nut": 8
+  },
+  {
+   "nazwa": "Bass",
+   "kanal": 2,
+   "nut": 4
+  }
+ ],
+ "audio": {
+  "oryginal": "audio/oryginal.wav",
+  "stemy": {
+   "vocals": "audio/vocals.wav",
+   "drums": "audio/drums.wav",
+   "bass": "audio/bass.wav",
+   "other": "audio/other.wav"
+  },
+  "kodek": "wav",
+  "sr": 22050
+ },
+ "licencja": {
+  "typ": "uzytkownik",
+  "nazwa": "plik użytkownika",
+  "do_udostepniania": false
+ },
+ "edycje": false,
+ "uklad_domyslny": "karaoke"
+}
