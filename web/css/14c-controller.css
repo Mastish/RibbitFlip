@@ -181,7 +181,12 @@
 
 /* The driver box (P-G3-02): only when ViGEmBus is missing, right under the readiness line. */
 #padCtlAvail[hidden]{display:none}
-#padCtlAvail.rf-need{margin:8px var(--card-x) 4px}
+#padCtlAvail.rf-need{margin:14px var(--card-x) 4px}
+/* The box is the card's FIRST child and the card has neither padding nor a border (its stitch is
+   a ::before), so the box's top margin used to collapse out through the card: the box sat flush
+   with the card's top edge, right on the stitch 5 px in. A block formatting context keeps the
+   margin inside. */
+#padCard{display:flow-root}
 
 /* The second section: the controller's name, and under it the one instruction of the screen
    (shown until a part of the drawing is picked). */

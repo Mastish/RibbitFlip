@@ -3151,6 +3151,8 @@ class GamepadEmitter:
         self._vg = None              # vgamepad module
         self._pad = None             # VX360Gamepad / VDS4Gamepad instance
         self._imp = None             # is vgamepad importable? (None=not yet tried)
+        self._imp_why = None         # why not: "module" / "bus" / a ViGEm error name (see import_problem)
+        self._imp_at = 0.0           # monotonic time of the last failed import (see IMPORT_RETRY_S)
         self._active = False         # is the pad created and working?
         self._pad_failed = False     # failed attempt to create the pad (don't retry)
         self._btn = None             # name -> ordinary button of THIS pad type
@@ -3175,26 +3177,54 @@ class GamepadEmitter:
         self._touch_xy = (0, 0)      # where it was last, in the pad's own grid (see _ex_bytes)
         self._tap_tok = {}           # button -> token of the most recent tap (see _tap_release)
 
+    # vgamepad CONNECTS TO ViGEmBus WHILE IT IS BEING IMPORTED (module-level `VBus()`), so a driver
+    # whose bus device is gone (service and files still there, "Nefarius Virtual Gamepad Emulation
+    # Bus" missing from Device Manager) makes `import vgamepad` itself fail with
+    # VIGEM_ERROR_BUS_NOT_FOUND. That is a driver problem, not a missing module, and the panel used
+    # to tell such a user to install both. A driver failure is retried (throttled: the live stream
+    # asks on every tick), so "Check again" sees a repaired driver without restarting the app; a
+    # missing module stays missing until restart.
+    IMPORT_RETRY_S = 3.0
+
     def _importable_nolock(self):
         if self._imp is None and not module_on("kontroler"):
             # Kontroler wyłączony przy starcie (--disable kontroler): vgamepad (i DLL ViGEm pod nim)
             # nie ładuje się wcale. Pytają o to GET /airmouse i powitanie /stream, czyli KAŻDY panel.
             return False
+        if (self._imp is False and self._imp_why not in (None, "module")
+                and time.monotonic() - self._imp_at >= self.IMPORT_RETRY_S):
+            self._imp = None
         if self._imp is None:
             try:
                 import vgamepad as vg
                 self._vg = vg
                 self._imp = True
-            except Exception as e:
-                self._imp = False
+                self._imp_why = None
+            except ImportError as e:
+                self._imp, self._imp_why = False, "module"
                 print(f"[kontroler] modul vgamepad niedostepny ({e.__class__.__name__}). "
                       f"By wlaczyc galke/krzyzak-pad: pip install vgamepad (+ sterownik ViGEmBus). "
                       f"Krzyzak dziala przez klawiature bez tego.")
+            except Exception as e:
+                msg = str(e)
+                why = ("bus" if "BUS_NOT_FOUND" in msg
+                       else msg if msg.startswith("VIGEM_ERROR") else e.__class__.__name__)
+                if why != self._imp_why:      # once per cause, not once per retry
+                    print(f"[kontroler] vgamepad jest, ale sterownik ViGEmBus nie odpowiada ({msg or why}). "
+                          f"Napraw albo zainstaluj ponownie ViGEmBus. Krzyzak dziala przez klawiature.")
+                self._imp, self._imp_why, self._imp_at = False, why, time.monotonic()
         return self._imp
 
     def importable(self):
         with self._lock:
             return self._importable_nolock()
+
+    def import_problem(self):
+        """Why no virtual pad can be built: None (it can, or the Kontroler module is off),
+        "module" (vgamepad not installed), "bus" (ViGEmBus installed but its bus device is
+        missing) or another ViGEm error name. Sent to the panel as `gpWhy`."""
+        with self._lock:
+            return None if self._importable_nolock() else self._imp_why
 
     @staticmethod
     def driver_present():
@@ -10082,6 +10112,7 @@ class AirMouse:
         # którego pad nie wstaje. Tylko w zdarzeniu konfiguracji (rzadkim), nie w strumieniu na żywo,
         # bo to odczyt rejestru. True / False / None (nie umiem sprawdzić).
         ev["gpDrv"] = GamepadEmitter.driver_present() if self.gp else None
+        ev["gpWhy"] = self.gp.import_problem() if self.gp else None
         ev["gpOn"] = bool(self.gp.active) if self.gp else False
         # NO PAD AT ALL is not the same answer as "no driver", and the two used to print the
         # same warning: a capsule the user unplugged from every controller was told to install
@@ -19758,6 +19789,7 @@ def make_handler(broadcaster, device_manager, token="", mcp_ctx=None):
                 if d and d.mouse.gp:
                     cfg = {**cfg, "gpMod": bool(d.mouse.gp.importable()),
                            "gpDrv": GamepadEmitter.driver_present(),
+                           "gpWhy": d.mouse.gp.import_problem(),
                            "gpOn": bool(d.mouse.gp.active)}
                 self._serve_json(cfg)
             elif path == "/wheel":
@@ -22360,6 +22392,7 @@ def make_handler(broadcaster, device_manager, token="", mcp_ctx=None):
                     if d.mouse.gp:
                         mc["gpMod"] = bool(d.mouse.gp.importable())
                         mc["gpDrv"] = GamepadEmitter.driver_present()
+                        mc["gpWhy"] = d.mouse.gp.import_problem()
                         mc["gpOn"] = bool(d.mouse.gp.active)
                     self._send_event(mc)
                     # KOŁO WYBORU tego kapsla. W migawce z tego samego powodu, co mouse_cfg:

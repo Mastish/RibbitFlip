@@ -1306,9 +1306,17 @@ function padReadyRegister(){
       const pads=padList();
       const needsDrv=pads.some(p=>!/wii|dsu/i.test(String(p&&p.kind||"")));
       const need=(needsDrv&&typeof mPadNeed==="function")?mPadNeed(state.mouseGp):null;
-      if(needsDrv)rows.push({ok:!need,pl:"Sterownik ViGEmBus zainstalowany",en:"The ViGEmBus driver is installed",
-        fix:{pl:"Pobierz ViGEmBus",en:"Download ViGEmBus",
-             run:()=>window.open((need&&need.url)||"https://github.com/nefarius/ViGEmBus/releases","_blank","noopener")}});
+      // Sam brak modułu vgamepad (sterownik jest albo nie wiadomo) to nie jest „brak sterownika”:
+      // wiersz mówi wtedy o module i prowadzi do ramki z instrukcją, a nie do pobierania ViGEmBus.
+      const gp=state.mouseGp||{};
+      const modOnly=!!(need&&!gp.mod&&(!gp.why||gp.why==="module")&&gp.drv!==false);
+      if(needsDrv)rows.push(modOnly
+        ?{ok:false,pl:"Moduł vgamepad zainstalowany",en:"The vgamepad module is installed",
+          fix:{pl:"Pokaż",en:"Show",run:()=>rfReady.show("padCtlAvail")}}
+        :{ok:!need,pl:need?"Sterownik ViGEmBus działa":"Sterownik ViGEmBus zainstalowany",
+          en:need?"The ViGEmBus driver works":"The ViGEmBus driver is installed",
+          fix:{pl:"Pobierz ViGEmBus",en:"Download ViGEmBus",
+               run:()=>window.open((need&&need.url)||"https://github.com/nefarius/ViGEmBus/releases","_blank","noopener")}});
       const pinned=pads.some(p=>padMembers(p.id).length>0);
       rows.push({ok:pinned,pl:"Kapsel jest przypięty do kontrolera",en:"A capsule is plugged into the controller",
         fix:{pl:"Pokaż",en:"Show",run:()=>rfReady.show("padHubList")}});

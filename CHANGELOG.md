@@ -7,6 +7,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Fixed
+- **Controller:** an installed ViGEmBus driver that stops responding gets its own warning with the repair steps, and **Check again** sees the repaired driver without restarting the app.
+
 ## [1.0.0] - 2026-11-22
 
 First public release: everything below is new, so this list is the whole app as it went public. What

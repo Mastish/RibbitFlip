@@ -388,6 +388,10 @@ function _mouseGp(m){
   // Sterownik ViGEmBus osobno od modułu vgamepad (serwer: gpDrv, tylko w zdarzeniu konfiguracji):
   // true / false / null = „nie umiem sprawdzić". Bez tego panel nie umiał powiedzieć „brakuje sterownika".
   if(m.gpDrv!==undefined)state.mouseGp.drv=m.gpDrv;
+  // DLACZEGO vgamepad się nie ładuje (serwer: gpWhy): "module" = nie ma modułu, "bus" = sterownik
+  // jest, ale brakuje jego urządzenia w Windowsie, inna nazwa = inny błąd ViGEm. vgamepad łączy się
+  // ze sterownikiem już przy imporcie, więc bez tego zepsuty sterownik wyglądał jak brak modułu.
+  if(m.gpWhy!==undefined)state.mouseGp.why=m.gpWhy;
 }
 function onMouseCfg(m,arrived){
   const prevMode=state.mouse.mode;
@@ -424,12 +428,32 @@ function mUpdateAutoState(){
 function mPadNeed(gp){
   if(!gp||gp.on||gp.none)return null;
   const url="https://github.com/nefarius/ViGEmBus/releases";
-  if(!gp.mod)return {url,urlLabel:_gl("Sterownik ViGEmBus ↗","ViGEmBus driver ↗"),
-    titleHtml:_gl("Brakuje modułu vgamepad i sterownika ViGEmBus","The vgamepad module and the ViGEmBus driver are missing"),
-    whyHtml:_gl("Bez nich wirtualny pad nie powstanie: gałka zostaje podglądem na ekranie, a przyciski kontrolera nigdzie nie polecą.",
-                "Without them no virtual pad is created: the stick stays an on-screen preview and controller buttons go nowhere."),
-    fixHtml:_gl("W wersji uruchamianej ze źródeł wpisz <code>pip install vgamepad</code>, zainstaluj ViGEmBus i uruchom aplikację ponownie.",
-                "When running from source, type <code>pip install vgamepad</code>, install ViGEmBus and restart the app.")};
+  // vgamepad jest, ale sterownik go odrzucił (najczęściej: usługa jest, urządzenia magistrali brak).
+  if(!gp.mod&&gp.why&&gp.why!=="module"){
+    const bus=gp.why==="bus",code=esc(gp.why);
+    return {url,urlLabel:_gl("Pobierz ViGEmBus ↗","Download ViGEmBus ↗"),recheck:"mouseFetchState",
+      titleHtml:_gl("Sterownik ViGEmBus nie odpowiada","The ViGEmBus driver does not respond"),
+      whyHtml:bus
+        ?_gl("Sterownik jest zainstalowany, ale w Windowsie brakuje jego urządzenia (magistrali ViGEm), więc wirtualny pad nie powstanie: gałka zostaje podglądem na ekranie, a przyciski kontrolera nigdzie nie polecą.",
+             "The driver is installed, but its device (the ViGEm bus) is missing from Windows, so no virtual pad can be created: the stick stays an on-screen preview and controller buttons go nowhere.")
+        :_gl(`Sterownik odrzucił połączenie (<code>${code}</code>), więc wirtualny pad nie powstanie: gałka zostaje podglądem na ekranie, a przyciski kontrolera nigdzie nie polecą.`,
+             `The driver refused the connection (<code>${code}</code>), so no virtual pad can be created: the stick stays an on-screen preview and controller buttons go nowhere.`),
+      fixHtml:_gl("Odinstaluj „ViGEm Bus Driver” (Ustawienia → Aplikacje) i zainstaluj go od nowa z GitHuba. Potem kliknij „Sprawdź ponownie”. Czasem Windows prosi o restart.",
+                  "Uninstall “ViGEm Bus Driver” (Settings → Apps) and install it again from GitHub. Then click “Check again”. Windows sometimes asks for a restart.")};
+  }
+  // Brak samego modułu. O sterowniku mówimy tylko wtedy, gdy naprawdę go nie ma.
+  if(!gp.mod){const noDrv=gp.drv===false;
+    return {url:noDrv?url:"",urlLabel:_gl("Sterownik ViGEmBus ↗","ViGEmBus driver ↗"),
+    titleHtml:noDrv?_gl("Brakuje modułu vgamepad i sterownika ViGEmBus","The vgamepad module and the ViGEmBus driver are missing")
+                   :_gl("Brakuje modułu vgamepad","The vgamepad module is missing"),
+    whyHtml:noDrv?_gl("Bez nich wirtualny pad nie powstanie: gałka zostaje podglądem na ekranie, a przyciski kontrolera nigdzie nie polecą.",
+                      "Without them no virtual pad is created: the stick stays an on-screen preview and controller buttons go nowhere.")
+                 :_gl("Bez niego wirtualny pad nie powstanie: gałka zostaje podglądem na ekranie, a przyciski kontrolera nigdzie nie polecą."+(gp.drv===true?" Sterownik ViGEmBus jest już zainstalowany.":""),
+                      "Without it no virtual pad is created: the stick stays an on-screen preview and controller buttons go nowhere."+(gp.drv===true?" The ViGEmBus driver is already installed.":"")),
+    fixHtml:noDrv?_gl("W wersji uruchamianej ze źródeł wpisz <code>pip install vgamepad</code>, zainstaluj ViGEmBus i uruchom aplikację ponownie.",
+                      "When running from source, type <code>pip install vgamepad</code>, install ViGEmBus and restart the app.")
+                 :_gl("W wersji uruchamianej ze źródeł wpisz <code>pip install vgamepad</code> i uruchom aplikację ponownie.",
+                      "When running from source, type <code>pip install vgamepad</code> and restart the app.")};}
   if(gp.drv===false)return {url,urlLabel:_gl("Pobierz ViGEmBus ↗","Download ViGEmBus ↗"),recheck:"mouseFetchState",
     titleHtml:_gl("Brakuje sterownika ViGEmBus","The ViGEmBus driver is missing"),
     whyHtml:_gl("Bez niego Windows nie zobaczy wirtualnego pada Xbox ani DualShock: gałka zostaje podglądem na ekranie, krzyżak zadziała tylko przez klawiaturę, a przyciski kontrolera nigdzie nie polecą. Kontroler Wii (emulator) sterownika nie potrzebuje.",
@@ -476,7 +500,8 @@ function mUpdateAvail(){
       else if(gp.on&&_park){t="🎮 Wirtualny kontroler aktywny — przyciski wychodzą, ale ruch kapsla nie prowadzi krzyżaka (zaparkowany).";}
       else if(gp.on){t="🎮 Krzyżak steruje D-padem wirtualnego kontrolera (skosy natywnie).";cls="ok";}
       else if(gp.mod){t="🎮 Pad utworzy się przy starcie (potrzebny ViGEmBus). Bez niego przełącz na „Klawiatura”.";}
-      else{t="⚠ Brak modułu vgamepad — wybierz „Klawiatura” albo zainstaluj vgamepad + ViGEmBus.";cls="warn";}
+      else if(gp.why&&gp.why!=="module"){t="⚠ Sterownik ViGEmBus nie odpowiada: wybierz „Klawiatura” albo napraw sterownik (instrukcja wyżej, pod linią gotowości).";cls="warn";}
+      else{t="⚠ Brak modułu vgamepad — wybierz „Klawiatura” albo zainstaluj vgamepad"+(gp.drv===false?" + ViGEmBus.":".");cls="warn";}
     }else{t=m.dpadDiagonal?"⌨ Krzyżak wysyła klawisze kierunków. Skosy (8 kier.) = dwa klawisze naraz."
                           :"⌨ Krzyżak wysyła klawisze kierunków — najwyżej jeden naraz (bez skosów).";}
     da.textContent=t;da.className="mouse-avail col2"+(cls?" "+cls:"");}
