@@ -115,7 +115,10 @@ Pytania, pomoc w konfiguracji i ogólne rozmowy najlepiej prowadzić na
 propozycji funkcji. GitHub Issues są na powtarzalne błędy i zgłoszenia dotyczące kodu. Opisz kroki
 prowadzące do błędu i napisz, czy pracujesz na prawdziwym sprzęcie, czy z `--simulate`. Sprawy
 bezpieczeństwa zgłaszaj zgodnie z [`SECURITY.md`](SECURITY.md), a nie w publicznym zgłoszeniu ani
-na Discordzie.
+na Discordzie. Bariery dostępności mają własny szablon zgłoszenia, opisany w
+[`ACCESSIBILITY.md`](ACCESSIBILITY.md).
+
+Na GitHubie i na Discordzie obowiązuje [kodeks postępowania](CODE_OF_CONDUCT.md).
 
 ---
 
@@ -230,3 +233,7 @@ for help, `#pomysły` for feature ideas. GitHub Issues are for reproducible bugs
 code-level reports: open one with steps to reproduce (and whether you're on real
 hardware or `--simulate`). For security issues, please follow
 [`SECURITY.md`](SECURITY.md) instead of filing a public issue or posting on Discord.
+Accessibility barriers have their own issue template, described in
+[`ACCESSIBILITY.md`](ACCESSIBILITY.md).
+
+The [Code of Conduct](CODE_OF_CONDUCT.md) applies on GitHub and on Discord.

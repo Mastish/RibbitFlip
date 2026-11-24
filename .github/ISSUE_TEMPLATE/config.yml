@@ -1,0 +1,13 @@
+# Issue chooser: GitHub Issues are for reproducible bugs and accessibility barriers.
+# Questions and ideas go to Discord, vulnerabilities go through SECURITY.md (see CONTRIBUTING.md).
+blank_issues_enabled: false
+contact_links:
+  - name: "Pytanie albo pomoc w konfiguracji / Question or setup help"
+    url: https://discord.gg/tyv2MjjVdb
+    about: "Forum #pomoc na serwerze Discord. / The #pomoc forum on the Discord server."
+  - name: "Pomysł na funkcję / Feature idea"
+    url: https://discord.gg/tyv2MjjVdb
+    about: "Kanał #pomysły na serwerze Discord. / The #pomysły channel on the Discord server."
+  - name: "Luka w zabezpieczeniach / Security vulnerability"
+    url: https://github.com/Mastish/RibbitFlip/blob/main/.github/SECURITY.md
+    about: "Zgłoś prywatnie według SECURITY.md, nie w publicznym zgłoszeniu. / Report privately as described in SECURITY.md, not in a public issue."

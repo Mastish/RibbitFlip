@@ -1,0 +1,93 @@
+name: "Błąd / Bug report"
+description: "Coś działa źle i da się to powtórzyć. / Something is broken and you can make it happen again."
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Dzięki za zgłoszenie! Pisz po polsku albo po angielsku. Pytania i pomoc w konfiguracji najszybciej załatwisz na forum `#pomoc` na [Discordzie](https://discord.gg/tyv2MjjVdb), a luki w zabezpieczeniach zgłaszaj według [SECURITY.md](https://github.com/Mastish/RibbitFlip/blob/main/.github/SECURITY.md).
+
+        Thanks for reporting! Write in Polish or English. Questions and setup help are quickest in the `#pomoc` forum on [Discord](https://discord.gg/tyv2MjjVdb); report security issues as described in [SECURITY.md](https://github.com/Mastish/RibbitFlip/blob/main/.github/SECURITY.md).
+  - type: textarea
+    id: co
+    attributes:
+      label: "Co się stało? / What happened?"
+      description: "Krótko, słowami z panelu. Zrzut ekranu bardzo pomaga. / Briefly, in the panel's own words. A screenshot helps a lot."
+    validations:
+      required: true
+  - type: textarea
+    id: kroki
+    attributes:
+      label: "Jak to powtórzyć? / Steps to reproduce"
+      placeholder: |
+        1. Otwórz… / Open…
+        2. Kliknij… / Click…
+        3. Widzę… / I see…
+    validations:
+      required: true
+  - type: textarea
+    id: oczekiwane
+    attributes:
+      label: "Czego się spodziewałeś? / What did you expect?"
+  - type: dropdown
+    id: obszar
+    attributes:
+      label: "Której części dotyczy? / Which part is it about?"
+      options:
+        - "Połączenie z kapslem / Capsule connection"
+        - "Klawiatura i mysz / Keyboard and mouse"
+        - "Pad (ViGEmBus) / Gamepad (ViGEmBus)"
+        - "MIDI / OSC / Synth"
+        - "Nakładki na ekranie / On-screen overlays"
+        - "Pomocna dłoń: skaner, klik bez klikania, koło / Helping hand: scanner, click without clicking, wheel"
+        - "Zestawy i profile / Setups and profiles"
+        - "RibbitBeat"
+        - "Asystent AI (MCP) / AI assistant (MCP)"
+        - "Instalacja i uruchamianie / Installing and starting"
+        - "Inne / Other"
+    validations:
+      required: true
+  - type: dropdown
+    id: sprzet
+    attributes:
+      label: "Na czym pracujesz? / What are you running on?"
+      options:
+        - "Prawdziwy kapsel / Real capsule"
+        - "Tryb --simulate (bez sprzętu) / --simulate mode (no hardware)"
+        - "Gra bez kapsla (mysz, klawiatura, pad) / Game without a capsule (mouse, keyboard, gamepad)"
+    validations:
+      required: true
+  - type: dropdown
+    id: uruchomienie
+    attributes:
+      label: "Jak uruchamiasz RibbitFlipa? / How do you run RibbitFlip?"
+      options:
+        - "RibbitFlip.exe z wydania / RibbitFlip.exe from a release"
+        - "Ze źródeł (Python) / From source (Python)"
+    validations:
+      required: true
+  - type: input
+    id: wersja
+    attributes:
+      label: "Wersja RibbitFlipa / RibbitFlip version"
+      description: "Numer z nazwy wydania albo z paczki diagnostycznej. / The number from the release name or the diagnostic bundle."
+      placeholder: "1.0.0"
+  - type: input
+    id: windows
+    attributes:
+      label: "Wersja Windows / Windows version"
+      placeholder: "Windows 11 24H2"
+  - type: textarea
+    id: diagnostyka
+    attributes:
+      label: "Paczka diagnostyczna / Diagnostic bundle"
+      description: |
+        W panelu kliknij **Zgłoś problem** w stopce. Zip trafia do folderu `Zgloszenia` obok programu: przeciągnij go tutaj. Paczka nie zawiera haseł ani nazwy konta Windows, ale zgłoszenie jest publiczne, więc zajrzyj do niej przed wysłaniem.
+
+        In the panel, click **Report a problem** in the footer. The zip goes to the `Zgloszenia` folder next to the program: drag it here. The bundle contains no passwords or Windows account name, but this issue is public, so look inside before you send it.
+  - type: checkboxes
+    id: duplikat
+    attributes:
+      label: "Zanim wyślesz / Before you send"
+      options:
+        - label: "Sprawdziłem, że takiego zgłoszenia jeszcze nie ma. / I checked that this hasn't been reported yet."

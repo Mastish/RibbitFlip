@@ -1,0 +1,50 @@
+name: "Bariera dostępności / Accessibility barrier"
+description: "Coś jest dla Ciebie trudne albo niemożliwe do zrobienia. / Something is hard or impossible for you to do."
+labels: ["accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bariery dostępności traktujemy jak błędy. Pisz po polsku albo po angielsku i tak krótko, jak Ci wygodnie: wystarczy jedno zdanie, resztę dopytamy. Jeśli wolisz, napisz na forum `#pomoc` na [Discordzie](https://discord.gg/tyv2MjjVdb). Więcej: [ACCESSIBILITY.md](https://github.com/Mastish/RibbitFlip/blob/main/.github/ACCESSIBILITY.md).
+
+        We treat accessibility barriers as bugs. Write in Polish or English and as briefly as suits you: one sentence is enough, we will ask about the rest. If you prefer, post in the `#pomoc` forum on [Discord](https://discord.gg/tyv2MjjVdb). More: [ACCESSIBILITY.md](https://github.com/Mastish/RibbitFlip/blob/main/.github/ACCESSIBILITY.md).
+  - type: textarea
+    id: cel
+    attributes:
+      label: "Co próbowałeś zrobić? / What were you trying to do?"
+    validations:
+      required: true
+  - type: textarea
+    id: bariera
+    attributes:
+      label: "Co Cię zatrzymało? / What stopped you?"
+      description: "Na przykład za mały przycisk, za słaby kontrast, za krótki czas, ruch, którego nie możesz wykonać. / For example a button too small, contrast too low, too little time, a movement you cannot make."
+    validations:
+      required: true
+  - type: dropdown
+    id: obszar
+    attributes:
+      label: "Gdzie? / Where?"
+      options:
+        - "Instalacja i pierwsza konfiguracja / Installing and first-time setup"
+        - "Panel / Panel"
+        - "Skaner ekranu / Screen scanner"
+        - "Klik bez klikania / Click without clicking"
+        - "Koło wyboru / Selection wheel"
+        - "Kursor ruchem głowy lub dłoni / Head or hand cursor"
+        - "Nakładki na ekranie / On-screen overlays"
+        - "RibbitBeat"
+        - "Dokumentacja / Documentation"
+        - "Inne / Other"
+    validations:
+      required: true
+  - type: textarea
+    id: pomoce
+    attributes:
+      label: "Sprzęt wspomagający i ustawienia / Assistive technology and settings"
+      description: "Jeśli z czegoś korzystasz: czytnik ekranu, powiększenie, wysoki kontrast, ograniczony ruch, przełącznik, kapsel na czapce. / If you use any: screen reader, magnifier, high contrast, reduced motion, a switch, the capsule on a cap."
+  - type: input
+    id: wersja
+    attributes:
+      label: "Wersja RibbitFlipa i Windows / RibbitFlip and Windows version"
+      placeholder: "1.0.0, Windows 11"
